@@ -6,7 +6,7 @@ To do list:
 
 3) Change type variable to datatype
 
-4) Change to relative paths (Evan)
+4) Change hard-linked paths to relative, most importantly for scripts (Evan)
 
 5) Intermediate file hygiene
 
