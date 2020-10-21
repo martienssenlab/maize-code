@@ -9,7 +9,7 @@
 #$ -N maizecode
 
 usage="
-##### Master script for Maize code data analysis
+##### Main script for Maize code data analysis
 ##### 
 ##### sh MaizeCode.sh -f samplefile -t type -p path to genome reference -r name of reference genome
 ##### 	-f: samplefile (tab delimited text file with Line, Tissue, Sample, Rep, Path, PE or SE)
