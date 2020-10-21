@@ -14,4 +14,6 @@ To do list:
 
 7) Add the references in the sample file to be able to map to different references form the same samplefile and can then be processed together later on
 
-8) Compute PBC1 and PBC2 (PCR Bottlenecking Coefficient) (https://www.encodeproject.org/data-standards/terms/#library) 
+8) Compute PBC1 and PBC2 (PCR Bottlenecking Coefficient) (https://www.encodeproject.org/data-standards/terms/#library)
+
+9) Management of R packages
