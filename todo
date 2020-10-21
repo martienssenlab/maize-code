@@ -1,0 +1,13 @@
+To do list:
+
+1) Add details on the input files (gff3 and fasta)
+
+2) Rename deeptools folder
+
+3) Change type variable to datatype
+
+4) Change to relative paths (Evan)
+
+5) Intermediate file hygiene
+
+6) Down the line? Compatiblity for potential user that has a different set-up (no cluster, no qsub ...)
