@@ -12,7 +12,7 @@ usage="
 ##### Main script for Maize code data analysis
 ##### 
 ##### sh MaizeCode.sh -f samplefile -t type -p path to genome reference -r name of reference genome
-##### 	-f: samplefile (tab delimited text file with Line, Tissue, Sample, Rep, Path, PE or SE)
+##### 	-f: samplefile (tab delimited text file with Line, Tissue, Sample, Rep, SequencingID, Path, PE or SE)
 ##### 	-t: data type (ChIP, RNA or RAMPAGE)
 ##### 	-p: path to the folder containing all the different genome references (e.g. ~/data/Genomes/Zea_mays)
 ##### 	-r: reference genome (line ID + ref; e.g. B73_v4)
