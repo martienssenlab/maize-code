@@ -11,9 +11,9 @@ pigz; samtools; bowtie2; STAR; fastqc; cutadapt; bedtools; deeptools; macs2; idr
 3) Organize your reference genome folders so that they each contain ONE fasta file and ONE gff3 file
 4) Copy all these scripts in ~/data/Scripts/. If you would rather have them in another folder, check in the MaizeCode.sh script and replace the location.
 5) Make the samplefiles you want. Examples of how to make them are at the bottom of the MaizeCode.sh file (easiest is then to ctrl+H the names and path from the excel spreadsheet to replace them)
-6) Submit the MaizeCode.sh script, giving as argument 1) the samplefile.txt of your choice, 2) the type of data (ChIP, RNA, ...), 3) the path to your directory that contains the different genome directories and 4) the name of the reference to use (i.e. the name of the genome directory folder).
+6) Submit the MaizeCode.sh script, giving as argument -f the samplefile.txt of your choice, -t the type of data (ChIP, RNA, ...), -p the path to your directory that contains the different genome directories and -r the name of the reference to use (i.e. the name of the genome directory folder).
 7) Make the analysis_samplefiles you want. Examples are at the bottom of the MaizeCode_ChIP_analysis.sh file.
-8) For ChIP data, submit the MaizeCode_ChIP_analysis.sh script either in the MaizeCode or in the ChIP folder (gets created in MaizeCode.sh), giving as argument 1) the analysis_samplefile.txt and 2) the regions (bed file) to be plotted on.
+8) For ChIP data, submit the MaizeCode_ChIP_analysis.sh script either in the MaizeCode or in the ChIP folder (gets created in MaizeCode.sh), giving as argument -f the analysis_samplefile.txt and -r the regions (bed file) to be plotted on. -s can be set if the analysis should stop after calling peaks and making bigwig files.
 
 
 Comments
