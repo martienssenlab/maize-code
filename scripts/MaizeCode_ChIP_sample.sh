@@ -11,15 +11,16 @@
 usage="
 ##### Script for Maize code ChIP data analysis, used by script MaizeCode.sh with ChIP argument
 #####
-##### Argument #1: folder containing the reference directory (e.g. ~/data/Genomes/Zea_mays/B73_v4)
-##### Argument #2: Name of the bowtie2 index in the reference directory (e.g. B73_v4)
-##### Argument #3: sample line (e.g. B73)
-##### Argument #4: tissue (e.g. endosperm)
-##### Argument #5: ChIP-seq mark (e.g. H3K4me1)
-##### Argument #6: replicate number (e.g. Rep1)
-##### Argument #7: if data is paired-end (PE) or single-end (SE)
+##### sh MaizeCode_ChIP_sample.sh -d reference directory -l inbred line -t tissue -m histone mark -e replicate ID -p paired
+##### 	-d: folder containing the reference directory (e.g. ~/data/Genomes/Zea_mays/B73_v4)
+##### 	-l: sample line (e.g. B73)
+##### 	-t: tissue (e.g. endosperm)
+##### 	-m: ChIP-seq mark (e.g. H3K4me1)
+##### 	-e: replicate ID (e.g. Rep1)
+##### 	-p: if data is paired-end (PE) or single-end (SE)
+##### 	-h: help, returns usage
 #####
-##### It creates the folders needed, runs fastQC, trims adapters with cutadapt, aligns with bowtie2, 
+##### It creates the folders needed, runs fastQC, trims adapters with cutadapt, aligns with bowtie2,
 ##### filters duplicates with samtools, calls peaks with Macs2 and creates bigwig files with deeptools
 #####
 ##### Requirements: samtools, fastQC, Cutadapt, Bowtie2
@@ -32,23 +33,35 @@ date
 printf "\n"
 
 export threads=$NSLOTS
-export ref_dir=$1
-export ref=$2
-export line=$3
-export tissue=$4
-export mark=$5
-export rep=$6
-export paired=$7
 
 if [ $# -eq 0 ]; then
 	printf "$usage\n"
 	exit 1
 fi
 
-if [[ "$1" == "help" ]]; then
+while getopts "d:l:t:m:r:p:h" opt; do
+	case $opt in
+		h) 	printf "$usage\n"
+			exit 0;;
+		d) 	export refdir=${OPTARG};;
+		l)	export line=${OPTARG};;
+		t)	export tissue=${OPTARG};;
+		m)	export mark=${OPTARG};;
+		r)	export rep=${OPTARG};;
+		p)	export paired=${OPTARG};;
+		*)	printf "$usage\n"
+			exit 1;;
+	esac
+done
+shift $((OPTIND - 1))
+
+if [ ! $refdir ] || [ ! $line ] || [ ! $tissue ] || [ ! $mark ] || [ ! $rep ] || [ ! $paired ]; then
+	printf "Missing arguments!\n"
 	printf "$usage\n"
 	exit 1
 fi
+
+export ref=${refdir##*/}
 
 name=${line}_${tissue}_${mark}_${rep}
 
