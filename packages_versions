@@ -1,0 +1,21 @@
+pigz 2.3.4
+
+samtools 1.10
+Using htslib 1.10.2
+
+deeptools 3.5.0
+
+bowtie2 64-bit
+Compiler: gcc version 7.5.0 (crosstool-NG 1.24.0.131_87df0e6_dirty)
+
+STAR 2.7.5c
+
+FastQC v0.11.9
+
+Cutadapt 2.10
+
+bedtools v2.29.2
+
+macs2 2.2.7.1
+
+IDR 2.0.4.2
