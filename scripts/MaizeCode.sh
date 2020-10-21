@@ -10,11 +10,13 @@
 
 usage="
 ##### Master script for Maize code data analysis
-#####
-##### Argument #1: samplefile (tab delimited text file with Line, Tissue, Sample, Rep, Path, PE or SE)
-##### Argument #2: data type (ChIP, RNA or RAMPAGE)
-##### Argument #3: path to the folder containing all the different genome references (e.g. ~/data/Genomes/Zea_mays)
-##### Argument #4: reference genome (line ID + ref; e.g. B73_v4)
+##### 
+##### sh MaizeCode.sh -f samplefile -t type -p path to genome reference -r name of reference genome
+##### 	-f: samplefile (tab delimited text file with Line, Tissue, Sample, Rep, Path, PE or SE)
+##### 	-t: data type (ChIP, RNA or RAMPAGE)
+##### 	-p: path to the folder containing all the different genome references (e.g. ~/data/Genomes/Zea_mays)
+##### 	-r: reference genome (line ID + ref; e.g. B73_v4)
+##### 	-h: help, returns usage
 #####
 ##### Each reference genome should then be in a seperate folder (named like argument #4) with .fa and .gff3 files (can be gzipped)
 #####
@@ -33,17 +35,28 @@ date
 printf "\n"
 
 export threads=$NSLOTS
-export samplefile=$1
-export type=$2
-export pathtoref=$3
-export ref=$4
 
 if [ $# -eq 0 ]; then
 	printf "$usage\n"
 	exit 1
 fi
 
-if [[ "$1" == "help" ]]; then
+while getopts "f:t:p:r:h" opt; do
+	case $opt in
+		h) 	printf "$usage\n"
+			exit 0;;
+		f) 	export samplefile=${OPTARG};;
+		t)	export type=${OPTARG};;
+		p)	export pathtoref=${OPTARG};;
+		r)	export ref=${OPTARG};;
+		*)	printf "$usage\n"
+			exit 1;;
+	esac
+done
+shift $((OPTIND - 1))
+
+if [ ! $samplefile ] || [ ! $type ] || [ ! $pathtoref ] || [ ! $ref ]; then
+	printf "Missing arguments!\n"
 	printf "$usage\n"
 	exit 1
 fi
@@ -64,7 +77,7 @@ printf "\nReference directory containing genome files: $ref_dir\n"
 ################################### Preparing enrivonment ###################################
 #############################################################################################
 
-#### Not very great way (since it creates temporary unzipped fasta and gff3 files, even if not needed) but does the job quickly...
+### Not very great way (since it creates temporary unzipped fasta and gff3 files, even if not needed) but does the job quickly...
 
 printf "\nMaking sure reference directory is ready or if genome indexes need to be built\n"
 
@@ -158,24 +171,19 @@ do
 	fi
 	printf "\nRunning $type worker script for $name\n"
 	cd $type
-	qsub -N ${name} -o ${name}.log ~/data/Scripts/MaizeCode_${type}_sample.sh $ref_dir $ref $line $tissue $sample $rep $paired
+	qsub -N ${name} -o ${name}.log ~/data/Scripts/MaizeCode_${type}_sample.sh -d $ref_dir -l $line -t $tissue -m $sample -r $rep -p $paired
 	cd ..
 done < $samplefile
 
 
-#############################################################################################
-########################################### MISC ############################################
-#############################################################################################
+############################################################################################
+########################################## MISC ############################################
+############################################################################################
 
-###### To make the samplefile (e.g. for B73 endosperm)
+# # ##### To make the samplefile (e.g. for B73 endosperm)
 
-# printf "B73\tendosperm\tInput\tRep1\tS01\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\nB73\tendosperm\tH3K4me1\tRep1\tS02\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\nB73\tendosperm\tH3K4me3\tRep1\tS03\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\nB73\tendosperm\tH3K27ac\tRep1\tS04\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\nB73\tendosperm\tInput\tRep2\tS05\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\nB73\tendosperm\tH3K4me1\tRep2\tS06\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\nB73\tendosperm\tH3K4me3\tRep2\tS07\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\nB73\tendosperm\tH3K27ac\tRep2\tS08\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\n" > B73_endosperm_samplefile.txt
+# # printf "B73\tendosperm\tInput\tRep1\tS01\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\nB73\tendosperm\tH3K4me1\tRep1\tS02\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\nB73\tendosperm\tH3K4me3\tRep1\tS03\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\nB73\tendosperm\tH3K27ac\tRep1\tS04\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\nB73\tendosperm\tInput\tRep2\tS05\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\nB73\tendosperm\tH3K4me1\tRep2\tS06\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\nB73\tendosperm\tH3K4me3\tRep2\tS07\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\nB73\tendosperm\tH3K27ac\tRep2\tS08\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\n" > B73_endosperm_samplefile.txt
 
-#############################################################################################
+############################################################################################
 
 printf "\nScript finished successfully!\n"
-
-
-
-
-
