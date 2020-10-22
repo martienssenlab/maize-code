@@ -65,8 +65,6 @@ export ref=${ref_dir##*/}
 
 name=${line}_${tissue}_${mark}_${rep}
 
-printf "\nPIPELINE seems OK:\nref dir is: $ref_dir\nref is $ref\nsample name is: $name\ndata is $paired\n"
-
 if [[ $paired == "PE" ]]; then
 
 	#### FastQC on raw data
