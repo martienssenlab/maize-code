@@ -2,9 +2,9 @@ To do list:
 
 1) Add details on the input files (gff3 and fasta)
 
-2) Rename deeptools folder
+2) DONE Rename deeptools folder
 
-3) Change type variable to datatype
+3) DONE Change type variable to datatype
 
 4) Change hard-linked paths to relative, most importantly for scripts (Evan)
 
