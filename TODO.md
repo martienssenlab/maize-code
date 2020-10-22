@@ -1,5 +1,7 @@
 To do list:
 
+0) Update README file
+
 1) DONE Add details on the input files (gff3 and fasta)
 
 2) DONE (Rename deeptools folder)
