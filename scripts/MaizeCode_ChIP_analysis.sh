@@ -87,12 +87,12 @@ fi
 ###################################### Preparing files ######################################
 #############################################################################################
 
-linelist=()
-tissuelist=()
-marklist=()
-samplelist=()
-bwlist=()
-bamlist=()
+line_list=()
+tissue_list=()
+mark_list=()
+sample_list=()
+bw_list=()
+bam_list=()
 while read line tissue mark rep paired
 do
 	#### To merge bam files of replicates if chosen and not already exisiting
@@ -120,11 +120,11 @@ do
 		input=${line}_${tissue}_Input_${rep}
 	fi
 	#### To append the lista (used for labels and other stuff)
-	samplelist+=("$name")
-	linelist+=("$line")
-	tissuelist+=("$tissue")
-	marklist+=("$mark")
-	bamlist+=("mapped/rmdup_${name}.bam" "mapped/rmdup_${input}.bam")	
+	sample_list+=("$name")
+	line_list+=("$line")
+	tissue_list+=("$tissue")
+	mark_list+=("$mark")
+	bam_list+=("mapped/rmdup_${name}.bam" "mapped/rmdup_${input}.bam")	
 	#### To call either broad or narrow peaks if not disabled and not already exisiting
 	case "$mark" in
 		H3K4me1) peaktype="broad";;
@@ -182,7 +182,7 @@ do
 		printf "\nBigwig file for $name already exists\n"
 	fi
 	#### To append the list of bw files to be used by deeptools
-	bwlist+=("tracks/${name}.bw")
+	bw_list+=("tracks/${name}.bw")
 done < $samplefile
 
 if [[ $keepgoing == "STOP" ]]; then
@@ -205,27 +205,27 @@ analysisname="${samplename}_on_${regioname}"
 
 #### To get the list of unique information (i.e. get rid of potential repeats)
 
-uniqline=($(printf "%s\n" "${linelist[@]}" | sort -u))
-uniqtissue=($(printf "%s\n" "${tissuelist[@]}" | sort -u))
-uniqmark=($(printf "%s\n" "${marklist[@]}" | sort -u))
+uniq_line_list=($(printf "%s\n" "${line_list[@]}" | sort -u))
+uniq_tissue_list=($(printf "%s\n" "${tissue_list[@]}" | sort -u))
+uniq_mark_list=($(printf "%s\n" "${mark_list[@]}" | sort -u))
 
 #### To create idr analysis and summary peak statistics
 
 printf "Line\tTissue\Mark\tPeaks_in_rep1\tPeaks_in_Rep2\tCommon_peaks\tCommon_peaks_IDR<=0.05\n" > reports/summary_peaks_${analysisname}.txt
-for line in ${uniqline[@]}
+for line in ${uniq_line_list[@]}
 do
-	for tissue in ${uniqtissue[@]}
+	for tissue in ${uniq_tissue_list[@]}
 	do
-		for mark in ${uniqmark[@]}
+		for mark in ${uniq_mark_list[@]}
 		do
-			if [[ " ${samplelist[@]} " =~ "${line}_${tissue}_${mark}" ]]; then
+			if [[ " ${sample_list[@]} " =~ "${line}_${tissue}_${mark}" ]]; then
 				case "$mark" in
 					H3K4me1) peaktype="broad";;
 					H3K4me3) peaktype="narrow";;
 					H3K27ac) peaktype="narrow";;
 				esac
 				#### To get IDR analysis on replicates (if they were both present in the samplefile)
-				if [[ " ${samplelist[@]} " =~ " ${line}_${tissue}_${mark}_Rep1 " ]] && [[ " ${samplelist[@]} " =~ " ${line}_${tissue}_${mark}_Rep2 " ]]; then
+				if [[ " ${sample_list[@]} " =~ " ${line}_${tissue}_${mark}_Rep1 " ]] && [[ " ${sample_list[@]} " =~ " ${line}_${tissue}_${mark}_Rep2 " ]]; then
 					if [ ! -f peaks/idr_${line}_${tissue}_${mark}.${peaktype}Peak ]; then
 						printf "\nDoing IDR analysis on both replicates from ${line}_${tissue}_${mark} ($peaktype peaks) with idr version:\n"
 						idr --version
@@ -252,7 +252,7 @@ if [ -f peaks/tmp_peaks_${analysisname}.bed ]; then
 	rm -f peaks/tmp_peaks_${analysisname}.bed
 fi
 
-for sample in ${samplelist[@]}
+for sample in ${sample_list[@]}
 do
 	case "$sample" in
 		*H3K4me1*) peaktype="broad";;
@@ -271,7 +271,7 @@ rm -f peaks/tmp*
 
 #### To create a matrix of peak presence in each sample (for upset plots and/or venn diagramms)
 
-for sample in ${samplelist[@]}
+for sample in ${sample_list[@]}
 do
 	printf "$sample\n" > peaks/temp_col_${sample}.txt
 	awk -v OFS="\t" -v s=$sample '{if ($0 ~ s) print "1"; else print "0"}' peaks/peaks_${analysisname}.bed >> peaks/temp_col_${sample}.txt
@@ -303,34 +303,34 @@ rm peaks/temp_col_*.txt
 # #### Computing the matrix
 # if [ ! -f tracks/regions_${analysisname}.gz ]; then
 	# printf "\nComputing scale-regions matrix for $analysisname\n"
-	# computeMatrix scale-regions -R $regionfile -S ${bwlist[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o tracks/regions_${analysisname}.gz
+	# computeMatrix scale-regions -R $regionfile -S ${bw_list[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o tracks/regions_${analysisname}.gz
 # fi
 # if [ ! -f tracks/tss_${analysisname}.gz ]; then
 	# printf "\nComputing reference-point on TSS matrix for $analysisname\n"
-	# computeMatrix reference-point --referencePoint "TSS" -R $regionfile -S ${bwlist[@]} -bs 50 -b 2000 -a 6000 -p $threads -o tracks/tss_${analysisname}.gz
+	# computeMatrix reference-point --referencePoint "TSS" -R $regionfile -S ${bw_list[@]} -bs 50 -b 2000 -a 6000 -p $threads -o tracks/tss_${analysisname}.gz
 # fi
 
 # #### Ploting heatmaps
 # printf "\nPlotting full heatmap for scale-regions of $analysisname\n"
-# plotHeatmap -m tracks/regions_${analysisname}.gz -out plots/${analysisname}_heatmap_regions.pdf --sortRegions descend --sortUsing mean --samplesLabel ${samplelist[@]} --colorMap 'seismic'
+# plotHeatmap -m tracks/regions_${analysisname}.gz -out plots/${analysisname}_heatmap_regions.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sample_list[@]} --colorMap 'seismic'
 # printf "\nPlotting heatmap for scale-regions of $analysisname split in 3 kmeans\n"
-# plotHeatmap -m tracks/regions_${analysisname}.gz -out plots/${analysisname}_heatmap_regions_k3.pdf --sortRegions descend --sortUsing mean --samplesLabel ${samplelist[@]} --colorMap 'seismic' --kmeans 3 --outFileSortedRegions tracks/${analysisname}_sortedregions_k3.txt
+# plotHeatmap -m tracks/regions_${analysisname}.gz -out plots/${analysisname}_heatmap_regions_k3.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sample_list[@]} --colorMap 'seismic' --kmeans 3 --outFileSortedRegions tracks/${analysisname}_sortedregions_k3.txt
 
 # printf "\nPlotting full heatmap for reference-point TSS of $analysisname\n"
-# plotHeatmap -m tracks/tss_${analysisname}.gz -out plots/${analysisname}_heatmap_tss.pdf --sortRegions descend --sortUsing region_length --samplesLabel ${samplelist[@]} --colorMap 'seismic'
+# plotHeatmap -m tracks/tss_${analysisname}.gz -out plots/${analysisname}_heatmap_tss.pdf --sortRegions descend --sortUsing region_length --samplesLabel ${sample_list[@]} --colorMap 'seismic'
 # printf "\nPlotting heatmap for reference-point TSS of $analysisname split in 3 kmeans\n"
-# plotHeatmap -m tracks/tss_${analysisname}.gz -out plots/${analysisname}_heatmap_tss_k3.pdf --sortRegions descend --sortUsing region_length --samplesLabel ${samplelist[@]} --colorMap 'seismic' --kmeans 3 --outFileSortedRegions tracks/${analysisname}_sortedtss_k3.txt
+# plotHeatmap -m tracks/tss_${analysisname}.gz -out plots/${analysisname}_heatmap_tss_k3.pdf --sortRegions descend --sortUsing region_length --samplesLabel ${sample_list[@]} --colorMap 'seismic' --kmeans 3 --outFileSortedRegions tracks/${analysisname}_sortedtss_k3.txt
 
 # #### Plotting Metaplot profiles
 # printf "\nPlotting metaplot profiles for scale-regions of $analysisname\n"
-# plotProfile -m tracks/regions_${analysisname}.gz -out plots/${analysisname}_profiles_regions.pdf --plotType lines --averageType mean --perGroup
+# plotProfile -m tracks/regions_${analysisname}.gz -out plots/${analysisname}_profiles_regions.pdf --plotType lines --averageType mean --perGroup --samplesLabel ${sample_list[@]}
 # printf "\nPlotting metaplot profiles for scale-regions of $analysisname split in 5 kmeans\n"
-# plotProfile -m tracks/regions_${analysisname}.gz -out plots/${analysisname}_profiles_regions_k5.pdf --plotType lines --averageType mean --perGroup --kmeans 5
+# plotProfile -m tracks/regions_${analysisname}.gz -out plots/${analysisname}_profiles_regions_k5.pdf --plotType lines --averageType mean --perGroup --samplesLabel ${sample_list[@]} --kmeans 5
 
 # printf "\nPlotting metaplot profiles for reference-point TSS of $analysisname\n"
-# plotProfile -m tracks/tss_${analysisname}.gz -out plots/${analysisname}_profiles_tss.pdf --plotType lines --averageType mean --perGroup
+# plotProfile -m tracks/tss_${analysisname}.gz -out plots/${analysisname}_profiles_tss.pdf --plotType lines --averageType mean --perGroup --samplesLabel ${sample_list[@]}
 # printf "\nPlotting metaplot profiles for reference-point TSS of $analysisname split in 5 kmeans\n"
-# plotProfile -m tracks/tss_${analysisname}.gz -out plots/${analysisname}_profiles_tss_k5.pdf --plotType lines --averageType mean --perGroup --kmeans 5
+# plotProfile -m tracks/tss_${analysisname}.gz -out plots/${analysisname}_profiles_tss_k5.pdf --plotType lines --averageType mean --perGroup --samplesLabel ${sample_list[@]} --kmeans 5
 
 #### When done this way, the 5 kmeans regions in heatmap and profiles are not going to be the same. 
 #### To have the same regions, make a new matrix using the region file coming from the --outFileSortedRegions (e.g. tracks/${analysisname}_sortedtss_k5.txt)
