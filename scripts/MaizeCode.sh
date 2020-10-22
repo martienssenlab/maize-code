@@ -65,7 +65,7 @@ if [ ! -d ./$type ]; then
 	mkdir ./$type
 	mkdir ./$type/fastq
 	mkdir ./$type/mapped
-	mkdir ./$type/deeptools
+	mkdir ./$type/tracks
 	mkdir ./$type/reports
 fi
 
