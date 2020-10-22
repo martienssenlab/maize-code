@@ -46,7 +46,7 @@ while getopts "f:t:p:r:h" opt; do
 		h) 	printf "$usage\n"
 			exit 0;;
 		f) 	export samplefile=${OPTARG};;
-		t)	export type=${OPTARG};;
+		t)	export datatype=${OPTARG};;
 		p)	export pathtoref=${OPTARG};;
 		r)	export ref=${OPTARG};;
 		*)	printf "$usage\n"
@@ -55,18 +55,18 @@ while getopts "f:t:p:r:h" opt; do
 done
 shift $((OPTIND - 1))
 
-if [ ! $samplefile ] || [ ! $type ] || [ ! $pathtoref ] || [ ! $ref ]; then
+if [ ! $samplefile ] || [ ! $datatype ] || [ ! $pathtoref ] || [ ! $ref ]; then
 	printf "Missing arguments!\n"
 	printf "$usage\n"
 	exit 1
 fi
 
-if [ ! -d ./$type ]; then
-	mkdir ./$type
-	mkdir ./$type/fastq
-	mkdir ./$type/mapped
-	mkdir ./$type/tracks
-	mkdir ./$type/reports
+if [ ! -d ./$datatype ]; then
+	mkdir ./$datatype
+	mkdir ./$datatype/fastq
+	mkdir ./$datatype/mapped
+	mkdir ./$datatype/tracks
+	mkdir ./$datatype/reports
 fi
 
 ref_dir=$pathtoref/$ref
@@ -116,24 +116,24 @@ if [ ! -f $ref_dir/chrom.sizes ]; then
 	cut -f1,2 ${fasta}.fai > $ref_dir/chrom.sizes
 fi
 	
-if [ ! -f $type/tracks/all_genes.bed ]; then
-	awk -v OFS="\t" '$3=="gene" {print $1,$4-1,$5,$9,".",$7}' $gff > $type/tracks/${ref}_all_genes.bed
+if [ ! -f $datatype/tracks/all_genes.bed ]; then
+	awk -v OFS="\t" '$3=="gene" {print $1,$4-1,$5,$9,".",$7}' $gff > $datatype/tracks/${ref}_all_genes.bed
 fi
 
-if [[ $type == "ChIP" ]]; then
+if [[ $datatype == "ChIP" ]]; then
 	if [ ! -f $ref_dir/*.bt2* ]; then
 #### This return the following warning 'line 111: [: too many arguments when the index is already build'
 		printf "\nBuilding Bowtie2 index for $ref\n"
 		bowtie2-build --threads $threads $fasta $ref_dir/$ref
 	fi
-elif [[ $type == "RNA" ]]; then
+elif [[ $datatype == "RNA" ]]; then
 	gen_dir=$ref_dir/STAR_index
 	if [ ! -d ${gen_dir} ]; then
 		printf "Building STAR index directory for $ref\n"
 		mkdir ${gen_dir}
 		STAR --runThreadN $threads --runMode genomeGenerate --genomeDir ${gen_dir} --genomeFastaFiles $fasta --sjdbGTFfile $gff --sjdbGTFtagExonParentTranscript Parent
 	fi
-elif [[ $type == "RAMPAGE" ]]; then
+elif [[ $datatype == "RAMPAGE" ]]; then
 	printf "\nRAMPAGE mode not yet activated.. Sorry!\n"
 else
 	printf "\nType of data unknown!\n"
@@ -149,29 +149,29 @@ rm -f $ref_dir/temp*
 #############################################################################################
 
 
-if [ ! -f $type/reports/summary_mapping_stats.txt ]; then
-	printf "Line\tTissue\tMark\tRep\tTotal_reads\tPassing_filtering\tDeduplicated_reads\tProperly_mapped_reads\n" > $type/reports/summary_mapping_stats.txt
+if [ ! -f $datatype/reports/summary_mapping_stats.txt ]; then
+	printf "Line\tTissue\tMark\tRep\tTotal_reads\tPassing_filtering\tDeduplicated_reads\tProperly_mapped_reads\n" > $datatype/reports/summary_mapping_stats.txt
 fi
 
 while read line tissue sample rep sampleID path paired
 do
 	name=${line}_${tissue}_${sample}_${rep}
-	if [ ! -f ./$type/fastq/${name}*.fastq.gz ]; then
+	if [ ! -f ./$datatype/fastq/${name}*.fastq.gz ]; then
 		if [[ $paired == "PE" ]]; then
 			printf "\nCopying PE fastq for $name ($sampleID in $path)\n"
-			cp $path/${sampleID}*R1*fastq.gz ./$type/fastq/${name}_R1.fastq.gz
-			cp $path/${sampleID}*R2*fastq.gz ./$type/fastq/${name}_R2.fastq.gz
+			cp $path/${sampleID}*R1*fastq.gz ./$datatype/fastq/${name}_R1.fastq.gz
+			cp $path/${sampleID}*R2*fastq.gz ./$datatype/fastq/${name}_R2.fastq.gz
 		elif [[ $paired == "SE" ]]; then
 			printf "\nCopying SE fastq for $name ($sampleID in $path)\n"
-			cp $path/${sampleID}*fastq.gz ./$type/fastq/${name}.fastq.gz
+			cp $path/${sampleID}*fastq.gz ./$datatype/fastq/${name}.fastq.gz
 		else
 			printf "\nData format missing: paired-end (PE) or single-end (SE)?\n"
 			exit 1
 		fi
 	fi
-	printf "\nRunning $type worker script for $name\n"
-	cd $type
-	qsub -N ${name} -o ${name}.log ~/data/Scripts/MaizeCode_${type}_sample.sh -d $ref_dir -l $line -t $tissue -m $sample -r $rep -p $paired
+	printf "\nRunning $datatype worker script for $name\n"
+	cd $datatype
+	qsub -N ${name} -o ${name}.log ~/data/Scripts/MaizeCode_${datatype}_sample.sh -d $ref_dir -l $line -t $tissue -m $sample -r $rep -p $paired
 	cd ..
 done < $samplefile
 
