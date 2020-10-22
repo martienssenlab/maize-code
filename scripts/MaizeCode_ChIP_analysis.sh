@@ -166,10 +166,10 @@ do
 		exit 1
 	fi
 	#### To create bw files if not already exisiting
-	if [ ! -f deeptools/${name}.bw ]; then
+	if [ ! -f tracks/${name}.bw ]; then
 		printf "\nMaking bigwig files for $name with deeptools version:\n"
 		deeptools --version
-		bamCompare -b1 mapped/rmdup_${name}.bam -b2 mapped/rmdup_${input}.bam -o deeptools/${name}.bw -p $threads --binSize 1 --scaleFactorsMethod "None" --normalizeUsing CPM
+		bamCompare -b1 mapped/rmdup_${name}.bam -b2 mapped/rmdup_${input}.bam -o tracks/${name}.bw -p $threads --binSize 1 --scaleFactorsMethod "None" --normalizeUsing CPM
 	else
 		printf "\nBigwig file for $name already exists\n"
 	fi
@@ -182,7 +182,7 @@ do
 		printf "\nBigwig file for $name already exists\n"
 	fi
 	#### To append the list of bw files to be used by deeptools
-	bwlist+=("deeptools/${name}.bw")
+	bwlist+=("tracks/${name}.bw")
 done < $samplefile
 
 if [[ $keepgoing == "STOP" ]]; then
@@ -301,39 +301,39 @@ rm peaks/temp_col_*.txt
 # deeptools --version
 
 # #### Computing the matrix
-# if [ ! -f deeptools/regions_${analysisname}.gz ]; then
+# if [ ! -f tracks/regions_${analysisname}.gz ]; then
 	# printf "\nComputing scale-regions matrix for $analysisname\n"
-	# computeMatrix scale-regions -R $regionfile -S ${bwlist[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o deeptools/regions_${analysisname}.gz
+	# computeMatrix scale-regions -R $regionfile -S ${bwlist[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o tracks/regions_${analysisname}.gz
 # fi
-# if [ ! -f deeptools/tss_${analysisname}.gz ]; then
+# if [ ! -f tracks/tss_${analysisname}.gz ]; then
 	# printf "\nComputing reference-point on TSS matrix for $analysisname\n"
-	# computeMatrix reference-point --referencePoint "TSS" -R $regionfile -S ${bwlist[@]} -bs 50 -b 2000 -a 6000 -p $threads -o deeptools/tss_${analysisname}.gz
+	# computeMatrix reference-point --referencePoint "TSS" -R $regionfile -S ${bwlist[@]} -bs 50 -b 2000 -a 6000 -p $threads -o tracks/tss_${analysisname}.gz
 # fi
 
 # #### Ploting heatmaps
 # printf "\nPlotting full heatmap for scale-regions of $analysisname\n"
-# plotHeatmap -m deeptools/regions_${analysisname}.gz -out plots/${analysisname}_heatmap_regions.pdf --sortRegions descend --sortUsing mean --samplesLabel ${samplelist[@]} --colorMap 'seismic'
+# plotHeatmap -m tracks/regions_${analysisname}.gz -out plots/${analysisname}_heatmap_regions.pdf --sortRegions descend --sortUsing mean --samplesLabel ${samplelist[@]} --colorMap 'seismic'
 # printf "\nPlotting heatmap for scale-regions of $analysisname split in 3 kmeans\n"
-# plotHeatmap -m deeptools/regions_${analysisname}.gz -out plots/${analysisname}_heatmap_regions_k3.pdf --sortRegions descend --sortUsing mean --samplesLabel ${samplelist[@]} --colorMap 'seismic' --kmeans 3 --outFileSortedRegions deeptools/${analysisname}_sortedregions_k3.txt
+# plotHeatmap -m tracks/regions_${analysisname}.gz -out plots/${analysisname}_heatmap_regions_k3.pdf --sortRegions descend --sortUsing mean --samplesLabel ${samplelist[@]} --colorMap 'seismic' --kmeans 3 --outFileSortedRegions tracks/${analysisname}_sortedregions_k3.txt
 
 # printf "\nPlotting full heatmap for reference-point TSS of $analysisname\n"
-# plotHeatmap -m deeptools/tss_${analysisname}.gz -out plots/${analysisname}_heatmap_tss.pdf --sortRegions descend --sortUsing region_length --samplesLabel ${samplelist[@]} --colorMap 'seismic'
+# plotHeatmap -m tracks/tss_${analysisname}.gz -out plots/${analysisname}_heatmap_tss.pdf --sortRegions descend --sortUsing region_length --samplesLabel ${samplelist[@]} --colorMap 'seismic'
 # printf "\nPlotting heatmap for reference-point TSS of $analysisname split in 3 kmeans\n"
-# plotHeatmap -m deeptools/tss_${analysisname}.gz -out plots/${analysisname}_heatmap_tss_k3.pdf --sortRegions descend --sortUsing region_length --samplesLabel ${samplelist[@]} --colorMap 'seismic' --kmeans 3 --outFileSortedRegions deeptools/${analysisname}_sortedtss_k3.txt
+# plotHeatmap -m tracks/tss_${analysisname}.gz -out plots/${analysisname}_heatmap_tss_k3.pdf --sortRegions descend --sortUsing region_length --samplesLabel ${samplelist[@]} --colorMap 'seismic' --kmeans 3 --outFileSortedRegions tracks/${analysisname}_sortedtss_k3.txt
 
 # #### Plotting Metaplot profiles
 # printf "\nPlotting metaplot profiles for scale-regions of $analysisname\n"
-# plotProfile -m deeptools/regions_${analysisname}.gz -out plots/${analysisname}_profiles_regions.pdf --plotType lines --averageType mean --perGroup
+# plotProfile -m tracks/regions_${analysisname}.gz -out plots/${analysisname}_profiles_regions.pdf --plotType lines --averageType mean --perGroup
 # printf "\nPlotting metaplot profiles for scale-regions of $analysisname split in 5 kmeans\n"
-# plotProfile -m deeptools/regions_${analysisname}.gz -out plots/${analysisname}_profiles_regions_k5.pdf --plotType lines --averageType mean --perGroup --kmeans 5
+# plotProfile -m tracks/regions_${analysisname}.gz -out plots/${analysisname}_profiles_regions_k5.pdf --plotType lines --averageType mean --perGroup --kmeans 5
 
 # printf "\nPlotting metaplot profiles for reference-point TSS of $analysisname\n"
-# plotProfile -m deeptools/tss_${analysisname}.gz -out plots/${analysisname}_profiles_tss.pdf --plotType lines --averageType mean --perGroup
+# plotProfile -m tracks/tss_${analysisname}.gz -out plots/${analysisname}_profiles_tss.pdf --plotType lines --averageType mean --perGroup
 # printf "\nPlotting metaplot profiles for reference-point TSS of $analysisname split in 5 kmeans\n"
-# plotProfile -m deeptools/tss_${analysisname}.gz -out plots/${analysisname}_profiles_tss_k5.pdf --plotType lines --averageType mean --perGroup --kmeans 5
+# plotProfile -m tracks/tss_${analysisname}.gz -out plots/${analysisname}_profiles_tss_k5.pdf --plotType lines --averageType mean --perGroup --kmeans 5
 
 #### When done this way, the 5 kmeans regions in heatmap and profiles are not going to be the same. 
-#### To have the same regions, make a new matrix using the region file coming from the --outFileSortedRegions (e.g. deeptools/${analysisname}_sortedtss_k5.txt)
+#### To have the same regions, make a new matrix using the region file coming from the --outFileSortedRegions (e.g. tracks/${analysisname}_sortedtss_k5.txt)
 #### You can then keep its order (--sortUsing keep) if required
 
 
