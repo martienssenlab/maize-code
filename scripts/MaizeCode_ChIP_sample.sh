@@ -43,7 +43,7 @@ while getopts "d:l:t:m:r:p:h" opt; do
 	case $opt in
 		h) 	printf "$usage\n"
 			exit 0;;
-		d) 	export refdir=${OPTARG};;
+		d) 	export ref_dir=${OPTARG};;
 		l)	export line=${OPTARG};;
 		t)	export tissue=${OPTARG};;
 		m)	export mark=${OPTARG};;
@@ -55,13 +55,13 @@ while getopts "d:l:t:m:r:p:h" opt; do
 done
 shift $((OPTIND - 1))
 
-if [ ! $refdir ] || [ ! $line ] || [ ! $tissue ] || [ ! $mark ] || [ ! $rep ] || [ ! $paired ]; then
+if [ ! $ref_dir ] || [ ! $line ] || [ ! $tissue ] || [ ! $mark ] || [ ! $rep ] || [ ! $paired ]; then
 	printf "Missing arguments!\n"
 	printf "$usage\n"
 	exit 1
 fi
 
-export ref=${refdir##*/}
+export ref=${ref_dir##*/}
 
 name=${line}_${tissue}_${mark}_${rep}
 
@@ -141,5 +141,3 @@ if [[ $paired == "PE" ]]; then
 fi
 
 printf "\nScript finished successfully!\n"
-
-
