@@ -116,8 +116,8 @@ if [ ! -f $ref_dir/chrom.sizes ]; then
 	cut -f1,2 ${fasta}.fai > $ref_dir/chrom.sizes
 fi
 	
-if [ ! -f $type/deeptools/all_genes.bed ]; then
-	awk -v OFS="\t" '$3=="gene" {print $1,$4-1,$5,$9,".",$7}' $gff > $type/deeptools/${ref}_all_genes.bed
+if [ ! -f $type/tracks/all_genes.bed ]; then
+	awk -v OFS="\t" '$3=="gene" {print $1,$4-1,$5,$9,".",$7}' $gff > $type/tracks/${ref}_all_genes.bed
 fi
 
 if [[ $type == "ChIP" ]]; then
