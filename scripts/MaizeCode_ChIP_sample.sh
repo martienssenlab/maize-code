@@ -21,7 +21,7 @@ usage="
 ##### 	-h: help, returns usage
 #####
 ##### It creates the folders needed, runs fastQC, trims adapters with cutadapt, aligns with bowtie2,
-##### filters duplicates with samtools, calls peaks with Macs2 and creates bigwig files with deeptools
+##### filters duplicates with samtools, and get some mapping stats
 #####
 ##### Requirements: samtools, fastQC, Cutadapt, Bowtie2
 "
