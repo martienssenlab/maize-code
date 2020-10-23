@@ -6,13 +6,13 @@ MaizeCode Pipeline Help
 Step-by-Step pipeline
 
 1) Make a MaizeCode folder somewhere
-2) Check for packages requirements and install the ones you don’t have:
+2) Check for packages requirements (see package_versions file for versions that work for sure) and install the ones you don’t have:
 pigz; samtools; bowtie2; STAR; fastqc; cutadapt; bedtools; deeptools; macs2; idr;
-3) Organize your reference genome folders so that they each contain ONE fasta file and ONE gff3 file
+3) Organize your reference genome folders so that they each contain ONE fasta file and ONE gff3 file (has to have 'gene' in column 3 and exons must be linked by 'Parent' in column 9)
 4) Copy all these scripts in ~/data/Scripts/. If you would rather have them in another folder, check in the MaizeCode.sh script and replace the location.
-5) Make the samplefiles you want. Examples of how to make them are at the bottom of the MaizeCode.sh file (easiest is then to ctrl+H the names and path from the excel spreadsheet to replace them)
-6) Submit the MaizeCode.sh script, giving as argument -f the samplefile.txt of your choice, -t the type of data (ChIP, RNA, ...), -p the path to your directory that contains the different genome directories and -r the name of the reference to use (i.e. the name of the genome directory folder).
-7) Make the analysis_samplefiles you want. Examples are at the bottom of the MaizeCode_ChIP_analysis.sh file.
+5) Make the samplefiles you want. An example of a samplefile is in the data folder (B73_endosperm_samplefile.txt) and a quick way to make them is at the bottom of the MaizeCode.sh file
+6) Submit the MaizeCode.sh script, giving as argument -f the samplefile.txt of your choice and -p the path to your directory that contains the different genome directories.
+7) Make the analysis_samplefiles you want. An example of an analysis samplefile is in the data folder (B73_endosperm_analysis_samplefile.txt) and a quick way to make them is at the bottom of the MaizeCode_ChIP_analysis.sh file
 8) For ChIP data, submit the MaizeCode_ChIP_analysis.sh script either in the MaizeCode or in the ChIP folder (gets created in MaizeCode.sh), giving as argument -f the analysis_samplefile.txt and -r the regions (bed file) to be plotted on. -s can be set if the analysis should stop after calling peaks and making bigwig files.
 
 
@@ -26,7 +26,7 @@ Comments
 - For now I’ve used the MaizeCode.sh script for 8 samples at a time (all ChIPs from a specific LinexTissue). It runs in a couple hours (depending on the size of the files). It processes each sample in parallel and asks for 20 threads for each so better to limit the samplefiles to this amount.
 - Always process the Input samples with their corresponding ChIP in the MaizeCode.sh script. (It can also be done separately, before or after) but they need to be done for the MaizeCode_ChIP_analysis.sh script to run successfully.
 - The MaizeCode_ChIP_analysis.sh script is clearly not finished and will have to be tweaked for each analysis, but should give a first look at the data.
-- These are preliminary version of the scripts, Evan will probably have some input on them, so they are not final versions! Use at your own risk (i.e. can be good for preliminary but probably not the final results). Comments from anyone are of course appreciated.
+- These are preliminary version of the scripts!
 - I am still working on the MaizeCode_ChIP_analysis.sh script. The version here is far from the final version. It is just here for now to satisfy your curiosity. I’ll keep updating the file on the drive. The first part (calling peaks and making bigwig) should be good and you could run it if you want, but the rest of the analysis needs work. In any case, it will have to be tweaked for each analysis as we go, but I hope to make it good enough to run once for a first overview of all the data before specific analysis.
 
 
