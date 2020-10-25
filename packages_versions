@@ -19,3 +19,6 @@ bedtools v2.29.2
 macs2 2.2.7.1
 
 IDR 2.0.4.2
+
+R 3.6.3
+R libraries: readr 1.4.0; ggplot2 3.3.2; UpSetR 1.4.0
