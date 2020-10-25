@@ -14,15 +14,15 @@ usage="
 ##### sh MaiCode_ChIP_analysis.sh -f samplefile -r regionfile [-s]
 #####	-f: samplefile containing the samples to compare and in 5 tab-delimited columns:
 ##### 		Line, Tissue, Mark, Rep (Rep1, Rep2 or merged), PE or SE
-##### 	-r: bedfiles containing the regions that want to be ploted over
+##### 	-r: regionfile (bed file) containing the regions that want to be ploted over
 ##### 		(safest to use a full path to the region file)
-#####		If no region file is given, the analysis will only call peaks and create bigwig files
-#####	-s: If set, the script stops after calling peaks and making bigwigs
-#####		Set it last to avoid problems
 ##### 	-h: help, returns usage
 ##### 
 ##### It calls broad (for H3K4me2) or narrow (for H3K4me3 and H3K27ac) peaks with Macs2,
-##### creates bigwig files (log2 FC vs Input) and makes heatmaps and metaplots with deeptools on the provided regions
+##### creates bigwig files (log2 FC vs Input), makes fingerprint plots,
+##### idr analysis (if both replciates are present in samplefile), calculates peak stats,
+##### and creates an upset plots to see overlap between samples, highlighting peaks in gene bodies
+#####
 ##### If the replicates are to be merged, the Rep value in the samplefile should be 'merged'
 #####
 ##### Requirements: samtools, bedtools, deeptools, macs2, idr
@@ -47,30 +47,16 @@ while getopts ":f:r:sh" opt; do
 			exit 0;;
 		f) 	export samplefile=${OPTARG};;
 		r)	export regionfile=${OPTARG};;
-		s)	printf "\nOption to stop after bigwigs selected\n"
-			export keepgoing="STOP";;
 		*)	printf "$usage\n"
 			exit 1;;
 	esac
 done
 shift $((OPTIND - 1))
 
-if [ ! $samplefile ]; then
-	printf "Missing samplefile\n"
+if [ ! $samplefile ] || [ ! $regionfile ]; then
+	printf "Missing arguments!\n"
 	printf "$usage\n"
 	exit 1
-fi
-
-if [ ! $regionfile ]; then
-	printf "Regionfile missing or not bed format.\nAnalysis will be stopped after making bigiwig files\nIf that was not intended, check usage."
-	keepgoing="STOP"
-fi
-
-#### To move into ChIP directory if script was launched from MaizeCode folder
-path=$(pwd)
-curdir=${path##*/}
-if [[ $curdir != "ChIP" ]]; then
-	cd ChIP
 fi
 
 if [ ! -d ./peaks ]; then
@@ -80,12 +66,6 @@ fi
 if [ ! -d ./plots ]; then
 	mkdir ./plots
 fi
-
-
-#############################################################################################
-########################################### PART1 ###########################################
-###################################### Preparing files ######################################
-#############################################################################################
 
 line_list=()
 tissue_list=()
@@ -119,13 +99,13 @@ do
 		name=${line}_${tissue}_${mark}_${rep}
 		input=${line}_${tissue}_Input_${rep}
 	fi
-	#### To append the lista (used for labels and other stuff)
+	#### To append the lists (used for labels and other stuff)
 	sample_list+=("$name")
 	line_list+=("$line")
 	tissue_list+=("$tissue")
 	mark_list+=("$mark")
 	bam_list+=("mapped/rmdup_${name}.bam" "mapped/rmdup_${input}.bam")	
-	#### To call either broad or narrow peaks if not disabled and not already exisiting
+	#### To call either broad or narrow peaks if not already exisiting
 	case "$mark" in
 		H3K4me1) peaktype="broad";;
 		H3K4me3) peaktype="narrow";;
@@ -174,7 +154,7 @@ do
 		printf "\nBigwig file for $name already exists\n"
 	fi
 	#### To create fingerprint plots if not already exisiting
-	if [ ! -f plots/Fingerprint_${name}.bw ]; then
+	if [ ! -f plots/Fingerprint_${name}.png ]; then
 		printf "\nPlotting Fingerprint for $name with deeptools version:\n"
 		deeptools --version
 		plotFingerprint -b mapped/rmdup_${name}.bam mapped/rmdup_${input}.bam -o plots/Fingerprint_${name}.png -p $threads -l ${name} ${input}
@@ -190,18 +170,8 @@ if [[ $keepgoing == "STOP" ]]; then
 	exit 0
 fi	
 
-#############################################################################################
-########################################### PART2 ###########################################
-################################### Making region files #####################################
-#############################################################################################
-
-#### The name of the files is a combination of the samplefile name and the regionfile name
-
-tmp1=${samplefile##*/}
-samplename=${tmp1%.*}
-tmp3=${regionfile##*/}
-regioname=${tmp3%.*}
-analysisname="${samplename}_on_${regioname}"
+tmp1=${samplefile##*temp_}
+samplename=${tmp1%_ChIP*}
 
 #### To get the list of unique information (i.e. get rid of potential repeats)
 
@@ -211,7 +181,7 @@ uniq_mark_list=($(printf "%s\n" "${mark_list[@]}" | sort -u))
 
 #### To create idr analysis and summary peak statistics
 
-printf "Line\tTissue\Mark\tPeaks_in_rep1\tPeaks_in_Rep2\tCommon_peaks\tCommon_peaks_IDR<=0.05\n" > reports/summary_peaks_${analysisname}.txt
+printf "Line\tTissue\Mark\tPeaks_in_rep1\tPeaks_in_Rep2\tCommon_peaks\tCommon_peaks_IDR<=0.05\n" > reports/summary_peaks_${samplename}.txt
 for line in ${uniq_line_list[@]}
 do
 	for tissue in ${uniq_tissue_list[@]}
@@ -239,7 +209,7 @@ do
 					rep2=$(awk '{print $1,$2,$3}' peaks/${line}_${tissue}_${mark}_Rep2_peaks.${peaktype}Peak | sort -k1,1 -k2,2n -u | wc -l)
 					common=$(awk '{print $1,$2,$3}' peaks/idr_${line}_${tissue}_${mark}.${peaktype}Peak | sort -k1,1 -k2,2n -u | wc -l)
 					idr=$(awk '$5>=540 {print $1,$2,$3}' peaks/idr_${line}_${tissue}_${mark}.${peaktype}Peak | sort -k1,1 -k2,2n -u | wc -l)
-					awk -v OFS="\t" -v a=$line -v b=$tissue -v c=$mark -v d=$rep1 -v e=$rep2 -v f=$common -v g=$idr 'BEGIN {print a,b,c,d,e,f" ("f/d*100"%rep1;"f/e*100"%rep2)",g" ("g/f*100"%common)"}' >> reports/summary_peaks_${analysisname}.txt
+					awk -v OFS="\t" -v a=$line -v b=$tissue -v c=$mark -v d=$rep1 -v e=$rep2 -v f=$common -v g=$idr 'BEGIN {print a,b,c,d,e,f" ("f/d*100"%rep1;"f/e*100"%rep2)",g" ("g/f*100"%common)"}' >> reports/summary_peaks_${samplename}.txt
 				fi
 			fi
 		done
@@ -248,8 +218,9 @@ done
 
 #### To make a single file containing all overlapping peaks
 
-if [ -f peaks/tmp_peaks_${analysisname}.bed ]; then
-	rm -f peaks/tmp_peaks_${analysisname}.bed
+printf "\nPreparing merged peaks file for $samplename\n"
+if [ -f peaks/tmp_peaks_${samplename}.bed ]; then
+	rm -f peaks/tmp_peaks_${samplename}.bed
 fi
 
 for sample in ${sample_list[@]}
@@ -259,108 +230,38 @@ do
 		*H3K4me3*) peaktype="narrow";;
 		*H3K27ac*) peaktype="narrow";;
 	esac
-	awk -v OFS="\t" -v s=$sample '{print $1,$2,$3,s}' peaks/${sample}_peaks.${peaktype}Peak | uniq >> peaks/tmp_peaks_${analysisname}.bed
+	awk -v OFS="\t" -v s=$sample '{print $1,$2,$3,s}' peaks/${sample}_peaks.${peaktype}Peak | uniq >> peaks/tmp_peaks_${samplename}.bed
 done
-sort -k1,1 -k2,2n peaks/tmp_peaks_${analysisname}.bed > peaks/tmp2_peaks_${analysisname}.bed
-bedtools merge -i peaks/tmp2_peaks_${analysisname}.bed -c 4 -o distinct | sort -k1,1 -k2,2n | awk -v OFS="\t" '{print $1,$2,$3,"Peak_"NR,$4}'> peaks/tmp3_peaks_${analysisname}.bed
+sort -k1,1 -k2,2n peaks/tmp_peaks_${samplename}.bed > peaks/tmp2_peaks_${samplename}.bed
+bedtools merge -i peaks/tmp2_peaks_${samplename}.bed -c 4 -o distinct | sort -k1,1 -k2,2n | awk -v OFS="\t" '{print $1,$2,$3,"Peak_"NR,$4}'> peaks/tmp3_peaks_${samplename}.bed
 
 #### To get distance to closest gene (and the gene model name)
 
-bedtools closest -a peaks/tmp3_peaks_${analysisname}.bed -b $regionfile -D ref | awk -v OFS="\t" '{print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$9,$7}' > peaks/peaks_${analysisname}.bed
+printf "\nGetting closest region of $samplename to $regionfile\n"
+bedtools closest -a peaks/tmp3_peaks_${samplename}.bed -b $regionfile -D ref | awk -v OFS="\t" '{print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$9,$7}' > peaks/peaks_${samplename}.bed
 rm -f peaks/tmp*
 
-#### To create a matrix of peak presence in each sample (for upset plots and/or venn diagramms)
+#### To create a matrix of peak presence in each sample
 
+printf "\nCreating matrix file for $samplename\n"
 for sample in ${sample_list[@]}
 do
 	printf "$sample\n" > peaks/temp_col_${sample}.txt
-	awk -v OFS="\t" -v s=$sample '{if ($0 ~ s) print "1"; else print "0"}' peaks/peaks_${analysisname}.bed >> peaks/temp_col_${sample}.txt
+	awk -v OFS="\t" -v s=$sample '{if ($0 ~ s) print "1"; else print "0"}' peaks/peaks_${samplename}.bed >> peaks/temp_col_${sample}.txt
 done
 
 #### To group peaks based on their distance (gene body (x=0), promoter (0<x<2kb upstream), terminator (0<x<2kb downstream), distal)
 
-awk -v OFS="\t" 'BEGIN {printf "PeakID\tDistance\n"} {if ($5<-2000) d="Distal"; else if ($5<0) d="Promoter"; else if ($5==0) d="Gene_body"; else if ($5>2000) d="Distal"; else d="Terminator"; print $4,d}' peaks/peaks_${analysisname}.bed > peaks/temp_col_AAA.txt
+awk -v OFS="\t" 'BEGIN {printf "PeakID\tDistance\n"} {if ($5<-2000) d="Distal"; else if ($5<0) d="Promoter"; else if ($5==0) d="Gene_body"; else if ($5>2000) d="Distal"; else d="Terminator"; print $4,d}' peaks/peaks_${samplename}.bed > peaks/temp_col_AAA.txt
 
-paste peaks/temp_col_*.txt | uniq > peaks/matrix_upset_${analysisname}.txt
+paste peaks/temp_col_*.txt | uniq > peaks/matrix_upset_${samplename}.txt
 
 rm peaks/temp_col_*.txt
 
+#### To make an Upset plot highlighting peaks in gene bodies
 
-#############################################################################################
-########################################### PART3 ###########################################
-####################################### Making plots ########################################
-#############################################################################################
-
-
-#### To make heatmaps and profiles with deeptools
-#### By default, it does both scale-regions and reference-point on start of bedfile provided
-#### By default, it does heatmap on all the data, heatmap with 5 kmeans, and corresponding profiles
-#### Probably need to edit many parameters depending on the purpose of the analysis
-
-# printf "\nDoing analysis for $analysisname with deeptools version:\n"
-# deeptools --version
-
-# #### Computing the matrix
-# if [ ! -f tracks/regions_${analysisname}.gz ]; then
-	# printf "\nComputing scale-regions matrix for $analysisname\n"
-	# computeMatrix scale-regions -R $regionfile -S ${bw_list[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o tracks/regions_${analysisname}.gz
-# fi
-# if [ ! -f tracks/tss_${analysisname}.gz ]; then
-	# printf "\nComputing reference-point on TSS matrix for $analysisname\n"
-	# computeMatrix reference-point --referencePoint "TSS" -R $regionfile -S ${bw_list[@]} -bs 50 -b 2000 -a 6000 -p $threads -o tracks/tss_${analysisname}.gz
-# fi
-
-# #### Ploting heatmaps
-# printf "\nPlotting full heatmap for scale-regions of $analysisname\n"
-# plotHeatmap -m tracks/regions_${analysisname}.gz -out plots/${analysisname}_heatmap_regions.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sample_list[@]} --colorMap 'seismic'
-# printf "\nPlotting heatmap for scale-regions of $analysisname split in 3 kmeans\n"
-# plotHeatmap -m tracks/regions_${analysisname}.gz -out plots/${analysisname}_heatmap_regions_k3.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sample_list[@]} --colorMap 'seismic' --kmeans 3 --outFileSortedRegions tracks/${analysisname}_sortedregions_k3.txt
-
-# printf "\nPlotting full heatmap for reference-point TSS of $analysisname\n"
-# plotHeatmap -m tracks/tss_${analysisname}.gz -out plots/${analysisname}_heatmap_tss.pdf --sortRegions descend --sortUsing region_length --samplesLabel ${sample_list[@]} --colorMap 'seismic'
-# printf "\nPlotting heatmap for reference-point TSS of $analysisname split in 3 kmeans\n"
-# plotHeatmap -m tracks/tss_${analysisname}.gz -out plots/${analysisname}_heatmap_tss_k3.pdf --sortRegions descend --sortUsing region_length --samplesLabel ${sample_list[@]} --colorMap 'seismic' --kmeans 3 --outFileSortedRegions tracks/${analysisname}_sortedtss_k3.txt
-
-# #### Plotting Metaplot profiles
-# printf "\nPlotting metaplot profiles for scale-regions of $analysisname\n"
-# plotProfile -m tracks/regions_${analysisname}.gz -out plots/${analysisname}_profiles_regions.pdf --plotType lines --averageType mean --perGroup --samplesLabel ${sample_list[@]}
-# printf "\nPlotting metaplot profiles for scale-regions of $analysisname split in 5 kmeans\n"
-# plotProfile -m tracks/regions_${analysisname}.gz -out plots/${analysisname}_profiles_regions_k5.pdf --plotType lines --averageType mean --perGroup --samplesLabel ${sample_list[@]} --kmeans 5
-
-# printf "\nPlotting metaplot profiles for reference-point TSS of $analysisname\n"
-# plotProfile -m tracks/tss_${analysisname}.gz -out plots/${analysisname}_profiles_tss.pdf --plotType lines --averageType mean --perGroup --samplesLabel ${sample_list[@]}
-# printf "\nPlotting metaplot profiles for reference-point TSS of $analysisname split in 5 kmeans\n"
-# plotProfile -m tracks/tss_${analysisname}.gz -out plots/${analysisname}_profiles_tss_k5.pdf --plotType lines --averageType mean --perGroup --samplesLabel ${sample_list[@]} --kmeans 5
-
-#### When done this way, the 5 kmeans regions in heatmap and profiles are not going to be the same. 
-#### To have the same regions, make a new matrix using the region file coming from the --outFileSortedRegions (e.g. tracks/${analysisname}_sortedtss_k5.txt)
-#### You can then keep its order (--sortUsing keep) if required
-
-
-#############################################################################################
-########################################### MISC ############################################
-#############################################################################################
-
-###### To make a test samplefile for (B73 endosperm H3K4me1)
-
-# printf "B73\tendosperm\tH3K4me1\tRep1\tPE\nB73\tendosperm\tH3K4me1\tRep2\tPE\n" > test_analysis_samplefile.txt
-
-###### To make the samplefile for B73_endosperm
-
-# printf "B73\tendosperm\tH3K4me1\tRep1\tPE\nB73\tendosperm\tH3K4me1\tRep2\tPE\nB73\tendosperm\tH3K4me1\tmerged\tPE\nB73\tendosperm\tH3K4me3\tRep1\tPE\nB73\tendosperm\tH3K4me3\tRep2\tPE\nB73\tendosperm\tH3K4me3\tmerged\tPE\nB73\tendosperm\tH3K27ac\tRep1\tPE\nB73\tendosperm\tH3K27ac\tRep2\tPE\nB73\tendosperm\tH3K27ac\tmerged\tPE\n" > B73_endosperm_analysis_samplefile.txt
-
-###### To create a regionfile containing several groups of regions (e.g. gene_list1, gene_list2 and gene_list3)
-
-# printf "#Name_gene_list1" > regionfile.bed
-# cat gene_list1.bed >> regionfile.bed
-# printf "#Name_gene_list2" >> regionfile.bed
-# cat gene_list2.bed >> regionfile.bed
-# printf "#Name_gene_list3" >> regionfile.bed
-# cat gene_list3.bed >> regionfile.bed
-
-#############################################################################################
-
+printf "\nCreating Upset plot for $samplename with R version:\n"
+R --version
+Rscript --vanilla ~/data/Scripts/MaizeCode_R_Upset.r peaks/matrix_upset_${samplename}.txt ${samplename}
 
 printf "\nScript finished successfully!\n"		
-
-
