@@ -36,6 +36,8 @@ date
 printf "\n"
 
 export threads=$NSLOTS
+export mc_dir=$(dirname "$0")
+echo "Running MaizeCode scripts from ${mc_dir} in working directory "${PWD}"
 
 if [ $# -eq 0 ]; then
 	printf "$usage\n"
