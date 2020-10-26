@@ -106,7 +106,7 @@ for datatype in ${uniq_datatype_list[@]}
 do
 	printf "\nRunning $datatype analysis script\n"
 	cd $datatype
-	qsub -N ${datatype} -o ${datatype}.log ~/data/Scripts/MaizeCode_${datatype}_analysis.sh -f temp_${samplename}_${datatype}.txt -r ${regionfile} &
+	qsub -sync y -N ${datatype} -o ${datatype}.log ~/data/Scripts/MaizeCode_${datatype}_analysis.sh -f temp_${samplename}_${datatype}.txt -r ${regionfile} &
 	pids+=("$!")
 	cd ..
 done
