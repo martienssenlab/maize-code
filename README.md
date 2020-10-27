@@ -94,4 +94,4 @@ Plots metaplots of ChIP marks on the differentially expressed genes (each UP and
 Plots Upset plots highlighting DEG in the overlapped peaks
 
 - ___MaizeCode_R_Upset.r___\
-Create an Upset plot of overlapping peaks and their presence in gene bodies (e.g. data/Upset_B73_endosperm.pdf)
+Create an Upset plot of overlapping peaks and their presence in gene bodies. An example is in the data folder (e.g. data/Upset_B73_endosperm.pdf)
