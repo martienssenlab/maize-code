@@ -1,23 +1,23 @@
 # maize-code
 
-MaizeCode Pipeline Help
+## MaizeCode Pipeline Help
 
 
-Step-by-Step pipeline
+### Step-by-Step pipeline
 
 1) Make a MaizeCode folder somewhere
 2) Copy the MaizeCode scripts folder somewhere
 3) Check for packages requirements (see package_versions file for versions that work for sure) and install the ones you don’t have:
 pigz; samtools; bowtie2; STAR; fastqc; cutadapt; bedtools; deeptools; macs2; idr; R (and R libraries: readr, ggplot2, UpSetR)
 4) Organize your reference genome folders so that they are all in the same main folder and that each contain ONE fasta file and ONE gff3 file (has to have 'gene' in column 3 and exons must be linked by 'Parent' in column 9)
-5) Make the samplefiles you want. An example of a samplefile is in the data folder (B73_endosperm_samplefile.txt) and a quick way to make them is at the bottom of the MaizeCode.sh file. For cleaner naming purposes, have "_samplefile.txt" as a suffix.
+5) Make the samplefiles you want. An example of a samplefile is in the data folder (B73_endosperm_samplefile.txt) and a quick way to make them is at the bottom of the MaizeCode.sh file. For cleaner naming purposes, have "\_samplefile.txt" as a suffix.
 6) Submit the MaizeCode.sh script, giving as argument -f the samplefile.txt of your choice and -p the path to your directory that contains the different genome directories.
 7) By default, it will proceed with the analysis. -s can be set so that it does not proceed with the analysis at all, and it will not do the combined analysis if several different references are being used for mapping
-8) If the analysis has not proceeded, if you want to analyze different samples together or if you want to analyze merged replicates, make the analysis_samplefile you want. An example of an analysis samplefile is in the data folder (B73_endosperm_analysis_samplefile.txt) and a quick way to make them is at the bottom of the MaizeCode_analysis.sh file. For better naming purposes, have "_analysis_samplefile.txt" as a suffix.
+8) If the analysis has not proceeded, if you want to analyze different samples together or if you want to analyze merged replicates, make the analysis_samplefile you want. An example of an analysis samplefile is in the data folder (B73_endosperm_analysis_samplefile.txt) and a quick way to make them is at the bottom of the MaizeCode_analysis.sh file. For better naming purposes, have "\_analysis_samplefile.txt" as a suffix.
 9) Submit the MaizeCode_analysis.sh script, giving as argument -f the analysis_samplefile.txt and -r the regions (bed file) to be plotted on. -s can be set if the combined analysis should not be performed (only calls peaks and makes bigwig files). It also stops there if the regionfile is missing.
 
 
-Comments
+### Comments
 
 - There is one wrapper script (MaizeCode.sh) that launches sub-scripts depending on what needs to be done.
 - The MaizeCode_analysis script is called by default by the MaizeCode.sh script but can be used seperately for any additional analysis.
@@ -31,7 +31,7 @@ Comments
 - These are preliminary version of the scripts!
 
 
-Scripts description
+### Scripts description
 
 - MaizeCode.sh - wrapper script for the whole pipeline\
 Creates the different folders\
