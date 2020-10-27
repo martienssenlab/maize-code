@@ -12,9 +12,9 @@ pigz; samtools; bowtie2; STAR; fastqc; cutadapt; bedtools; deeptools; macs2; idr
 4) Organize your reference genome folders so that they are all in the same main folder and that each contain ONE fasta file and ONE gff3 file (has to have 'gene' in column 3 and exons must be linked by 'Parent' in column 9)
 5) Make the samplefiles you want. An example of a samplefile is in the data folder (B73_endosperm_samplefile.txt) and a quick way to make them is at the bottom of the MaizeCode.sh file
 6) Submit the MaizeCode.sh script, giving as argument -f the samplefile.txt of your choice and -p the path to your directory that contains the different genome directories.
-7) By default, it will proceed with the analysis. It can be set so that it does not proceed with the analysis at all (-s argument to the MaizeCode.sh submission) and it will not do the combined analysis if several different references are being used for mapping
-8) If the analysis has not proceeded, or different samples want to be analyzed together (or merged samples are to be used for example), make the corresponding analysis_samplefile you want. An example of an analysis samplefile is in the data folder (B73_endosperm_analysis_samplefile.txt) and a quick way to make them is at the bottom of the MaizeCode_analysis.sh file
-9) Submit the MaizeCode_analysis.sh script, giving as argument -f the analysis_samplefile.txt and -r the regions (bed file) to be plotted on. -s can be set if the analysis should stop after calling peaks and making bigwig files. It also stops there if the regionfile is missing.
+7) By default, it will proceed with the analysis. -s can be set so that it does not proceed with the analysis at all, and it will not do the combined analysis if several different references are being used for mapping
+8) If the analysis has not proceeded, if you want to analyze different samples together or if you want to analyze merged replicates, make the analysis_samplefile you want. An example of an analysis samplefile is in the data folder (B73_endosperm_analysis_samplefile.txt) and a quick way to make them is at the bottom of the MaizeCode_analysis.sh file
+9) Submit the MaizeCode_analysis.sh script, giving as argument -f the analysis_samplefile.txt and -r the regions (bed file) to be plotted on. -s can be set if the combined analysis should not be performed (only calls peaks and makes bigwig files). It also stops there if the regionfile is missing.
 
 
 Comments
