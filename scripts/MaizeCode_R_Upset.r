@@ -16,6 +16,6 @@ plot1<-upset(inputable, point.size = 2, line.size = 1, sets = set2, order.by = "
       queries = list(list(query=elements, params=list("Distance","Gene_body"), color="red", active=T, 
                           query.name=c("Gene_body"))), query.legend = "top")
 						  
-pdf(paste0("plots/Upset_",samplename,".pdf"),10,8)
+pdf(paste0("combined/plots/Upset_",samplename,".pdf"),10,8)
 print(plot1)
 dev.off()
