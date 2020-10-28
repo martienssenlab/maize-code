@@ -1,9 +1,9 @@
 #!/bin/bash
 #$ -V
 #$ -cwd
-#$ -pe threads 8
-#$ -l m_mem_free=10G
-#$ -l tmp_free=50G
+#$ -pe threads 1
+#$ -l m_mem_free=2G
+#$ -l tmp_free=10G
 #$ -o maizecodeanalysis.log
 #$ -j y
 #$ -N maizecodeanalysis
@@ -11,18 +11,19 @@
 usage="
 ##### Script for Maize code data analysis
 #####
-##### sh MaiCode_analysis.sh -f samplefile -r regionfile [-s]
+##### sh MaiCode_analysis.sh -f samplefile [-r regionfile] [-s]
 #####	-f: samplefile containing the samples to compare and in 5 tab-delimited columns:
 ##### 		Line, Tissue, Sample, Rep (Rep1, Rep2 or merged), PE or SE
-##### 	-r: bedfiles containing the regions that want to be ploted over
+##### 	-r: bedfile containing the regions that want to be plotted over
 ##### 		(safest to use a full path to the region file)
 #####		If no region file is given, the analysis will behave as if -s was set
-#####	-s: If set, the script stops after calling peaks for ChIP samples or DEG for RNA samples and making bigwigs
-#####		Set it last to avoid problems
+#####	-s: If set, the script does not progress into the combined data analysis
 ##### 	-h: help, returns usage
 ##### 
 ##### It sends each type of sample to its specific analysis file (MaizeCode_ChIP_analysis.sh or MaizeCode_RNA_analysis.sh)
-##### Then combines into deeper analysis (to detail...)
+##### Then starts a combined analysis (MaizeCode_combined_analysis.sh)
+##### If replicates are to be merged, 'merged' should be the value in column #4 (replicate ID) of the samplefile
+##### For cleaner naming purposes, use 'analysis_samplefile.txt' as suffix
 #####
 ##### Requirements: samtools, bedtools, deeptools, macs2, idr, R (+R packages: ggplot2,readr,UpSetR)
 "
@@ -34,6 +35,9 @@ date
 printf "\n"
 
 export threads=$NSLOTS
+# # export mc_dir=$(dirname "$0")
+export mc_dir="${HOME}/data/Scripts/MaizeCode"
+printf "\nRunning MaizeCode scripts from ${mc_dir} in working directory ${PWD}\n"
 
 if [ $# -eq 0 ]; then
 	printf "$usage\n"
@@ -42,12 +46,12 @@ fi
 
 while getopts ":f:r:sh" opt; do
 	case $opt in
-		h) 	printf "$usage\n"
-			exit 0;;
 		f) 	export samplefile=${OPTARG};;
 		r)	export regionfile=${OPTARG};;
-		s)	printf "\nOption to stop after bigwigs selected\n"
+		s)	printf "\nOption not to perform combined analysis selected\n"
 			export keepgoing="STOP";;
+		h) 	printf "$usage\n"
+			exit 0;;
 		*)	printf "$usage\n"
 			exit 1;;
 	esac
@@ -55,13 +59,13 @@ done
 shift $((OPTIND - 1))
 
 if [ ! $samplefile ]; then
-	printf "Missing samplefile\n"
+	printf "Missing samplefile!\n"
 	printf "$usage\n"
 	exit 1
 fi
 
 if [ ! $regionfile ]; then
-	printf "Regionfile missing or not bed format.\nAnalysis will be stopped without deeper analysis\nIf that was not intended, check usage.\n"
+	printf "Regionfile is missing.\nAnalysis will be stopped without deeper analysis\nIf that was not intended, check usage.\n"
 	keepgoing="STOP"
 fi
 
@@ -71,114 +75,143 @@ fi
 #############################################################################################
 
 tmp1=${samplefile##*/}
-samplename=${tmp1%_analysis*}
+samplename=${tmp1%%_analysis*}
 
-if [ -f temp_${samplename}_ChIP.txt ]; then
-	rm temp_${samplename}_ChIP.txt
+if [[ "$keepgoing" == "STOP" ]]; then
+	analysisname="${samplename}_no_region"
+else
+	tmp2=${regionfile##*/}
+	regionname=${tmp2%.*}
+	analysisname="${samplename}_on_${regionname}"
 fi
 
-if [ -f temp_${samplename}_RNA.txt ]; then
-	rm temp_${samplename}_RNA.txt
+if [ -s ChIP/temp_${samplename}_ChIP.txt ]; then
+	rm -f ChIP/temp_${samplename}_ChIP.txt
 fi
 
+if [ -s RNA/temp_${samplename}_RNA.txt ]; then
+	rm -f RNA/temp_${samplename}_RNA.txt
+fi
+
+#### Check if there are new samples to analyze individually
+new_chipsample=()
+new_rnasample=()
 datatype_list=()
 while read line tissue sample rep paired
 do
+	name=${line}_${tissue}_${sample}_${rep}
 	case "$sample" in
 		H*|Input) datatype="ChIP";;
 		*RNA*|RAMPAGE) datatype="RNA";;
+		*) datatype="unknown";;
 	esac
-	if [[ "$datatype" == "ChIP" ]]; then
+	if [ -e $datatype/chkpts/analysis_${name} ]; then
+		printf "\nSingle sample analysis for $name already done!\n"	
+	elif [[ "$datatype" == "ChIP" ]]; then
+		datatype_list+=("${datatype}")
+		new_chipsample+=("${name}")
+		if [ ! -d ./ChIP/peaks ]; then
+			mkdir ./ChIP/peaks
+		fi
+		if [ ! -d ./ChIP/plots ]; then
+			mkdir ./ChIP/plots
+		fi
 		printf "$line\t$tissue\t$sample\t$rep\t$paired\n" >> $datatype/temp_${samplename}_ChIP.txt
 	elif [[ "$datatype" == "RNA" ]]; then
+		datatype_list+=("${datatype}")
+		new_rnasample+=("${name}")
 		printf "$line\t$tissue\t$sample\t$rep\t$paired\n" >> $datatype/temp_${samplename}_RNA.txt
 	else
-		printf "Type of data unknown!\n"
-		exit 1
+		printf "\nType of data unknown for $name\nSample not processed\n"
 	fi
-	datatype_list+=("$datatype")
 done < $samplefile
 
-uniq_datatype_list=($(printf "%s\n" "${datatype_list[@]}" | sort -u))
+#### If there are new samples, run the ChIP and/or RNA pipeline on the new samples of the same type
 
-pids=()
-for datatype in ${uniq_datatype_list[@]}
-do
-	printf "\nRunning $datatype analysis script\n"
-	cd $datatype
-	qsub -sync y -N ${datatype} -o ${datatype}.log ~/data/Scripts/MaizeCode_${datatype}_analysis.sh -f temp_${samplename}_${datatype}.txt -r ${regionfile} &
-	pids+=("$!")
-	cd ..
-done
+test_new=1
+if [ ${#new_chipsample[@]} -eq 0 ] && [ ${#new_rnasample[@]} -eq 0 ]; then
+	printf "\nAll samples in samplefile already analyzed individually\n"
+	test_new=0
+fi
 
-#### Wait for the other scripts to finish
-printf "\nWaiting for the datatype analysis scripts to finish\n"
-wait $pids || { printf "\nThere was an error during analysis\n" >&2; exit 1; }
+if [[ "${test_new}" == 1 ]]; then
+	uniq_datatype_list=($(printf "%s\n" "${datatype_list[@]}" | sort -u))
+	pids=()
+	for datatype in ${uniq_datatype_list[@]}
+	do
+		printf "\nRunning $datatype analysis script\n"
+		cd $datatype
+		qsub -sync y -N ${datatype} -o logs/${samplename}.log ${mc_dir}/MaizeCode_${datatype}_analysis.sh -f temp_${samplename}_${datatype}.txt &
+		pids+=("$!")
+		cd ..
+	done
+	#### Wait for the other scripts to finish
+	printf "\nWaiting for the datatype analysis scripts to finish\n"
+	wait $pids
+
+	for datatype in ${uniq_datatype_list[@]}
+	do
+		if [[ "$datatype" == "ChIP" ]]; then
+			for chipsample in ${new_chipsample[@]}
+			do
+				if [ ! -e ${datatype}/chkpts/analysis_${chipsample} ]; then
+					printf "\nProblem during the processing of ChIP sample ${chipsample}!\nCheck log: ChIP/logs/${samplename}.log\n"
+				else 
+					printf "\nChIP analysis for $chipsample processed succesfully\n"
+				fi
+			done
+		elif [[ "$datatype" == "RNA" ]]; then
+			for rnasample in ${new_rnasample[@]}
+			do
+				if [ ! -e ${datatype}/chkpts/analysis_${rnasample} ]; then
+					printf "\nProblem during the processing of RNA sample ${rnasample}!\nCheck log: RNA/logs/${samplename}.log\n"
+				else 
+					printf "\nChIP analysis for $rnasample processed succesfully\n"
+				fi
+			done
+		fi
+	done
+fi
 
 if [[ $keepgoing == "STOP" ]]; then
-	printf "\nScript finished successfully without deeper analysis\n"		
+	printf "\nScript finished successfully without combined analysis\n"
+	touch chkpts/${analysisname}
 	exit 0
 fi	
 
 #############################################################################################
 ########################################### PART2 ###########################################
-############################### Combining ChIP and RNA data #################################
+###################### Do the combined analysis of ChIP and RNA data ########################
 #############################################################################################
 
+if [ ! -d ./combined ]; then
+	mkdir ./combined
+	mkdir ./combined/peaks
+	mkdir ./combined/DEG
+	mkdir ./combined/matrix
+	mkdir ./combined/plots
+	mkdir ./combined/chkpts
+	mkdir ./combined/logs
+fi
 
+if [ -e combined/chkpts/combined_${analysisname} ]; then
+	rm -f combined/chkpts/${analysisname}
+fi
 
+pids=()
+##### Processing combined analysis
+printf "\nLaunching combined analysis script\n"
+qsub -sync y -N combined_analysis -o combined/logs/combined_analysis.log ${mc_dir}/MaizeCode_combined_analysis.sh -f $samplefile -r $regionfile &
+pids+=("$!")
 
+wait $pids
 
-#############################################################################################
-########################################### PART3 ###########################################
-####################################### Making plots ########################################
-#############################################################################################
-
-
-#### To make heatmaps and profiles with deeptools
-#### By default, it does both scale-regions and reference-point on start of bedfile provided
-#### By default, it does heatmap on all the data, heatmap with 5 kmeans, and corresponding profiles
-#### Probably need to edit many parameters depending on the purpose of the analysis
-
-# printf "\nDoing analysis for $analysisname with deeptools version:\n"
-# deeptools --version
-
-# #### Computing the matrix
-# if [ ! -f tracks/regions_${analysisname}.gz ]; then
-	# printf "\nComputing scale-regions matrix for $analysisname\n"
-	# computeMatrix scale-regions -R $regionfile -S ${bw_list[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o tracks/regions_${analysisname}.gz
-# fi
-# if [ ! -f tracks/tss_${analysisname}.gz ]; then
-	# printf "\nComputing reference-point on TSS matrix for $analysisname\n"
-	# computeMatrix reference-point --referencePoint "TSS" -R $regionfile -S ${bw_list[@]} -bs 50 -b 2000 -a 6000 -p $threads -o tracks/tss_${analysisname}.gz
-# fi
-
-# #### Ploting heatmaps
-# printf "\nPlotting full heatmap for scale-regions of $analysisname\n"
-# plotHeatmap -m tracks/regions_${analysisname}.gz -out plots/${analysisname}_heatmap_regions.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sample_list[@]} --colorMap 'seismic'
-# printf "\nPlotting heatmap for scale-regions of $analysisname split in 3 kmeans\n"
-# plotHeatmap -m tracks/regions_${analysisname}.gz -out plots/${analysisname}_heatmap_regions_k3.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sample_list[@]} --colorMap 'seismic' --kmeans 3 --outFileSortedRegions tracks/${analysisname}_sortedregions_k3.txt
-
-# printf "\nPlotting full heatmap for reference-point TSS of $analysisname\n"
-# plotHeatmap -m tracks/tss_${analysisname}.gz -out plots/${analysisname}_heatmap_tss.pdf --sortRegions descend --sortUsing region_length --samplesLabel ${sample_list[@]} --colorMap 'seismic'
-# printf "\nPlotting heatmap for reference-point TSS of $analysisname split in 3 kmeans\n"
-# plotHeatmap -m tracks/tss_${analysisname}.gz -out plots/${analysisname}_heatmap_tss_k3.pdf --sortRegions descend --sortUsing region_length --samplesLabel ${sample_list[@]} --colorMap 'seismic' --kmeans 3 --outFileSortedRegions tracks/${analysisname}_sortedtss_k3.txt
-
-# #### Plotting Metaplot profiles
-# printf "\nPlotting metaplot profiles for scale-regions of $analysisname\n"
-# plotProfile -m tracks/regions_${analysisname}.gz -out plots/${analysisname}_profiles_regions.pdf --plotType lines --averageType mean --perGroup --samplesLabel ${sample_list[@]}
-# printf "\nPlotting metaplot profiles for scale-regions of $analysisname split in 5 kmeans\n"
-# plotProfile -m tracks/regions_${analysisname}.gz -out plots/${analysisname}_profiles_regions_k5.pdf --plotType lines --averageType mean --perGroup --samplesLabel ${sample_list[@]} --kmeans 5
-
-# printf "\nPlotting metaplot profiles for reference-point TSS of $analysisname\n"
-# plotProfile -m tracks/tss_${analysisname}.gz -out plots/${analysisname}_profiles_tss.pdf --plotType lines --averageType mean --perGroup --samplesLabel ${sample_list[@]}
-# printf "\nPlotting metaplot profiles for reference-point TSS of $analysisname split in 5 kmeans\n"
-# plotProfile -m tracks/tss_${analysisname}.gz -out plots/${analysisname}_profiles_tss_k5.pdf --plotType lines --averageType mean --perGroup --samplesLabel ${sample_list[@]} --kmeans 5
-
-#### When done this way, the 5 kmeans regions in heatmap and profiles are not going to be the same. 
-#### To have the same regions, make a new matrix using the region file coming from the --outFileSortedRegions (e.g. tracks/${analysisname}_sortedtss_k5.txt)
-#### You can then keep its order (--sortUsing keep) if required
-
+if [ ! -e combined/chkpts/${analysisname} ]; then
+	printf "\nProblem during the combined analysis of ${samplename} on ${regionname}!\nCheck log: logs/${analysisname}.log\n"
+else 
+	printf "\nCombined analysis for $samplename on $regionname processed succesfully\n"
+	touch combined/chkpts/${analysisname}
+fi
 
 #############################################################################################
 ########################################### MISC ############################################
@@ -203,5 +236,3 @@ fi
 
 #############################################################################################
 
-
-printf "\nScript finished successfully!\n"
