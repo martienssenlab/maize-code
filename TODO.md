@@ -4,7 +4,7 @@
 - [x] Add details on the input files (gff3 and fasta)
 - [x] Rename deeptools folder
 - [x] Change type variable to datatype
-- [x] Change hard-linked paths to relative, most importantly for scripts
+- [ ] Change hard-linked paths to relative for scripts (alternative to dirname "$0")
 - [ ] Work on intermediate file hygiene
 - [ ] Work on the compatiblity with other systems (no cluster, no qsub ...)
 - [ ] Compute PBC1 and PBC2 (PCR Bottlenecking Coefficient) (https://www.encodeproject.org/data-standards/terms/#library)
