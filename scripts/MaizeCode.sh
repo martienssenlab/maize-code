@@ -28,6 +28,7 @@ usage="
 ##### col #8: Name of the genome reference to map. Each genome reference should have a unique folder that contains a single fasta file and a single gff3 file (can be gzipped).
 ##### The gff3 files should have 'gene' in column 3 and exons should be linked by 'Parent' in column 9
 ##### The fasta and gff3 files should have the same chromosome names (i.e. 1 2 3... and 1 2 3... or Chr1 Chr2 Chr3... and Chr1 Chr2 Chr3...)
+##### For cleaner naming purposes, use '_samplefile.txt' as suffix
 #####
 ##### This script creates the folders needed,
 ##### prepares the genome index and chrom.sizes file if they are not done for this type of data
@@ -43,7 +44,8 @@ date
 printf "\n"
 
 export threads=$NSLOTS
-export mc_dir=$(dirname "$0")
+# # export mc_dir=$(dirname "$0")
+export mc_dir="${HOME}/data/Scripts/MaizeCode"
 printf "\nRunning MaizeCode scripts from ${mc_dir} in working directory ${PWD}\n"
 
 if [ $# -eq 0 ]; then
@@ -57,7 +59,8 @@ while getopts "f:p:sh" opt; do
 			exit 0;;
 		f) 	export samplefile=${OPTARG};;
 		p)	export pathtoref=${OPTARG};;
-		s)	export keepgoing="STOP";;
+		s)	printf "\nOption not to perform analysis selected\n"
+			export keepgoing="STOP";;
 		*)	printf "$usage\n"
 			exit 1;;
 	esac
@@ -86,11 +89,11 @@ fi
 
 #### To prepare the lists of samples, reference genomes and type of data
 
-datatype_list=()
-ref_list=()
+newdatatype_list=()
+newref_list=()
 datatype_ref_list=()
-new_sample=0
 new_env=0
+new_sample=0
 while read line tissue sample rep sampleID path paired ref
 do
 	name=${line}_${tissue}_${sample}_${rep}
@@ -104,35 +107,30 @@ do
 		printf "$usage\n"
 		exit 1
 	fi
-	if [ ! -e $datatype/chkpts/map_${name}_${ref} ]; then
-		${new_sample}+=1
+	if [ ! -e $datatype/chkpts/${name}_${ref} ]; then
+		new_sample=1
 	fi
 	if [ ! -e $datatype/chkpts/env_${ref} ]; then
-		${new_env}+=1
-		datatype_list+=("$datatype")
-		ref_list+=("$ref")
+		new_env=1
+		newdatatype_list+=("$datatype")
+		newref_list+=("$ref")
 		data_ref_list+=("${datatype}_${ref}")
 	fi
 done < $samplefile
 
-#### To check if new samples are to be mapped
-if [[ ${new_sample} == 0 ]]; then
-	printf "\nAll samples in $samplefile have already been mapped\n"
-	exit 0
-fi
 
 #### To check if new environments need to be prepapred
 if [[ ${new_env} == 0 ]]; then
 	printf "\nAll environments are ready for mapping\n"
 else
-	uniq_ref_list=($(printf "%s\n" "${ref_list[@]}" | sort -u))
-	uniq_datatype_list=($(printf "%s\n" "${datatype_list[@]}" | sort -u))
+	uniq_newref_list=($(printf "%s\n" "${newref_list[@]}" | sort -u))
+	uniq_newdatatype_list=($(printf "%s\n" "${newdatatype_list[@]}" | sort -u))
 
 	check_list=()
 	pids=()
-	for ref in ${uniq_ref_list[@]}
+	for ref in ${uniq_newref_list[@]}
 	do
-		for datatype in ${uniq_datatype_list[@]}
+		for datatype in ${uniq_newdatatype_list[@]}
 		do
 			if [[ " ${data_ref_list[@]} " =~ " ${datatype}_${ref} " ]]; then
 				check_list+=("$datatype/chkpts/env_${ref}")
@@ -162,15 +160,15 @@ else
 			fi	
 		done
 	done
-	#### Wait for the other scripts to finish
+	#### Wait for the check_environment scripts to finish
 	printf "\nWaiting for the environments to be prepared...\n"
 	wait $pids
 	#### Check if the environment are good or if an error occurred
 	for check in ${check_list[@]}
 	do
+		datatype=${check%%/*}
+		ref=${check##*/}
 		if [ ! -e $check ]; then
-			datatype=${check%%/*}
-			ref=${check##*/}
 			printf "\nProblem while making environment for $datatype with $ref genome!\nCheck log: $datatype/logs/env_${ref}.log\n"
 			exit 1
 		else
@@ -185,7 +183,7 @@ fi
 ############################# Getting samples, mapping and QC ###############################
 #############################################################################################
 
-tmp1=${samplefile%%_analysis*}
+tmp1=${samplefile%%_samplefile*}
 analysisfile="${tmp1}_analysis_samplefile.txt"
 
 if [ -s ${analysisfile} ]; then
@@ -193,6 +191,9 @@ if [ -s ${analysisfile} ]; then
 fi
 
 check_list=()
+checkname_list=()
+checkdatatype_list=()
+ref_list=()
 pids=()
 while read line tissue sample rep sampleID path paired ref
 do
@@ -203,11 +204,14 @@ do
 		*RNA*|RAMPAGE) datatype="RNA";;
 	esac
 	check=$datatype/chkpts/${name}_${ref}
+	checkname_list+=("$name")
+	checkdatatype_list+=("$datatype")
 	check_list+=("$check")
+	ref_list+=("$ref")
 	if [ -e $check ]; then
 		printf "Sample $name has already been mapped to $ref genome\n"
 	else
-		if [ ! -s ./$datatype/fastq/${name}*.fastq.gz ]; then
+		if [ ! -e ./$datatype/fastq/${name}*.fastq.gz ]; then
 #### This return the following warning '[: too many arguments' when several files are there (PE data)
 			if [[ $paired == "PE" ]]; then
 				printf "\nCopying PE fastq for $name ($sampleID in $path)\n"
@@ -232,53 +236,59 @@ do
 	fi
 done < $samplefile
 
-#### Wait for the other scripts to finish
-printf "\nWaiting for the samples to be mapped...\n"
-wait $pids
+if [[ ${new_sample} != 0 ]]; then
+#### Wait for the mapping sample scripts to finish
+	printf "\nWaiting for the samples to be mapped...\n"
+	wait $pids
 
-for check in ${check_list[@]}
-do
-	if [ ! -e $check ]; then
-		printf "\nProblem during mapping of $name to $ref genome!\n"
-		exit 1
-	else
-		printf "\nSample $name mapped successfully to $ref genome.\n"
-	fi
-done
+	i=0
+	for check in ${check_list[@]}
+	do
+		if [ ! -e $check ]; then
+			printf "\nProblem during mapping of ${checkname_list[i]}!\nCheck log: ${checkdatatype_list[i]}/logs/${checkname_list[i]}.log"
+			exit 1
+		else
+			printf "\nSample ${checkname_list[i]} successfully mapped.\n"
+		fi
+		i=$((i+1))
+	done
+fi
 
 #############################################################################################
 ########################################### PART3 ###########################################
 ############################# Starting analysis if not stopped ##############################
 #############################################################################################
 
-if [[ $keepgoing == "STOP" ]]; then
+if [[ "$keepgoing" == "STOP" ]]; then
 	printf "\nScript finished successfully without analysis\n"		
 	exit 0
 fi	
 
 tmp1=${samplefile##*/}
-samplename=${tmp1%%_analysis*}
-if [[ "$keepgoing" == "STOP" ]]; then
-	analysisname="${samplename}_no_region"
-else
+samplename=${tmp1%%_samplefile*}
+
+uniq_ref_list=($(printf "%s\n" "${ref_list[@]}" | sort -u))
+
+pids=()
+if [ ${#uniq_ref_list[@]} -eq 1 ]; then
+	regionfile="${checkdatatype_list[0]}/tracks/${uniq_ref_list[0]}_all_genes.bed"
 	tmp2=${regionfile##*/}
 	regionname=${tmp2%.*}
 	analysisname="${samplename}_on_${regionname}"
-fi
-
-pids=()
-if [ ${uniq_ref_list[@]} -eq 1 ]; then
-	printf "\nPerforming the complete analysis using $regionfile as region file\n"
-	qsub -sync y -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f $analysisfile -r ${uniq_datatype_list[0]}/tracks/${uniq_ref_list[@]}_all_genes.bed &
+	check="combined/chkpts/${analysisname}"
+	printf "\nPerforming the complete analysis using $regionname as region file\n"
+	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f $analysisfile -r $regionfile &
 	pids+=("$!")
-elif 	
-	printf "\nToo many references. Combined analysis will not be performed\n"
-	qsub -sync y -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f $analysisfile &
+else	
+	analysisname="${samplename}_no_region"
+	check="chkpts/${analysisname}"
+	printf "\nToo many references for a combined analysis to be performed\nYou will need to run the MaizeCode_analysis.sh script once that this one is finished\nUsing a specific regionfile for combined analysis!\n"
+	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f $analysisfile &
 	pids+=("$!")
 fi
 
 wait $pids
-if [ ! -e chkpts/${analysisname} ]; then
+if [ ! -e ${check} ]; then
 	printf "\nProblem during the analysis. Check maizecode.log\n"
 	exit 1
 else
@@ -294,3 +304,4 @@ fi
 # # printf "B73\tendosperm\tInput\tRep1\tS01\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tH3K4me1\tRep1\tS02\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tH3K4me3\tRep1\tS03\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tH3K27ac\tRep1\tS04\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tInput\tRep2\tS05\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tH3K4me1\tRep2\tS06\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tH3K4me3\tRep2\tS07\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tH3K27ac\tRep2\tS08\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\n" > B73_endosperm_samplefile.txt
 
 ############################################################################################
+
