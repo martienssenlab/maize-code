@@ -17,3 +17,4 @@ get the data type from the samplefile too (if H* or Input it is ChIP, if *RNA* o
 - [ ] Continue analysis pipeline
 - [ ] Decide on changing naming of files to record reference they have been mapped to? (for the moment, if a file has been mapped to reference A, it will not be mapped on A again, but if asked to be mapped on reference B, new files will overwrite existing reference A-mapped files!)
 - [ ] Fix warning when asked to check for the existence of a file that has several possiblities (e.g. [ ! -e ./$datatype/fastq/${name}*.fastq.gz ] for PE data in MaizeCode.sh)
+- [ ] Add output information in the readme (files, logs, summaries, plots, etc..)
