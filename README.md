@@ -70,9 +70,12 @@ If new files are to be analyzed, send each group of sample of the same datatype 
 Launches the `MaizeCode_combined_analysis.sh` if the `-s` option is not set (or no regionfile is given)
 
 - __MaizeCode_ChIP_analysis.sh__\
-Takes either each replicate independently or merge the bam files of the two replicates\
+Merge biological replicates independently and split into pseudo-replicates\
 Calls peaks with macs2 (calls broad peaks for H3K4me1, and narrow peaks for H3K4me3 and H3K27ac)\
-Makes bigwig files with deeptools (log2 FC vs Input, normalizing each file by CPM)
+Makes bigwig files with deeptools (log2 FC vs Input, normalizing each file by CPM)\
+Make IDR analysis for biological replicates with idr\
+Makes a `selected_peaks` file with the peaks called in the merged sample and both pseudo-replicates with bedtools intersect\
+Makes some stats on the number of peaks
 
 - __MaizeCode_RNA_analysis.sh__ - ___NOT DONE YET, but expectations are:___\
 Makes bigwig files with deeptools (normalized by CPM)
@@ -80,12 +83,11 @@ Makes bigwig files with deeptools (normalized by CPM)
 - __MaizeCode_combined_analysis.sh__\
 Splits the samplefile into ChIP and RNA samples\
 For ChIP samples:\
-Does IDR analysis of both replicates with idr (if both are present in the samplefile)\
-Makes a single file, merging all peaks from all samples with bedtools merge\
+Makes a single file, merging all selected peaks from all samples with bedtools merge\
 Gets distance of each peak to the closest region from the regionfile with bedtools closest (default all genes annotated in the reference)\
 Creates an Upset plot to show overlap among the different samples, highlighting the peaks in gene bodies (using `MaizeCode_R_Upset.r` script)\
 ___Other analyses to add:___\
-Calculates differential peaks between the different tissues (if the same mark is present in different tissue)\
+Calculates differential peaks between the different tissues (if the same mark is present in different tissue) _in progress_\
 For RNA samples: ___NOT DONE YET, but expectations are:___\
 Calls differentially expressed genes\
 Then, it combines both types of data: ___NOT DONE YET, but expectations are:___\
