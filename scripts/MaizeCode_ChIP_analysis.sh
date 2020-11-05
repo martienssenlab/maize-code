@@ -122,11 +122,11 @@ do
 				if [[ $peaktype == "broad" ]] && [ ! -s peaks/${name}_${filetype}_peaks.${peaktype}Peak ]; then
 					printf "\nCalling broad peaks for PE $namefiletype (vs $inputfiletype) with macs2 version:\n"
 					macs2 --version
-					macs2 callpeak -t ${namefiletype} -c ${inputfiletype} -f BAMPE -g 2.2e9 ${param} -n ${name}_${filetype} --keep-dup "all" --outdir peaks/ --tempdir $TMPDIR --broad
+					macs2 callpeak -t ${namefiletype} -c ${inputfiletype} -f BAMPE -g 2.2e9 ${param} -n ${name}_${filetype} --keep-dup "all" --outdir peaks/ --tempdir \$TMPDIR --broad
 				elif [[ $peaktype == "narrow" ]] && [ ! -s peaks/${namefiletype}_peaks.${peaktype}Peak ]; then
 					printf "\nCalling narrow peaks for PE $namefiletype (vs $inputfiletype) with macs2 version:\n"
 					macs2 --version
-					macs2 callpeak -t ${namefiletype} -c ${inputfiletype} -f BAMPE -g 2.2e9 ${param} -n ${name}_${filetype} --keep-dup "all" --call-summits --outdir peaks/ --tempdir $TMPDIR
+					macs2 callpeak -t ${namefiletype} -c ${inputfiletype} -f BAMPE -g 2.2e9 ${param} -n ${name}_${filetype} --keep-dup "all" --call-summits --outdir peaks/ --tempdir \$TMPDIR
 				elif [ -s peaks/${name}_${filetype}_peaks.${peaktype}Peak ]; then
 					printf "\n$peaktype peaks already called for $namefiletype\n"
 				else
@@ -138,11 +138,11 @@ do
 				if [[ $peaktype == "broad" ]] && [ ! -s peaks/${name}_${filetype}_peaks.${peaktype}Peak ]; then
 					printf "\nCalling broad peaks for SE $namefiletype (vs $inputfiletype) with macs2 version:\n"
 					macs2 --version
-					macs2 callpeak -t ${namefiletype} -c ${inputfiletype} -f BAM -g 2.2e9 ${param} -n ${name}_${filetype} --keep-dup "all" --outdir peaks/ --tempdir $TMPDIR --nomodel --broad
+					macs2 callpeak -t ${namefiletype} -c ${inputfiletype} -f BAM -g 2.2e9 ${param} -n ${name}_${filetype} --keep-dup "all" --outdir peaks/ --tempdir \$TMPDIR --nomodel --broad
 				elif [[ $peaktype == "narrow" ]] && [ ! -s peaks/${name}_${filetype}_peaks.${peaktype}Peak ]; then
 					printf "\nCalling narrow peaks for SE $namefiletype (vs $inputfiletype) with macs2 version:\n"
 					macs2 --version
-					macs2 callpeak -t ${namefiletype} -c ${inputfiletype} -f BAM -g 2.2e9 ${param} -n ${name}_${filetype} --keep-dup "all" --call-summits --outdir peaks/ --tempdir $TMPDIR --nomodel
+					macs2 callpeak -t ${namefiletype} -c ${inputfiletype} -f BAM -g 2.2e9 ${param} -n ${name}_${filetype} --keep-dup "all" --call-summits --outdir peaks/ --tempdir \$TMPDIR --nomodel
 				elif [ -s peaks/${name}_${filetype}_peaks.${peaktype}Peak ]; then
 					printf "\n$peaktype peaks already called for $namefiletype\n"
 				else
@@ -185,10 +185,12 @@ do
 		printf "\nIDR analysis already done for ${name}\n"
 	fi
 	#### To get the final selected peak file (peaks called in merged also present in both replicates)
-	awk -v OFS="\t" '{print $1,$2,$3}' peaks/${name}_merged.${peaktype}Peak | sort -k1,1 -k2,2n -u > peaks/temp_${name}.bed
-	bedtools intersect -a peaks/${name}_pseudo1.bed -b peaks/${name}_pseudo2.bed > peaks/temp2_${name}.bed
-	bedtools intersect -a peaks/temp_${name}.bed -b peaks/temp2_${name}.bed -u > peaks/temp3_${name}.bed
-	bedtools intersect -a peaks/${name}_merged.${peaktype}Peak -b peaks/temp3_${name}.bed -u > peaks/selected_peaks_${name}.${peaktype}Peak
+	awk -v OFS="\t" '{print $1,$2,$3}' peaks/${name}_merged_peaks.${peaktype}Peak | sort -k1,1 -k2,2n -u > peaks/temp_${name}_merged.bed
+	awk -v OFS="\t" '{print $1,$2,$3}' peaks/${name}_pseudo1_peaks.${peaktype}Peak | sort -k1,1 -k2,2n -u > peaks/temp_${name}_pseudo1.bed
+	awk -v OFS="\t" '{print $1,$2,$3}' peaks/${name}_pseudo2_peaks.${peaktype}Peak | sort -k1,1 -k2,2n -u > peaks/temp_${name}_pseudo2.bed
+	bedtools intersect -a peaks/temp_${name}_pseudo1.bed -b peaks/temp_${name}_pseudo2.bed > peaks/temp_${name}_pseudos.bed
+	bedtools intersect -a peaks/temp_${name}_merged.bed -b peaks/temp_${name}_pseudos.bed -u > peaks/temp_${name}_selected.bed
+	bedtools intersect -a peaks/${name}_merged_peaks.${peaktype}Peak -b peaks/temp_${name}_selected.bed -u > peaks/selected_peaks_${name}.${peaktype}Peak
 
 	#### To get some peaks stats for each mark
 	printf "\nCalculating peak stats for ${name} in ${peaktype} peaks\n"
@@ -197,8 +199,8 @@ do
 	common=$(awk '{print $1,$2,$3}' peaks/idr_${name}.${peaktype}Peak | sort -k1,1 -k2,2n -u | wc -l)
 	idr=$(awk '$5>=540 {print $1,$2,$3}' peaks/idr_${name}.${peaktype}Peak | sort -k1,1 -k2,2n -u | wc -l)
 	merged=$(awk '{print $1,$2,$3}' peaks/${name}_merged_peaks.${peaktype}Peak | sort -k1,1 -k2,2n -u | wc -l)
-	pseudos=$(awk '{print $1,$2,$3}' peaks/temp2_${name}.bed | sort -k1,1 -k2,2n -u | wc -l)
-	selected=$(awk '{print $1,$2,$3}' peaks/selected_peaks_${name}.bed | sort -k1,1 -k2,2n -u | wc -l)
+	pseudos=$(awk '{print $1,$2,$3}' peaks/temp_${name}_pseudos.bed | sort -k1,1 -k2,2n -u | wc -l)
+	selected=$(cat peaks/temp_${name}_selected.bed | sort -k1,1 -k2,2n -u | wc -l)
 	awk -v OFS="\t" -v a=$line -v b=$tissue -v c=$mark -v d=$rep1 -v e=$rep2 -v f=$common -v g=$idr -v h=$merged -v i=$pseudos -v j=$selected 'BEGIN {print a,b,c,d,e,f" ("f/d*100"%rep1;"f/e*100"%rep2)",g" ("g/f*100"%common)",h,i,j" ("j/h*100"%merged)"}' >> peaks/summary_peaks_${samplename}.txt
 	rm -f peaks/temp*
 	touch chkpts/analysis_${name}
