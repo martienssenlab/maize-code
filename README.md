@@ -16,6 +16,7 @@ pigz; samtools; bowtie2; STAR; fastqc; cutadapt; bedtools; deeptools; macs2; idr
 8) If the analysis has not proceeded or if you want to analyze different samples together, make the analysis_samplefile you want. An example of an analysis samplefile is in the data folder (B73_endosperm_analysis_samplefile.txt) and a quick way to make them is at the bottom of the `MaizeCode_analysis.sh` file. For better naming purposes, use "\_analysis_samplefile.txt" as a suffix.
 9) Submit the `MaizeCode_analysis.sh` script, giving as argument `-f <analysisfile>` the analysis_samplefile.txt and `-r <bedfile>` the regions (bed file) to be plotted on. `-s` can be set if the combined analysis should not be performed (only calls peaks and makes bigwig files). It also stops there if the regionfile is missing.
 
+---
 
 ### Comments
 
@@ -30,6 +31,7 @@ pigz; samtools; bowtie2; STAR; fastqc; cutadapt; bedtools; deeptools; macs2; idr
 - The `MaizeCode_combined_analysis.sh` script will have to be tweaked for each analysis, but a default use of it should give a first look at the data.
 - These are preliminary version of the scripts!
 
+---
 
 ### Scripts description
 
@@ -104,6 +106,7 @@ Create an Upset plot of overlapping peaks and their presence in gene bodies. An 
 ___Other option to add:___\
 Highlight expressed genes instead of gene bodies
 
+---
 
 ### Output
 
