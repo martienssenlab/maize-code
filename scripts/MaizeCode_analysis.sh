@@ -12,17 +12,16 @@ usage="
 ##### Script for Maize code data analysis
 #####
 ##### sh MaiCode_analysis.sh -f samplefile [-r regionfile] [-s]
-#####	-f: samplefile containing the samples to compare and in 5 tab-delimited columns:
-##### 		Line, Tissue, Sample, Rep (Rep1, Rep2 or merged), PE or SE
-##### 	-r: bedfile containing the regions that want to be plotted over
-##### 		(safest to use a full path to the region file)
-#####		If no region file is given, the analysis will behave as if -s was set
+#####	-f: samplefile containing the samples to compare and in 4 tab-delimited columns:
+##### 		Line, Tissue, Sample, PE or SE
+##### 	-r: bedfile containing the regions that are to be plotted over
+##### 		It is safest to use a full path to the region file.
+#####		If no region file is given, the analysis will behave as if -s was set.
 #####	-s: If set, the script does not progress into the combined data analysis
 ##### 	-h: help, returns usage
 ##### 
 ##### It sends each type of sample to its specific analysis file (MaizeCode_ChIP_analysis.sh or MaizeCode_RNA_analysis.sh)
 ##### Then starts a combined analysis (MaizeCode_combined_analysis.sh)
-##### If replicates are to be merged, 'merged' should be the value in column #4 (replicate ID) of the samplefile
 ##### For cleaner naming purposes, use 'analysis_samplefile.txt' as suffix
 #####
 ##### Requirements: samtools, bedtools, deeptools, macs2, idr, R (+R packages: ggplot2,readr,UpSetR)
