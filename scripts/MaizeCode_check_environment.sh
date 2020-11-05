@@ -111,7 +111,7 @@ fi
 
 if [[ $datatype == "ChIP" ]]; then
 	if [ ! -s $datatype/reports/summary_mapping_stats.txt ]; then
-		printf "Line\tTissue\tMark\tRep\tReference_genome\tTotal_reads\tPassing_filtering\tDeduplicated_reads\tProperly_mapped_reads\n" > $datatype/reports/summary_mapping_stats.txt
+		printf "Line\tTissue\tMark\tRep\tTotal_reads\tPassing_filtering\tDeduplicated_reads\tProperly_mapped_reads\n" > $datatype/reports/summary_mapping_stats.txt
 	fi
 	if [ ! -e $ref_dir/*.bt2* ]; then
 #### This return the following warning '[: too many arguments' when the index is already build (several bt2 files)
@@ -137,4 +137,3 @@ rm -f $ref_dir/temp*
 
 printf "\nScript finished successfully!\n"
 touch $datatype/chkpts/env_${ref}
-
