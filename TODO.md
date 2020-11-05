@@ -5,7 +5,7 @@
 - [x] Rename deeptools folder
 - [x] Change type variable to datatype
 - [ ] Change hard-linked paths to relative for scripts (alternative to dirname "$0")
-- [ ] Work on intermediate file hygiene
+- [ ] Work on intermediate file hygiene (many intermediate files that could be removed). Maybe add option -output (or something) to chose what should be kept?
 - [ ] Work on the compatiblity with other systems (no cluster, no qsub ...)
 - [ ] Compute PBC1 and PBC2 (PCR Bottlenecking Coefficient) (https://www.encodeproject.org/data-standards/terms/#library)
 - [ ] Make genome coverage files plots for ChIPseq samples
@@ -19,7 +19,7 @@ get the data type from the samplefile too (if H* or Input it is ChIP, if *RNA* o
 - [ ] Decide on changing naming of files to record reference they have been mapped to? (for the moment, if a file has been mapped to reference A, it will not be mapped on A again, but if asked to be mapped on reference B, new files will overwrite existing reference A-mapped files!)
 - [ ] Fix warning when asked to check for the existence of a file that has several possiblities (e.g. [ ! -e ./$datatype/fastq/${name}*.fastq.gz ] for PE data in MaizeCode.sh)
 - [x] Add output information in the readme (files, logs, summaries, plots, etc..)
-- [ ] Improve logs (callback if errors, followup on where it's actually at, naming, etc...)
+- [ ] Improve logs (callback if errors, follow-up on where it's actually at, naming, etc...). The 'wait' command will break if there is an error instead of continue with checking the touch files.
 - [x] Decide how to work with ChIP replicates For many downstream analysis, it would be much easier to have one file for each line * tissue * mark. Do we do it by default on peaks called after merging bam files, on peaks passing the IDR threshold (very limited when samples are not great), or peaks that are called in the _best_ replicate (to be defined). This needs to be automatize because going through all the different combinations possible is overwhelming. __Chose pseudo-replicates method__
 - [ ] Make a genome browser session? (trackhub for UCSC? Cyverse?)
 - [ ] Increase efficiency of the whole pipeline?
