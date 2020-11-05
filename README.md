@@ -108,7 +108,8 @@ Highlight expressed genes instead of gene bodies
 ### Output
 
 __Directories:__
-In the main folder where the analysis is called (<maizecode>)
+In the main folder where the analysis is called (`<maizecode>`)
+
 - `<maizecode>/ChIP`: Folder containing data from ChIP sample(s)
 *only created if at least one ChIP sample has been analyzed*
   - `<maizecode>/ChIP/fastq`: Folder containing raw and trimmed fastq files
@@ -120,7 +121,7 @@ In the main folder where the analysis is called (<maizecode>)
   - `<maizecode>/ChIP/logs`: Folder containing log files to go back to in case of error during environment building `env_<genome_reference>.log`, mapping `<sample_name>.log`, analysis of ChIP samples together `<samplefile_name>.log` and single sample analysis `analysis_<sample_name>.log`
   - `<maizecode>/ChIP/chkpts`: Folder containing `touch` files to track success and completion of environment building `env_<genome_ref>`, sample mapping `<sample_name>` and single sample analysis (peak calling and bigwig files) `analysis_<sample_name>`. These files are produced to prevent these steps to be repeated if they were already performed in order to only performed the combined analysis of different combinations of samples. If these files are deleted, the mapping and analysis steps will be repeated and will overwrite existing files.
 
-- RNA: Folder containing data from RNA sample(s) ___NOT DONE YET, but expectations are:___\
+- `<maizecode>/RNA`: Folder containing data from RNA sample(s) ___NOT DONE YET, but expectations are:___\
 *only created if at least one ChIP sample has been analyzed*
   - `<maizecode>/RNA/fastq`: Folder containing raw and trimmed fastq files
   - `<maizecode>/RNA/mapped`: Folder containing mapped and indexed data (bam and bam.bai files). It will contain mapped data before and after deduplication for each biological replicate and the merged replicates files.
@@ -130,7 +131,7 @@ In the main folder where the analysis is called (<maizecode>)
   - `<maizecode>/RNA/logs`: Folder containing log files to go back to in case of error during environment building `env_<genome_reference>.log`, mapping `<sample_name>.log` and analysis of RNA samples together `<samplefile_name>.log`
   - `<maizecode>/RNA/chkpts`: Folder containing `touch` files to track success and completion of environment building `env_<genome_ref>`, sample mapping `<sample_name>` and single sample analysis (bigwig files) `analysis_<sample_name>`. These files are produced to prevent these steps to be repeated if they were already performed in order to only performed the combined analysis of different combinations of samples. If these files are deleted, the mapping and analysis steps will be repeated and will overwrite existing files.
 
-- combined: Folder containing data from combined analysis ___The names of the folders should be changed to be more explicit___\
+- `<maizecode>/combined`: Folder containing data from combined analysis ___The names of the folders should be changed to be more explicit___\
 *only created if at least one combined analysis has been performed*
   - `<maizecode>/combined/DEG`: Folder containing differentially expressed genes analysis results
   - `<maizecode>/combined/peaks`: Folder containing combined peak files and matrix for Upset plots
@@ -139,7 +140,7 @@ In the main folder where the analysis is called (<maizecode>)
   - `<maizecode>/combined/logs`: Folder containing log files to go back to in case of error during combined analysis `combined_analysis_<samplefile_name>_<regionfile_name>.log`
   - `<maizecode>/combined/chkpts`: Folder containing `touch` files to track success of combined analysis `<samplefile_name>_<regionfile_name>.log`. These files are only for success tracking and will be overwritten if an analysis with the same name is to be performed. 
 
-- chkpts: Folder containing `touch` files to track success of a run **without** combined analysis
+- `<maizecode>/chkpts`: Folder containing `touch` files to track success of a run **without** combined analysis
 
 __Statistics:__
 - `summary_mapping_stats.txt`
