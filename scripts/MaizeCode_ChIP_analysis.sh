@@ -9,7 +9,7 @@
 #$ -N ChIPanalysis
 
 usage="
-##### Script for Maize code ChIP data analysis
+##### Script for Maize code ChIP data analysis, used by script MaizeCode_analysis.sh for ChIP data
 #####
 ##### sh MaiCode_ChIP_analysis.sh -f samplefile [-h]
 #####	-f: samplefile containing the samples to compare and in 4 tab-delimited columns:
@@ -181,6 +181,7 @@ do
 		printf "\nDoing IDR analysis on both replicates from ${line}_${tissue}_${mark} ($peaktype peaks) with idr version:\n"
 		idr --version
 		idr --input-file-type ${peaktype}Peak --output-file-type ${peaktype}Peak --samples peaks/${name}_Rep1_peaks.${peaktype}Peak peaks/${name}_Rep2_peaks.${peaktype}Peak -o peaks/idr_${name}.${peaktype}Peak -l reports/idr_${name}.log --plot
+		mv peaks/idr_${name}.${peaktype}Peak.png plots/
 	else
 		printf "\nIDR analysis already done for ${name}\n"
 	fi
@@ -207,4 +208,3 @@ do
 done < $samplefile
 
 printf "\nScript finished successfully!\n"
-
