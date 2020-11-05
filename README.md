@@ -1,17 +1,14 @@
 # maize-code
 
----
 
 ## MaizeCode Pipeline Help
 
----
 
 ### Step-by-Step pipeline
 
 1) Make a MaizeCode folder somewhere
 2) Copy the MaizeCode scripts folder somewhere
-3) Check that the following required packages are installed and in your $PATH (the versions noted here are working for sure, no guarantees for different versions).\
-Recommended installation using conda
+3) Check that the following required packages are installed and in your $PATH (the versions noted here are working for sure, no guarantees for different versions). Recommended installation using conda.
 ```
 pigz 2.3.4
 samtools 1.10 (Using htslib 1.10.2)
