@@ -11,13 +11,14 @@
 - [ ] Make genome coverage files plots for ChIPseq samples
 - [ ] Improve portability/management of R packages
 - [ ] Manage the way to get the fastq files depending on where they are coming from (server, sra, ...)
+- [ ] Archive raw fastq files
 - [x] Add the references in the sample file to be able to map to different references form the same samplefile and can then be processed together later on +
 get the data type from the samplefile too (if H* or Input it is ChIP, if *RNA* or RAMPAGE it is RNA)
 - [ ] Make the RNA pipeline
 - [ ] Continue analysis pipeline
 - [ ] Decide on changing naming of files to record reference they have been mapped to? (for the moment, if a file has been mapped to reference A, it will not be mapped on A again, but if asked to be mapped on reference B, new files will overwrite existing reference A-mapped files!)
 - [ ] Fix warning when asked to check for the existence of a file that has several possiblities (e.g. [ ! -e ./$datatype/fastq/${name}*.fastq.gz ] for PE data in MaizeCode.sh)
-- [ ] Add output information in the readme (files, logs, summaries, plots, etc..)
+- [x] Add output information in the readme (files, logs, summaries, plots, etc..)
 - [ ] Improve logs (callback if errors, followup on where it's actually at, naming, etc...)
 - [x] Decide how to work with ChIP replicates For many downstream analysis, it would be much easier to have one file for each line * tissue * mark. Do we do it by default on peaks called after merging bam files, on peaks passing the IDR threshold (very limited when samples are not great), or peaks that are called in the _best_ replicate (to be defined). This needs to be automatize because going through all the different combinations possible is overwhelming. __Chose pseudo-replicates method__
 - [ ] Make a genome browser session? (trackhub for UCSC? Cyverse?)
