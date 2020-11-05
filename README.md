@@ -101,7 +101,7 @@ Plots heatmaps of all the samples over the regionfile (parameters will need to b
 Plots metaplots of ChIP marks on the differentially expressed genes (each UP and DOWN between all sample pairs)\
 Plots Upset plots highlighting expressed genes in the overlapped peaks
 
-- ___MaizeCode_R_Upset.r___\
+- __MaizeCode_R_Upset.r__\
 Create an Upset plot of overlapping peaks and their presence in gene bodies. An example is in the data folder (e.g. data/Upset_B73_endosperm.pdf)
 ___Other option to add:___\
 Highlight expressed genes instead of gene bodies
@@ -111,7 +111,7 @@ Highlight expressed genes instead of gene bodies
 ### Output
 
 __Directories:__
-In the main folder where the analysis is called (`<maizecode>`)
+From the main folder `<maizecode>` where the `MaizeCode.sh` is run
 
 - `<maizecode>/ChIP`: Folder containing data from ChIP sample(s)
 *only created if at least one ChIP sample has been analyzed*
