@@ -11,30 +11,34 @@
 usage="
 ##### Main script for Maize code data analysis
 ##### 
-##### sh MaizeCode.sh -f samplefile -p path to genome reference [-s]
+##### sh MaizeCode.sh -f <samplefile> -p <path to genome reference> [-s]
 ##### 	-f: samplefile
 ##### 	-p: path to the folder containing all the different genome references (e.g. ~/data/Genomes/Zea_mays)
 #####	-s: if set, the analysis does not proceed (default=not set, keep going with the analysis over all the samples in the samplefile)
 ##### 	-h: help, returns usage
 #####
-##### The samplefile should be a tab delimited text file with 8 columns:
+##### The samplefile should be a tab-delimited text file with 8 columns:
 ##### col #1: Line (e.g. B73)
 ##### col #2: Tissue (e.g endosperm) 
-##### col #3: Sample (e.g. H3K4me3 or 'Input' for ChIP, (sh)RNA or RAMPAGE for RNA). Histone marks must start with capital 'H'. 'Input', RNA and RAMPAGE are case-sensitive
-##### col #4: Replicate ID (e.g. Rep1 or Rep2). If only one replicate in the experiment, put 'Rep1'.
-##### col #5: SequencingID (e.g. S01). Unique identifier for the sample in the sequencing folder
+##### col #3: Sample (e.g. H3K4me3 or 'Input' for ChIP, (sh)RNA or RAMPAGE for RNA). Histone marks must start with capital 'H'. 'Input', 'RNA' and 'RAMPAGE' are case-sensitive.
+##### col #4: Replicate ID [Rep1 | Rep2]
+##### col #5: SequencingID (e.g. S01). Unique identifier for the name of the sample in the raw sequencing folder which path is given in the next column.
 ##### col #6: Path to the fastq files (e.g. /seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846)
 ##### col #7: If data is paired-end or single-end [PE | SE]. 
-##### col #8: Name of the genome reference to map. Each genome reference should have a unique folder that contains a single fasta file and a single gff3 file (can be gzipped).
+##### col #8: Name of the genome reference to map (e.g. B73_v4). Each genome reference should have a unique folder that contains a single fasta file and a single gff3 file (can be gzipped).
 ##### The gff3 files should have 'gene' in column 3 and exons should be linked by 'Parent' in column 9
 ##### The fasta and gff3 files should have the same chromosome names (i.e. 1 2 3... and 1 2 3... or Chr1 Chr2 Chr3... and Chr1 Chr2 Chr3...)
 ##### For cleaner naming purposes, use '_samplefile.txt' as suffix
 #####
 ##### This script creates the folders needed,
-##### prepares the genome index and chrom.sizes file if they are not done for this type of data
-##### and send each sample into a datatype-specific script (MaizeCode_$datatype_sample.sh) if they have not been mapped before
+##### prepares the genome index and chrom.sizes file if they are not done for this type of data,
+##### sends each sample into a datatype-specific script for mapping (MaizeCode_$datatype_sample.sh) if they have not been mapped before
+##### starts the script (MaizeCode_analysis.sh) for the analysis on all the samples in the samplefile (if -s is not set), 
+##### It uses all the genes of the reference genome (if all samples are mapping to the same reference) as a region file or a combined analysis,
+##### or only proceed with single sample analysis if different references are used. In the latter case, MaizeCode_analysis.sh script will need to be run independantly with the regionfile of your choice.
 #####
-##### Requirements: pigz, samtools, Bowtie2 for ChIP data, STAR for RNA data, xxx for RAMPAGE data
+##### Requirements for the mapping pipeline: pigz, samtools, fastQC, Cutadapt, Bowtie2 for ChIP data, STAR for RNA data
+##### Additional requirements for the analysis pipeline: bedtools, deeptools, macs2, idr, R (+R packages: ggplot2,readr,UpSetR)
 "
 
 set -e -o pipefail
