@@ -9,19 +9,21 @@
 #$ -N combinedanalysis
 
 usage="
-##### Script for Maize code combined data analysis
+##### Script for Maize code combined data analysis, used by script MaizeCode_analyis.sh if -s was not set and region file exists
 #####
-##### sh MaiCode_analysis.sh -f samplefile -r regionfile [-s]
+##### sh MaiCode_combined_analysis.sh -f samplefile -r regionfile [-s]
 #####	-f: samplefile containing the samples to compare and in 5 tab-delimited columns:
 ##### 		Line, Tissue, Sample, Rep (Rep1, Rep2 or merged), PE or SE
-##### 	-r: bedfiles containing the regions that want to be ploted over
-##### 		(safest to use a full path to the region file)
+##### 	-r: bedfile containing the regions that are to be ploted over.
 ##### 	-h: help, returns usage
 ##### 
-##### It sends each type of sample to its specific analysis file (MaizeCode_ChIP_analysis.sh or MaizeCode_RNA_analysis.sh)
-##### Then combines into deeper analysis (to detail...)
+##### It produces an Upset plot of the intersection between all ChIP samples, highlighting peaks in the input regions
+##### It creates different heatmaps of all ChIP and RNA samples in the samplefile on all input regions
+##### Under development:
+##### Makes differential peak calling between all pairs of ChIP samples for each mark
+##### Call differential expressed genes between all pairs of RNA samples
 #####
-##### Requirements: samtools, bedtools, deeptools, macs2, idr, R (+R packages: ggplot2,readr,UpSetR)
+##### Requirements: bedtools, deeptools, macs2, R (+R packages: ggplot2,readr,UpSetR)
 "
 
 set -e -o pipefail
