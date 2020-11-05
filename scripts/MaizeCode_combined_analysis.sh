@@ -94,25 +94,25 @@ chip_tissue_list=()
 chip_mark_list=()
 rna_sample_list=()
 bw_list=()
-while read line tissue sample rep paired
+while read line tissue sample paired
 do
-	name=${line}_${tissue}_${sample}_${rep}
+	name=${line}_${tissue}_${sample}
 	case "$sample" in
 		H*|Input) datatype="ChIP";;
 		*RNA*|RAMPAGE) datatype="RNA";;
 		*) datatype="unknown";;
 	esac
-	bw_list+=("$datatype/tracks/${name}.bw")
+	bw_list+=("$datatype/tracks/${name}_merged.bw")
 	sample_list+=("$name")
 	if [[ "$datatype" == "ChIP" ]]; then
 		chip_sample_list+=("${name}")
 		chip_line_list+=("${line}")
 		chip_tissue_list+=("${tissue}")
 		chip_mark_list+=("${sample}")
-		printf "$line\t$tissue\t$sample\t$rep\t$paired\n" >> combined/temp_${samplename}_ChIP.txt
+		printf "$line\t$tissue\t$sample\t$paired\n" >> combined/temp_${samplename}_ChIP.txt
 	elif [[ "$datatype" == "RNA" ]]; then
 		rna_sample_list+=("${name}")
-		printf "$line\t$tissue\t$sample\t$rep\t$paired\n" >> combined/temp_${samplename}_RNA.txt
+		printf "$line\t$tissue\t$sample\t$paired\n" >> combined/temp_${samplename}_RNA.txt
 	else
 		printf "\nType of data unknown for ${name}\nSample not processed!\n"
 	fi
@@ -120,50 +120,8 @@ done < $samplefile
 
 #############################################################################################
 ########################################### PART2 ###########################################
-################################## Combine the ChIP samples #################################
+############################### Overlapping peaks - Upset plot  #############################
 #############################################################################################
-
-#### To create idr analysis and summary peak statistics
-
-uniq_chip_line_list=($(printf "%s\n" "${chip_line_list[@]}" | sort -u))
-uniq_chip_tissue_list=($(printf "%s\n" "${chip_tissue_list[@]}" | sort -u))
-uniq_chip_mark_list=($(printf "%s\n" "${chip_mark_list[@]}" | sort -u))
-
-printf "Line\tTissue\tMark\tPeaks_in_rep1\tPeaks_in_Rep2\tCommon_peaks\tCommon_peaks_IDR<=0.05\n" > combined/peaks/summary_peaks_${samplename}.txt
-
-for line in ${uniq_chip_line_list[@]}
-do
-	for tissue in ${uniq_chip_tissue_list[@]}
-	do
-		for mark in ${uniq_chip_mark_list[@]}
-		do
-			if [[ " ${chip_sample_list[@]} " =~ "${line}_${tissue}_${mark}" ]]; then
-				case "$mark" in
-					H3K4me1) peaktype="broad";;
-					H3K4me3) peaktype="narrow";;
-					H3K27ac) peaktype="narrow";;
-				esac
-				#### To get IDR analysis on replicates (if they were both present in the samplefile)
-				if [[ " ${chip_sample_list[@]} " =~ " ${line}_${tissue}_${mark}_Rep1 " ]] && [[ " ${chip_sample_list[@]} " =~ " ${line}_${tissue}_${mark}_Rep2 " ]]; then
-					if [ ! -s ChIP/peaks/idr_${line}_${tissue}_${mark}.${peaktype}Peak ]; then
-						printf "\nDoing IDR analysis on both replicates from ${line}_${tissue}_${mark} ($peaktype peaks) with idr version:\n"
-						idr --version
-						idr --input-file-type ${peaktype}Peak --output-file-type ${peaktype}Peak --samples ChIP/peaks/${line}_${tissue}_${mark}_Rep1_peaks.${peaktype}Peak ChIP/peaks/${line}_${tissue}_${mark}_Rep2_peaks.${peaktype}Peak -o ChIP/peaks/idr_${line}_${tissue}_${mark}.${peaktype}Peak -l ChIP/reports/idr_${line}_${tissue}_${mark}.log --plot
-					else
-						printf "\nIDR analysis already done for ${line}_${tissue}_${mark}\n"
-					fi
-					#### To get some peaks stats for each type of mark (also if both replicates were present)
-					printf "\nCalculating peak stats for ${line}_${tissue}_${mark} in ${peaktype} peaks\n"
-					rep1=$(awk '{print $1,$2,$3}' ChIP/peaks/${line}_${tissue}_${mark}_Rep1_peaks.${peaktype}Peak | sort -k1,1 -k2,2n -u | wc -l)
-					rep2=$(awk '{print $1,$2,$3}' ChIP/peaks/${line}_${tissue}_${mark}_Rep2_peaks.${peaktype}Peak | sort -k1,1 -k2,2n -u | wc -l)
-					common=$(awk '{print $1,$2,$3}' ChIP/peaks/idr_${line}_${tissue}_${mark}.${peaktype}Peak | sort -k1,1 -k2,2n -u | wc -l)
-					idr=$(awk '$5>=540 {print $1,$2,$3}' ChIP/peaks/idr_${line}_${tissue}_${mark}.${peaktype}Peak | sort -k1,1 -k2,2n -u | wc -l)
-					awk -v OFS="\t" -v a=$line -v b=$tissue -v c=$mark -v d=$rep1 -v e=$rep2 -v f=$common -v g=$idr 'BEGIN {print a,b,c,d,e,f" ("f/d*100"%rep1;"f/e*100"%rep2)",g" ("g/f*100"%common)"}' >> combined/peaks/summary_peaks_${samplename}.txt
-				fi
-			fi
-		done
-	done
-done
 
 #### To make a single file containing all overlapping peaks
 
@@ -179,7 +137,7 @@ do
 		*H3K4me3*) peaktype="narrow";;
 		*H3K27ac*) peaktype="narrow";;
 	esac
-	awk -v OFS="\t" -v s=$sample '{print $1,$2,$3,s}' ChIP/peaks/${sample}_peaks.${peaktype}Peak | uniq >> combined/peaks/tmp_peaks_${samplename}.bed
+	awk -v OFS="\t" -v s=$sample '{print $1,$2,$3,s}' ChIP/peaks/selected_peaks_${sample}.${peaktype}Peak | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_${samplename}.bed
 done
 sort -k1,1 -k2,2n combined/peaks/tmp_peaks_${samplename}.bed > combined/peaks/tmp2_peaks_${samplename}.bed
 bedtools merge -i combined/peaks/tmp2_peaks_${samplename}.bed -c 4 -o distinct | sort -k1,1 -k2,2n | awk -v OFS="\t" '{print $1,$2,$3,"Peak_"NR,$4}'> combined/peaks/tmp3_peaks_${samplename}.bed
@@ -216,10 +174,54 @@ Rscript --vanilla ${mc_dir}/MaizeCode_R_Upset.r combined/peaks/matrix_upset_${sa
 
 #############################################################################################
 ########################################### PART3 ###########################################
-################################## Combine the RNA samples ##################################
+####################### Calling differential peaks accross tissues ##########################
 #############################################################################################
 
+# # #### To call differential peaks for all the potential pairs of sample of the same mark between different tissues of the same reference
 
+# uniq_chip_line_list=($(printf "%s\n" "${chip_line_list[@]}" | sort -u))
+# uniq_chip_mark_list=($(printf "%s\n" "${chip_mark_list[@]}" | sort -u))
+
+# for line in ${uniq_chip_line_list[@]}
+# do
+	# sample_line=$(grep "$line" ${chip_sample_list[@]})
+	# for mark in ${uniq_chip_mark_list[@]}
+	# do
+		# sample_line_mark=$(grep "$mark" ${sample_line[@]})
+		# numsample=${sample_line_mark[@]}
+		# numsamplemin=$((numsample-1))
+		# case "$mark" in
+			# H3K4me1) 	peaktype="broad"
+						# l=500
+						# g=400;;
+			# H3K4me3) 	peaktype="narrow"
+						# l=250
+						# g=150;;
+			# H3K27ac) 	peaktype="narrow"
+						# l=250
+						# g=150;;
+		# esac
+		# if [ $numsample -ge 2 ]; then
+			# i=0
+			# j=1
+			# while [ $i -lt $numsamplemin ]
+			# do
+				# a1=$(grep "properly paired" reports/flagstat_${sample_line_mark[i]}_Rep1.txt | awk '{print $1}')
+				# a2=$(grep "properly paired" reports/flagstat_${sample_line_mark[i]}_Rep2.txt | awk '{print $1}')
+				# a=$((a1+a2))
+				# while [ $j -le $numsamplemin ]
+				# do	
+					# b1=$(grep "properly paired" reports/flagstat_${sample_line_mark[j]}_Rep1.txt | awk '{print $1}')
+					# b2=$(grep "properly paired" reports/flagstat_${sample_line_mark[j]}_Rep2.txt | awk '{print $1}')
+					# b=$((b1+b2))
+					# macs2 bdgdiff --t1 ChIP/peaks/${sample_line_mark[i]}_merged_treat_pileup.bdg --c1 ChIP/peaks/${sample_line_mark[i]}_merged_control_lambda.bdg --t2 ChIP/peaks/${sample_line_mark[j]}_merged_treat_pileup.bdg --c2 ChIP/peaks/${sample_line_mark[j]}_merged_control_lambda.bdg --d1 $a --d2 $b -g $g -l $l --outdir combined/peaks --o-prefix diff_${sample_line_mark[i]}_${sample_line_mark[j]}
+					# j=$((j+1))
+				# done
+				# i=$((i+1))
+			# done
+		# fi
+	# done
+# done
 
 
 #############################################################################################
@@ -236,36 +238,31 @@ printf "\nDoing analysis for $analysisname with deeptools version:\n"
 deeptools --version
 
 #### Computing the matrix
-if [ ! -f combined/matrix/regions_${analysisname}.gz ]; then
-	printf "\nComputing scale-regions matrix for $analysisname\n"
-	computeMatrix scale-regions -R $regionfile -S ${bw_list[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o combined/matrix/regions_${analysisname}.gz
-fi
-if [ ! -f combined/matrix/tss_${analysisname}.gz ]; then
-	printf "\nComputing reference-point on TSS matrix for $analysisname\n"
-	computeMatrix reference-point --referencePoint "TSS" -R $regionfile -S ${bw_list[@]} -bs 50 -b 2000 -a 6000 -p $threads -o combined/matrix/tss_${analysisname}.gz
-fi
+printf "\nComputing scale-regions matrix for $analysisname\n"
+computeMatrix scale-regions --missingDataAsZero --skipZeros -R $regionfile -S ${bw_list[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o combined/matrix/regions_${analysisname}.gz
+printf "\nComputing reference-point on TSS matrix for $analysisname\n"
+computeMatrix reference-point --referencePoint "TSS" --missingDataAsZero --skipZeros -R $regionfile -S ${bw_list[@]} -bs 50 -b 2000 -a 8000 -p $threads -o combined/matrix/tss_${analysisname}.gz
+printf "\nComputing reference-point on TES matrix for $analysisname\n"
+computeMatrix reference-point --referencePoint "TES" --missingDataAsZero --skipZeros -R $regionfile -S ${bw_list[@]} -bs 50 -b 8000 -a 2000 -p $threads -o combined/matrix/tes_${analysisname}.gz
 
-#### Ploting heatmaps
-printf "\nPlotting full heatmap for scale-regions of $analysisname\n"
-plotHeatmap -m combined/matrix/regions_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_regions.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sample_list[@]} --colorMap 'seismic'
-printf "\nPlotting heatmap for scale-regions of $analysisname split in 3 kmeans\n"
-plotHeatmap -m combined/matrix/regions_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_regions_k3.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sample_list[@]} --colorMap 'seismic' --kmeans 3 --outFileSortedRegions combined/matrix/${analysisname}_sortedregions_k3.txt
-
-printf "\nPlotting full heatmap for reference-point TSS of $analysisname\n"
-plotHeatmap -m combined/matrix/tss_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_tss.pdf --sortRegions descend --sortUsing region_length --samplesLabel ${sample_list[@]} --colorMap 'seismic'
-printf "\nPlotting heatmap for reference-point TSS of $analysisname split in 3 kmeans\n"
-plotHeatmap -m combined/matrix/tss_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_tss_k3.pdf --sortRegions descend --sortUsing region_length --samplesLabel ${sample_list[@]} --colorMap 'seismic' --kmeans 3 --outFileSortedRegions combined/matrix/${analysisname}_sortedtss_k3.txt
-
-# #### Plotting Metaplot profiles
-# printf "\nPlotting metaplot profiles for scale-regions of $analysisname\n"
-# plotProfile -m combined/matrix/regions_${analysisname}.gz -out combined/plots/${analysisname}_profiles_regions.pdf --plotType lines --averageType mean --perGroup --samplesLabel ${sample_list[@]}
-# printf "\nPlotting metaplot profiles for scale-regions of $analysisname split in 5 kmeans\n"
-# plotProfile -m combined/matrix/regions_${analysisname}.gz -out combined/plots/${analysisname}_profiles_regions_k5.pdf --plotType lines --averageType mean --perGroup --samplesLabel ${sample_list[@]} --kmeans 5
-
-# printf "\nPlotting metaplot profiles for reference-point TSS of $analysisname\n"
-# plotProfile -m combined/matrix/tss_${analysisname}.gz -out combined/plots/${analysisname}_profiles_tss.pdf --plotType lines --averageType mean --perGroup --samplesLabel ${sample_list[@]}
-# printf "\nPlotting metaplot profiles for reference-point TSS of $analysisname split in 5 kmeans\n"
-# plotProfile -m combined/matrix/tss_${analysisname}.gz -out combined/plots/${analysisname}_profiles_tss_k5.pdf --plotType lines --averageType mean --perGroup --samplesLabel ${sample_list[@]} --kmeans 5
+for matrix in regions tss tes
+do
+	printf "\nGetting scales (10th and 90th quantiles) for ${matrix} matrix\n"
+	computeMatrixOperations dataRange -m combined/matrix/${matrix}_${analysisname}.gz > combined/matrix/values_${matrix}_${analysisname}.txt
+	mins=()
+	maxs=()
+	for sample in ${sample_list[@]}
+	do
+		mini=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $5}')
+		mins+=("$mini")
+		maxi=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $6}')
+		maxs+=("$maxi")
+	done
+	printf "\nPlotting heatmap for by $matrix of $analysisname\n"
+	plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sample_list[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]}
+	printf "\nPlotting heatmap for by $matrix of $analysisname in 5 clusters (kmeans)\n"
+	plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}_k5.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sample_list[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --kmeans 5 --outFileSortedRegions combined/matrix/${analysisname}_${matrix}_regions_k5.txt
+done
 
 printf "\nCombined analysis script finished successfully\n"
 touch combined/chkpts/${analysisname}
