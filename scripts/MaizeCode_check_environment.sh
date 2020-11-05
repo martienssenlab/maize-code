@@ -13,19 +13,18 @@ usage="
 ##### 
 ##### sh MaizeCode_check_environment.sh -p path to genome reference -r ref -d datatype
 ##### 	-p: path to the folder containing all the different genome references (e.g. ~/data/Genomes/Zea_mays)
-##### 	-r: genome reference to use
-#####	-d: type of data
+##### 	-r: genome reference to use (e.g. B73_v4) 
+#####	-d: type of data [ChIP | RNA]
 ##### 	-h: help, returns usage
 #####
 ##### The reference genome folder should contain a single fasta file and a single gff3 file (can be gzipped)
 ##### The gff3 files should have 'gene' in column 3 and exons should be linked by 'Parent' in column 9
 ##### The fasta and gff3 files should have the same chromosome names (i.e. 1 2 3... and 1 2 3... or Chr1 Chr2 Chr3... and Chr1 Chr2 Chr3...)
-##### The type of data will define whether to build bowtie2 or STAR indexes
+##### The type of data (ChIP or RNA) will define whether to build bowtie2 or STAR indexes
 #####
-##### This script check if the indexes and other files need to be created
-##### and creates them if they do
+##### This script check if the indexes and other files need to be created and creates them if they do
 #####
-##### Requirements: pigz, samtools, Bowtie2 for ChIP data, STAR for RNA data, xxx for RAMPAGE data
+##### Requirements: pigz, samtools, Bowtie2 for ChIP data, STAR for RNA data
 "
 
 set -e -o pipefail
