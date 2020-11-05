@@ -1,14 +1,31 @@
 # maize-code
 
+---
+
 ## MaizeCode Pipeline Help
 
+---
 
 ### Step-by-Step pipeline
 
 1) Make a MaizeCode folder somewhere
 2) Copy the MaizeCode scripts folder somewhere
-3) Check for packages requirements (see package_versions file for versions that work for sure) and install the ones you don’t have:
-pigz; samtools; bowtie2; STAR; fastqc; cutadapt; bedtools; deeptools; macs2; idr; R (and R libraries: readr, ggplot2, UpSetR)
+3) Check that the following required packages are installed and in your $PATH (the versions noted here are working for sure, no guarantees for different versions).\
+Recommended installation using conda
+```
+pigz 2.3.4
+samtools 1.10 (Using htslib 1.10.2)
+bowtie2 64-bit 2.4.1; Compiler: gcc version 7.5.0 (crosstool-NG 1.24.0.131_87df0e6_dirty)
+STAR 2.7.5c
+fastqc v0.11.9
+cutadapt 2.10
+bedtools v2.29.2
+deeptools 3.5.0
+macs2 2.2.7.1
+IDR 2.0.4.2 
+R 3.6.3
+R libraries: readr 1.4.0; ggplot2 3.3.2; UpSetR 1.4.0
+```
 4) Organize your reference genome folders so that they are all in the same main folder and that each contain ONE fasta file and ONE gff3 file (has to have 'gene' in column 3 and exons must be linked by 'Parent' in column 9)
 5) Make the samplefiles you want. An example of a samplefile is in the data folder (B73_endosperm_samplefile.txt) and a quick way to make them is at the bottom of the `MaizeCode.sh` file. For cleaner naming purposes, use "\_samplefile.txt" as a suffix.
 6) Submit the `MaizeCode.sh` script, giving as argument `-f <samplefile>` the samplefile.txt of your choice and `-p <path> ` the path to your directory that contains the different genome directories.
