@@ -41,6 +41,7 @@ set -e -o pipefail
 
 printf "\n\n"
 date
+startdate=`date +%s`
 printf "\n"
 
 export threads=$NSLOTS
@@ -162,7 +163,7 @@ else
 	done
 	#### Wait for the check_environment scripts to finish
 	printf "\nWaiting for the environments to be prepared...\n"
-	wait $pids
+	wait ${pids[*]}
 	#### Check if the environment are good or if an error occurred
 	for check in ${check_list[@]}
 	do
@@ -194,24 +195,28 @@ check_list=()
 checkname_list=()
 checkdatatype_list=()
 ref_list=()
+datatype_list=()
+sample_list=()
 pids=()
 while read line tissue sample rep sampleID path paired ref
 do
 	ref_dir=$pathtoref/$ref
+	shortname=${line}_${tissue}_${sample}
 	name=${line}_${tissue}_${sample}_${rep}
 	case "$sample" in
 		H*|Input) datatype="ChIP";;
 		*RNA*|RAMPAGE) datatype="RNA";;
 	esac
 	check=$datatype/chkpts/${name}_${ref}
-	checkname_list+=("$name")
-	checkdatatype_list+=("$datatype")
-	check_list+=("$check")
 	ref_list+=("$ref")
+	datatype_list+=("$datatype")
 	if [ -e $check ]; then
 		printf "Sample $name has already been mapped to $ref genome\n"
 	else
-		if [ ! -e ./$datatype/fastq/${name}*.fastq.gz ]; then
+		checkname_list+=("$name")
+		checkdatatype_list+=("$datatype")
+		check_list+=("$check")
+		if [ ! -s ./$datatype/fastq/${name}*.fastq.gz ]; then
 #### This return the following warning '[: too many arguments' when several files are there (PE data)
 			if [[ $paired == "PE" ]]; then
 				printf "\nCopying PE fastq for $name ($sampleID in $path)\n"
@@ -231,21 +236,22 @@ do
 		pids+=("$!")
 		cd ..
 	fi
-	if [[ "${sample}" != "Input" ]]; then
-		printf "${line}\t${tissue}\t${sample}\t${rep}\t${paired}\n" >> $analysisfile
+	if [[ ! "${sample_list[@]}" =~ "${shortname}" ]] && [[ "${sample}" != "Input" ]]; then
+		printf "${line}\t${tissue}\t${sample}\t${paired}\n" >> $analysisfile
+		sample_list+=("$shortname")
 	fi
 done < $samplefile
 
 if [[ ${new_sample} != 0 ]]; then
 #### Wait for the mapping sample scripts to finish
 	printf "\nWaiting for the samples to be mapped...\n"
-	wait $pids
+	wait ${pids[*]}
 
 	i=0
 	for check in ${check_list[@]}
 	do
 		if [ ! -e $check ]; then
-			printf "\nProblem during mapping of ${checkname_list[i]}!\nCheck log: ${checkdatatype_list[i]}/logs/${checkname_list[i]}.log"
+			printf "\nProblem during mapping of ${checkname_list[i]}!\nCheck log: ${checkdatatype_list[i]}/logs/${checkname_list[i]}.log\n"
 			exit 1
 		else
 			printf "\nSample ${checkname_list[i]} successfully mapped.\n"
@@ -268,10 +274,11 @@ tmp1=${samplefile##*/}
 samplename=${tmp1%%_samplefile*}
 
 uniq_ref_list=($(printf "%s\n" "${ref_list[@]}" | sort -u))
+uniq_datatype_list=($(printf "%s\n" "${datatype_list[@]}" | sort -u))
 
 pids=()
 if [ ${#uniq_ref_list[@]} -eq 1 ]; then
-	regionfile="${checkdatatype_list[0]}/tracks/${uniq_ref_list[0]}_all_genes.bed"
+	regionfile="${uniq_datatype_list[0]}/tracks/${uniq_ref_list[0]}_all_genes.bed"
 	tmp2=${regionfile##*/}
 	regionname=${tmp2%.*}
 	analysisname="${samplename}_on_${regionname}"
@@ -287,12 +294,17 @@ else
 	pids+=("$!")
 fi
 
-wait $pids
+wait ${pids[*]}
 if [ ! -e ${check} ]; then
 	printf "\nProblem during the analysis. Check maizecode.log\n"
 	exit 1
 else
-	printf "\nMaizeCode script finished successfully!\nCheck out the stats and plots!\n"
+	enddate=`date +%s`
+	runtime=$((enddate-startdate))
+	hours=$((runtime / 3600))
+	minutes=$(( (runtime % 3600) / 60 ))
+	seconds=$(( (runtime % 3600) % 60 ))
+	printf "\nMaizeCode script finished successfully in $hours:$minutes:$seconds (hh:mm:ss)!\nCheck out the stats and plots!\n"
 fi
 
 ############################################################################################
