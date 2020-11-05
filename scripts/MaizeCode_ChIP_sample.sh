@@ -22,7 +22,6 @@ usage="
 #####
 ##### It runs fastQC, trims adapters with cutadapt, aligns with bowtie2,
 ##### filters duplicates with samtools, and get some mapping stats
-##### !!! At the moment, it is not going to be run on the same references, but will overwrite if the same sample name is mapping to a new reference !!!
 #####
 ##### Requirements: samtools, fastQC, Cutadapt, Bowtie2
 "
@@ -86,7 +85,6 @@ if [[ $paired == "PE" ]]; then
 	bowtie2 --version
 	bowtie2 -p $threads --end-to-end --maxins 1500 --met-file reports/bt2_${name}.txt -x $ref_dir/$ref -1 fastq/trimmed_${name}_R1.fastq.gz -2 fastq/trimmed_${name}_R2.fastq.gz -S mapped/${name}.sam |& tee reports/mapping_${name}.txt
 elif [[ $paired == "SE" ]]; then
-### Single-end process not tested !!!
 	#### FastQC on raw data
 	printf "\nRunning fastQC for $name with fastqc version:\n"
 	fastqc --version
