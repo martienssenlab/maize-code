@@ -103,3 +103,67 @@ Plots Upset plots highlighting expressed genes in the overlapped peaks
 Create an Upset plot of overlapping peaks and their presence in gene bodies. An example is in the data folder (e.g. data/Upset_B73_endosperm.pdf)
 ___Other option to add:___\
 Highlight expressed genes instead of gene bodies
+
+
+### Output
+
+__Directories:__
+In the main folder where the analysis is called (<maizecode>)
+- `<maizecode>/ChIP`: Folder containing data from ChIP sample(s)
+*only created if at least one ChIP sample has been analyzed*
+  - `<maizecode>/ChIP/fastq`: Folder containing raw and trimmed fastq files
+  - `<maizecode>/ChIP/mapped`: Folder containing mapped and indexed data (bam and bam.bai files). It will contain mapped data before and after deduplication for each biological replicate, the merged replicates and the pseudo-replicates files.
+  - `<maizecode>/ChIP/tracks`: Folder containing bigwig files and the all_genes.bed file for all genome references
+  - `<maizecode>/ChIP/plots`: Folder containing the fingerprint plots for each sample and idr plots between biological replicates
+  - `<maizecode>/ChIP/peaks`: Folder containing all peak files and the `summary_peaks_<samplefile_name>.txt` file that has a summary of peak statistics for all ChIP samples analyzed together in the samplefile `<samplefile_name>_samplefile.txt`
+  - `<maizecode>/ChIP/reports`: Folder containing the fastQC reports, trimming details, mapping details, idr details and the `summary_mapping_stats.txt` file that has a summary of mapping statistics for all ChIP samples processed
+  - `<maizecode>/ChIP/logs`: Folder containing log files to go back to in case of error during environment building `env_<genome_reference>.log`, mapping `<sample_name>.log`, analysis of ChIP samples together `<samplefile_name>.log` and single sample analysis `analysis_<sample_name>.log`
+  - `<maizecode>/ChIP/chkpts`: Folder containing `touch` files to track success and completion of environment building `env_<genome_ref>`, sample mapping `<sample_name>` and single sample analysis (peak calling and bigwig files) `analysis_<sample_name>`. These files are produced to prevent these steps to be repeated if they were already performed in order to only performed the combined analysis of different combinations of samples. If these files are deleted, the mapping and analysis steps will be repeated and will overwrite existing files.
+
+- RNA: Folder containing data from RNA sample(s) ___NOT DONE YET, but expectations are:___\
+*only created if at least one ChIP sample has been analyzed*
+  - `<maizecode>/RNA/fastq`: Folder containing raw and trimmed fastq files
+  - `<maizecode>/RNA/mapped`: Folder containing mapped and indexed data (bam and bam.bai files). It will contain mapped data before and after deduplication for each biological replicate and the merged replicates files.
+  - `<maizecode>/RNA/tracks`: Folder containing bigwig files and the all_genes.bed file for all genome references
+  - `<maizecode>/RNA/plots`: Folder containing some plots for each sample (*which plots, if any, to be determined*)
+   - `<maizecode>/RNA/reports`: Folder containing the fastQC reports, trimming details, mapping details and the `summary_mapping_stats.txt` file that has a summary of mapping statistics for all RNA samples processed
+  - `<maizecode>/RNA/logs`: Folder containing log files to go back to in case of error during environment building `env_<genome_reference>.log`, mapping `<sample_name>.log` and analysis of RNA samples together `<samplefile_name>.log`
+  - `<maizecode>/RNA/chkpts`: Folder containing `touch` files to track success and completion of environment building `env_<genome_ref>`, sample mapping `<sample_name>` and single sample analysis (bigwig files) `analysis_<sample_name>`. These files are produced to prevent these steps to be repeated if they were already performed in order to only performed the combined analysis of different combinations of samples. If these files are deleted, the mapping and analysis steps will be repeated and will overwrite existing files.
+
+- combined: Folder containing data from combined analysis ___The names of the folders should be changed to be more explicit___\
+*only created if at least one combined analysis has been performed*
+  - `<maizecode>/combined/DEG`: Folder containing differentially expressed genes analysis results
+  - `<maizecode>/combined/peaks`: Folder containing combined peak files and matrix for Upset plots
+  - `<maizecode>/combined/matrix`: Folder containing matrix files for heatmap plotting, outputed regions from kmean clustering of the heatmaps and value tables to be used for the scales of heatmaps
+  - `<maizecode>/combined/plots`: Folder containing the Upset plots and heatmaps
+  - `<maizecode>/combined/logs`: Folder containing log files to go back to in case of error during combined analysis `combined_analysis_<samplefile_name>_<regionfile_name>.log`
+  - `<maizecode>/combined/chkpts`: Folder containing `touch` files to track success of combined analysis `<samplefile_name>_<regionfile_name>.log`. These files are only for success tracking and will be overwritten if an analysis with the same name is to be performed. 
+
+- chkpts: Folder containing `touch` files to track success of a run **without** combined analysis
+
+__Statistics:__
+- `summary_mapping_stats.txt`
+Located in `<maizecode>/ChIP/reports/` for ChIP samples and `<maizecode>/RNA/reports` for RNA samples.
+Tab-delimited file with 8 columns giving information for each sample (detailed in columns#1 to #4) on\
+the number of reads in total (column #5),\
+the number of reads (and percentage of the total reads) that pass filtering (column #6),\
+the number of reads (and percentage of the total reads) that are in the deduplicated bam file (column #7)\,
+the number of reads (and percentage of the total reads) that are properly mapped (column #8).
+
+- `summary_peaks_<samplefile_name>.txt`
+Located in `<maizecode>/ChIP/peaks/`. 
+Tab-delimited file with 10 columns giving information for each histone mark (detailed in columns#1 to #3) on\
+the number of peaks called in each biological replicate (columns #4 and #5, respectively),\
+the number of peaks in common between the biological replicates (all peaks given by the IDR analysis) and the percentage relative to each biological replicate (column #6),\
+the number of peaks in common between the biological replicates that pass the IDR threshold of 0.05 and the percentage relative to the number of peaks in common (column #7),\
+the number of peaks called when both replicates are merged (column #8),\
+the number of peaks shared by each pseudo-replicate (column #9),\
+the number of selected peaks (i.e. the peaks that will be used for downstream analysis) which are the peaks shared by the merged and both pseudo-replicates, and the percentage relative to the the number of merged peaks (column #10).
+
+__Plots:__
+- `Upset_<samplefile_name>_<regionfile_name>.pdf`
+Upset plots showing intersection between all the samples in the `<samplefile_name>_analysis_samplefile.txt`, highlighting the peaks that are present on the regions in `<regionfile_name>.bed`
+
+
+
+
