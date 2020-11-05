@@ -97,35 +97,35 @@ fi
 new_chipsample=()
 new_rnasample=()
 datatype_list=()
-while read line tissue sample rep paired
+while read line tissue sample paired
 do
-	name=${line}_${tissue}_${sample}_${rep}
 	case "$sample" in
 		H*|Input) datatype="ChIP";;
 		*RNA*|RAMPAGE) datatype="RNA";;
 		*) datatype="unknown";;
 	esac
+	name=${line}_${tissue}_${sample}
 	if [ -e $datatype/chkpts/analysis_${name} ]; then
 		printf "\nSingle sample analysis for $name already done!\n"	
 	elif [[ "$datatype" == "ChIP" ]]; then
-		datatype_list+=("${datatype}")
-		new_chipsample+=("${name}")
 		if [ ! -d ./ChIP/peaks ]; then
 			mkdir ./ChIP/peaks
 		fi
 		if [ ! -d ./ChIP/plots ]; then
 			mkdir ./ChIP/plots
 		fi
-		printf "$line\t$tissue\t$sample\t$rep\t$paired\n" >> $datatype/temp_${samplename}_ChIP.txt
+		datatype_list+=("${datatype}")
+		new_chipsample+=("${name}")
+		printf "$line\t$tissue\t$sample\t$paired\n" >> $datatype/temp_${samplename}_${datatype}.txt
 	elif [[ "$datatype" == "RNA" ]]; then
 		datatype_list+=("${datatype}")
 		new_rnasample+=("${name}")
-		printf "$line\t$tissue\t$sample\t$rep\t$paired\n" >> $datatype/temp_${samplename}_RNA.txt
+		printf "$line\t$tissue\t$sample\t$paired\n" >> $datatype/temp_${samplename}_${datatype}.txt
 	else
 		printf "\nType of data unknown for $name\nSample not processed\n"
 	fi
 done < $samplefile
-
+	
 #### If there are new samples, run the ChIP and/or RNA pipeline on the new samples of the same type
 
 test_new=1
@@ -147,7 +147,7 @@ if [[ "${test_new}" == 1 ]]; then
 	done
 	#### Wait for the other scripts to finish
 	printf "\nWaiting for the datatype analysis scripts to finish\n"
-	wait $pids
+	wait ${pids[*]}
 
 	for datatype in ${uniq_datatype_list[@]}
 	do
@@ -201,10 +201,10 @@ fi
 pids=()
 ##### Processing combined analysis
 printf "\nLaunching combined analysis script\n"
-qsub -sync y -N combined_analysis -o combined/logs/combined_analysis.log ${mc_dir}/MaizeCode_combined_analysis.sh -f $samplefile -r $regionfile &
+qsub -sync y -N combined_analysis -o combined/logs/combined_analysis_${analysisname}.log ${mc_dir}/MaizeCode_combined_analysis.sh -f $samplefile -r $regionfile &
 pids+=("$!")
 
-wait $pids
+wait ${pids[*]}
 
 if [ ! -e combined/chkpts/${analysisname} ]; then
 	printf "\nProblem during the combined analysis of ${samplename} on ${regionname}!\nCheck log: logs/${analysisname}.log\n"
@@ -235,4 +235,3 @@ fi
 # cat gene_list3.bed >> regionfile.bed
 
 #############################################################################################
-
