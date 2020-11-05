@@ -164,6 +164,21 @@ __Plots:__
 - `Upset_<samplefile_name>_<regionfile_name>.pdf`
 Upset plots showing intersection between all the samples in the `<samplefile_name>_analysis_samplefile.txt`, highlighting the peaks that are present on the regions in `<regionfile_name>.bed`
 
+- `<samplefile_name>_<regionfile_name>_heatmap_regions.pdf`
+Heatmap of the enrichment for all ChIP and RNA samples in the `<samplefile_name>_analysis_samplefile.txt` on the regions from `<regionfile_name>.bed`, scaling each region to the same length, in decreasing order of overall enrichment in all samples
 
+- `<samplefile_name>_<regionfile_name>_heatmap_regions_k5.pdf`
+Heatmap of the enrichment for all ChIP and RNA samples in the `<samplefile_name>_analysis_samplefile.txt` on the regions from `<regionfile_name>.bed`, scaling each region to the same length, clustered into 5 regions by kmeans
 
+- `<samplefile_name>_<regionfile_name>_heatmap_tss.pdf`
+Heatmap of the enrichment for all ChIP and RNA samples in the `<samplefile_name>_analysis_samplefile.txt` on the regions from `<regionfile_name>.bed`, aligning all regions by their transcription start site, in decreasing order of overall enrichment in all samples
+
+- `<samplefile_name>_<regionfile_name>_heatmap_tss_k5.pdf`
+Heatmap of the enrichment for all ChIP and RNA samples in the `<samplefile_name>_analysis_samplefile.txt` on the regions from `<regionfile_name>.bed`, aligning all regions by their transcription start site, clustered into 5 regions by kmeans
+
+- `<samplefile_name>_<regionfile_name>_heatmap_tss.pdf`
+Heatmap of the enrichment for all ChIP and RNA samples in the `<samplefile_name>_analysis_samplefile.txt` on the regions from `<regionfile_name>.bed`, aligning all regions by their transcription end site, in decreasing order of overall enrichment in all samples
+
+- `<samplefile_name>_<regionfile_name>_heatmap_tes_k5.pdf`
+Heatmap of the enrichment for all ChIP and RNA samples in the `<samplefile_name>_analysis_samplefile.txt` on the regions from `<regionfile_name>.bed`, aligning all regions by their transcription end site, clustered into 5 regions by kmeans
 
