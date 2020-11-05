@@ -21,3 +21,4 @@ get the data type from the samplefile too (if H* or Input it is ChIP, if *RNA* o
 - [ ] Improve logs (callback if errors, followup on where it's actually at, naming, etc...)
 - [x] Decide how to work with ChIP replicates For many downstream analysis, it would be much easier to have one file for each line * tissue * mark. Do we do it by default on peaks called after merging bam files, on peaks passing the IDR threshold (very limited when samples are not great), or peaks that are called in the _best_ replicate (to be defined). This needs to be automatize because going through all the different combinations possible is overwhelming. __Chose pseudo-replicates method__
 - [ ] Make a genome browser session? (trackhub for UCSC? Cyverse?)
+- [ ] Increase efficiency of the whole pipeline?
