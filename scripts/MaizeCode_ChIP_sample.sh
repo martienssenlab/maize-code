@@ -4,23 +4,23 @@
 #$ -pe threads 20
 #$ -l m_mem_free=12G
 #$ -l tmp_free=100G
-#$ -o ChIPsample.log
+#$ -o logs/ChIPsample.log
 #$ -j y
 #$ -N ChIPsample
 
 usage="
-##### Script for Maize code ChIP data analysis, used by script MaizeCode.sh with ChIP argument
+##### Script for Maize code ChIP data analysis, used by script MaizeCode.sh for ChIP samples
 #####
 ##### sh MaizeCode_ChIP_sample.sh -d reference directory -l inbred line -t tissue -m histone mark -e replicate ID -p paired
 ##### 	-d: folder containing the reference directory (e.g. ~/data/Genomes/Zea_mays/B73_v4)
-##### 	-l: sample line (e.g. B73)
+##### 	-l: inbred line (e.g. B73)
 ##### 	-t: tissue (e.g. endosperm)
 ##### 	-m: ChIP-seq mark (e.g. H3K4me1)
 ##### 	-e: replicate ID (e.g. Rep1)
-##### 	-p: if data is paired-end (PE) or single-end (SE)
+##### 	-p: if data is paired-end (PE) or single-end (SE) [ PE | SE ]
 ##### 	-h: help, returns usage
 #####
-##### It creates the folders needed, runs fastQC, trims adapters with cutadapt, aligns with bowtie2,
+##### It runs fastQC, trims adapters with cutadapt, aligns with bowtie2,
 ##### filters duplicates with samtools, and get some mapping stats
 #####
 ##### Requirements: samtools, fastQC, Cutadapt, Bowtie2
@@ -66,51 +66,40 @@ export ref=${ref_dir##*/}
 name=${line}_${tissue}_${mark}_${rep}
 
 if [[ $paired == "PE" ]]; then
-
 	#### FastQC on raw data
 	printf "\nRunning fastQC for $name with fastqc version:\n"
 	fastqc --version
 	fastqc -o reports/ fastq/${name}_R1.fastq.gz
-	fastqc -o reports/ fastq/${name}_R2.fastq.gz
-	
+	fastqc -o reports/ fastq/${name}_R2.fastq.gz	
 	#### Trimming illumina adapters with Cutadapt
 	printf "\nTrimming Illumina adapters for $name with cutadapt version:\n"
 	cutadapt --version
 	cutadapt -j $threads -q 10 -m 20 -a AGATCGGAAGAGCACACGTCTGAAC -A AGATCGGAAGAGCGTCGTGTAGGGA -o fastq/trimmed_${name}_R1.fastq.gz -p fastq/trimmed_${name}_R2.fastq.gz fastq/${name}_R1.fastq.gz fastq/${name}_R2.fastq.gz |& tee reports/trimming_${name}.txt
-	
 	#### FastQC on trimmed data
 	printf "\nRunning fastQC on trimmed files for $name\n"
 	fastqc -o reports/ fastq/trimmed_${name}_R1.fastq.gz
 	fastqc -o reports/ fastq/trimmed_${name}_R2.fastq.gz
-	
 	#### Aligning reads to reference genome with Bowtie2
 	#### maxins 1500 used after seeing that average insert size from first round of mapping was ~500bp (for most B73 marks) but ~900bp for Inputs
 	printf "\nMaping $name to $ref\n"
 	bowtie2 --version
 	bowtie2 -p $threads --end-to-end --maxins 1500 --met-file reports/bt2_${name}.txt -x $ref_dir/$ref -1 fastq/trimmed_${name}_R1.fastq.gz -2 fastq/trimmed_${name}_R2.fastq.gz -S mapped/${name}.sam |& tee reports/mapping_${name}.txt
-	
 elif [[ $paired == "SE" ]]; then
-### Single-end process not tested !!!
-
 	#### FastQC on raw data
 	printf "\nRunning fastQC for $name with fastqc version:\n"
 	fastqc --version
 	fastqc -o reports/ fastq/${name}.fastq.gz
-	
 	#### Trimming illumina adapters with Cutadapt
 	printf "\nTrimming Illumina adapters for $name with cutadapt version:\n"
 	cutadapt --version
 	cutadapt -j $threads -q 10 -m 20 -a AGATCGGAAGAGCACACGTCTGAAC -o fastq/trimmed_${name}.fastq.gz fastq/${name}.fastq.gz |& tee reports/trimming_${name}.txt
-	
 	#### FastQC on trimmed data
 	printf "\nRunning fastQC on trimmed files for $name\n"
 	fastqc -o reports/ fastq/trimmed_${name}.fastq.gz
-	
 	#### Aligning reads to reference genome with Bowtie2
 	printf "\nMaping $name to $ref with bowtie2 version:\n"
 	bowtie2 --version
 	bowtie2 -p $threads --end-to-end --met-file reports/bt2_${name}.txt -x $ref_dir/$ref -U fastq/trimmed_${name}.fastq.gz -S mapped/${name}.sam |& tee reports/mapping_${name}.txt
-	
 else
 	printf "\nData format missing: paired-end (PE) or single-end (SE)?\n"
 	exit 1
@@ -141,3 +130,4 @@ if [[ $paired == "PE" ]]; then
 fi
 
 printf "\nScript finished successfully!\n"
+touch chkpts/${name}_${ref}

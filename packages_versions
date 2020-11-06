@@ -5,7 +5,7 @@ Using htslib 1.10.2
 
 deeptools 3.5.0
 
-bowtie2 64-bit
+bowtie2 64-bit 2.4.1
 Compiler: gcc version 7.5.0 (crosstool-NG 1.24.0.131_87df0e6_dirty)
 
 STAR 2.7.5c
@@ -19,3 +19,6 @@ bedtools v2.29.2
 macs2 2.2.7.1
 
 IDR 2.0.4.2
+
+R 3.6.3
+R libraries: readr 1.4.0; ggplot2 3.3.2; UpSetR 1.4.0
