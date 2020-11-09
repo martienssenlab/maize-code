@@ -27,7 +27,7 @@ IDR 2.0.4.2
 R 3.6.3
 R libraries: readr 1.4.0; ggplot2 3.3.2; UpSetR 1.4.0
 ```
-5) Organize your reference genome folders so that they are all in the same main folder and that each contain ONE fasta file and ONE gtf file. If you only have a gff3 file, create a gtf file with cufflinks `gffread -T <gff_file> -o <gtf_file>` and check that transcript_id and gene_id look good in the 9th column.
+5) Organize your reference genome folders so that they are all in the same main folder and that each contain ONE fasta file (.fa extension), ONE GFF3 file (.gff3 extension) and ONE GTF (.gtf) file. The GTF file can be created from a GFF3 file with cufflinks `gffread -T <gff_file> -o <gtf_file>` and check that transcript_id and gene_id look good in the 9th column. The GFF3 file should have 'gene' in the 3rd column. All files can be gzipped (.gz extension).
 6) Make the samplefiles you want. An example of a samplefile is in the data folder (B73_endosperm_samplefile.txt) and a quick way to make them is at the bottom of the `MaizeCode.sh` file. For cleaner naming purposes, use "\_samplefile.txt" as a suffix.
 7) Submit the `MaizeCode.sh` script, giving as argument `-f <samplefile>` the samplefile.txt of your choice and `-p <path> ` the path to your directory that contains the different genome directories.
 8) By default, it will proceed with the analysis. `-s` can be set so that it does not proceed with the analysis at all, and it will not do the combined analysis if several different references are being used for mapping
