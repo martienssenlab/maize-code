@@ -12,7 +12,7 @@
 `export mc_dir="${HOME}/data/Scripts/MaizeCode/"` with\
 `export mc_dir="${HOME}/YOUR/PATH/TO/SCRIPTS/MaizeCode/"`\
 __This is one of the TODO things to improve!!__
-4) Check that the following required packages are installed and in your $PATH (the versions noted here are working for sure, no guarantees for different versions). Recommended installation using conda.
+4) Check that the following required packages are installed and in your $PATH (the versions noted here are working for sure, no guarantees for different versions). Recommended installation using conda, except grit where source should be installed (with easy_install)
 ```
 pigz 2.3.4
 samtools 1.10 (Using htslib 1.10.2)
@@ -23,7 +23,8 @@ cutadapt 2.10
 bedtools v2.29.2
 deeptools 3.5.0
 macs2 2.2.7.1
-IDR 2.0.4.2 
+IDR 2.0.4.2
+grit 2.0.5
 R 3.6.3
 R libraries: readr 1.4.0; ggplot2 3.3.2; UpSetR 1.4.0
 ```
