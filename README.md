@@ -67,7 +67,7 @@ Runs an instance of `MaizeCode_ChIP_sample.sh` or `MaizeCode_RNA_sample.sh` for 
 Waits for the samples to be mapped\
 Runs the `MaizeCode_R_mapping_stats.r` script to plot the mapping statitistics into bar plots\ 
 Runs the `MaizeCode_analysis.sh` script if the `-s` argument (that stops after mapping) has not been given\
-By default, it will provide the `<reference_genome>_all_genes.bed` files created by the check_environment script as region files\
+By default, it will provide the `<reference_genome>_all_genes.bed` files created by the check_environment script as region files
 
 - __MaizeCode_check_environment.sh__\
 Checks if there is ONE fasta and ONE gff3 file in the reference folder (and unzip them if required)\
@@ -170,7 +170,7 @@ __Directories:__
 From the main folder `<maizecode>` where the `MaizeCode.sh` is run
 
 - `<maizecode>/ChIP`: Folder containing data from ChIP sample(s)\
-*only created if at least one ChIP sample has been analyzed*\
+*only created if at least one ChIP sample has been analyzed*
   - `<maizecode>/ChIP/fastq`: Folder containing raw and trimmed fastq files
   - `<maizecode>/ChIP/mapped`: Folder containing mapped and indexed data (bam and bam.bai files). It will contain mapped data before and after deduplication for each biological replicate, the merged replicates and the pseudo-replicates files.
   - `<maizecode>/ChIP/tracks`: Folder containing bigwig files and the all_genes.bed file for all genome references
@@ -181,7 +181,7 @@ From the main folder `<maizecode>` where the `MaizeCode.sh` is run
   - `<maizecode>/ChIP/chkpts`: Folder containing `touch` files to track success and completion of environment building `env_<genome_ref>`, sample mapping `<sample_name>` and single sample analysis (peak calling and bigwig files) `analysis_<sample_name>`. These files are produced to prevent these steps to be repeated if they were already performed in order to only performed the combined analysis of different combinations of samples. If these files are deleted, the mapping and analysis steps will be repeated and will overwrite existing files.
 
 - `<maizecode>/RNA`: Folder containing data from RNA sample(s)\
-*only created if at least one RNA sample has been analyzed*\
+*only created if at least one RNA sample has been analyzed*
   - `<maizecode>/RNA/fastq`: Folder containing raw and trimmed fastq files
   - `<maizecode>/RNA/mapped`: Folder containing mapped and indexed data (bam and bam.bai files). It will contain mapped data before and after deduplication for each biological replicate and the merged replicates files
   - `<maizecode>/RNA/tracks`: Folder containing stranded bigwig files based on all or unique reads (4 files per biological replicate, plus 4 files for the merged replicates) and the all_genes.bed file for all genome references
@@ -194,7 +194,7 @@ From the main folder `<maizecode>` where the `MaizeCode.sh` is run
 - `<maizecode>/combined`: Folder containing data from combined analysis\
 *only created if at least one sample has been mapped*\
 **`<analysis_name>` is a combination of the samplefile and regionfile names: `<samplefile_name>_on_<regionfile_name>`**\
-**By default, `<regionfile_name>` is `all_genes`**\
+**By default, `<regionfile_name>` is `all_genes`**
   - `<maizecode>/combined/DEG`: Folder containing differentially expressed genes analysis results. `FC_<sample1>_vs_<sample2>.txt` are pairwise comparison between sample1 and sample2 for all genes. `DEG_<sample1>_vs_<sample2>.txt` only contain the differentially expressed genes (FDR<=0.05) between sample1 and sample2.
   - `<maizecode>/combined/peaks`: Folder containing combined ChIPseq peak files `peaks_<analysis_name>.bed`, RAMPAGE TSS files `tss_<analysis_name>.bed` and matrix for Upset plots `matrix_upset_<analysis_name>.txt`.
   - `<maizecode>/combined/matrix`: Folder containing matrix files for heatmap plotting `regions_<analysis_name>.gz`, `tss_<analysis_name>.gz` and `deg_<analysis_name>.gz`, outputed regions from kmean clustering of the heatmaps `<analysis_name>_regions_regions_k5.txt` and `<analysis_name>_tss_regions_k5.txt` and the value tables to be used for the scales of heatmaps `values_regions_<analysis_name>.txt` and `values_tss_<analysis_name>.txt`. 'regions' corresponds to the 'scale_regions' argument of deeptools, 'tss' corresponds to the 'reference-point --referencePoint TSS' argument of deeptools and 'k5' corresponds to the '--kmeans 5' argument of deeptools.
