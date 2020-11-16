@@ -1,0 +1,5 @@
+B73	roots	H3K4me1	PE	/grid/martienssen/home/jcahn/data/Genomes/Zea_mays/B73_v4
+B73	roots	H3K4me3	PE	/grid/martienssen/home/jcahn/data/Genomes/Zea_mays/B73_v4
+B73	roots	H3K27ac	PE	/grid/martienssen/home/jcahn/data/Genomes/Zea_mays/B73_v4
+B73	roots	RNAseq	PE	/grid/martienssen/home/jcahn/data/Genomes/Zea_mays/B73_v4
+B73	roots	RAMPAGE	PE	/grid/martienssen/home/jcahn/data/Genomes/Zea_mays/B73_v4
