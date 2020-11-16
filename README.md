@@ -29,7 +29,7 @@ bedGraphToBigWig v 2.8
 R 3.6.3
 R libraries: ggplot2 3.3.2; UpSetR 1.4.0; limma 3.42.2; edgeR 3.28.1; dplyr 1.0.2; tidyr 1.1.2; stringr 1.4.0; cowplot 1.1.0; gplots 3.1.0
 ```
-5) Organize your reference genome folders so that they are all in the same main folder and that each contain ONE fasta file (.fa extension), ONE GFF3 file (.gff3 extension) and ONE GTF (.gtf) file.\
+5) Organize your reference genome folders so that they are all in the same main folder and that each contain ONE fasta file (.fa extension), ONE GFF3 file (.gff3 extension) and ONE GTF (.gtf extension) file.\
 The GTF file can be created from a GFF3 file with cufflinks `gffread -T <gff_file> -o <gtf_file>` and check that 'transcript_id' and 'gene_id' look good in the 9th column.\
 The GFF3 file should have 'gene' in the 3rd column.\
 All files can be gzipped (.gz extension).
