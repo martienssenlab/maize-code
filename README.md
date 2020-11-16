@@ -101,48 +101,48 @@ If different lines are present, it then launches the `MaizeCode_combined_analysi
 - __MaizeCode_ChIP_analysis.sh__\
 Merges biological replicates and split into pseudo-replicates\
 For each type of file (replicate1, replicate2, pseudo-replicate1, pseudo-replicate2 and merged) in parallel:\
-  :Calls peaks with macs2 (calls broad peaks for H3K4me1, and narrow peaks for H3K4me3 and H3K27ac)\
-  Makes bigwig files with deeptools (log2 FC vs Input, normalizing each file by CPM)\
-  Plot Fingerprint\
+          Calls peaks with macs2 (calls broad peaks for H3K4me1, and narrow peaks for H3K4me3 and H3K27ac)\
+          Makes bigwig files with deeptools (log2 FC vs Input, normalizing each file by CPM)\
+          Plot Fingerprint\
 Waits for the previous steps to proceed\
 Makes IDR analysis for biological replicates with idr\
 Makes a `selected_peaks` file with the peaks called in the merged sample and both pseudo-replicates with bedtools intersect\
 Makes some stats on the number of peaks (in `ChIP/peaks/summary_peaks_<samplefile_name>.txt`)
 
 - __MaizeCode_RNA_analysis.sh__\
-Processes each sample in parallel
-For RAMPAGE data:
-    Merges biological replicates and creates stranded tracks (bigwigs) with STAR and bedGraphToBigWig\
-    Calls peaks (to identify TSS) with macs2 (_should be grit but not maintained and pretty cryptic_)\
-    Makes IDR analysis for biological replicates with idr\
-    Make some stats on the number of peaks (in `RNA/TSS/summary_tss_<samplefile_name>.txt`)\
-For RNAseq data:
-    Merges biological replicates and creates stranded tracks (bigwigs) with STAR and bedGraphToBigWig\
-    Makes some stats on the number of expressed genes (in `RNA/TSS/summary_expression_<samplefile_name>.txt`)\
+Processes each sample in parallel\
+For RAMPAGE data:\
+                Merges biological replicates and creates stranded tracks (bigwigs) with STAR and bedGraphToBigWig\
+                Calls peaks (to identify TSS) with macs2 (_should be grit but not maintained and pretty cryptic_)\
+                Makes IDR analysis for biological replicates with idr\
+                Make some stats on the number of peaks (in `RNA/TSS/summary_tss_<samplefile_name>.txt`)\
+For RNAseq data:\
+                Merges biological replicates and creates stranded tracks (bigwigs) with STAR and bedGraphToBigWig\
+                Makes some stats on the number of expressed genes (in `RNA/TSS/summary_expression_<samplefile_name>.txt`)\
 For shRNA data: ___NOT DONE YET, but expectations are:___\
-    Merges biological replicates and creates stranded tracks (bigwigs) with STAR and bedGraphToBigWig\
-    Makes some stats on the number of clusters (in `RNA/TSS/summary_clusters_<samplefile_name>.txt`)
+                Merges biological replicates and creates stranded tracks (bigwigs) with STAR and bedGraphToBigWig\
+                Makes some stats on the number of clusters (in `RNA/TSS/summary_clusters_<samplefile_name>.txt`)
 
 - __MaizeCode_line_analysis.sh__ ___Analyses marked by *** are still under development:___\
 Splits the samplefile into ChIPseq and RNA samples\
 For ChIPseq samples:\
-  Makes a single file, merging all selected peaks from all samples with bedtools merge\
-  Gets distance of each peak to the closest region from the regionfile with bedtools closest (default: all genes annotated in the reference)\
-  Creates an Upset plot to show overlap among the different samples, highlighting the peaks in gene bodies, using `MaizeCode_R_Upset.r` script\
-  _if several tissues are present in the samplefile:_\
-  Calculates differential peaks between the different tissues\
+                Makes a single file, merging all selected peaks from all samples with bedtools merge\
+                Gets distance of each peak to the closest region from the regionfile with bedtools closest (default: all genes annotated in the reference)\
+                Creates an Upset plot to show overlap among the different samples, highlighting the peaks in gene bodies, using `MaizeCode_R_Upset.r` script\
+                _if several tissues are present in the samplefile:_\
+                Calculates differential peaks between the different tissues\
 For RAMPAGE samples:\
-  _if several tissues are present in the samplefile:_\
-  Calls differential TSS between the different tissues\*\*\*\
+                _if several tissues are present in the samplefile:_\
+                Calls differential TSS between the different tissues\*\*\*\
 For RNAseq samples:\
- _if several tissues are present in the samplefile:_\
-  Makes sample and count tables\
-  Calls differentially expressed genes between all pairs of tissues using `MaizeCode_R_DEG.r` script\
+                _if several tissues are present in the samplefile:_\
+                Makes sample and count tables\
+                Calls differentially expressed genes between all pairs of tissues using `MaizeCode_R_DEG.r` script\
 On all the samples:
-  Plots heatmaps of the ChIPseq and RNAseq samples over the regionfile (parameters might need to be adjusted)\
-  Plots heatmaps and profiles of the ChIPseq samples over the differentially expressed genes (if they were called previously)\
-  Splits all genes into different clusters based on all avalaible data (silent, constitutive and tissue-specific genes)\*\*\*\
-  Identifies enhancers and assign to a gene\*\*\*\
+                Plots heatmaps of the ChIPseq and RNAseq samples over the regionfile (parameters might need to be adjusted)\
+                Plots heatmaps and profiles of the ChIPseq samples over the differentially expressed genes (if they were called previously)\
+                Splits all genes into different clusters based on all avalaible data (silent, constitutive and tissue-specific genes)\*\*\*\
+                Identifies enhancers and assign to a gene\*\*\*\
 
 - __MaizeCode_combined_analysis.sh__ ___NOT DONE YET, but expectations are:___\
 Compares gene status between homolog genes\
@@ -158,8 +158,8 @@ Creates an Upset plot of overlapping peaks and their presence in gene bodies nam
 Performs differential expression analysis with edgeR on all RNAseq samples present in the samplefile with edgeR\
 Plots MDS (`combined/plots/MDS_<analysis_name>.pdf`) and BCV (`combined/plots/BCV_<analysis_name>.pdf`)\
 For each pair of tissues:\
-  Create a table of log2FC for all genes (named `combined/DEG/FC_<analysis_name>_<tissue1>_vs_<tissue2>.txt`)\
-  Create a table of differentially expressed genes (named `combined/DEG/DEG_<analysis_name>_<tissue1>_vs_<tissue2>.txt`)\
+                 Create a table of log2FC for all genes (named `combined/DEG/FC_<analysis_name>_<tissue1>_vs_<tissue2>.txt`)\
+                 Create a table of differentially expressed genes (named `combined/DEG/DEG_<analysis_name>_<tissue1>_vs_<tissue2>.txt`)\
 Plots two heatmaps on all the differentially expressed genes (by log(cpm) named `combined/plots/Heatmap_cpm_<analysis_name>.pdf` and scaling per row (z_score) named `combined/plots/Heatmap_zscore_<analysis_name>.pdf`)
 
 ---
