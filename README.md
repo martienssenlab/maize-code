@@ -101,9 +101,9 @@ If different lines are present, it then launches the `MaizeCode_combined_analysi
 - __MaizeCode_ChIP_analysis.sh__\
 Merges biological replicates and split into pseudo-replicates\
 For each type of file (replicate1, replicate2, pseudo-replicate1, pseudo-replicate2 and merged) in parallel:\
-  + Calls peaks with macs2 (calls broad peaks for H3K4me1, and narrow peaks for H3K4me3 and H3K27ac)\
-  + Makes bigwig files with deeptools (log2 FC vs Input, normalizing each file by CPM)\
-  + Plot Fingerprint\
+Calls peaks with macs2 (calls broad peaks for H3K4me1, and narrow peaks for H3K4me3 and H3K27ac)\
+Makes bigwig files with deeptools (log2 FC vs Input, normalizing each file by CPM)\
+Plot Fingerprint\
 Waits for the previous steps to proceed\
 Makes IDR analysis for biological replicates with idr\
 Makes a `selected_peaks` file with the peaks called in the merged sample and both pseudo-replicates with bedtools intersect\
@@ -112,37 +112,37 @@ Makes some stats on the number of peaks (in `ChIP/peaks/summary_peaks_<samplefil
 - __MaizeCode_RNA_analysis.sh__\
 Processes each sample in parallel\
 For RAMPAGE data:\
-                Merges biological replicates and creates stranded tracks (bigwigs) with STAR and bedGraphToBigWig\
-                Calls peaks (to identify TSS) with macs2 (_should be grit but not maintained and pretty cryptic_)\
-                Makes IDR analysis for biological replicates with idr\
-                Make some stats on the number of peaks (in `RNA/TSS/summary_tss_<samplefile_name>.txt`)\
+Merges biological replicates and creates stranded tracks (bigwigs) with STAR and bedGraphToBigWig\
+Calls peaks (to identify TSS) with macs2 (_should be grit but not maintained and pretty cryptic_)\
+Makes IDR analysis for biological replicates with idr\
+Make some stats on the number of peaks (in `RNA/TSS/summary_tss_<samplefile_name>.txt`)\
 For RNAseq data:\
-                Merges biological replicates and creates stranded tracks (bigwigs) with STAR and bedGraphToBigWig\
-                Makes some stats on the number of expressed genes (in `RNA/TSS/summary_expression_<samplefile_name>.txt`)\
+Merges biological replicates and creates stranded tracks (bigwigs) with STAR and bedGraphToBigWig\
+Makes some stats on the number of expressed genes (in `RNA/TSS/summary_expression_<samplefile_name>.txt`)\
 For shRNA data: ___NOT DONE YET, but expectations are:___\
-                Merges biological replicates and creates stranded tracks (bigwigs) with STAR and bedGraphToBigWig\
-                Makes some stats on the number of clusters (in `RNA/TSS/summary_clusters_<samplefile_name>.txt`)
+Merges biological replicates and creates stranded tracks (bigwigs) with STAR and bedGraphToBigWig\
+Makes some stats on the number of clusters (in `RNA/TSS/summary_clusters_<samplefile_name>.txt`)
 
 - __MaizeCode_line_analysis.sh__ ___Analyses marked by *** are still under development:___\
 Splits the samplefile into ChIPseq and RNA samples\
 For ChIPseq samples:\
-                Makes a single file, merging all selected peaks from all samples with bedtools merge\
-                Gets distance of each peak to the closest region from the regionfile with bedtools closest (default: all genes annotated in the reference)\
-                Creates an Upset plot to show overlap among the different samples, highlighting the peaks in gene bodies, using `MaizeCode_R_Upset.r` script\
-                _if several tissues are present in the samplefile:_\
-                Calculates differential peaks between the different tissues\
+Makes a single file, merging all selected peaks from all samples with bedtools merge\
+Gets distance of each peak to the closest region from the regionfile with bedtools closest (default: all genes annotated in the reference)\
+Creates an Upset plot to show overlap among the different samples, highlighting the peaks in gene bodies, using `MaizeCode_R_Upset.r` script\
+_if several tissues are present in the samplefile:_\
+Calculates differential peaks between the different tissues\
 For RAMPAGE samples:\
-                _if several tissues are present in the samplefile:_\
-                Calls differential TSS between the different tissues\*\*\*\
+_if several tissues are present in the samplefile:_\
+Calls differential TSS between the different tissues\*\*\*\
 For RNAseq samples:\
-                _if several tissues are present in the samplefile:_\
-                Makes sample and count tables\
-                Calls differentially expressed genes between all pairs of tissues using `MaizeCode_R_DEG.r` script\
+_if several tissues are present in the samplefile:_\
+Makes sample and count tables\
+Calls differentially expressed genes between all pairs of tissues using `MaizeCode_R_DEG.r` script\
 On all the samples:
-                Plots heatmaps of the ChIPseq and RNAseq samples over the regionfile (parameters might need to be adjusted)\
-                Plots heatmaps and profiles of the ChIPseq samples over the differentially expressed genes (if they were called previously)\
-                Splits all genes into different clusters based on all avalaible data (silent, constitutive and tissue-specific genes)\*\*\*\
-                Identifies enhancers and assign to a gene\*\*\*\
+Plots heatmaps of the ChIPseq and RNAseq samples over the regionfile (parameters might need to be adjusted)\
+Plots heatmaps and profiles of the ChIPseq samples over the differentially expressed genes (if they were called previously)\
+Splits all genes into different clusters based on all avalaible data (silent, constitutive and tissue-specific genes)\*\*\*\
+Identifies enhancers and assign to a gene\*\*\*
 
 - __MaizeCode_combined_analysis.sh__ ___NOT DONE YET, but expectations are:___\
 Compares gene status between homolog genes\
@@ -158,8 +158,8 @@ Creates an Upset plot of overlapping peaks and their presence in gene bodies nam
 Performs differential expression analysis with edgeR on all RNAseq samples present in the samplefile with edgeR\
 Plots MDS (`combined/plots/MDS_<analysis_name>.pdf`) and BCV (`combined/plots/BCV_<analysis_name>.pdf`)\
 For each pair of tissues:\
-                 Create a table of log2FC for all genes (named `combined/DEG/FC_<analysis_name>_<tissue1>_vs_<tissue2>.txt`)\
-                 Create a table of differentially expressed genes (named `combined/DEG/DEG_<analysis_name>_<tissue1>_vs_<tissue2>.txt`)\
+Create a table of log2FC for all genes (named `combined/DEG/FC_<analysis_name>_<tissue1>_vs_<tissue2>.txt`)\
+Create a table of differentially expressed genes (named `combined/DEG/DEG_<analysis_name>_<tissue1>_vs_<tissue2>.txt`)\
 Plots two heatmaps on all the differentially expressed genes (by log(cpm) named `combined/plots/Heatmap_cpm_<analysis_name>.pdf` and scaling per row (z_score) named `combined/plots/Heatmap_zscore_<analysis_name>.pdf`)
 
 ---
@@ -169,8 +169,8 @@ Plots two heatmaps on all the differentially expressed genes (by log(cpm) named 
 __Directories:__
 From the main folder `<maizecode>` where the `MaizeCode.sh` is run
 
-- `<maizecode>/ChIP`: Folder containing data from ChIP sample(s)
-*only created if at least one ChIP sample has been analyzed*
+- `<maizecode>/ChIP`: Folder containing data from ChIP sample(s)\
+*only created if at least one ChIP sample has been analyzed*\
   - `<maizecode>/ChIP/fastq`: Folder containing raw and trimmed fastq files
   - `<maizecode>/ChIP/mapped`: Folder containing mapped and indexed data (bam and bam.bai files). It will contain mapped data before and after deduplication for each biological replicate, the merged replicates and the pseudo-replicates files.
   - `<maizecode>/ChIP/tracks`: Folder containing bigwig files and the all_genes.bed file for all genome references
@@ -181,7 +181,7 @@ From the main folder `<maizecode>` where the `MaizeCode.sh` is run
   - `<maizecode>/ChIP/chkpts`: Folder containing `touch` files to track success and completion of environment building `env_<genome_ref>`, sample mapping `<sample_name>` and single sample analysis (peak calling and bigwig files) `analysis_<sample_name>`. These files are produced to prevent these steps to be repeated if they were already performed in order to only performed the combined analysis of different combinations of samples. If these files are deleted, the mapping and analysis steps will be repeated and will overwrite existing files.
 
 - `<maizecode>/RNA`: Folder containing data from RNA sample(s)\
-*only created if at least one RNA sample has been analyzed*
+*only created if at least one RNA sample has been analyzed*\
   - `<maizecode>/RNA/fastq`: Folder containing raw and trimmed fastq files
   - `<maizecode>/RNA/mapped`: Folder containing mapped and indexed data (bam and bam.bai files). It will contain mapped data before and after deduplication for each biological replicate and the merged replicates files
   - `<maizecode>/RNA/tracks`: Folder containing stranded bigwig files based on all or unique reads (4 files per biological replicate, plus 4 files for the merged replicates) and the all_genes.bed file for all genome references
@@ -192,7 +192,7 @@ From the main folder `<maizecode>` where the `MaizeCode.sh` is run
   - `<maizecode>/RNA/chkpts`: Folder containing `touch` files to track success and completion of environment building `env_<genome_ref>`, sample mapping `<sample_name>` and single sample analysis (bigwig files) `analysis_<sample_name>`. These files are produced to prevent these steps to be repeated if they were already performed in order to only performed the combined analysis of different combinations of samples. If these files are deleted, the mapping and analysis steps will be repeated and will overwrite existing files.
 
 - `<maizecode>/combined`: Folder containing data from combined analysis\
-*only created if at least one sample has been mapped*
+*only created if at least one sample has been mapped*\
 **`<analysis_name>` is a combination of the samplefile and regionfile names: `<samplefile_name>_on_<regionfile_name>`**\
 **By default, `<regionfile_name>` is `all_genes`**\
   - `<maizecode>/combined/DEG`: Folder containing differentially expressed genes analysis results. `FC_<sample1>_vs_<sample2>.txt` are pairwise comparison between sample1 and sample2 for all genes. `DEG_<sample1>_vs_<sample2>.txt` only contain the differentially expressed genes (FDR<=0.05) between sample1 and sample2.
@@ -206,7 +206,7 @@ From the main folder `<maizecode>` where the `MaizeCode.sh` is run
 
 __Statistics:__
 - `summary_mapping_stats.txt`
-Located in `<maizecode>/<ChIP|RNA>/reports/`
+Located in `<maizecode>/<ChIP|RNA>/reports/`\
 Tab-delimited file with 8 columns giving information for each sample (detailed in columns#1 to #4) on\
 the genome reference it was mapped to (column #5),\
 the number of reads in total (column #6),\
@@ -215,7 +215,7 @@ the number of reads (and percentage of the total reads) that are mapping to the 
 the number of reads (and percentage of the total reads) that are uniquely mapped (column #9).
 
 - `summary_peaks_<samplefile_name>.txt`
-Located in `<maizecode>/ChIP/peaks/`. 
+Located in `<maizecode>/ChIP/peaks/`\
 Tab-delimited file with 10 columns giving information for each histone mark (detailed in columns#1 to #3) on\
 the number of peaks called in each biological replicate (columns #4 and #5, respectively),\
 the number of peaks in common between the biological replicates (all peaks given by the IDR analysis) and the percentage relative to each biological replicate (column #6),\
@@ -225,7 +225,7 @@ the number of peaks shared by each pseudo-replicate (column #9),\
 the number of selected peaks (i.e. the peaks that will be used for downstream analysis) which are the peaks shared by the merged and both pseudo-replicates, and the percentage relative to the the number of merged peaks (column #10).
 
 - `summary_tss_<samplefile_name>.txt`
-Located in `<maizecode>/RNA/TSS/`. 
+Located in `<maizecode>/RNA/TSS/`\
 Tab-delimited file with 8 columns giving information for each RAMPAGE sample (detailed in columns#1 to #3) on\
 the number of annotated genes in the reference genome (columns #4),\
 the number of peaks called in each biological replicate (columns #5 and #6, respectively),\
@@ -233,7 +233,7 @@ the number of peaks in common between the biological replicates (all peaks given
 the number of peaks in common between the biological replicates that pass the IDR threshold of 0.05 and the percentage relative to the number of peaks in common (column #8).\
 
 - `summary_expression_<samplefile_name>.txt`
-Located in `<maizecode>/RNA/TSS/`.
+Located in `<maizecode>/RNA/TSS/`\
 Tab-delimited file with 13 columns giving information for each RNAseq sample (detailed in columns#1 to #3) on\
 the number of annotated genes in the reference genome (columns #4),\
 the number of silent genes (cpm=0), lowly expressed genes (cpm<1) and highly expressed genes (cpm>1) in the first biological replicate (columns #5, #6 and #7, respectively),\ 
