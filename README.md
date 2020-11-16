@@ -96,7 +96,7 @@ Gets some mapping stats (in `RNA/reports/summary_mapping_stats.txt`)
 - __MaizeCode_analysis.sh__ - _wrapper script for the analysis pipeline_\
 If new samples are to be analyzed individually, it sends each group of samples of the same datatype to `MaizeCode_ChIP_analysis.sh` or `MaizeCode_RNA_analysis.sh`\
 It then launches the `MaizeCode_line_analysis.sh` script for each reference present in the sample file\
-If different lines are present, it then launches the `MaizeCode_combined_analysis.sh` script ___NOT DONE YET___\
+If different lines are present, it then launches the `MaizeCode_combined_analysis.sh` script ___NOT DONE YET___
 
 - __MaizeCode_ChIP_analysis.sh__\
 Merges biological replicates and split into pseudo-replicates\
@@ -112,16 +112,16 @@ Makes some stats on the number of peaks (in `ChIP/peaks/summary_peaks_<samplefil
 - __MaizeCode_RNA_analysis.sh__\
 Processes each sample in parallel
 For RAMPAGE data:
-  Merges biological replicates and creates stranded tracks (bigwigs) with STAR and bedGraphToBigWig\
-  Calls peaks (to identify TSS) with macs2 (_should be grit but not maintained and pretty cryptic_)\
-  Makes IDR analysis for biological replicates with idr\
-  Make some stats on the number of peaks (in `RNA/TSS/summary_tss_<samplefile_name>.txt`)
+    Merges biological replicates and creates stranded tracks (bigwigs) with STAR and bedGraphToBigWig\
+    Calls peaks (to identify TSS) with macs2 (_should be grit but not maintained and pretty cryptic_)\
+    Makes IDR analysis for biological replicates with idr\
+    Make some stats on the number of peaks (in `RNA/TSS/summary_tss_<samplefile_name>.txt`)\
 For RNAseq data:
-  Merges biological replicates and creates stranded tracks (bigwigs) with STAR and bedGraphToBigWig\
-  Makes some stats on the number of expressed genes (in `RNA/TSS/summary_expression_<samplefile_name>.txt`)
+    Merges biological replicates and creates stranded tracks (bigwigs) with STAR and bedGraphToBigWig\
+    Makes some stats on the number of expressed genes (in `RNA/TSS/summary_expression_<samplefile_name>.txt`)\
 For shRNA data: ___NOT DONE YET, but expectations are:___\
-  Merges biological replicates and creates stranded tracks (bigwigs) with STAR and bedGraphToBigWig\
-  Makes some stats on the number of clusters (in `RNA/TSS/summary_clusters_<samplefile_name>.txt`)
+    Merges biological replicates and creates stranded tracks (bigwigs) with STAR and bedGraphToBigWig\
+    Makes some stats on the number of clusters (in `RNA/TSS/summary_clusters_<samplefile_name>.txt`)
 
 - __MaizeCode_line_analysis.sh__ ___Analyses marked by *** are still under development:___\
 Splits the samplefile into ChIPseq and RNA samples\
