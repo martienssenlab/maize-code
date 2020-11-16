@@ -101,9 +101,9 @@ If different lines are present, it then launches the `MaizeCode_combined_analysi
 - __MaizeCode_ChIP_analysis.sh__\
 Merges biological replicates and split into pseudo-replicates\
 For each type of file (replicate1, replicate2, pseudo-replicate1, pseudo-replicate2 and merged) in parallel:\
-* Calls peaks with macs2 (calls broad peaks for H3K4me1, and narrow peaks for H3K4me3 and H3K27ac)\
-* Makes bigwig files with deeptools (log2 FC vs Input, normalizing each file by CPM)\
-* Plot Fingerprint\
+  + Calls peaks with macs2 (calls broad peaks for H3K4me1, and narrow peaks for H3K4me3 and H3K27ac)\
+  + Makes bigwig files with deeptools (log2 FC vs Input, normalizing each file by CPM)\
+  + Plot Fingerprint\
 Waits for the previous steps to proceed\
 Makes IDR analysis for biological replicates with idr\
 Makes a `selected_peaks` file with the peaks called in the merged sample and both pseudo-replicates with bedtools intersect\
