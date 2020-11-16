@@ -45,15 +45,15 @@ All files can be gzipped (.gz extension).
 ### Comments
 
 - There is one wrapper script `MaizeCode.sh` that launches sub-scripts depending on what needs to be done.
-- The `MaizeCode_analysis.sh` script is called by default by the `MaizeCode.sh` script but can be used seperately for any additional analysis.
-- Check out the usage of each script before as it can give some information about the details and requirement for the scripts. Submitting each script without arguments (or followed by `-h`) will return its usage.
+- The `MaizeCode_analysis.sh` script is called by default by the `MaizeCode.sh` script but can be used seperately for any additional analysis. Combining samplefiles and running the `MaizeCode.sh` script would also work, would not take much longer and will produce the mapping_stats plot specific for the new combination of samples.
+- Check out the usage of each script before as it could give some information about the details and requirements for the scripts. Submitting each script without arguments (or followed by `-h`) will return its usage.
 - The shRNA and complete RAMPAGE pipelines are not ready yet
 - It should work for both Single-end or Paired-end data but the SE part has not been tested (and I might not have edited it well as I was changing the PE part). A non-issue for now since all the ChIP data is PE, but to keep in mind for potential future use.
 - The whole pipeline creates a lot of report files and probably files that are not necessary to keep but for now I keep them like this for potential troubleshooting.
-- For now I’ve used the `MaizeCode.sh` script for 8 samples at a time (all ChIPs from a specific Line x Tissue). It runs in a couple hours (depending on the size of the files). It processes each sample in parallel and asks for 20 threads for each so better to limit the samplefiles to this amount.
+- For now I’ve used the `MaizeCode.sh` script from scratch for 16 samples at a time (all ChIPs and RNAseq from two tissues of the same line). It runs in ~16h day (depending on the size of the files). Once that the mapping and single-sample analysis have been done, reusing these samples in a different analysis is much quicker though, the limitations are for mapping ChIPseq samples and calling ChIPseq peaks (since it does it for eahc biological replicate, the merge file and both pseudo-replicates). That is probably the first step that could be optimized for faster runs.
 - Always process the Input samples with their corresponding ChIP in the `MaizeCode.sh` script. (It can also be done separately, before or after) but they need to be done for the `MaizeCode_analysis.sh` script to run successfully.
 - The analysis will have to be adapted to the desired output, but running the `MaizeCode_analysis.sh` script should give a first look at the data and generate all the files required for further analysis.
-- These are preliminary version of the scripts!
+- These are still preliminary version of the scripts!
 
 ---
 
