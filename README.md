@@ -27,7 +27,7 @@ IDR 2.0.4.2
 (grit 2.0.5)
 bedGraphToBigWig v 2.8
 R 3.6.3
-R libraries: ggplot2 3.3.2; UpSetR 1.4.0; limma 3.42.2; edgeR 3.28.1; dplyr 1.0.2; tidyr 1.1.2; stringr 1.4.0; cowplot 1.1.0
+R libraries: ggplot2 3.3.2; UpSetR 1.4.0; limma 3.42.2; edgeR 3.28.1; dplyr 1.0.2; tidyr 1.1.2; stringr 1.4.0; cowplot 1.1.0; gplots 3.1.0
 ```
 5) Organize your reference genome folders so that they are all in the same main folder and that each contain ONE fasta file (.fa extension), ONE GFF3 file (.gff3 extension) and ONE GTF (.gtf) file. The GTF file can be created from a GFF3 file with cufflinks `gffread -T <gff_file> -o <gtf_file>` and check that transcript_id and gene_id look good in the 9th column. The GFF3 file should have 'gene' in the 3rd column. All files can be gzipped (.gz extension).
 6) Make the samplefiles you want. An example of a samplefile is in the data folder (B73_endosperm_samplefile.txt) and a quick way to make them is at the bottom of the `MaizeCode.sh` file. For cleaner naming purposes, use "\_samplefile.txt" as a suffix.
@@ -58,18 +58,19 @@ R libraries: ggplot2 3.3.2; UpSetR 1.4.0; limma 3.42.2; edgeR 3.28.1; dplyr 1.0.
 
 - __MaizeCode.sh__ - _wrapper script for the whole pipeline_\
 Creates the different folders\
-Starts the `MaizeCode_check_environment.sh` script for each environment (datatype * reference) that needs to be created\
+Runs the `MaizeCode_check_environment.sh` script for each environment (datatype * reference) that needs to be created\
 Copies fastq files from their folder in seq/ to the fastq/ folder (if not already done)\
 Runs an instance of `MaizeCode_ChIP_sample.sh` or `MaizeCode_RNA_sample.sh` for each sample\
 Waits for the samples to be mapped\
-Launches the `MaizeCode_analysis.sh` script if the `-s` argument (that stops after mapping) has not been given\
-By default, it will provide the `$reference_all_genes.bed` files created by the check_environment script as region files\
+Runs the `MaizeCode_R_mapping_stats.r` script to plot the mapping statitistics into bar plots\ 
+Runs the `MaizeCode_analysis.sh` script if the `-s` argument (that stops after mapping) has not been given\
+By default, it will provide the `<reference_genome>_all_genes.bed` files created by the check_environment script as region files\
 
 - __MaizeCode_check_environment.sh__\
 Checks if there is ONE fasta and ONE gff3 file in the reference folder (and unzip them if required)\
 Makes a `chrom.sizes` file if not there (can be useful down the line for bedGraphtoBigWig for example)\
 Makes a `all_genes.bed` file if not there (will be used for analysis/plots)\
-Create the template for the stat files (in `[ChIP|RNA]/reports/summary_mapping_stats.txt`)\
+Create the template for the stat files (in `<ChIP|RNA>/reports/summary_mapping_stats.txt`)\
 Makes the bowtie2 or STAR indexes (for ChIP and RNA, respectively) if not already there
 
 - __MaizeCode_ChIP_sample.sh__\
@@ -92,7 +93,7 @@ Gets some mapping stats (in `RNA/reports/summary_mapping_stats.txt`)
 - __MaizeCode_analysis.sh__ - _wrapper script for the analysis pipeline_\
 If new samples are to be analyzed individually, it sends each group of samples of the same datatype to `MaizeCode_ChIP_analysis.sh` or `MaizeCode_RNA_analysis.sh`\
 It then launches the `MaizeCode_line_analysis.sh` script for each reference present in the sample file\
-If different lines are present, it then launches the `MaizeCode_combined_analysis.sh` script\
+If different lines are present, it then launches the `MaizeCode_combined_analysis.sh` script ___NOT DONE YET___\
 
 - __MaizeCode_ChIP_analysis.sh__\
 Merges biological replicates and split into pseudo-replicates\
@@ -120,23 +121,23 @@ For shRNA data: ___NOT DONE YET, but expectations are:___\
   Makes some stats on the number of clusters (in `RNA/TSS/summary_clusters_<samplefile_name>.txt`)
 
 - __MaizeCode_line_analysis.sh__ ___Analyses marked by *** are still under development:___\
-Splits the samplefile into ChIP and RNA samples\
-For ChIP samples:\
+Splits the samplefile into ChIPseq and RNA samples\
+For ChIPseq samples:\
   Makes a single file, merging all selected peaks from all samples with bedtools merge\
   Gets distance of each peak to the closest region from the regionfile with bedtools closest (default: all genes annotated in the reference)\
   Creates an Upset plot to show overlap among the different samples, highlighting the peaks in gene bodies, using `MaizeCode_R_Upset.r` script\
   _if several tissues are present in the samplefile:_
-  Calculates differential peaks between the different tissues\*\*\*\
+  Calculates differential peaks between the different tissues\
 For RAMPAGE samples:\
   _if several tissues are present in the samplefile:_
   Calls differential TSS between the different tissues\*\*\*\
 For RNAseq samples:\
  _if several tissues are present in the samplefile:_
   Makes sample and count tables
-  Calls differentially expressed genes between all pairs of tissues using `MaizeCode_R_DEG.r` script\*\*\*\
+  Calls differentially expressed genes between all pairs of tissues using `MaizeCode_R_DEG.r` script\
 On all the samples:
-  Plots heatmaps of the ChIP and RNAseq samples over the regionfile (parameters might need to be adjusted)\
-  Plots heatmaps of the ChIP and RNAseq samples over the differentially expressed genes (if they were called previously)\*\*\*\
+  Plots heatmaps of the ChIPseq and RNAseq samples over the regionfile (parameters might need to be adjusted)\
+  Plots heatmaps and profiles of the ChIPseq samples over the differentially expressed genes (if they were called previously)\
   Splits all genes into different clusters based on all avalaible data (silent, constitutive and tissue-specific genes)\*\*\*\
   Identifies enhancers and assign to a gene\*\*\*\
 
@@ -144,15 +145,19 @@ On all the samples:
 Compares gene status between homolog genes
 Compares enhancers?
 
+- __MaizeCode_R_mapping_stats.r__\
+Creates a plot representing the mapping statistics (both read numbers and distribution) named `combined/plots/mapping_stats_<analysis_name>.pdf`
+
 - __MaizeCode_R_Upset.r__\
-Creates an Upset plot of overlapping peaks and their presence in gene bodies
+Creates an Upset plot of overlapping peaks and their presence in gene bodies named `combined/plots/Upset_<analysis_name>.pdf`
 
 - __MaizeCode_R_DEG.r__\
-Performs differential expression analysis with edgeR on all RNAseq samples present in the samplefile
-Plots MDS and BCV
-For all pairs of sample:
-  Create a table of log2FC for all genes (named `combined/DEG/FC_<sample1>_vs_<sample2>.txt`)
-  Create a table of differentially expressed genes (named `combined/DEG/DEG_<sample1>_vs_<sample2>.txt`)
+Performs differential expression analysis with edgeR on all RNAseq samples present in the samplefile with edgeR
+Plots MDS (`combined/plots/MDS_<analysis_name>.pdf`) and BCV (`combined/plots/BCV_<analysis_name>.pdf`)
+For each pair of tissues:
+  Create a table of log2FC for all genes (named `combined/DEG/FC_<analysis_name>_<tissue1>_vs_<tissue2>.txt`)
+  Create a table of differentially expressed genes (named `combined/DEG/DEG_<analysis_name>_<tissue1>_vs_<tissue2>.txt`)
+Plots two heatmaps on all the differentially expressed genes (by log(cpm) named `combined/plots/Heatmap_cpm_<analysis_name>.pdf` and scaling per row (z_score) named `combined/plots/Heatmap_zscore_<analysis_name>.pdf`)
 
 ---
 
@@ -184,13 +189,13 @@ From the main folder `<maizecode>` where the `MaizeCode.sh` is run
   - `<maizecode>/RNA/chkpts`: Folder containing `touch` files to track success and completion of environment building `env_<genome_ref>`, sample mapping `<sample_name>` and single sample analysis (bigwig files) `analysis_<sample_name>`. These files are produced to prevent these steps to be repeated if they were already performed in order to only performed the combined analysis of different combinations of samples. If these files are deleted, the mapping and analysis steps will be repeated and will overwrite existing files.
 
 - `<maizecode>/combined`: Folder containing data from combined analysis\
-*only created if at least one combined analysis has been performed*
+*only created if at least one sample has been mapped*
 **`<analysis_name>` is a combination of the samplefile and regionfile names: `<samplefile_name>_on_<regionfile_name>`**\
 **By default, `<regionfile_name>` is `all_genes`**\
-  - `<maizecode>/combined/DEG`: Folder containing differentially expressed genes analysis results. `FC_<sample1>_vs_<sample2>.txt` are pairwise comparison between sample1 and sample2 for all genes. `DEG_<sample1>_vs_<sample2>.txt` only contain the differentially expressed genes (FDR<=0.05) between sample1 and sample2. `<analysis_name>_DEG_plus.bed` and `<analysis_name>_DEG_minus.bed` contain all the differentially expressed genes on the plus and minus strand, respectively, between all samples in the analysis, grouped by all pairs possible and whther UP or DOWN-regulated.
+  - `<maizecode>/combined/DEG`: Folder containing differentially expressed genes analysis results. `FC_<sample1>_vs_<sample2>.txt` are pairwise comparison between sample1 and sample2 for all genes. `DEG_<sample1>_vs_<sample2>.txt` only contain the differentially expressed genes (FDR<=0.05) between sample1 and sample2.
   - `<maizecode>/combined/peaks`: Folder containing combined ChIPseq peak files `peaks_<analysis_name>.bed`, RAMPAGE TSS files `tss_<analysis_name>.bed` and matrix for Upset plots `matrix_upset_<analysis_name>.txt`.
   - `<maizecode>/combined/matrix`: Folder containing matrix files for heatmap plotting `regions_<analysis_name>.gz`, `tss_<analysis_name>.gz` and `deg_<analysis_name>.gz`, outputed regions from kmean clustering of the heatmaps `<analysis_name>_regions_regions_k5.txt` and `<analysis_name>_tss_regions_k5.txt` and the value tables to be used for the scales of heatmaps `values_regions_<analysis_name>.txt` and `values_tss_<analysis_name>.txt`. 'regions' corresponds to the 'scale_regions' argument of deeptools, 'tss' corresponds to the 'reference-point --referencePoint TSS' argument of deeptools and 'k5' corresponds to the '--kmeans 5' argument of deeptools.
-  - `<maizecode>/combined/plots`: Folder containing the Upset plots `Upset_<analysis_name>.pdf` and the different heatmaps `<analysis_name>_heatmaps_regions.pdf`, `<analysis_name>_heatmaps_regions_k5.pdf`, `<analysis_name>_heatmaps_tss.pdf` and `<analysis_name>_heatmaps_tss_k5.pdf`. 'regions' corresponds to the 'scale_regions' argument of deeptools, 'tss' corresponds to the 'reference-point --referencePoint TSS' argument of deeptools and 'k5' corresponds to the '--kmeans 5' argument of deeptools.
+  - `<maizecode>/combined/plots`: Folder containing the mapping statistics plot `mapping_stats_<analysis_name>.pdf`, the Upset plots of peaks in gene bodies `Upset_<analysis_name>.pdf`, the MDS and BCV plots from the DEG analysis `MDS_<analysis_name>.pdf` and `BCV_<analysis_name>.pdf`, respectively, the heatmaps of differentially expressed genes clustered accross all samples with log(cpm) values `Heatmap_cpm_<analysis_name>.pdf` and normalized for each gene `Heatmap_zscore_<analysis_name>.pdf`, and the different deeptools heatmaps `<analysis_name>_heatmaps_regions.pdf`, `<analysis_name>_heatmaps_regions_k5.pdf`, `<analysis_name>_heatmaps_tss.pdf` and `<analysis_name>_heatmaps_tss_k5.pdf`, and profiles . 'regions' corresponds to the 'scale_regions' argument of deeptools, 'tss' corresponds to the 'reference-point --referencePoint TSS' argument of deeptools and 'k5' corresponds to the '--kmeans 5' argument of deeptools.
   - `<maizecode>/combined/logs`: Folder containing log files to go back to in case of error during combined analysis `analysis_<analysis_name>.log`
   - `<maizecode>/combined/chkpts`: Folder containing `touch` files to track success of combined analysis `<analysis_name>.log`. These files are only for success tracking and will be overwritten if an analysis with the same name is to be performed.
 
@@ -198,15 +203,7 @@ From the main folder `<maizecode>` where the `MaizeCode.sh` is run
 
 __Statistics:__
 - `summary_mapping_stats.txt`
-Located in `<maizecode>/ChIP/reports/` for ChIP samples
-Tab-delimited file with 9 columns giving information for each sample (detailed in columns#1 to #4) on\
-the genome reference it was mapped to (column #5),\
-the number of reads in total (column #6),\
-the number of reads (and percentage of the total reads) that pass filtering (column #7),\
-the number of reads (and percentage of the total reads) that are in the deduplicated bam file (column #8)\,
-the number of reads (and percentage of the total reads) that are properly mapped (column #9).
-
-Located in `<maizecode>/RNA/reports/` for RNA samples
+Located in `<maizecode>/<ChIP|RNA>/reports/`
 Tab-delimited file with 8 columns giving information for each sample (detailed in columns#1 to #4) on\
 the genome reference it was mapped to (column #5),\
 the number of reads in total (column #6),\
@@ -241,20 +238,38 @@ the number of silent genes (cpm=0), lowly expressed genes (cpm<1) and highly exp
 the number of silent genes (cpm=0), lowly expressed genes (cpm<1) and highly expressed genes (cpm>1) after averaging both replicates (columns #11, #12 and #13, respectively)\
 
 __Plots:__ (examples are in the github data folder)
-- `Upset_<samplefile_name>_<regionfile_name>.pdf`
-Upset plots showing intersection between all the ChIP samples in the `<samplefile_name>_analysis_samplefile.txt`, highlighting the peaks that are present on the regions in `<regionfile_name>.bed`
+- `combined/plots/mapping_stats_<samplefile_name>.pdf`
+Bar plots showing number and sitribution of uniquely mapped, multi-mapping, unmapped and filtered reads for all samples in `<samplefile_name>_analysis_samplefile.txt`.
 
-- `<samplefile_name>_<regionfile_name>_heatmap_regions.pdf`
-Heatmap of the enrichment for all ChIP and RNAseq samples in the `<samplefile_name>_analysis_samplefile.txt` on the regions from `<regionfile_name>.bed`, scaling each region to the same length, in decreasing order of overall enrichment in all samples
+- `combined/plots/Upset_<samplefile_name>_on_<regionfile_name>.pdf`
+Upset plots showing intersection between all the ChIP samples in the `<samplefile_name>_analysis_samplefile.txt`, highlighting the peaks that are present on the regions in `<regionfile_name>.bed`.
 
-- `<samplefile_name>_<regionfile_name>_heatmap_regions_k5.pdf`
-Heatmap of the enrichment for all ChIP and RNAseq samples in the `<samplefile_name>_analysis_samplefile.txt` on the regions from `<regionfile_name>.bed`, scaling each region to the same length, clustered into 5 regions by kmeans
+- `combined/plots/MDS_<analysis_name>_on_<regionfile_name>.pdf`
+MDS plot (2D representation of variance) between all the RNAseq samples in the `<samplefile_name>_analysis_samplefile.txt` mapping to the same reference genome used to create the `<regionfile_name>.txt`.
 
-- `<samplefile_name>_<regionfile_name>_heatmap_tss.pdf`
-Heatmap of the enrichment for all ChIP and RNAseq samples in the `<samplefile_name>_analysis_samplefile.txt` on the regions from `<regionfile_name>.bed`, aligning all regions by their transcription start site, in decreasing order of overall enrichment in all samples
+- `combined/plots/BCV_<analysis_name>_on_<regionfile_name>.pdf`
+BCV plot (Biological coefficient of variation) for all the genes in the `<regionfile_name>.txt` based on all the RNAseq samples in the `<samplefile_name>_analysis_samplefile.txt`.
 
-- `<samplefile_name>_<regionfile_name>_heatmap_tss_k5.pdf`
-Heatmap of the enrichment for all ChIP and RNAseq samples in the `<samplefile_name>_analysis_samplefile.txt` on the regions from `<regionfile_name>.bed`, aligning all regions by their transcription start site, clustered into 5 regions by kmeans
+- `combined/plots/Heatmap_cpm_<analysis_name>_on_<regionfile_name>.pdf`
+Clustered heatmap of all the differentially expressed genes between all pairs of RNAseq samples in the `<samplefile_name>_analysis_samplefile.txt`, scaled by log(count per million) of the RNAseq replicate samples (highlights gene expression levels).
 
-- `<samplefile_name>_<regionfile_name>_heatmap_deg.pdf`
-Heatmap of the enrichment for all ChIP and RNAseq samples in the `<samplefile_name>_analysis_samplefile.txt` on the differentially expressed genes called between the all pairs of RNAseq samples, scaling each region to the same length, in decreasing order of overall enrichment in each group of DEGs.
+- `combined/plots/Heatmap_zscore_<analysis_name>_on_<regionfile_name>.pdf`
+Clustered heatmap of all the differentially expressed genes between all pairs of RNAseq samples in the `<samplefile_name>_analysis_samplefile.txt`, scaling each row by zscore among the RNAseq replicate samples (highlights differences between samples).
+
+- `combined/plots/<samplefile_name>_<regionfile_name>_heatmap_regions.pdf`
+Heatmap of the enrichment for all ChIP and RNAseq samples in the `<samplefile_name>_analysis_samplefile.txt` on the regions from `<regionfile_name>.bed`, scaling each region to the same length, in decreasing order of overall enrichment in all samples.
+
+- `combined/plots/<samplefile_name>_<regionfile_name>_heatmap_regions_k5.pdf`
+Heatmap of the enrichment for all ChIP and RNAseq samples in the `<samplefile_name>_analysis_samplefile.txt` on the regions from `<regionfile_name>.bed`, scaling each region to the same length, clustered into 5 regions by kmeans.
+
+- `combined/plots/<samplefile_name>_<regionfile_name>_heatmap_tss.pdf`
+Heatmap of the enrichment for all ChIP and RNAseq samples in the `<samplefile_name>_analysis_samplefile.txt` on the regions from `<regionfile_name>.bed`, aligning all regions by their transcription start site, in decreasing order of overall enrichment in all samples.
+
+- `combined/plots/<samplefile_name>_<regionfile_name>_heatmap_tss_k5.pdf`
+Heatmap of the enrichment for all ChIP and RNAseq samples in the `<samplefile_name>_analysis_samplefile.txt` on the regions from `<regionfile_name>.bed`, aligning all regions by their transcription start site, clustered into 5 regions by kmeans.
+
+- `combined/plots/<samplefile_name>_<regionfile_name>_heatmap_DEG.pdf`
+Heatmap of the enrichment for all ChIP samples in the `<samplefile_name>_analysis_samplefile.txt` on the groups of differentially expressed genes called between the all pairs of RNAseq samples, scaling each gene to the same length, in decreasing order of overall enrichment in each group of UP and DOWN-regulated genes, using a specific scale for each mark (warning: genes differentially expressed between several pairs of tissues will be present in the corresponding clusters).
+
+- `combined/plots/<samplefile_name>_<regionfile_name>_heatmap_all_DEGs.pdf`
+Heatmap of the enrichment for all ChIP samples in the `<samplefile_name>_analysis_samplefile.txt` on all the differentially expressed genes called between the all pair of RNAseq samples, scaling each gene to the same length, and clustering into 5 groups by kmeans, using a specific scale for each mark (warning: the generated clusters of genes are not linked to the samples they were originally called in as differentially expressed).
