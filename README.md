@@ -27,7 +27,7 @@ IDR 2.0.4.2
 (grit 2.0.5)
 bedGraphToBigWig v 2.8
 R 3.6.3
-R libraries: ggplot2 3.3.2; UpSetR 1.4.0; limma 3.42.2; edgeR 3.28.1; dplyr 1.0.2; tidyr 1.1.2; stringr 1.4.0; cowplot 1.1.0; gplots 3.1.0
+R libraries: ggplot2 3.3.2; UpSetR 1.4.0; limma 3.42.2; edgeR 3.28.1; dplyr 1.0.2; tidyr 1.1.2; stringr 1.4.0; cowplot 1.1.0; gplots 3.1.0; RColorBrewer 1.1.2
 ```
 5) Organize your reference genome folders so that they are all in the same main folder and that each contain ONE fasta file (.fa extension), ONE GFF file (.gff or .gff* extension) and ONE GTF (.gtf extension) file.\
 The GTF file can be created from a GFF file with cufflinks `gffread -T <gff_file> -o <gtf_file>` and check that 'transcript_id' and 'gene_id' look good in the 9th column.\
@@ -95,7 +95,9 @@ Gets some mapping stats
 
 - __MaizeCode_analysis.sh__ - _wrapper script for the analysis pipeline_\
 If new samples are to be analyzed individually, sends each group of samples of the same datatype to `MaizeCode_ChIP_analysis.sh` or `MaizeCode_RNA_analysis.sh`\
-Gathers peak, gene expression and tss statistics for all samples in the samplefile (in combined/reports/summary_ChIP_peaks_<samplename>.txt \
+Gathers peak statistics for all ChIPseq samples in the samplefile and lauches `MaizeCode_R_peak_stats.r` to plot them\
+Gathers gene expression statistics for all RNAseq samples in the samplefile and lauches `MaizeCode_R_gene_ex_stats.r` to plot them\
+Gathers TSS statistics for all RAMPAGE samples in the samplefile\
 Launches the `MaizeCode_line_analysis.sh` script for each reference present in the samplefile\
 If different lines are present, launches the `MaizeCode_combined_analysis.sh` script ___NOT DONE YET___
 
@@ -150,7 +152,13 @@ Compares gene status between homolog genes\
 Compares enhancers?
 
 - __MaizeCode_R_mapping_stats.r__\
-Creates a plot representing the mapping statistics (both read numbers and distribution) named `combined/plots/mapping_stats_<samplefile_name>.pdf`
+Creates a plot representing the mapping statistics (both read numbers and distribution), named `combined/plots/mapping_stats_<samplefile_name>.pdf`
+
+- __MaizeCode_R_peak_stats.r__\
+Creates a plot representing the number of peaks called in the different ChIPseq sub-samples, named `combined/plots/peak_stats_<samplefile_name>.pdf`
+
+- __MaizeCode_R_gene_ex_stats.r__\
+Creates a plot summarizing the expression levels of genes in all RNAseq samples named `combined/plots/gene_expression_stats_<samplefile_name>.pdf`
 
 - __MaizeCode_R_Upset.r__\
 Creates an Upset plot of overlapping peaks and their presence in gene bodies named `combined/plots/Upset_<analysis_name>.pdf`
@@ -199,7 +207,7 @@ From the main folder `<maizecode>` where the `MaizeCode.sh` is run
   - `<maizecode>/combined/DEG`: Folder containing differentially expressed genes analysis results. `FC_<sample1>_vs_<sample2>.txt` are pairwise comparison between sample1 and sample2 for all genes. `DEG_<sample1>_vs_<sample2>.txt` only contain the differentially expressed genes (FDR<=0.05, |logFC|>2) between sample1 and sample2.
   - `<maizecode>/combined/peaks`: Folder containing combined ChIPseq peak files `peaks_<analysis_name>.bed`, RAMPAGE TSS files `tss_<analysis_name>.bed` and matrix for Upset plots `matrix_upset_<analysis_name>.txt`.
   - `<maizecode>/combined/matrix`: Folder containing matrix files for heatmap plotting `regions_<analysis_name>.gz`, `tss_<analysis_name>.gz` and `deg_<analysis_name>.gz`, outputed regions from kmean clustering of the heatmaps `<analysis_name>_regions_regions_k5.txt` and `<analysis_name>_tss_regions_k5.txt` and the value tables to be used for the scales of heatmaps `values_regions_<analysis_name>.txt` and `values_tss_<analysis_name>.txt`. 'regions' corresponds to the 'scale_regions' argument of deeptools, 'tss' corresponds to the 'reference-point --referencePoint TSS' argument of deeptools and 'k5' corresponds to the '--kmeans 5' argument of deeptools.
-  - `<maizecode>/combined/plots`: Folder containing the mapping statistics plot `mapping_stats_<analysis_name>.pdf`, the Upset plots of peaks in gene bodies `Upset_<analysis_name>.pdf`, the MDS and BCV plots from the DEG analysis `MDS_<analysis_name>.pdf` and `BCV_<analysis_name>.pdf`, respectively, the heatmaps of differentially expressed genes clustered accross all samples with log(cpm) values `Heatmap_cpm_<analysis_name>.pdf` and normalized for each gene `Heatmap_zscore_<analysis_name>.pdf`, and the different deeptools heatmaps `<analysis_name>_heatmaps_regions.pdf`, `<analysis_name>_heatmaps_regions_k5.pdf`, `<analysis_name>_heatmaps_tss.pdf` and `<analysis_name>_heatmaps_tss_k5.pdf`, and profiles . 'regions' corresponds to the 'scale_regions' argument of deeptools, 'tss' corresponds to the 'reference-point --referencePoint TSS' argument of deeptools and 'k5' corresponds to the '--kmeans 5' argument of deeptools.
+  - `<maizecode>/combined/plots`: Folder containing the mapping statistics plot `mapping_stats_<analysis_name>.pdf`, the peak statistics plot `peak_stats_<analysis_name>.pdf`, the gene expression statistics plot `gene_expression_stats_<analysis_name>.pdf`, the Upset plots of peaks in gene bodies `Upset_<analysis_name>.pdf`, the MDS and BCV plots from the DEG analysis `MDS_<analysis_name>.pdf` and `BCV_<analysis_name>.pdf`, respectively, the heatmaps of differentially expressed genes clustered accross all samples with log(cpm) values `Heatmap_cpm_<analysis_name>.pdf` and normalized for each gene `Heatmap_zscore_<analysis_name>.pdf`, and the different deeptools heatmaps `<analysis_name>_heatmaps_regions.pdf`, `<analysis_name>_heatmaps_regions_k5.pdf`, `<analysis_name>_heatmaps_tss.pdf` and `<analysis_name>_heatmaps_tss_k5.pdf`, and profiles . 'regions' corresponds to the 'scale_regions' argument of deeptools, 'tss' corresponds to the 'reference-point --referencePoint TSS' argument of deeptools and 'k5' corresponds to the '--kmeans 5' argument of deeptools.
   - `<maizecode>/combined/reports`: Folder containing the `summary_mapping_stats_<samplefile_name>.txt` file that has a summary of mapping statistics for all samples in each samplefile, the `summary_ChIP_peaks_<samplefile_name>.txt` file that has a summary of peak statistics for all ChIPseq samples in each samplefile,the `summary_gene_expression_<samplefile_name>.txt` file that has a summary of gene expression statistics for all RNAseq samples in each samplefile and the `summary_RAMPAGE_tss_<samplefile_name>.txt` file that has a summary of peak/tss statistics for all RAMPAGE samples in each samplefile.
   - `<maizecode>/combined/logs`: Folder containing log files to go back to in case of error during combined analysis `analysis_<analysis_name>.log`
   - `<maizecode>/combined/chkpts`: Folder containing `touch` files to track success of combined analysis `<analysis_name>.log`. These files are only for success tracking and will be overwritten if an analysis with the same name is to be performed.
@@ -260,6 +268,17 @@ Tool details: https://github.com/nboley/idr \
 
 - `combined/plots/mapping_stats_<samplefile_name>.pdf`\
 Bar plots showing number and distribution of uniquely mapped, multi-mapping, unmapped and filtered reads for all samples in `<samplefile_name>_analysis_samplefile.txt`.\
+tool details: https://ggplot2.tidyverse.org/reference/geom_bar.html \
+tool details: https://wilkelab.org/cowplot/reference/index.html \
+\[ generated in R by `MaizeCode_R_mapping_stats.r`, started from `MaizeCode.sh` ]
+
+- `combined/plots/peak_stats_<samplefile_name>.pdf`\
+Bar plots showing the number of peaks called in each biological replicate, the number of peaks in common between the replicates, the number of peaks in common passing an IDR threshold of 0.05, the number of peaks called when the bam files of both biological replicates are merged, the number of peaks in common between pseudo-replicates (called on two random halves of the merged bam file) and the number of selected peaks (common between the merged and the pseudoreplicates) for all ChIPseq samples in `<samplefile_name>_analysis_samplefile.txt`.\
+tool details: https://ggplot2.tidyverse.org/reference/geom_bar.html \
+\[ generated in R by `MaizeCode_R_mapping_stats.r`, started from `MaizeCode.sh` ]
+
+- `combined/plots/gene_expression_stats_<samplefile_name>.pdf`\
+Bar plots showing the distribution of genes in three large categories: unexpressed (cpm=0), lowly expressed (cpm<1) and highly expressed (cpm>1) for each biological replicate and when taking their average, for all RNAseq samples in `<samplefile_name>_analysis_samplefile.txt`.\
 tool details: https://ggplot2.tidyverse.org/reference/geom_bar.html \
 \[ generated in R by `MaizeCode_R_mapping_stats.r`, started from `MaizeCode.sh` ]
 
