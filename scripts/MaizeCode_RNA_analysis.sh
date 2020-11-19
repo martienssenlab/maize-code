@@ -56,26 +56,33 @@ fi
 tmp1=${samplefile##*temp_}
 export samplename=${tmp1%%_RNA*}
 
-if [ ! -s TSS/summary_tss_${samplename}.txt ]; then
-	printf "Line\tTissue\tType\tTotal_annotated_genes\tTSS_in_rep1\tTSS_in_Rep2\tCommon_TSS\tCommon_TSS_IDR<=0.05\n" > TSS/summary_tss_${samplename}.txt
+if [ ! -s reports/summary_RAMPAGE_tss.txt ]; then
+	printf "Line\tTissue\tType\tTotal_annotated_genes\tTSS_in_rep1\tTSS_in_Rep2\tCommon_TSS\tCommon_TSS_IDR<=0.05\n" > reports/summary_RAMPAGE_tss.txt
 fi
-if [ ! -s TSS/summary_expression_${samplename}.txt ]; then
-	printf "Line\tTissue\tType\tTotal_annotated_genes\tNot_expressed_in_Rep1\tLow_expression_in_Rep1(<1cpm)\tHigh_expression_in_Rep1(>1cpm)\tNot_expressed_in_Rep2\tLow_expression_in_Rep2(<1cpm)\tHigh_expression_in_Rep2(>1cpm)\tNo_mean\tLow_mean(<1cpm)\tHigh_mean(>1cpm)\n" > TSS/summary_expression_${samplename}.txt
+if [ ! -s reports/summary_gene_expression.txt ]; then
+	printf "Line\tTissue\tType\tTotal_annotated_genes\tNot_expressed_in_Rep1\tLow_expression_in_Rep1(<1cpm)\tHigh_expression_in_Rep1(>1cpm)\tNot_expressed_in_Rep2\tLow_expression_in_Rep2(<1cpm)\tHigh_expression_in_Rep2(>1cpm)\tNo_mean\tLow_mean(<1cpm)\tHigh_mean(>1cpm)\n" > reports/summary_gene_expression.txt
 fi
 
 pids=()
 while read line tissue rnatype paired ref_dir
 do
+	export line
+	export tissue
+	export rnatype
 	export name=${line}_${tissue}_${rnatype}
 	case "$rnatype" in
-		RNAseq)	export param_bg="--outWigType bedGraph";;
-		shRNA) 	export param_bg="--outWigType bedGraph";;
-		RAMPAGE)	export param_bg="--outWigType bedGraph read1_5p";;
+		RNAseq)	export param_bg="--outWigType bedGraph"
+				export strandedness="reverse";;
+		shRNA) 	export param_bg="--outWigType bedGraph"
+				export strandedness="reverse";;
+		RAMPAGE)	export param_bg="--outWigType bedGraph read1_5p"
+					export strandedness="reverse";;
 	esac
 	printf "\nStarting single RNA sample analysis for $name\n"	
+	export ref_dir=${ref_dir}
 	export ref=${ref_dir##*/}
 	export annotated_gene_number=$(cat tracks/${ref}_all_genes.bed | wc -l)
-	qsub -N ${name} -V -cwd -sync y -pe threads 20 -l m_mem_free=8G -l tmp_free=50G -j y -o logs/analysis_${name}.log <<-EOF &
+	qsub -N ${name} -V -cwd -sync y -pe threads 20 -l m_mem_free=8G -l tmp_free=50G -j y -o logs/analysis_${name}.log <<-'EOF' &
 		#!/bin/bash
 		set -e -o pipefail
 		
@@ -83,15 +90,15 @@ do
 		date
 		printf "\n"
 		
-		export threads=\$NSLOTS
+		export threads=$NSLOTS
 		
 		#### To merge bam files of replicates
 		if [ ! -s mapped/${name}_merged.bam ]; then
 			printf "\nMerging replicates of $name\n"
-			samtools merge -@ \$threads mapped/temp_${name}.bam mapped/mrkdup_${name}_Rep1_Processed.out.bam mapped/mrkdup_${name}_Rep2_Processed.out.bam
-			samtools sort -@ \$threads -o mapped/${name}_merged.bam mapped/temp_${name}.bam
+			samtools merge -@ $threads mapped/temp_${name}.bam mapped/mrkdup_${name}_Rep1_Processed.out.bam mapped/mrkdup_${name}_Rep2_Processed.out.bam
+			samtools sort -@ $threads -o mapped/${name}_merged.bam mapped/temp_${name}.bam
 			rm -f mapped/temp_${name}.bam
-			samtools index -@ \$threads mapped/${name}_merged.bam
+			samtools index -@ $threads mapped/${name}_merged.bam
 		fi
 		#### To make bw files of merged samples if not already existing
 		if [ ! -s tracks/${name}_merged_minus.bw ]; then
@@ -101,13 +108,23 @@ do
 			### Converting to bigwig files
 			printf "\nConverting bedGraphs to bigWigs\n"
 			sort -k1,1 -k2,2n tracks/bg_${name}_merged_Signal.UniqueMultiple.str1.out.bg > tracks/${name}_merged_Signal.sorted.UniqueMultiple.str1.out.bg
-			bedGraphToBigWig tracks/${name}_merged_Signal.sorted.UniqueMultiple.str1.out.bg ${ref_dir}/chrom.sizes tracks/${name}_merged_minus.bw
 			sort -k1,1 -k2,2n tracks/bg_${name}_merged_Signal.Unique.str1.out.bg > tracks/${name}_merged_Signal.sorted.Unique.str1.out.bg
-			bedGraphToBigWig tracks/${name}_merged_Signal.sorted.Unique.str1.out.bg ${ref_dir}/chrom.sizes tracks/${name}_merged_unique_minus.bw
 			sort -k1,1 -k2,2n tracks/bg_${name}_merged_Signal.UniqueMultiple.str2.out.bg > tracks/${name}_merged_Signal.sorted.UniqueMultiple.str2.out.bg
-			bedGraphToBigWig tracks/${name}_merged_Signal.sorted.UniqueMultiple.str2.out.bg ${ref_dir}/chrom.sizes tracks/${name}_merged_plus.bw
 			sort -k1,1 -k2,2n tracks/bg_${name}_merged_Signal.Unique.str2.out.bg > tracks/${name}_merged_Signal.sorted.Unique.str2.out.bg
-			bedGraphToBigWig tracks/${name}_merged_Signal.sorted.Unique.str2.out.bg ${ref_dir}/chrom.sizes tracks/${name}_merged_unique_plus.bw
+			if [[ $strandedness == "forward" ]]; then
+				bedGraphToBigWig tracks/${name}_merged_Signal.sorted.UniqueMultiple.str1.out.bg ${ref_dir}/chrom.sizes tracks/${name}_merged_plus.bw
+				bedGraphToBigWig tracks/${name}_merged_Signal.sorted.Unique.str1.out.bg ${ref_dir}/chrom.sizes tracks/${name}_merged_unique_plus.bw
+				bedGraphToBigWig tracks/${name}_merged_Signal.sorted.UniqueMultiple.str2.out.bg ${ref_dir}/chrom.sizes tracks/${name}_merged_minus.bw
+				bedGraphToBigWig tracks/${name}_merged_Signal.sorted.Unique.str2.out.bg ${ref_dir}/chrom.sizes tracks/${name}_merged_unique_minus.bw
+			elif [[ $strandedness == "reverse" ]]; then
+				bedGraphToBigWig tracks/${name}_merged_Signal.sorted.UniqueMultiple.str1.out.bg ${ref_dir}/chrom.sizes tracks/${name}_merged_minus.bw
+				bedGraphToBigWig tracks/${name}_merged_Signal.sorted.Unique.str1.out.bg ${ref_dir}/chrom.sizes tracks/${name}_merged_unique_minus.bw
+				bedGraphToBigWig tracks/${name}_merged_Signal.sorted.UniqueMultiple.str2.out.bg ${ref_dir}/chrom.sizes tracks/${name}_merged_plus.bw
+				bedGraphToBigWig tracks/${name}_merged_Signal.sorted.Unique.str2.out.bg ${ref_dir}/chrom.sizes tracks/${name}_merged_unique_plus.bw
+			else
+				printf "\nStrandedness of data unknown! Tracks could not be created and script failed!\n"
+				exit 1
+			fi
 			### Moving Log files to report folder
 			mv tracks/*${name}_merged*Log* reports/
 			### Cleaning up
@@ -116,49 +133,47 @@ do
 			printf "\nBigwig files for $name already exists\n"
 		fi
 		
-		### Performing peak calling on RAMPAGE data to identify TSS and check biological variation with IDR
+		#### Performing peak calling on RAMPAGE data to identify TSS and check biological variation with IDR
 		if [[ $rnatype == "RAMPAGE" ]]; then
 			#### To call TSS/peaks on each biological replicate
 			for rep in Rep1 Rep2
 			do
-				namefile=mapped/mrkdup_${name}_\${rep}_Processed.out.bam
-				controlfile=mapped/mrkdup_${line}_${tissue}_RNAseq_\${rep}_Processed.out.bam
-				printf "\nCalling peaks for TSS on \${namefile} vs \${controlfile} with macs2 version:\n"
-				macs2 --version
-				macs2 callpeak -t \${namefile} -c \${controlfile} -f BAM -g 2.2e9 -B -n ${name}_\${rep} --keep-dup "all" --call-summits --outdir TSS/ --tempdir \$TMPDIR --nomodel --extsize 100
+				if [ ! -s TSS/${name}_${rep}_peaks.narrowPeak ]; then
+					namefile=mapped/mrkdup_${name}_${rep}_Processed.out.bam
+					controlfile=mapped/mrkdup_${line}_${tissue}_RNAseq_${rep}_Processed.out.bam
+					printf "\nCalling peaks for TSS on ${namefile} vs ${controlfile} with macs2 version:\n"
+					macs2 --version
+					macs2 callpeak -t ${namefile} -c ${controlfile} -f BAM -g 2.2e9 -B -n ${name}_${rep} --keep-dup "all" --call-summits --outdir TSS/ --tempdir $TMPDIR --nomodel --extsize 100
+				else
+					printf "\nPeak already called for $name $rep\n"
+				fi
 			done
 			#### To get IDR analysis on biological replicates
-			if [ ! -s TSS/idr_${name}.bed ]; then
+			if [ ! -s TSS/idr_${name}.narrowPeak ]; then
 				printf "\nGoing IDR analysis on both replicates from ${name} with idr version:\n"
 				idr --version
-				idr --input-file-type narrowPeak --samples TSS/${name}_Rep1_peaks.narrowPeak TSS/${name}_Rep2_peaks.narrowPeak -o TSS/idr_${name}.narrowPeak -l reports/idr_${name}.log --plot
+				idr --input-file-type narrowPeak --samples TSS/${name}_Rep1_peaks.narrowPeak TSS/${name}_Rep2_peaks.narrowPeak -o TSS/idr_${name}.narrowPeak -l reports/idr_${name}.log --plot || true
 				mv TSS/idr_${name}.narrowPeak.png plots/idr_${name}.png
 			else
 				printf "\nIDR analysis already done for ${name}\n"
 			fi
 			#### To get some tss stats for each RAMPAGE sample
 			printf "\nCalculating peak/TSS stats for ${name}\n"
-			rep1=$(awk '{print $1,$2,$3}' TSS/${name}_Rep1.bed | sort -k1,1 -k2,2n -u | wc -l)
-			rep2=$(awk '{print $1,$2,$3}' TSS/${name}_Rep2.bed | sort -k1,1 -k2,2n -u | wc -l)
-			common=$(awk '{print $1,$2,$3}' TSS/idr_${name}.bed | sort -k1,1 -k2,2n -u | wc -l)
-			idr=$(awk '$5>=540 {print $1,$2,$3}' TSS/idr_${name}.bed | sort -k1,1 -k2,2n -u | wc -l)
-			awk -v OFS="\t" -v a=$line -v b=$tissue -v c=$rnatype -v n=${annotated_gene_number} -v d=\$rep1 -v e=\$rep2 -v f=\$common -v g=\$idr 'BEGIN {print a,b,c,n,d,e,f" ("f/d*100"%rep1;"f/e*100"%rep2)",g" ("g/f*100"%common)"}' >> TSS/summary_tss_${samplename}.txt
+			rep1=$(awk '{print $1,$2,$3}' TSS/${name}_Rep1_peaks.narrowPeak | sort -k1,1 -k2,2n -u | wc -l)
+			rep2=$(awk '{print $1,$2,$3}' TSS/${name}_Rep2_peaks.narrowPeak | sort -k1,1 -k2,2n -u | wc -l)
+			common=$(awk '{print $1,$2,$3}' TSS/idr_${name}.narrowPeak | sort -k1,1 -k2,2n -u | wc -l)
+			idr=$(awk '$5>=540 {print $1,$2,$3}' TSS/idr_${name}.narrowPeak | sort -k1,1 -k2,2n -u | wc -l)
+			awk -v OFS="\t" -v a=$line -v b=$tissue -v c=$rnatype -v n=${annotated_gene_number} -v d=$rep1 -v e=$rep2 -v f=$common -v g=$idr 'BEGIN {print a,b,c,n,d,e,f" ("f/d*100"%rep1;"f/e*100"%rep2)",g" ("g/f*100"%common)"}' >> reports/summary_RAMPAGE_tss.txt
+		#### To get some stats on gene expression levels for RNAseq samples
 		elif [[ $rnatype == "RNAseq" ]]; then
-			#### To get some stats for each RNAseq sample
 			printf "\nCalculating gene expession stats for ${name}\n"
 			totrep1=$(awk '$1 !~ /^N/ {n+=$2} END {print n}' mapped/map_${name}_Rep1_ReadsPerGene.out.tab)
-			awk -v OFS="\t" -v t=\$totrep1 '$1 !~ /^N/ {n=$2/t; print $1,n}' mapped/map_${name}_Rep1_ReadsPerGene.out.tab > mapped/temp_genes_${name}_rep1.txt
-			rep1=$(awk -v OFS="\t" '{if ($2=0) a+=1; else if ($2<1) b+=1; else c+=1} END {printf "a\tb\tc"}' mapped/temp_genes_${name}_rep1.txt)
+			awk -v OFS="\t" -v t=${totrep1} '$1 !~ /^N/ {n=$2/t*1000000; print $1,n}' mapped/map_${name}_Rep1_ReadsPerGene.out.tab > mapped/temp_genes_${name}_rep1.txt
 			totrep2=$(awk '$1 !~ /^N_/ {n+=$2} END {print n}' mapped/map_${name}_Rep2_ReadsPerGene.out.tab)
-			awk -v OFS="\t" -v t=\$totrep2 '$1 !~ /^N_/ {n=$2/t; print $1,n}' mapped/map_${name}_Rep2_ReadsPerGene.out.tab > mapped/temp_genes_${name}_rep2.txt
-			rep2=$(awk -v OFS="\t" '{if ($2=0) a+=1; else if ($2<1) b+=1; else c+=1} END {printf "a\tb\tc"}' mapped/temp_genes_${name}_rep2.txt)
-			while read gene value
-			do
-				awk -v OFS="\t" -v g=\$gene -v r=\$value '$1==g {m=($2+r)/2; print $1,m}' mapped/temp_genes_${name}_rep1.txt > mapped/temp_genes_${name}_mean.txt
-			done < mapped/temp_genes_${name}_rep1.txt
-			mean=$(awk -v OFS="\t" '{if ($2=0) a+=1; else if ($2<1) b+=1; else c+=1} END {printf "a\tb\tc"}' mapped/temp_genes_${name}_mean.txt)
-			awk -v OFS="\t" -v l=$line -v t=$tissue -v r=$rnatype -v n=${annotated_gene_number} -v a=\$rep1 -v b=\$rep2 -v c=\$mean 'BEGIN {printf l,t,r,n,a,b,c}' >> TSS/summary_expression_${samplename}.txt
-			rm -f mapped/temp_genes_${name}_*
+			awk -v OFS="\t" -v t=$totrep2 '$1 !~ /^N_/ {n=$2/t*1000000; print $1,n}' mapped/map_${name}_Rep2_ReadsPerGene.out.tab > mapped/temp_genes_${name}_rep2.txt
+			paste mapped/temp_genes_${name}_rep1.txt mapped/temp_genes_${name}_rep2.txt | awk -v OFS="\t" '{m=($2+$4)/2; print $1,$2,$4,m}' > mapped/temp_genes_${name}_mean.txt
+			awk -v OFS="\t" -v l=$line -v t=$tissue -v r=$rnatype -v n=${annotated_gene_number} '{if ($2==0) a+=1; else if ($2<=1) b+=1; else c+=1; if ($3==0) d+=1; else if ($3<=1) e+=1; else f+=1; if ($4==0) g+=1; else if ($4<=1) h+=1; else i+=1} END {print l,t,r,n,a,b,c,d,e,f,g,h,i}' mapped/temp_genes_${name}_mean.txt >> reports/summary_gene_expression.txt
+			rm -f mapped/temp_genes_${name}*
 		fi
 		printf "\nAnalysis finished for $name\n"
 		touch chkpts/analysis_${name}
@@ -170,4 +185,3 @@ printf "\nWaiting for samples to be processed individually\n"
 wait ${pids[*]}
 
 printf "\nScript finished successfully!\n"
-
