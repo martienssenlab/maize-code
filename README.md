@@ -35,7 +35,7 @@ The GFF file should have 'gene' in the 3rd column.\
 All files can be gzipped (.gz extension).
 6) Make the samplefiles you want. An example of a samplefile is in the data folder (B73_endosperm_samplefile.txt) and a quick way to make them is at the bottom of the `MaizeCode.sh` file. For cleaner naming purposes, use "\_samplefile.txt" as a suffix.
 7) Submit the `MaizeCode.sh` script, giving as argument `-f <samplefile.txt>` the samplefile of your choice and `-p <path>` the path to your directory that contains the different genome directories.
-8) By default, it will proceed with the analysis. `-s` can be set so that it does not proceed with the analysis at all.
+8) By default, it will proceed with the analysis. `-s` can be set so that it does not proceed with the analysis at all or `-c` can be set if only single sample analysis should be performed but no combined analysis per line or between lines.
 9) If the analysis has not proceeded or if you want to analyze different samples together, make the analysis_samplefile you want. An example of an analysis samplefile is in the data folder (B73_endosperm_analysis_samplefile.txt) and a quick way to make them is at the bottom of the `MaizeCode_analysis.sh` file. For better naming purposes, use "\_analysis_samplefile.txt" as a suffix.
 10) Submit the `MaizeCode_analysis.sh` script, giving as argument `-f <analysisfile>` the analysis_samplefile and `-r <regionfile>` the regions (in bed6 format) to be plotted on. `-s` can be set if the combined analysis should not be performed (only single-sample analysis will be done, i.e calling peaks and making bigwig files). It also stops there if the regionfile is missing.
 11) Have a look at the results: mapping statistics, peak statistics and various plots (see Output below).
@@ -67,6 +67,7 @@ Runs an instance of `MaizeCode_ChIP_sample.sh` or `MaizeCode_RNA_sample.sh` for 
 Waits for the samples to be mapped\
 Runs the `MaizeCode_R_mapping_stats.r` script to plot the mapping statitistics of all the samples in samplefile into bar plots\ 
 Runs the `MaizeCode_analysis.sh` script if the `-s` argument (that stops after mapping) has not been given\
+Runs the `MaizeCode_analysis.sh -s` script if the `-c` argument (that stops after single sample analyis) has been given\
 By default, it will provide the `<reference_genome>_all_genes.bed` files created by the check_environment script as region files
 
 - __MaizeCode_check_environment.sh__\
