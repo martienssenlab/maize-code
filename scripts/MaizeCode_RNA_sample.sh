@@ -21,7 +21,7 @@ usage="
 ##### 	-h: help, returns usage
 #####
 ##### It runs fastQC, trims adapters with cutadapt, aligns with STAR (different parameters based on type of RNA),
-##### creates count tables and get some mapping stats
+##### make stranded track files (bigwigs) and get some mapping stats
 #####
 ##### Requirements: samtools, fastQC, Cutadapt, STAR
 "
@@ -140,9 +140,9 @@ if [[ $paired == "PE" ]]; then
 	tot=$(grep "Total read pairs processed:" reports/trimming_${name}.txt | awk '{print $NF}' | sed 's/,//g')
 	filt=$(grep "Number of input reads" reports/map_${name}_Log.final.out | awk '{print $NF}')
 	multi=$(grep "Number of reads mapped to multiple loci" reports/map_${name}_Log.final.out | awk '{print $NF}')
-	prop=$(grep "Uniquely mapped reads number" reports/map_${name}_Log.final.out | awk '{print $NF}')
-	all=$((multi+prop))
-	awk -v OFS="\t" -v l=$line -v t=$tissue -v m=$mark -v r=$rep -v a=$tot -v b=$filt -v c=$all -v d=$prop 'BEGIN {print l,t,m,r,a,b" ("b/a*100"%)",c" ("c/a*100"%)",d" ("d/a*100"%)"}' >> reports/summary_mapping_stats.txt
+	single=$(grep "Uniquely mapped reads number" reports/map_${name}_Log.final.out | awk '{print $NF}')
+	allmap=$((multi+single))
+	awk -v OFS="\t" -v l=$line -v t=$tissue -v m=$rnatype -v r=$rep -v g=$ref -v a=$tot -v b=$filt -v c=$allmap -v d=$single 'BEGIN {print l,t,m,r,g,a,b" ("b/a*100"%)",c" ("c/a*100"%)",d" ("d/a*100"%)"}' >> reports/summary_mapping_stats.txt
 elif [[ $paired == "SE" ]]; then
 	#### FastQC on raw data
 	printf "\nRunning fastQC for $name with fastqc version:\n"
