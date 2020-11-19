@@ -11,10 +11,11 @@
 usage="
 ##### Main script for Maize code data analysis
 ##### 
-##### sh MaizeCode.sh -f <samplefile> -p <path to genome reference> [-s]
+##### sh MaizeCode.sh -f <samplefile> -p <path to genome reference> [-s1] [-s2]
 ##### 	-f: samplefile
 ##### 	-p: path to the folder containing all the different genome references (e.g. ~/data/Genomes/Zea_mays)
-#####	-s: if set, the analysis does not proceed (default=not set, keep going with the analysis over all the samples in the samplefile)
+#####	-s: if set, the whole analysis does not proceed (default=not set, keep going with the analysis over all the samples in the samplefile)
+#####	-c: if set, only single samples analysis proceeds, not grouped analysis per line (default=not set, keep going with the complete analysis)
 ##### 	-h: help, returns usage
 #####
 ##### The samplefile should be a tab-delimited text file with 8 columns:
@@ -51,14 +52,14 @@ printf "\n"
 export threads=$NSLOTS
 # # export mc_dir=$(dirname "$0")
 export mc_dir="${HOME}/data/Scripts/MaizeCode"
-printf "\nRunning MaizeCode scripts from ${mc_dir} in working directory ${PWD}\n"
+printf "\nRunning MaizeCode.sh script from ${mc_dir} in working directory ${PWD}\n"
 
 if [ $# -eq 0 ]; then
 	printf "$usage\n"
 	exit 1
 fi
 
-while getopts "f:p:sh" opt; do
+while getopts "f:p:sch" opt; do
 	case $opt in
 		h) 	printf "$usage\n"
 			exit 0;;
@@ -66,6 +67,8 @@ while getopts "f:p:sh" opt; do
 		p)	export pathtoref=${OPTARG};;
 		s)	printf "\nOption not to perform analysis selected\n"
 			export keepgoing="STOP";;
+		c)	printf "\nOption not to perform combined analysis selected\n"
+			export wholeanalysis="STOP";;
 		*)	printf "$usage\n"
 			exit 1;;
 	esac
@@ -96,7 +99,7 @@ fi
 
 newdatatype_list=()
 newref_list=()
-datatype_ref_list=()
+datat_ref_list=()
 new_env=0
 new_sample=0
 while read line tissue sample rep sampleID path paired ref
@@ -172,7 +175,7 @@ else
 	for check in ${check_list[@]}
 	do
 		datatype=${check%%/*}
-		ref=${check##*/}
+		ref=${check##*/env_}
 		if [ ! -e $check ]; then
 			printf "\nProblem while making environment for $datatype with $ref genome!\nCheck log: $datatype/logs/env_${ref}.log\n"
 			exit 1
@@ -182,6 +185,17 @@ else
 	done
 fi
 
+if [ ! -d ./combined ]; then
+	mkdir ./combined
+	mkdir ./combined/peaks
+	mkdir ./combined/DEG
+	mkdir ./combined/TSS
+	mkdir ./combined/reports
+	mkdir ./combined/matrix
+	mkdir ./combined/plots
+	mkdir ./combined/chkpts
+	mkdir ./combined/logs
+fi
 
 #############################################################################################
 ########################################### PART2 ###########################################
@@ -191,6 +205,9 @@ fi
 tmp1=${samplefile%%_samplefile*}
 analysisfile="${tmp1}_analysis_samplefile.txt"
 
+tmp2=${samplefile##*/}
+samplename=${tmp1%%_samplefile*}
+
 if [ -s ${analysisfile} ]; then
 	rm -f ${analysisfile}
 fi
@@ -199,7 +216,6 @@ check_list=()
 checkname_list=()
 checkdatatype_list=()
 ref_list=()
-datatype_list=()
 sample_list=()
 pids=()
 while read line tissue sample rep sampleID path paired ref
@@ -213,7 +229,6 @@ do
 	esac
 	check=$datatype/chkpts/${name}_${ref}
 	ref_list+=("$ref")
-	datatype_list+=("$datatype")
 	if [ -e $check ]; then
 		printf "Sample $name has already been mapped to $ref genome\n"
 	else
@@ -224,8 +239,8 @@ do
 #### This return the following warning '[: too many arguments' when several files are there (PE data)
 			if [[ $paired == "PE" ]]; then
 				printf "\nCopying PE fastq for $name ($sampleID in $path)\n"
-				cp $path/${sampleID}*R1*fastq.gz ./$datatype/fastq/${name}_R1.fastq.gz
-				cp $path/${sampleID}*R2*fastq.gz ./$datatype/fastq/${name}_R2.fastq.gz
+				cp $path/${sampleID}*R1*q.gz ./$datatype/fastq/${name}_R1.fastq.gz
+				cp $path/${sampleID}*R2*q.gz ./$datatype/fastq/${name}_R2.fastq.gz
 			elif [[ $paired == "SE" ]]; then
 				printf "\nCopying SE fastq for $name ($sampleID in $path)\n"
 				cp $path/${sampleID}*fastq.gz ./$datatype/fastq/${name}.fastq.gz
@@ -241,7 +256,7 @@ do
 		cd ..
 	fi
 	if [[ ! "${sample_list[@]}" =~ "${shortname}" ]] && [[ "${sample}" != "Input" ]]; then
-		printf "${line}\t${tissue}\t${sample}\t${paired}\n" >> $analysisfile
+		printf "${line}\t${tissue}\t${sample}\t${paired}\t${ref_dir}\n" >> $analysisfile
 		sample_list+=("$shortname")
 	fi
 done < $samplefile
@@ -264,43 +279,83 @@ if [[ ${new_sample} != 0 ]]; then
 	done
 fi
 
+### Plotting mapping stats for better visualization
+
+printf "\nExtracting mapping stats table\n"
+if [ -e combined/reports/temp_mapping_stats_${samplename}.txt ]; then
+	rm -f combined/reports/temp_mapping_stats_${samplename}.txt
+fi
+
+while read line tissue sample rep sampleID path paired ref
+do
+	case "$sample" in
+		H*|Input) datatype="ChIP";;
+		*RNA*|RAMPAGE) datatype="RNA";;
+	esac
+	awk -v a=$line -v b=$tissue -v c=$sample -v d=$rep -v e=$ref '$1==a && $2==b && $3==c && $4==d && $5==e' ${datatype}/reports/summary_mapping_stats.txt >> combined/reports/temp_mapping_stats_${samplename}.txt
+done < $samplefile
+
+printf "Line\tTissue\tSample\tRep\tReference_genome\tTotal_reads\tPassing_filtering\tAll_mapped_reads\tUniquely_mapped_reads\n" > combined/reports/summary_mapping_stats_${samplename}.txt
+sort combined/reports/temp_mapping_stats_${samplename}.txt -u >> combined/reports/summary_mapping_stats_${samplename}.txt
+rm -f combined/reports/temp_mapping_stats_${samplename}.txt
+printf "\nPlotting mapping stats for all samples in the samplefile with R:\n"
+R --version
+Rscript --vanilla ${mc_dir}/MaizeCode_R_mapping_stats.r combined/reports/summary_mapping_stats_${samplename}.txt ${samplename}
+
+if [[ "$keepgoing" == "STOP" ]]; then
+	enddate=`date +%s`
+	runtime=$((enddate-startdate))
+	hours=$((runtime / 3600))
+	minutes=$(( (runtime % 3600) / 60 ))
+	seconds=$(( (runtime % 3600) % 60 ))
+	printf "\nScript finished successfully without analysis in $hours:$minutes:$seconds (hh:mm:ss)!\n"		
+	exit 0
+fi	
+
 #############################################################################################
 ########################################### PART3 ###########################################
 ############################# Starting analysis if not stopped ##############################
 #############################################################################################
 
-if [[ "$keepgoing" == "STOP" ]]; then
-	printf "\nScript finished successfully without analysis\n"		
-	exit 0
-fi	
-
-tmp1=${samplefile##*/}
-samplename=${tmp1%%_samplefile*}
-
 uniq_ref_list=($(printf "%s\n" "${ref_list[@]}" | sort -u))
-uniq_datatype_list=($(printf "%s\n" "${datatype_list[@]}" | sort -u))
 
-pids=()
-if [ ${#uniq_ref_list[@]} -eq 1 ]; then
-	regionfile="${uniq_datatype_list[0]}/tracks/${uniq_ref_list[0]}_all_genes.bed"
-	tmp2=${regionfile##*/}
-	regionname=${tmp2%.*}
-	analysisname="${samplename}_on_${regionname}"
-	check="combined/chkpts/${analysisname}"
-	printf "\nPerforming the complete analysis using $regionname as region file\n"
-	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f $analysisfile -r $regionfile &
-	pids+=("$!")
-else	
-	analysisname="${samplename}_no_region"
-	check="chkpts/${analysisname}"
-	printf "\nToo many references for a combined analysis to be performed\nYou will need to run the MaizeCode_analysis.sh script once that this one is finished\nUsing a specific regionfile for combined analysis!\n"
-	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f $analysisfile &
-	pids+=("$!")
+if [ -e all_genes.txt ]; then
+	rm -f all_genes.txt
 fi
 
+for ref in ${uniq_ref_list[@]}
+do
+	if [ -s ChIP/tracks/${ref}_all_genes.bed ]; then
+		printf "ChIP/tracks/${ref}_all_genes.bed\n" >> all_genes.txt
+	elif [ -s RNA/tracks/${ref}_all_genes.bed ]; then
+		printf "ChIP/tracks/${ref}_all_genes.bed\n" >> all_genes.txt
+	else
+		printf "Problem: no region file found for ${ref}!\n"
+		exit 1
+	fi
+done
+
+pids=()
+analysisname="${samplename}_on_all_genes"
+check="combined/chkpts/${analysisname}"
+
+if [[ "$wholeanalysis" == "STOP" ]]; then
+	printf "\nPerforming only the single sample analysis\n"
+	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f $analysisfile -r all_genes.txt -s &
+else
+	printf "\nPerforming the complete analysis on all genes\n"
+	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f $analysisfile -r all_genes.txt &
+fi	
+pids+=("$!")
+
 wait ${pids[*]}
+
+if [ -e all_genes.txt ]; then
+	rm -f all_genes.txt
+fi
+
 if [ ! -e ${check} ]; then
-	printf "\nProblem during the analysis. Check maizecode.log\n"
+	printf "\nProblem during the $analysisname analysis. Check maizecode.log\n"
 	exit 1
 else
 	enddate=`date +%s`
@@ -308,7 +363,7 @@ else
 	hours=$((runtime / 3600))
 	minutes=$(( (runtime % 3600) / 60 ))
 	seconds=$(( (runtime % 3600) % 60 ))
-	printf "\nMaizeCode script finished successfully in $hours:$minutes:$seconds (hh:mm:ss)!\nCheck out the stats and plots!\n"
+	printf "\nMaizeCode script finished successfully in $hours:$minutes:$seconds (hh:mm:ss)!\nCheck out the plots!\n"
 fi
 
 ############################################################################################
@@ -317,6 +372,6 @@ fi
 
 # # ##### To make the samplefile (e.g. for B73 endosperm)
 
-# # printf "B73\tendosperm\tInput\tRep1\tS01\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tH3K4me1\tRep1\tS02\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tH3K4me3\tRep1\tS03\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tH3K27ac\tRep1\tS04\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tInput\tRep2\tS05\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tH3K4me1\tRep2\tS06\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tH3K4me3\tRep2\tS07\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tH3K27ac\tRep2\tS08\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\n" > B73_endosperm_samplefile.txt
+# # printf "B73\tendosperm\tInput\tRep1\tS01\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tH3K4me1\tRep1\tS02\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tH3K4me3\tRep1\tS03\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tH3K27ac\tRep1\tS04\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tInput\tRep2\tS05\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tH3K4me1\tRep2\tS06\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tH3K4me3\tRep2\tS07\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tH3K27ac\tRep2\tS08\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tRNAseq\tRep1\tendo\t/mnt/grid/martienssen/nlsas_norepl/data/data/archive/data/maizecode/released/B73/Long_Rampage/endo_rep1/RNAseq\tPE\tB73_v4\nB73\tendosperm\tRAMPAGE\tRep1\tendo\t/mnt/grid/martienssen/nlsas_norepl/data/data/archive/data/maizecode/released/B73/Long_Rampage/endo_rep1/RAMPAGE\tPE\tB73_v4\nB73\tendosperm\tRNAseq\tRep2\tendo\t/mnt/grid/martienssen/nlsas_norepl/data/data/archive/data/maizecode/released/B73/Long_Rampage/endo_rep2/RNAseq\tPE\tB73_v4\nB73\tendosperm\tRAMPAGE\tRep2\tendo\t/mnt/grid/martienssen/nlsas_norepl/data/data/archive/data/maizecode/released/B73/Long_Rampage/endo_rep2/RAMPAGE\tPE\tB73_v4\n" > B73_endosperm_samplefile.txt
 
 ############################################################################################
