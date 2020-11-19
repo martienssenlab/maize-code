@@ -12,9 +12,9 @@ usage="
 ##### Script for Maize code data analysis
 #####
 ##### sh MaiCode_analysis.sh -f samplefile [-r regionfile] [-s]
-#####	-f: samplefile containing the samples to compare and in 4 tab-delimited columns:
-##### 		Line, Tissue, Sample, PE or SE
-##### 	-r: bedfile containing the regions that are to be plotted over
+#####	-f: samplefile containing the samples to compare and in 5 tab-delimited columns:
+##### 		Line, Tissue, Sample, PE or SE, Reference genome directory
+##### 	-r: textfile containing the name of region files that are to be plotted over (bed files)
 ##### 		It is safest to use a full path to the region file.
 #####		If no region file is given, the analysis will behave as if -s was set.
 #####	-s: If set, the script does not progress into the combined data analysis
@@ -36,14 +36,14 @@ printf "\n"
 export threads=$NSLOTS
 # # export mc_dir=$(dirname "$0")
 export mc_dir="${HOME}/data/Scripts/MaizeCode"
-printf "\nRunning MaizeCode scripts from ${mc_dir} in working directory ${PWD}\n"
+printf "\nRunning MaizeCode_analysis.sh script from ${mc_dir} in working directory ${PWD}\n"
 
 if [ $# -eq 0 ]; then
 	printf "$usage\n"
 	exit 1
 fi
 
-while getopts ":f:r:sh" opt; do
+while getopts ":f:r:slh" opt; do
 	case $opt in
 		f) 	export samplefile=${OPTARG};;
 		r)	export regionfile=${OPTARG};;
@@ -51,7 +51,7 @@ while getopts ":f:r:sh" opt; do
 			export keepgoing="STOP";;
 		h) 	printf "$usage\n"
 			exit 0;;
-		*)	printf "$usage\n"
+		*)	printf "\nArgument unknown, retunring usage:\n$usage\n"
 			exit 1;;
 	esac
 done
@@ -92,11 +92,20 @@ if [ -s RNA/temp_${samplename}_RNA.txt ]; then
 	rm -f RNA/temp_${samplename}_RNA.txt
 fi
 
+if [ -s combined/temp_reports_${samplename}_ChIP.txt ]; then
+	rm -f combined/temp_reports_${samplename}_ChIP.txt
+fi
+
+if [ -s combined/temp_reports_${samplename}_RNA.txt ]; then
+	rm -f combined/temp_reports_${samplename}_RNA.txt
+fi
+
 #### Check if there are new samples to analyze individually
 new_chipsample=()
 new_rnasample=()
 datatype_list=()
-while read line tissue sample paired
+ref_list=()
+while read line tissue sample paired ref_dir
 do
 	case "$sample" in
 		H*|Input) datatype="ChIP";;
@@ -104,6 +113,7 @@ do
 		*) datatype="unknown";;
 	esac
 	name=${line}_${tissue}_${sample}
+	printf "$line\t$tissue\t$sample\t$paired\t${ref_dir}\n" >> combined/temp_reports_${samplename}_${datatype}.txt
 	if [ -e $datatype/chkpts/analysis_${name} ]; then
 		printf "\nSingle sample analysis for $name already done!\n"	
 	elif [[ "$datatype" == "ChIP" ]]; then
@@ -115,13 +125,23 @@ do
 		fi
 		datatype_list+=("${datatype}")
 		new_chipsample+=("${name}")
-		printf "$line\t$tissue\t$sample\t$paired\n" >> $datatype/temp_${samplename}_${datatype}.txt
+		printf "$line\t$tissue\t$sample\t$paired\t${ref_dir}\n" >> $datatype/temp_${samplename}_${datatype}.txt
 	elif [[ "$datatype" == "RNA" ]]; then
+		if [ ! -d ./RNA/plots ]; then
+			mkdir ./RNA/plots
+		fi
+		if [ ! -d ./RNA/TSS ]; then
+			mkdir ./RNA/TSS
+		fi
 		datatype_list+=("${datatype}")
 		new_rnasample+=("${name}")
-		printf "$line\t$tissue\t$sample\t$paired\n" >> $datatype/temp_${samplename}_${datatype}.txt
+		printf "$line\t$tissue\t$sample\t$paired\t${ref_dir}\n" >> $datatype/temp_${samplename}_${datatype}.txt
 	else
 		printf "\nType of data unknown for $name\nSample not processed\n"
+	fi
+	ref=${ref_dir##*/}
+	if [[ ! "${ref_list[@]}" =~ "${ref}" ]]; then
+		ref_list+=("$ref")
 	fi
 done < $samplefile
 	
@@ -154,23 +174,89 @@ if [[ "${test_new}" == 1 ]]; then
 			for chipsample in ${new_chipsample[@]}
 			do
 				if [ ! -e ${datatype}/chkpts/analysis_${chipsample} ]; then
-					printf "\nProblem during the processing of ChIP sample ${chipsample}!\nCheck log: ChIP/logs/${samplename}.log\n"
+					printf "\nProblem during the processing of ChIP sample ${chipsample}!\nCheck log: ChIP/logs/${samplename}.log and ChIP/logs/analysis_${chipsample}_*_.log\n"
 				else 
 					printf "\nChIP analysis for $chipsample processed succesfully\n"
+					rm -f temp_${samplename}_${datatype}.txt
 				fi
 			done
 		elif [[ "$datatype" == "RNA" ]]; then
 			for rnasample in ${new_rnasample[@]}
 			do
 				if [ ! -e ${datatype}/chkpts/analysis_${rnasample} ]; then
-					printf "\nProblem during the processing of RNA sample ${rnasample}!\nCheck log: RNA/logs/${samplename}.log\n"
+					printf "\nProblem during the processing of RNA sample ${rnasample}!\nCheck log: RNA/logs/${samplename}.log and RNA/logs/analysis_${rnasample}.log\n"
 				else 
-					printf "\nChIP analysis for $rnasample processed succesfully\n"
+					printf "\nRNA analysis for $rnasample processed succesfully\n"
+					rm -f temp_${samplename}_${datatype}.txt
 				fi
 			done
 		fi
 	done
 fi
+
+#### To get the peaks stats for all ChIPseq samples in the samplefile
+
+if [ -s combined/temp_reports_${samplename}_ChIP.txt ]; then
+	printf "\nSummarizing peak stats for ${samplename}\n"
+	if [ -s combined/reports/temp_peaks_${samplename}.txt ]; then
+		rm -f combined/reports/temp_peaks_${samplename}.txt
+	fi
+	while read line tissue mark paired ref_dir
+	do
+		awk -v a=$line -v b=$tissue -v c=$mark '$1==a && $2==b && $3==c' ChIP/reports/summary_ChIP_peaks.txt >> combined/reports/temp_peaks_${samplename}.txt
+	done < combined/temp_reports_${samplename}_ChIP.txt
+	printf "Line\tTissue\tMark\tPeaks_in_Rep1\tPeaks_in_Rep2\tCommon_peaks\tCommon_peaks_IDR_0.05\tPeaks_in_merged\tPeaks_in_pseudo_reps\tSelected_peaks\n" > combined/reports/summary_ChIP_peaks_${samplename}.txt
+	sort combined/reports/temp_peaks_${samplename}.txt -u >> combined/reports/summary_ChIP_peaks_${samplename}.txt
+	rm -f combined/reports/temp_peaks_${samplename}.txt
+	printf "\nPlotting peak stats for all samples in the samplefile with R:\n"
+	R --version
+	Rscript --vanilla ${mc_dir}/MaizeCode_R_peak_stats.r combined/reports/summary_ChIP_peaks_${samplename}.txt ${samplename}
+fi
+
+#### To get the RNA stats for all RNA samples in the samplefile
+
+if [ -s combined/temp_reports_${samplename}_RNA.txt ]; then
+	#### To get gene expression stats for RNAseq samples
+	grep "RNAseq" combined/temp_reports_${samplename}_RNA.txt > combined/reports/temp_${samplename}.txt
+	exist=$(cat combined/reports/temp_${samplename}.txt | wc -l)
+	if [ $exist -gt 0 ]; then
+		printf "\nSummarizing gene expression stats for ${samplename}\n"
+		if [ -s combined/reports/temp_gene_expression_${samplename}.txt ]; then
+			rm -f combined/reports/temp_gene_expression_${samplename}.txt
+		fi
+		while read line tissue sample paired ref_dir
+		do
+			awk -v a=$line -v b=$tissue -v c=$sample '$1==a && $2==b && $3==c' RNA/reports/summary_gene_expression.txt >> combined/reports/temp_gene_expression_${samplename}.txt
+		done < combined/reports/temp_${samplename}.txt
+		printf "Line\tTissue\tType\tTotal_annotated_genes\tNot_expressed_in_Rep1\tLow_expression_in_Rep1(<1cpm)\tHigh_expression_in_Rep1(>1cpm)\tNot_expressed_in_Rep2\tLow_expression_in_Rep2(<1cpm)\tHigh_expression_in_Rep2(>1cpm)\tNo_mean\tLow_mean(<1cpm)\tHigh_mean(>1cpm)\n" > combined/reports/summary_gene_expression_${samplename}.txt
+		sort combined/reports/temp_gene_expression_${samplename}.txt -u >> combined/reports/summary_gene_expression_${samplename}.txt
+		rm -f combined/reports/temp_gene_expression_${samplename}.txt
+		printf "\nPlotting gene expression stats for all RNAseq samples in the samplefile with R:\n"
+		R --version
+		Rscript --vanilla ${mc_dir}/MaizeCode_R_gene_ex_stats.r combined/reports/summary_gene_expression_${samplename}.txt ${samplename}
+	fi
+	#### To get tss stats for RAMPAGE samples
+	grep "RAMPAGE" combined/temp_reports_${samplename}_RNA.txt > combined/reports/temp_${samplename}.txt
+	exist=$(cat combined/reports/temp_${samplename}.txt | wc -l)
+	if [ $exist -gt 0 ]; then
+		printf "\nSummarizing tss stats for ${samplename}\n"
+		if [ -s combined/reports/temp_RAMPAGE_tss_${samplename}.txt ]; then
+			rm -f combined/reports/temp_RAMPAGE_tss_${samplename}.txt
+		fi
+		while read line tissue sample paired ref_dir
+		do
+			awk -v a=$line -v b=$tissue -v c=$sample '$1==a && $2==b && $3==c' RNA/reports/summary_RAMPAGE_tss.txt >> combined/reports/temp_RAMPAGE_tss_${samplename}.txt
+		done < combined/reports/temp_${samplename}.txt
+		printf "Line\tTissue\tType\tTotal_annotated_genes\tTSS_in_rep1\tTSS_in_Rep2\tCommon_TSS\tCommon_TSS_IDR<=0.05\n" > combined/reports/summary_RAMPAGE_tss_${samplename}.txt
+		sort combined/reports/temp_RAMPAGE_tss_${samplename}.txt -u >> combined/reports/summary_RAMPAGE_tss_${samplename}.txt
+		rm -f combined/reports/temp_RAMPAGE_tss_${samplename}.txt
+	fi
+	if [ -e combined/reports/temp_${samplename}.txt ]; then
+		rm -f combined/reports/temp_${samplename}.txt
+	fi
+fi
+
+rm -f combined/temp_reports_*
 
 if [[ $keepgoing == "STOP" ]]; then
 	printf "\nScript finished successfully without combined analysis\n"
@@ -180,57 +266,64 @@ fi
 
 #############################################################################################
 ########################################### PART2 ###########################################
-###################### Do the combined analysis of ChIP and RNA data ########################
+#################### Do the analysis of ChIP and RNA data for each reference ################
 #############################################################################################
 
-if [ ! -d ./combined ]; then
-	mkdir ./combined
-	mkdir ./combined/peaks
-	mkdir ./combined/DEG
-	mkdir ./combined/matrix
-	mkdir ./combined/plots
-	mkdir ./combined/chkpts
-	mkdir ./combined/logs
-fi
-
-if [ -e combined/chkpts/combined_${analysisname} ]; then
+if [ -e combined/chkpts/${analysisname} ]; then
 	rm -f combined/chkpts/${analysisname}
 fi
 
+check_list=()
+region_list=()
 pids=()
-##### Processing combined analysis
-printf "\nLaunching combined analysis script\n"
-qsub -sync y -N combined_analysis -o combined/logs/combined_analysis_${analysisname}.log ${mc_dir}/MaizeCode_combined_analysis.sh -f $samplefile -r $regionfile &
-pids+=("$!")
+##### Processing line analysis per reference genome
+for ref in ${ref_list[@]}
+do
+	grep "$ref" $samplefile > combined/${samplename}_analysis_samplefile.temp_${ref}.txt
+	grep "$ref" $regionfile > combined/${regionname}.temp_${ref}.txt
+	regioni=$(cat combined/${regionname}.temp_${ref}.txt)
+	tmp3=${regioni##*/}
+	regioniname=${tmp3%%.*}
+	check_list+=("combined/chkpts/analysis_${samplename}_on_${regioniname}")
+	region_list+=("${regioniname}")
+	printf "\nLaunching line analysis script for samplefile $samplename on regionfile $regioniname\n"
+	qsub -sync y -N ${ref}_analysis -o combined/logs/analysis_${samplename}_on_${regioniname}.log ${mc_dir}/MaizeCode_line_analysis.sh -f combined/${samplename}_analysis_samplefile.temp_${ref}.txt -r ${regioni} &
+	pids+=("$!")
+done
 
+printf "\nWaiting for line analysis to be processed\n"
 wait ${pids[*]}
 
-if [ ! -e combined/chkpts/${analysisname} ]; then
-	printf "\nProblem during the combined analysis of ${samplename} on ${regionname}!\nCheck log: logs/${analysisname}.log\n"
-else 
-	printf "\nCombined analysis for $samplename on $regionname processed succesfully\n"
-	touch combined/chkpts/${analysisname}
-fi
+i=0
+for check in ${check_list[@]}
+do
+	if [ ! -e ${check} ]; then
+		printf "\nProblem during the line analysis of ${ref_list[i]} on ${region_list[i]}!\nCheck log: combined/logs/analysis_${samplename}_on_${region_list[i]}.log\n"
+	else 
+		printf "\nLine analysis of ${ref_list[i]} on ${region_list[i]} processed succesfully\n"
+		rm -f combined/${samplename}_analysis_samplefile.temp_${ref_list[i]}.txt
+		rm -f combined/${regionname}.temp_${ref_list[i]}.txt
+	fi
+	i=$((i+1))
+done
+
+rm -f combined/*temp*
+touch combined/chkpts/${analysisname}
+
+
+#############################################################################################
+########################################### PART3 ###########################################
+#################### Do the analysis of ChIP and RNA data accross references ################
+#############################################################################################
+
 
 #############################################################################################
 ########################################### MISC ############################################
 #############################################################################################
 
-###### To make a test samplefile for (B73 endosperm H3K4me1)
-
-# printf "B73\tendosperm\tH3K4me1\tRep1\tPE\nB73\tendosperm\tH3K4me1\tRep2\tPE\n" > test_analysis_samplefile.txt
-
 ###### To make the samplefile for B73_endosperm
 
-# printf "B73\tendosperm\tH3K4me1\tRep1\tPE\nB73\tendosperm\tH3K4me1\tRep2\tPE\nB73\tendosperm\tH3K4me1\tmerged\tPE\nB73\tendosperm\tH3K4me3\tRep1\tPE\nB73\tendosperm\tH3K4me3\tRep2\tPE\nB73\tendosperm\tH3K4me3\tmerged\tPE\nB73\tendosperm\tH3K27ac\tRep1\tPE\nB73\tendosperm\tH3K27ac\tRep2\tPE\nB73\tendosperm\tH3K27ac\tmerged\tPE\n" > B73_endosperm_analysis_samplefile.txt
-
-###### To create a regionfile containing several groups of regions (e.g. gene_list1, gene_list2 and gene_list3)
-
-# printf "#Name_gene_list1" > regionfile.bed
-# cat gene_list1.bed >> regionfile.bed
-# printf "#Name_gene_list2" >> regionfile.bed
-# cat gene_list2.bed >> regionfile.bed
-# printf "#Name_gene_list3" >> regionfile.bed
-# cat gene_list3.bed >> regionfile.bed
+# printf "B73\tendosperm\tH3K4me1\tPE\t/grid/martienssen/home/jcahn/data/Genomes/Zea_mays/B73_v4\nB73\tendosperm\tH3K4me3\tPE\t/grid/martienssen/home/jcahn/data/Genomes/Zea_mays/B73_v4\nB73\tendosperm\tH3K27ac\tPE\t/grid/martienssen/home/jcahn/data/Genomes/Zea_mays/B73_v4\nB73\tendosperm\tRNAseq\tPE\t/grid/martienssen/home/jcahn/data/Genomes/Zea_mays/B73_v4\nB73\tendosperm\tRAMPAGE\tPE\t/grid/martienssen/home/jcahn/data/Genomes/Zea_mays/B73_v4" > B73_endosperm_analysis_samplefile.txt
 
 #############################################################################################
+

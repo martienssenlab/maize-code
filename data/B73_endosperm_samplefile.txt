@@ -1,8 +1,0 @@
-B73	endosperm	Input	Rep1	S01	/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846	PE	B73_v4
-B73	endosperm	H3K4me1	Rep1	S02	/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846	PE	B73_v4
-B73	endosperm	H3K4me3	Rep1	S03	/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846	PE	B73_v4
-B73	endosperm	H3K27ac	Rep1	S04	/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846	PE	B73_v4
-B73	endosperm	Input	Rep2	S05	/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846	PE	B73_v4
-B73	endosperm	H3K4me1	Rep2	S06	/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846	PE	B73_v4
-B73	endosperm	H3K4me3	Rep2	S07	/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846	PE	B73_v4
-B73	endosperm	H3K27ac	Rep2	S08	/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846	PE	B73_v4
