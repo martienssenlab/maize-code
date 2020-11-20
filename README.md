@@ -134,7 +134,7 @@ Makes a single file, merging all selected peaks from all samples with bedtools m
 Gets distance of each peak to the closest region from the regionfile with bedtools closest (default: all genes annotated in the reference)\
 Creates an Upset plot to show overlap among the different samples, highlighting the peaks in gene bodies, using `MaizeCode_R_Upset.r` script\
 _if several tissues are present in the samplefile:_\
-Calculates differential peaks between the different tissues\
+Calculates differential peaks between the different tissues\*\*\*\
 For RAMPAGE samples:\
 _if several tissues are present in the samplefile:_\
 Calls differential TSS between the different tissues\*\*\*\
