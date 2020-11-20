@@ -218,6 +218,30 @@ if [ ${#rnaseq_tissue_list[@]} -ge 2 ]; then
 	printf "\nLaunching DEG analysis with R version:\n"
 	R --version
 	Rscript --vanilla ${mc_dir}/MaizeCode_R_DEG.r combined/DEG/counts_${analysisname}.txt combined/DEG/samples_${analysisname}.txt ${analysisname} $regionfile
+	#### To extract DEG only called in one tissue
+	if [ ${#rnaseq_tissue_list[@]} -ge 3 ]; then
+		for file in $(ls combined/DEG/DEG_${analysisname}_*vs*.txt)
+		do
+			awk -v OFS="\t" '{print $1,$2,$3,$4,".",$6}' ${file} > ${file}.temp.bed
+		done
+		for tissue in ${rnaseq_tissue_list[@]}
+		do
+			printf "\nGetting DEGs specific in $tissue\n"
+			filearray=( $(ls combined/DEG/DEG_${analysisname}_*vs*.txt.temp.bed | grep "$tissue") )
+			i=0
+			max=$((${#filearray[@]}-1))
+			cat ${filearray[i]} > combined/DEG/temp_tissue_spec_DEG_${i}.txt
+			while [ $i -lt $max ]
+			do
+				j=$((i+1))
+				bedtools intersect -wa -a combined/DEG/temp_tissue_spec_DEG_${i}.txt -b ${filearray[j]} > combined/DEG/temp_tissue_spec_DEG_${j}.txt
+				i=$((i+1))
+			done
+			cat combined/DEG/temp_tissue_spec_DEG_${max}.txt > combined/DEG/only_${tissue}_DEG_${analysisname}.bed
+		done
+		rm -f combined/DEG/DEG_${analysisname}_*vs*.txt.temp.bed
+		rm -f combined/DEG/temp_tissue_spec_DEG_*
+	fi
 else 
 	printf "\nNo differential gene expression analysis performed (not enough samples)\n"
 fi
@@ -228,66 +252,66 @@ fi
 ##################### Differential peaks analysis between tissues ##########################
 ############################################################################################
 
-### To call differential peaks for all pairs of tissues of the same mark
+# #### To call differential peaks for all pairs of tissues of the same mark
 
-uniq_chip_mark_list=($(printf "%s\n" "${chip_mark_list[@]}" | sort -u))
-for mark in ${uniq_chip_mark_list[@]}
-do
-	sample_line_mark=()
-	for sample in ${chip_sample_list[@]}
-	do
-		if [[ $sample =~ $mark ]]; then
-			sample_line_mark+=("$sample")
-		fi
-	done
-	numsample=${#sample_line_mark[@]}
-	numsamplemin1=$((numsample-1))
-	numsamplemin2=$((numsample-2))
-	case "$mark" in
-		H3K4me1) 	peaktype="broad"
-					l=500
-					g=400;;
-		H3K4me3) 	peaktype="narrow"
-					l=250
-					g=150;;
-		H3K27ac) 	peaktype="narrow"
-					l=250
-					g=150;;
-	esac
-	if [ $numsample -ge 2 ]; then
-		i=0
-		while [ $i -lt $numsamplemin2 ]
-		do
-			a1=$(grep "properly paired" ChIP/reports/flagstat_${sample_line_mark[i]}_Rep1.txt | awk '{print $1}')
-			a2=$(grep "properly paired" ChIP/reports/flagstat_${sample_line_mark[i]}_Rep2.txt | awk '{print $1}')
-			a=$((a1+a2))
-			j=$((i+1))
-			while [ $j -le $numsamplemin1 ]
-			do	
-				b1=$(grep "properly paired" ChIP/reports/flagstat_${sample_line_mark[j]}_Rep1.txt | awk '{print $1}')
-				b2=$(grep "properly paired" ChIP/reports/flagstat_${sample_line_mark[j]}_Rep2.txt | awk '{print $1}')
-				b=$((b1+b2))
-				printf "\nCalling differential peaks between ${sample_line_mark[i]} and ${sample_line_mark[j]}$\n"
-				macs2 bdgdiff --t1 ChIP/peaks/${sample_line_mark[i]}_merged_treat_pileup.bdg --c1 ChIP/peaks/${sample_line_mark[i]}_merged_control_lambda.bdg --t2 ChIP/peaks/${sample_line_mark[j]}_merged_treat_pileup.bdg --c2 ChIP/peaks/${sample_line_mark[j]}_merged_control_lambda.bdg --d1 $a --d2 $b -g $g -l $l --outdir combined/peaks --o-prefix diff_${sample_line_mark[i]}_${sample_line_mark[j]}
-				j=$((j+1))
-			done
-			i=$((i+1))
-		done
-	else
-		printf "No differential ChIPseq peak analysis performed on $mark (not enough samples)\n"
-	fi
-done
+# uniq_chip_mark_list=($(printf "%s\n" "${chip_mark_list[@]}" | sort -u))
+# for mark in ${uniq_chip_mark_list[@]}
+# do
+	# sample_line_mark=()
+	# for sample in ${chip_sample_list[@]}
+	# do
+		# if [[ $sample =~ $mark ]]; then
+			# sample_line_mark+=("$sample")
+		# fi
+	# done
+	# numsample=${#sample_line_mark[@]}
+	# numsamplemin1=$((numsample-1))
+	# numsamplemin2=$((numsample-2))
+	# case "$mark" in
+		# H3K4me1) 	peaktype="broad"
+					# l=500
+					# g=400;;
+		# H3K4me3) 	peaktype="narrow"
+					# l=250
+					# g=150;;
+		# H3K27ac) 	peaktype="narrow"
+					# l=250
+					# g=150;;
+	# esac
+	# if [ $numsample -ge 2 ]; then
+		# i=0
+		# while [ $i -lt $numsamplemin2 ]
+		# do
+			# a1=$(grep "properly paired" ChIP/reports/flagstat_${sample_line_mark[i]}_Rep1.txt | awk '{print $1}')
+			# a2=$(grep "properly paired" ChIP/reports/flagstat_${sample_line_mark[i]}_Rep2.txt | awk '{print $1}')
+			# a=$((a1+a2))
+			# j=$((i+1))
+			# while [ $j -le $numsamplemin1 ]
+			# do	
+				# b1=$(grep "properly paired" ChIP/reports/flagstat_${sample_line_mark[j]}_Rep1.txt | awk '{print $1}')
+				# b2=$(grep "properly paired" ChIP/reports/flagstat_${sample_line_mark[j]}_Rep2.txt | awk '{print $1}')
+				# b=$((b1+b2))
+				# printf "\nCalling differential peaks between ${sample_line_mark[i]} and ${sample_line_mark[j]}\n"
+				# macs2 bdgdiff --t1 ChIP/peaks/${sample_line_mark[i]}_merged_treat_pileup.bdg --c1 ChIP/peaks/${sample_line_mark[i]}_merged_control_lambda.bdg --t2 ChIP/peaks/${sample_line_mark[j]}_merged_treat_pileup.bdg --c2 ChIP/peaks/${sample_line_mark[j]}_merged_control_lambda.bdg --d1 $a --d2 $b -g $g -l $l --outdir combined/peaks --o-prefix diff_${sample_line_mark[i]}_${sample_line_mark[j]}
+				# j=$((j+1))
+			# done
+			# i=$((i+1))
+		# done
+	# else
+		# printf "No differential ChIPseq peak analysis performed on $mark (not enough samples)\n"
+	# fi
+# done
 
 
-###########################################################################################
-######################################### PART6 ###########################################
-##################################### Making heatmaps  ####################################
-###########################################################################################
+#########################################################################################
+####################################### PART6 ###########################################
+################################### Making heatmaps  ####################################
+#########################################################################################
 
-### To make heatmaps and profiles with deeptools
-### By default, it does both scale-regions and reference-point on start of bedfile provided
-### By default, it does heatmap on all the data, heatmap with 5 kmeans, and corresponding profiles
-### Probably need to edit many parameters depending on the purpose of the analysis
+#### To make heatmaps and profiles with deeptools
+#### By default, it does both scale-regions and reference-point on start of bedfile provided
+#### By default, it does heatmap on all the data, heatmap with 5 kmeans, and corresponding profiles
+#### Probably need to edit many parameters depending on the purpose of the analysis
 
 printf "\nDoing analysis for $analysisname with deeptools version:\n"
 deeptools --version
@@ -315,7 +339,7 @@ do
 	done
 done
 
-#### Computing the stranded matrix
+## Computing the stranded matrix
 for strand in plus minus
 do
 	case "$strand" in
@@ -367,7 +391,7 @@ done
 
 
 if [ ${#rnaseq_tissue_list[@]} -ge 2 ]; then
-	### To reorder bigwig files and sample names by ChIPseq mark
+	#### To reorder bigwig files and sample names by ChIPseq mark
 	sorted_marks=()
 	sorted_labels=()
 	for mark in ${uniq_chip_mark_list[@]}
@@ -385,7 +409,7 @@ if [ ${#rnaseq_tissue_list[@]} -ge 2 ]; then
 			fi
 		done
 	done
-	### To prepare the region files and labels for all pairwise DEGs independantly and together
+	#### To plot all pairwise DEGs together
 	regions_labels=()
 	regions_files=()
 	if [ -e combined/matrix/temp_regions_${analysisname}_all_DEGs.bed ]; then
@@ -401,7 +425,7 @@ if [ ${#rnaseq_tissue_list[@]} -ge 2 ]; then
 		done
 		regions_files+=("combined/matrix/temp_regions_${analysisname}_DEG_${filename}_UP.bed" "combined/matrix/temp_regions_${analysisname}_DEG_${filename}_DOWN.bed")
 		regions_labels+=("${filename}_UP" "${filename}_DOWN")
-		awk -v OFS="\t" 'NR>1 {print $1,$2,$3}' $file >> combined/matrix/temp_regions_${analysisname}_all_DEGs.bed
+		awk -v OFS="\t" 'NR>1 {print $1,$2,$3}' $file >> combined/matrix/temp_regions_${analysisname}_all_DEGs.bed		
 	done
 	sort -k1,1n -k2,2n combined/matrix/temp_regions_${analysisname}_all_DEGs.bed -u > combined/matrix/temp_regions_${analysisname}_all_DEGs_unique.bed
 	printf "\nComputing matrix for DEG for each sample pairs from $analysisname\n"
@@ -429,6 +453,20 @@ if [ ${#rnaseq_tissue_list[@]} -ge 2 ]; then
 	plotHeatmap -m combined/matrix/${analysisname}_all_DEGs.gz -out combined/plots/${analysisname}_heatmap_all_DEGs_k5.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} --colorMap 'seismic' --interpolationMethod 'bilinear' --kmeans 5
 	printf "\nPlotting complete profiles for DEG for each sample pairs from $analysisname\n"
 	plotProfile -m combined/matrix/${analysisname}_all_DEGs.gz -out combined/plots/${analysisname}_profile_all_DEGs_k5.pdf --plotType 'lines' --averageType 'median' --samplesLabel ${sorted_labels[@]} --kmeans 5
+	
+	# #### To plot tissue-specific DEGs
+	
+	# for file in $(ls combined/DEG/only_${tissue}_DEG_${analysisname}.bed)
+	# do
+		# tmp4=${file%_DEG_${analysisname}.bed}
+		# filename=${tmp4##*/}
+		# tissue=${tmp4##*/only_}
+		# printf "\nComputing matrix for $tissue only ($filename) DEG from $analysisname\n"
+		# computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${file} -S ${sorted_marks[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o combined/matrix/${analysisname}_${filename}_DEG.gz
+		# printf "\nPlotting heatmap for $tissue only ($filename) DEG from $analysisname\n"
+		# plotHeatmap -m combined/matrix/${analysisname}_${filename}_DEG.gz -out combined/plots/${analysisname}_heatmap_${filename}_DEG.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} --regionsLabel ${filename} --colorMap 'seismic' --interpolationMethod 'bilinear'
+	# done
+	
 fi
 rm -f combined/matrix/temp_regions_${analysisname}_*.bed
 
