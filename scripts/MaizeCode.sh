@@ -235,8 +235,9 @@ do
 		checkname_list+=("$name")
 		checkdatatype_list+=("$datatype")
 		check_list+=("$check")
-		if [ ! -s ./$datatype/fastq/${name}*.fastq.gz ]; then
-#### This return the following warning '[: too many arguments' when several files are there (PE data)
+		if ls ./$datatype/fastq/${name}*.fastq.gz 1> /dev/null 2>&1; then
+			printf "\nFastq file(s) for ${name} already exist\n"
+		else
 			if [[ $paired == "PE" ]]; then
 				printf "\nCopying PE fastq for $name ($sampleID in $path)\n"
 				cp $path/${sampleID}*R1*q.gz ./$datatype/fastq/${name}_R1.fastq.gz
