@@ -220,27 +220,41 @@ if [ ${#rnaseq_tissue_list[@]} -ge 2 ]; then
 	Rscript --vanilla ${mc_dir}/MaizeCode_R_DEG.r combined/DEG/counts_${analysisname}.txt combined/DEG/samples_${analysisname}.txt ${analysisname} $regionfile
 	#### To extract DEG only called in one tissue
 	if [ ${#rnaseq_tissue_list[@]} -ge 3 ]; then
-		for file in $(ls combined/DEG/DEG_${analysisname}_*vs*.txt)
-		do
-			awk -v OFS="\t" '{print $1,$2,$3,$4,".",$6}' ${file} > ${file}.temp.bed
-		done
 		for tissue in ${rnaseq_tissue_list[@]}
 		do
+			if ls combined/DEG/DEG_${analysisname}_${tissue}_vs*.txt 1> /dev/null 2>&1; then
+				for file in $(ls combined/DEG/DEG_${analysisname}_${tissue}_vs*.txt)
+				do
+					awk -v OFS="\t" '$11 == "DOWN" {print $1,$2,$3,$4,".",$6}' ${file} > ${file}.DOWN.temp.bed
+					awk -v OFS="\t" '$11 == "UP" {print $1,$2,$3,$4,".",$6}' ${file} > ${file}.UP.temp.bed
+				done
+			fi
+			if ls combined/DEG/DEG_${analysisname}_*_vs_${tissue}.txt 1> /dev/null 2>&1; then
+				for file in $(ls combined/DEG/DEG_${analysisname}_*vs_${tissue}.txt)
+				do
+					awk -v OFS="\t" '$11 == "DOWN" {print $1,$2,$3,$4,".",$6}' ${file} >> ${file}.UP.temp.bed
+					awk -v OFS="\t" '$11 == "UP" {print $1,$2,$3,$4,".",$6}' ${file} >> ${file}.DOWN.temp.bed
+				done
+			fi
 			printf "\nGetting DEGs specific in $tissue\n"
-			filearray=( $(ls combined/DEG/DEG_${analysisname}_*vs*.txt.temp.bed | grep "$tissue") )
+			filearraydown=( $(ls combined/DEG/DEG_${analysisname}_*vs*.txt.DOWN.temp.bed | grep "$tissue") )
+			filearrayup=( $(ls combined/DEG/DEG_${analysisname}_*vs*.txt.UP.temp.bed | grep "$tissue") )
 			i=0
-			max=$((${#filearray[@]}-1))
-			cat ${filearray[i]} > combined/DEG/temp_tissue_spec_DEG_${i}.txt
+			max=$((${#filearraydown[@]}-1))
+			cat ${filearraydown[i]} > combined/DEG/temp_tissue_spec_DEG_${analysisname}_DOWN_${i}.txt
+			cat ${filearrayup[i]} > combined/DEG/temp_tissue_spec_DEG_${analysisname}_UP_${i}.txt
 			while [ $i -lt $max ]
 			do
 				j=$((i+1))
-				bedtools intersect -wa -a combined/DEG/temp_tissue_spec_DEG_${i}.txt -b ${filearray[j]} > combined/DEG/temp_tissue_spec_DEG_${j}.txt
+				bedtools intersect -wa -a combined/DEG/temp_tissue_spec_DEG_${analysisname}_DOWN_${i}.txt -b ${filearraydown[j]} > combined/DEG/temp_tissue_spec_DEG_${analysisname}_DOWN_${j}.txt
+				bedtools intersect -wa -a combined/DEG/temp_tissue_spec_DEG_${analysisname}_UP_${i}.txt -b ${filearrayup[j]} > combined/DEG/temp_tissue_spec_DEG_${analysisname}_UP_${j}.txt
 				i=$((i+1))
 			done
-			cat combined/DEG/temp_tissue_spec_DEG_${max}.txt > combined/DEG/only_${tissue}_DEG_${analysisname}.bed
+			cat combined/DEG/temp_tissue_spec_DEG_${analysisname}_DOWN_${max}.txt > combined/DEG/only_${tissue}_DEG_DOWN_${analysisname}.bed
+			cat combined/DEG/temp_tissue_spec_DEG_${analysisname}_UP_${max}.txt > combined/DEG/only_${tissue}_DEG_UP_${analysisname}.bed
+			rm -f combined/DEG/DEG_${analysisname}_*.temp.bed
+			rm -f combined/DEG/temp_tissue_spec_DEG_${analysisname}*
 		done
-		rm -f combined/DEG/DEG_${analysisname}_*vs*.txt.temp.bed
-		rm -f combined/DEG/temp_tissue_spec_DEG_*
 	fi
 else 
 	printf "\nNo differential gene expression analysis performed (not enough samples)\n"
@@ -251,6 +265,8 @@ fi
 ########################################## PART5 ###########################################
 ##################### Differential peaks analysis between tissues ##########################
 ############################################################################################
+
+# #### Takes a long time and not used yet so commented until further improvements ####
 
 # #### To call differential peaks for all pairs of tissues of the same mark
 
@@ -316,6 +332,8 @@ fi
 printf "\nDoing analysis for $analysisname with deeptools version:\n"
 deeptools --version
 
+uniq_chip_mark_list=($(printf "%s\n" "${chip_mark_list[@]}" | sort -u))
+
 #### To make heatmaps on the region file
 
 #### Splitting the region file by strand
@@ -339,7 +357,7 @@ do
 	done
 done
 
-## Computing the stranded matrix
+#### Computing the stranded matrix
 for strand in plus minus
 do
 	case "$strand" in
@@ -383,6 +401,7 @@ do
 	done
 	printf "\nPlotting heatmap for $matrix matrix of $analysisname\n"
 	plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} ${rnaseq_sample_list[@]} --regionsLabel ${regionname} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --interpolationMethod 'bilinear'
+	#### Not very useful right now ####
 	printf "\nPlotting heatmap for $matrix matrix of $analysisname in 5 clusters (kmeans)\n"
 	plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}_k5.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} ${rnaseq_sample_list[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --interpolationMethod 'bilinear' --kmeans 5 --outFileSortedRegions combined/matrix/${analysisname}_${matrix}_regions_k5.txt
 done
@@ -442,31 +461,51 @@ if [ ${#rnaseq_tissue_list[@]} -ge 2 ]; then
 		mins+=("$mini")
 		maxi=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $6}')
 		maxs+=("$maxi")
-	done	
+	done
+	k=$(( ${#regions_files[@]} / 2 ))
 	printf "\nPlotting complete heatmap for DEG for each sample pairs from $analysisname\n"
 	plotHeatmap -m combined/matrix/${analysisname}_DEG.gz -out combined/plots/${analysisname}_heatmap_DEG.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} --regionsLabel ${regions_labels[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --interpolationMethod 'bilinear'
-	plotHeatmap -m combined/matrix/${analysisname}_DEG.gz -out combined/plots/${analysisname}_heatmap_DEG_v2.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} --regionsLabel ${regions_labels[@]} --colorMap 'seismic' --interpolationMethod 'bilinear' --perGroup
-	printf "\nPlotting complete profiles for DEG for each sample pairs from $analysisname\n"
-	plotProfile -m combined/matrix/${analysisname}_DEG.gz -out combined/plots/${analysisname}_profile_DEG.pdf --plotType 'lines' --averageType 'median' --samplesLabel ${sorted_labels[@]} --regionsLabel ${regions_labels[@]}
-	plotProfile -m combined/matrix/${analysisname}_DEG.gz -out combined/plots/${analysisname}_profile_DEG_v2.pdf --plotType 'lines' --averageType 'median' --samplesLabel ${sorted_labels[@]} --regionsLabel ${regions_labels[@]} --perGroup
-	printf "\nPlotting complete heatmap for DEG for each sample pairs from $analysisname\n"
-	plotHeatmap -m combined/matrix/${analysisname}_all_DEGs.gz -out combined/plots/${analysisname}_heatmap_all_DEGs_k5.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} --colorMap 'seismic' --interpolationMethod 'bilinear' --kmeans 5
-	printf "\nPlotting complete profiles for DEG for each sample pairs from $analysisname\n"
-	plotProfile -m combined/matrix/${analysisname}_all_DEGs.gz -out combined/plots/${analysisname}_profile_all_DEGs_k5.pdf --plotType 'lines' --averageType 'median' --samplesLabel ${sorted_labels[@]} --kmeans 5
+	#### Not very useful right now ####
+	printf "\nPlotting complete heatmap for all DEGs from $analysisname\n"
+	plotHeatmap -m combined/matrix/${analysisname}_all_DEGs.gz -out combined/plots/${analysisname}_heatmap_all_DEGs_${k}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} --colorMap 'seismic' --interpolationMethod 'bilinear' --kmeans ${k}
 	
-	# #### To plot tissue-specific DEGs
-	
-	# for file in $(ls combined/DEG/only_${tissue}_DEG_${analysisname}.bed)
-	# do
-		# tmp4=${file%_DEG_${analysisname}.bed}
-		# filename=${tmp4##*/}
-		# tissue=${tmp4##*/only_}
-		# printf "\nComputing matrix for $tissue only ($filename) DEG from $analysisname\n"
-		# computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${file} -S ${sorted_marks[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o combined/matrix/${analysisname}_${filename}_DEG.gz
-		# printf "\nPlotting heatmap for $tissue only ($filename) DEG from $analysisname\n"
-		# plotHeatmap -m combined/matrix/${analysisname}_${filename}_DEG.gz -out combined/plots/${analysisname}_heatmap_${filename}_DEG.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} --regionsLabel ${filename} --colorMap 'seismic' --interpolationMethod 'bilinear'
-	# done
-	
+	for mark in ${uniq_chip_mark_list[@]}
+	do
+		selected_samples=()
+		selected_labels=()
+		for sample in ${sorted_labels[@]}
+		do
+			if [[ $sample =~ $mark ]]; then
+				selected_samples+=("${sample}_merged")
+				selected_labels+=("${sample}")
+			fi
+		done		
+		computeMatrixOperations subset -m combined/matrix/${analysisname}_DEG.gz -o combined/matrix/${analysisname}_DEG_${mark}.txt --samples ${selected_samples[@]}
+		printf "\nPlotting ${mark} profiles for DEG for each sample pairs from $analysisname\n"
+		plotProfile -m combined/matrix/${analysisname}_DEG_${mark}.txt -out combined/plots/${analysisname}_profile_DEG_${mark}.pdf --plotType 'lines' --averageType 'median' --samplesLabel ${selected_labels[@]} --regionsLabel ${regions_labels[@]} --perGroup
+	done
+	#### To plot tissue-specific DEGs
+	if [ ${#rnaseq_tissue_list[@]} -ge 3 ]; then
+		for tissue in ${rnaseq_tissue_list[@]}
+		do
+			filenames="combined/DEG/only_${tissue}_DEG_UP_${analysisname}.bed combined/DEG/only_${tissue}_DEG_DOWN_${analysisname}.bed"
+			printf "\nComputing matrix for $tissue specific DEG from $analysisname\n"
+			computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${filenames} -S ${sorted_marks[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o combined/matrix/${analysisname}_only_${tissue}_DEG.gz
+			printf "\nGetting scales (10th and 90th quantiles) for the $tissue specific DEG matrix of $analysisname\n"
+			computeMatrixOperations dataRange -m combined/matrix/${analysisname}_only_${tissue}_DEG.gz > combined/matrix/values_${analysisname}_only_${tissue}_DEG.gz
+			mins=()
+			maxs=()
+			for sample in ${sorted_labels[@]}
+			do
+				mini=$(grep $sample combined/matrix/values_${analysisname}_only_${tissue}_DEG.gz | awk '{print $5}')
+				mins+=("$mini")
+				maxi=$(grep $sample combined/matrix/values_${analysisname}_only_${tissue}_DEG.gz | awk '{print $6}')
+				maxs+=("$maxi")
+			done	
+			printf "\nPlotting heatmap for $tissue specific DEG from $analysisname\n"
+			plotHeatmap -m combined/matrix/${analysisname}_only_${tissue}_DEG.gz -out combined/plots/${analysisname}_heatmap_only_${tissue}_DEG.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} --regionsLabel "${tissue}_UP" "${tissue}_DOWN" --zMin ${mins[@]} --zMax ${maxs[@]} --colorMap 'seismic' --interpolationMethod 'bilinear'
+		done
+	fi
 fi
 rm -f combined/matrix/temp_regions_${analysisname}_*.bed
 

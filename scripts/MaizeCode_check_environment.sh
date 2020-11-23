@@ -140,8 +140,9 @@ if [[ $datatype == "ChIP" ]]; then
 	if [ ! -s $datatype/reports/summary_mapping_stats.txt ]; then
 		printf "Line\tTissue\tSample\tRep\tReference_genome\tTotal_reads\tPassing_filtering\tAll_mapped_reads\tUniquely_mapped_reads\n" > $datatype/reports/summary_mapping_stats.txt
 	fi
-	if [ ! -e ${ref_dir}/*.bt2* ]; then
-#### This return the following warning '[: too many arguments' when the index is already build (several bt2 files)
+	if ls ${ref_dir}/*.bt2* 1> /dev/null 2>&1; then
+		printf "\nBowtie2 index already exists for $ref in ${ref_dir}\n"
+	else
 		printf "\nBuilding Bowtie2 index for $ref\n"
 		bowtie2-build --threads $threads $fasta ${ref_dir}/$ref
 	fi
