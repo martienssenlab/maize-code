@@ -6,13 +6,11 @@
 
 ### Step-by-Step pipeline
 
-1) Make a MaizeCode folder somewhere
-2) Copy the MaizeCode scripts folder somewhere
-3) In MaizeCode.sh, MaizeCode_analysis.sh and MaizeCode_line_analysis.sh, replace the path to the folder containing the MaizeCode scripts with yours:\
-`export mc_dir="${HOME}/data/Scripts/MaizeCode/"` with\
-`export mc_dir="${HOME}/YOUR/PATH/TO/SCRIPTS/MaizeCode/"`\
-__This is one of the TODO things to improve!!__
-4) Check that the following required packages are installed and in your $PATH (the versions noted here are working for sure, no guarantees for different versions). Recommended installation using conda (except grit that should be installed with pip, but finding an alternative to using it is being looked at)
+1) Clone the git repository anywhere you want, for example in the folder you are in\
+`git clone https://github.com/eernst/maize-code.git ./maize-code`
+2) cd into the maize-code folder that has been created, following the same example\
+`cd maize-code`
+3) Check that the following required packages are installed and in your $PATH (the versions noted here are working for sure, no guarantees for different versions). Recommended installation using conda (except grit that should be installed with pip, but finding an alternative to using it is being looked at)
 ```
 pigz 2.3.4
 samtools 1.10 (Using htslib 1.10.2)
@@ -29,16 +27,18 @@ bedGraphToBigWig v 2.8
 R 3.6.3
 R libraries: ggplot2 3.3.2; UpSetR 1.4.0; limma 3.42.2; edgeR 3.28.1; dplyr 1.0.2; tidyr 1.1.2; stringr 1.4.0; cowplot 1.1.0; gplots 3.1.0; RColorBrewer 1.1.2
 ```
-5) Organize your reference genome folders so that they are all in the same main folder and that each contain ONE fasta file (.fa extension), ONE GFF file (.gff or .gff* extension) and ONE GTF (.gtf extension) file.\
+4) Organize your reference genome folders so that they are all in the same main folder and that each contain ONE fasta file (.fa extension), ONE GFF file (.gff or .gff* extension) and ONE GTF (.gtf extension) file.\
 The GTF file can be created from a GFF file with cufflinks `gffread -T <gff_file> -o <gtf_file>` and check that 'transcript_id' and 'gene_id' look good in the 9th column.\
 The GFF file should have 'gene' in the 3rd column.\
 All files can be gzipped (.gz extension).
-6) Make the samplefiles you want. An example of a samplefile is in the data folder (B73_endosperm_samplefile.txt) and a quick way to make them is at the bottom of the `MaizeCode.sh` file. For cleaner naming purposes, use "\_samplefile.txt" as a suffix.
-7) Submit the `MaizeCode.sh` script, giving as argument `-f <samplefile.txt>` the samplefile of your choice and `-p <path>` the path to your directory that contains the different genome directories.
-8) By default, it will proceed with the analysis. `-s` can be set so that it does not proceed with the analysis at all or `-c` can be set if only single sample analysis should be performed but no combined analysis per line or between lines.
-9) If the analysis has not proceeded or if you want to analyze different samples together, make the analysis_samplefile you want. An example of an analysis samplefile is in the data folder (B73_endosperm_analysis_samplefile.txt) and a quick way to make them is at the bottom of the `MaizeCode_analysis.sh` file. For better naming purposes, use "\_analysis_samplefile.txt" as a suffix.
-10) Submit the `MaizeCode_analysis.sh` script, giving as argument `-f <analysisfile>` the analysis_samplefile and `-r <regionfile>` the regions (in bed6 format) to be plotted on. `-s` can be set if the combined analysis should not be performed (only single-sample analysis will be done, i.e calling peaks and making bigwig files). It also stops there if the regionfile is missing.
-11) Have a look at the results: mapping statistics, peak statistics and various plots (see Output below).
+5) Make the samplefiles you want. An example of a samplefile is in the data folder (B73_endosperm_samplefile.txt) and a quick way to make them is at the bottom of the `MaizeCode.sh` file. For cleaner naming purposes, use "\_samplefile.txt" as a suffix.
+6) Submit the `scripts/MaizeCode.sh` script, giving as argument `-f <samplefile.txt>` the samplefile of your choice and `-p <path>` the path to your directory that contains the different genome directories. For example:\
+`qsub scripts/MaizeCode.sh -f example_samplefile.txt -r /path/to/main/folder/containing/genome/directories`
+7) By default, it will proceed with the analysis. `-s` can be set so that it does not proceed with the analysis at all or `-c` can be set if only single sample analysis should be performed but no combined analysis per line or between lines.
+8) If the analysis has not proceeded or if you want to analyze different samples together, make the analysis_samplefile you want. An example of an analysis samplefile is in the data folder (B73_endosperm_analysis_samplefile.txt) and a quick way to make them is at the bottom of the `MaizeCode_analysis.sh` file. For better naming purposes, use "\_analysis_samplefile.txt" as a suffix.
+9) Submit the `scripts/MaizeCode_analysis.sh` script, giving as argument `-f <analysisfile>` the analysis_samplefile and `-r <regionfile>` the regions (in bed6 format) to be plotted on. `-s` can be set if the combined analysis should not be performed (only single-sample analysis will be done, i.e calling peaks and making bigwig files). It also stops there if the regionfile is missing. For example:\
+`qsub scripts/MaizeCode_analysis.sh -f example_analysis_samplefile.txt -r all_genes.bed`
+10) Have a look at the results! (see Output below).
 
 ---
 
