@@ -8,7 +8,7 @@
 
 1) Make a MaizeCode folder somewhere
 2) Copy the MaizeCode scripts folder somewhere
-3) In MaizeCode.sh, MaizeCode_analysis.sh and MaizeCode_combined_analysis.sh, replace the path to the folder containing the MaizeCode scripts with yours:\
+3) In MaizeCode.sh, MaizeCode_analysis.sh and MaizeCode_line_analysis.sh, replace the path to the folder containing the MaizeCode scripts with yours:\
 `export mc_dir="${HOME}/data/Scripts/MaizeCode/"` with\
 `export mc_dir="${HOME}/YOUR/PATH/TO/SCRIPTS/MaizeCode/"`\
 __This is one of the TODO things to improve!!__
