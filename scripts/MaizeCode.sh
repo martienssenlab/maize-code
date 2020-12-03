@@ -11,7 +11,7 @@
 usage="
 ##### Main script for Maize code data analysis
 ##### 
-##### sh MaizeCode.sh -f <samplefile> -p <path to genome reference> [-s1] [-s2]
+##### sh MaizeCode.sh -f <samplefile> -p <path to genome reference> [-s] [-c] [-h]
 ##### 	-f: samplefile
 ##### 	-p: path to the folder containing all the different genome references (e.g. ~/data/Genomes/Zea_mays)
 #####	-s: if set, the whole analysis does not proceed (default=not set, keep going with the analysis over all the samples in the samplefile)
@@ -38,8 +38,8 @@ usage="
 ##### It uses all the genes of the reference genome (if all samples are mapping to the same reference) as a region file or a combined analysis,
 ##### or only proceed with single sample analysis if different references are used. In the latter case, MaizeCode_analysis.sh script will need to be run independantly with the regionfile of your choice.
 #####
-##### Requirements for the mapping pipeline: pigz, samtools, fastQC, Cutadapt, Bowtie2 for ChIP data, STAR for RNA data
-##### Additional requirements for the analysis pipeline: bedtools, deeptools, macs2, idr, R (+R packages: ggplot2,readr,UpSetR)
+##### Requirements for the mapping pipeline: pigz, samtools, fastQC, Cutadapt, Bowtie2 for ChIP data, STAR for RNA data, R and R packages: ggplot2,dplyr,tidyr,RColorBrewer,cowplot)
+##### Additional requirements for the analysis pipeline: bedtools, deeptools, macs2, idr, R packages: UpSetR for ChIP and RNA data, and limma,edgeR,stringr,gplots for RNAseq data
 "
 
 set -e -o pipefail
@@ -50,9 +50,8 @@ startdate=`date +%s`
 printf "\n"
 
 export threads=$NSLOTS
-# # export mc_dir=$(dirname "$0")
-export mc_dir="${HOME}/data/Scripts/MaizeCode"
-printf "\nRunning MaizeCode.sh script from ${mc_dir} in working directory ${PWD}\n"
+export mc_dir="${PWD}/scripts/"
+printf "\nRunning MaizeCode.sh script in working directory ${PWD}\n"
 
 if [ $# -eq 0 ]; then
 	printf "$usage\n"
@@ -235,7 +234,7 @@ do
 		checkname_list+=("$name")
 		checkdatatype_list+=("$datatype")
 		check_list+=("$check")
-		if ls ./$datatype/fastq/${name}*.fastq.gz 1> /dev/null 2>&1; then
+		if ls ./$datatype/fastq/trimmed_${name}*.fastq.gz 1> /dev/null 2>&1; then
 			printf "\nFastq file(s) for ${name} already exist\n"
 		else
 			if [[ $paired == "PE" ]]; then
@@ -244,7 +243,7 @@ do
 				cp $path/${sampleID}*R2*q.gz ./$datatype/fastq/${name}_R2.fastq.gz
 			elif [[ $paired == "SE" ]]; then
 				printf "\nCopying SE fastq for $name ($sampleID in $path)\n"
-				cp $path/${sampleID}*fastq.gz ./$datatype/fastq/${name}.fastq.gz
+				cp $path/${sampleID}*q.gz ./$datatype/fastq/${name}.fastq.gz
 			else
 				printf "\nData format unknown: paired-end (PE) or single-end (SE)?\n"
 				exit 1
