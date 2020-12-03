@@ -15,16 +15,15 @@ usage="
 #####	-f: samplefile containing the samples to compare and in 5 tab-delimited columns:
 ##### 		Line, Tissue, Sample, PE or SE, Reference genome directory
 ##### 	-r: textfile containing the name of region files that are to be plotted over (bed files)
-##### 		It is safest to use a full path to the region file.
+##### 		It is safest to use a full paths.
 #####		If no region file is given, the analysis will behave as if -s was set.
-#####	-s: If set, the script does not progress into the combined data analysis
+#####	-s: If set, the script does not progress into the line data analysis, only single sample analysis will be performed
 ##### 	-h: help, returns usage
 ##### 
 ##### It sends each type of sample to its specific analysis file (MaizeCode_ChIP_analysis.sh or MaizeCode_RNA_analysis.sh)
-##### Then starts a combined analysis (MaizeCode_combined_analysis.sh)
-##### For cleaner naming purposes, use 'analysis_samplefile.txt' as suffix
+##### Then starts an analysis per reference line (MaizeCode_line_analysis.sh)
 #####
-##### Requirements: samtools, bedtools, deeptools, macs2, idr, R (+R packages: ggplot2,readr,UpSetR)
+##### Requirements: samtools, bedtools, deeptools, macs2, idr, R (+R packages: ggplot2,UpSetR,limma,edgeR,dplyr,tidyr,stringr,gplots,RColorBrewer,cowplot)
 "
 
 set -e -o pipefail
@@ -34,16 +33,15 @@ date
 printf "\n"
 
 export threads=$NSLOTS
-# # export mc_dir=$(dirname "$0")
-export mc_dir="${HOME}/data/Scripts/MaizeCode"
-printf "\nRunning MaizeCode_analysis.sh script from ${mc_dir} in working directory ${PWD}\n"
+export mc_dir="${PWD}/scripts/"
+printf "\nRunning MaizeCode_analysis.sh script in working directory ${PWD}\n"
 
 if [ $# -eq 0 ]; then
 	printf "$usage\n"
 	exit 1
 fi
 
-while getopts ":f:r:slh" opt; do
+while getopts ":f:r:sh" opt; do
 	case $opt in
 		f) 	export samplefile=${OPTARG};;
 		r)	export regionfile=${OPTARG};;
@@ -175,9 +173,8 @@ if [[ "${test_new}" == 1 ]]; then
 			do
 				if [ ! -e ${datatype}/chkpts/analysis_${chipsample} ]; then
 					printf "\nProblem during the processing of ChIP sample ${chipsample}!\nCheck log: ChIP/logs/${samplename}.log and ChIP/logs/analysis_${chipsample}_*_.log\n"
-				else 
+				else
 					printf "\nChIP analysis for $chipsample processed succesfully\n"
-					rm -f temp_${samplename}_${datatype}.txt
 				fi
 			done
 		elif [[ "$datatype" == "RNA" ]]; then
@@ -187,7 +184,6 @@ if [[ "${test_new}" == 1 ]]; then
 					printf "\nProblem during the processing of RNA sample ${rnasample}!\nCheck log: RNA/logs/${samplename}.log and RNA/logs/analysis_${rnasample}.log\n"
 				else 
 					printf "\nRNA analysis for $rnasample processed succesfully\n"
-					rm -f temp_${samplename}_${datatype}.txt
 				fi
 			done
 		fi
