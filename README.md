@@ -10,7 +10,7 @@
 `git clone https://github.com/eernst/maize-code.git ./projects/maize-code`\
 You will be prompted to input your GitHub username and password
 2) cd into the maize-code folder that has been created, so following the same example\
-`cd projects/maize-code`
+`cd ./projects/maize-code/`
 3) Check that the following required packages are installed and in your $PATH (the versions noted here are working for sure, no guarantees for different versions). Recommended installation using conda (except grit that should be installed with pip, but finding an alternative to using it is being looked at)
 ```
 pigz 2.3.4
@@ -28,13 +28,15 @@ bedGraphToBigWig v 2.8
 R 3.6.3
 R libraries: ggplot2 3.3.2; UpSetR 1.4.0; limma 3.42.2; edgeR 3.28.1; dplyr 1.0.2; tidyr 1.1.2; stringr 1.4.0; cowplot 1.1.0; gplots 3.1.0; RColorBrewer 1.1.2
 ```
-4) Organize your reference genome folders so that they are all in the same main folder and that each contain ONE fasta file (.fa extension), ONE GFF file (.gff or .gff* extension) and ONE GTF (.gtf extension) file.\
+4) Organize your reference genome directories so that they are all in the same main folder and that each contain ONE fasta file (.fa extension), ONE GFF file (.gff or .gff* extension) and ONE GTF (.gtf extension) file.\ 
+For example, having a `genomes/` folder that contains the `genomes/B73/` directory where you can find `genomes/B73/B73.fa`, `genomes/B73/B73.gff` and `genomes/B73/B73.gtf` files\
+Other references should be in the same `genomes/` folder, following the same pattern, i.e. `genomes/W22/W22.fa`, `genomes/W22/W22.gff` and `genomes/W22/W22.gtf`\
 The GTF file can be created from a GFF file with cufflinks `gffread -T <gff_file> -o <gtf_file>` and check that 'transcript_id' and 'gene_id' look good in the 9th column.\
 The GFF file should have 'gene' in the 3rd column.\
 All files can be gzipped (.gz extension).
 5) Make the samplefiles you want. An example of a samplefile is in the data folder (Example_samplefile.txt) and a quick way to make them is at the bottom of the `MaizeCode.sh` script. For cleaner naming purposes, use "\_samplefile.txt" as a suffix.
-6) Submit the `scripts/MaizeCode.sh` script, giving as argument `-f <samplefile.txt>` the samplefile of your choice and `-p <path>` the path to your directory that contains the different genome directories. For example:\
-`qsub scripts/MaizeCode.sh -f example_samplefile.txt -r /path/to/main/folder/containing/genome/directories`
+6) Submit the `scripts/MaizeCode.sh` script, giving as argument `-f <samplefile.txt>` the samplefile of your choice and `-p <path>` the path to your folder that contains the different genome directories, i.e. the `genomes` folder mentioned above:\
+`qsub scripts/MaizeCode.sh -f example_samplefile.txt -r /path/to/genomes`
 7) By default, it will proceed with the analysis. `-s` can be set so that it does not proceed with the analysis at all or `-c` can be set if only single sample analysis should be performed but no combined analysis per line or between lines.
 8) If the analysis has not proceeded or if you want to analyze different samples together, make the new samplefile of your choice and submit the `scripts/MaizeCode.sh` script again.\
 `qsub scripts/MaizeCode.sh -f new_samplefile.txt -r /path/to/main/folder/containing/genome/directories`\
