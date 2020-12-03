@@ -75,6 +75,8 @@ if [[ $paired == "PE" ]]; then
 	printf "\nTrimming Illumina adapters for $name with cutadapt version:\n"
 	cutadapt --version
 	cutadapt -j $threads -q 10 -m 20 -a AGATCGGAAGAGCACACGTCTGAAC -A AGATCGGAAGAGCGTCGTGTAGGGA -o fastq/trimmed_${name}_R1.fastq.gz -p fastq/trimmed_${name}_R2.fastq.gz fastq/${name}_R1.fastq.gz fastq/${name}_R2.fastq.gz |& tee reports/trimming_${name}.txt
+	#### Removing untrimmed fastq
+	rm -f fastq/${name}_R*.fastq.gz
 	#### FastQC on trimmed data
 	printf "\nRunning fastQC on trimmed files for $name\n"
 	fastqc -o reports/ fastq/trimmed_${name}_R1.fastq.gz
@@ -93,6 +95,8 @@ elif [[ $paired == "SE" ]]; then
 	printf "\nTrimming Illumina adapters for $name with cutadapt version:\n"
 	cutadapt --version
 	cutadapt -j $threads -q 10 -m 20 -a AGATCGGAAGAGCACACGTCTGAAC -o fastq/trimmed_${name}.fastq.gz fastq/${name}.fastq.gz |& tee reports/trimming_${name}.txt
+	#### Removing untrimmed fastq
+	rm -f fastq/${name}.fastq.gz
 	#### FastQC on trimmed data
 	printf "\nRunning fastQC on trimmed files for $name\n"
 	fastqc -o reports/ fastq/trimmed_${name}.fastq.gz
@@ -109,13 +113,13 @@ fi
 printf "\nRemoving duplicates, sorting and indexing file with samtools version:\n"
 samtools --version
 samtools fixmate -@ $threads -m mapped/${name}.sam mapped/temp1_${name}.bam
-samtools sort -@ $threads -o mapped/${name}.bam mapped/temp1_${name}.bam
 rm -f mapped/${name}.sam
-rm -f mapped/temp1_${name}.bam
-samtools markdup -r -s -f reports/markdup_${name}.txt -@ $threads mapped/${name}.bam mapped/rmdup_${name}.bam
-samtools index -@ $threads mapped/rmdup_${name}.bam
+samtools sort -@ $threads -o mapped/temp2_${name}.bam mapped/temp1_${name}.bam
+samtools markdup -r -s -f reports/markdup_${name}.txt -@ $threads mapped/temp2_${name}.bam mapped/${name}.bam
+samtools index -@ $threads mapped/${name}.bam
 printf "\nGetting some stats\n"
-samtools flagstat -@ $threads mapped/rmdup_${name}.bam > reports/flagstat_${name}.txt
+samtools flagstat -@ $threads mapped/${name}.bam > reports/flagstat_${name}.txt
+rm -f mapped/temp*_${name}.bam
 
 #### Summary stats
 printf "\nMaking mapping statistics summary\n"
