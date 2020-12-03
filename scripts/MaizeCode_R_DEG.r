@@ -103,3 +103,4 @@ heatmap.2(lcpm,trace="none",ColSideColors = color_samples,
           margins=c(12,2),cexCol=2, labRow = "", col="bluered", srtCol=45, scale="row",
           lwid=c(1,5),lhei=c(0.5,5,0.1), key.title = "")
 dev.off()
+
