@@ -24,7 +24,7 @@ usage="
 ##### Differential gene expression analysis between all pairs of RNA samples
 ##### Differential peak/TSS calling between all pairs of RAMPAGE samples
 #####
-##### Requirements: bedtools, deeptools, macs2, R (+R packages: ggplot2,readr,UpSetR)
+##### Requirements: bedtools, deeptools, macs2, R (+R packages: ggplot2,UpSetR,limma,edgeR,dplyr,tidyr,stringr,gplots)
 "
 
 set -e -o pipefail
@@ -34,9 +34,8 @@ date
 printf "\n"
 
 export threads=$NSLOTS
-# # export mc_dir=$(dirname "$0")
-export mc_dir="${HOME}/data/Scripts/MaizeCode/"
-printf "\nRunning MaizeCode scripts from ${mc_dir} in working directory ${PWD}\n"
+export mc_dir="${PWD}/scripts/"
+printf "\nRunning MaizeCode scripts in working directory ${PWD}\n"
 
 if [ $# -eq 0 ]; then
 	printf "$usage\n"
@@ -399,15 +398,27 @@ do
 		mins+=("$temp3")
 		maxs+=("$temp4")
 	done
-	printf "\nPlotting heatmap for $matrix matrix of $analysisname\n"
+	mins2=()
+	maxs2=()
+	for sample in ${sorted_labels[@]}
+	do
+		mini=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $5}')
+		mins2+=("$mini")
+		maxi=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $6}')
+		maxs2+=("$maxi")
+	done
+	printf "\nPlotting heatmap for $matrix matrix of $analysisname scaling by mark\n"
 	plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} ${rnaseq_sample_list[@]} --regionsLabel ${regionname} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --interpolationMethod 'bilinear'
-	#### Not very useful right now ####
-	printf "\nPlotting heatmap for $matrix matrix of $analysisname in 5 clusters (kmeans)\n"
-	plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}_k5.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} ${rnaseq_sample_list[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --interpolationMethod 'bilinear' --kmeans 5 --outFileSortedRegions combined/matrix/${analysisname}_${matrix}_regions_k5.txt
+	printf "\nPlotting heatmap for $matrix matrix of $analysisname scaling by sample\n"
+	plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}_v2.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} ${rnaseq_sample_list[@]} --regionsLabel ${regionname} --colorMap 'seismic' --zMin ${mins2[@]} --zMax ${maxs2[@]} --interpolationMethod 'bilinear'
+	# #### Not very useful right now ####
+	# printf "\nPlotting heatmap for $matrix matrix of $analysisname in 5 clusters (kmeans)\n"
+	# plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}_k5.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} ${rnaseq_sample_list[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --interpolationMethod 'bilinear' --kmeans 5 --outFileSortedRegions combined/matrix/${analysisname}_${matrix}_regions_k5.txt
 done
 
-#### To make heatmaps and profiles with deeptools on the DEG if they were called
+rm -f combined/matrix/*${analysisname}*.gz
 
+#### To make heatmaps and profiles with deeptools on the DEG if they were called
 
 if [ ${#rnaseq_tissue_list[@]} -ge 2 ]; then
 	#### To reorder bigwig files and sample names by ChIPseq mark
@@ -462,12 +473,12 @@ if [ ${#rnaseq_tissue_list[@]} -ge 2 ]; then
 		maxi=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $6}')
 		maxs+=("$maxi")
 	done
-	k=$(( ${#regions_files[@]} / 2 ))
-	printf "\nPlotting complete heatmap for DEG for each sample pairs from $analysisname\n"
-	plotHeatmap -m combined/matrix/${analysisname}_DEG.gz -out combined/plots/${analysisname}_heatmap_DEG.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} --regionsLabel ${regions_labels[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --interpolationMethod 'bilinear'
-	#### Not very useful right now ####
-	printf "\nPlotting complete heatmap for all DEGs from $analysisname\n"
-	plotHeatmap -m combined/matrix/${analysisname}_all_DEGs.gz -out combined/plots/${analysisname}_heatmap_all_DEGs_${k}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} --colorMap 'seismic' --interpolationMethod 'bilinear' --kmeans ${k}
+	# #### Not very useful right now, too messy ####
+	# k=$(( ${#regions_files[@]} / 2 ))
+	# printf "\nPlotting complete heatmap for DEG for each sample pairs from $analysisname\n"
+	# plotHeatmap -m combined/matrix/${analysisname}_DEG.gz -out combined/plots/${analysisname}_heatmap_DEG.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} --regionsLabel ${regions_labels[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --interpolationMethod 'bilinear'
+	# printf "\nPlotting complete heatmap for all DEGs from $analysisname\n"
+	# plotHeatmap -m combined/matrix/${analysisname}_all_DEGs.gz -out combined/plots/${analysisname}_heatmap_all_DEGs_${k}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} --colorMap 'seismic' --interpolationMethod 'bilinear' --kmeans ${k}
 	
 	for mark in ${uniq_chip_mark_list[@]}
 	do
@@ -480,9 +491,9 @@ if [ ${#rnaseq_tissue_list[@]} -ge 2 ]; then
 				selected_labels+=("${sample}")
 			fi
 		done		
-		computeMatrixOperations subset -m combined/matrix/${analysisname}_DEG.gz -o combined/matrix/${analysisname}_DEG_${mark}.txt --samples ${selected_samples[@]}
+		computeMatrixOperations subset -m combined/matrix/${analysisname}_DEG.gz -o combined/matrix/${analysisname}_DEG_${mark}.gz --samples ${selected_samples[@]}
 		printf "\nPlotting ${mark} profiles for DEG for each sample pairs from $analysisname\n"
-		plotProfile -m combined/matrix/${analysisname}_DEG_${mark}.txt -out combined/plots/${analysisname}_profile_DEG_${mark}.pdf --plotType 'lines' --averageType 'median' --samplesLabel ${selected_labels[@]} --regionsLabel ${regions_labels[@]} --perGroup
+		plotProfile -m combined/matrix/${analysisname}_DEG_${mark}.gz -out combined/plots/${analysisname}_profile_DEG_${mark}.pdf --plotType 'lines' --averageType 'median' --samplesLabel ${selected_labels[@]} --regionsLabel ${regions_labels[@]} --perGroup --numPlotsPerRow 2
 	done
 	#### To plot tissue-specific DEGs
 	if [ ${#rnaseq_tissue_list[@]} -ge 3 ]; then
@@ -507,7 +518,9 @@ if [ ${#rnaseq_tissue_list[@]} -ge 2 ]; then
 		done
 	fi
 fi
-rm -f combined/matrix/temp_regions_${analysisname}_*.bed
+rm -f combined/matrix/temp_regions_${analysisname}*.bed
+rm -f combined/matrix/*${analysisname}*.gz
+rm -f combined/matrix/values*${analysisname}*
 
 printf "\nCombined analysis script finished successfully for $analysisname\n"
 touch combined/chkpts/analysis_${analysisname}
