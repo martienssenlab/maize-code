@@ -8,8 +8,6 @@
 #$ -j y
 #$ -N maizecode
 
-printf "test script\n"
-
 usage="
 ##### Main script for Maize code data analysis
 ##### 
