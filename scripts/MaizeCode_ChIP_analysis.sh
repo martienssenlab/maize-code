@@ -2,8 +2,8 @@
 #$ -V
 #$ -cwd
 #$ -pe threads 20
-#$ -l m_mem_free=12G
-#$ -l tmp_free=100G
+#$ -l m_mem_free=3G
+#$ -l tmp_free=50G
 #$ -o ChIPanalysis.log
 #$ -j y
 #$ -N ChIPanalysis
@@ -81,7 +81,7 @@ do
 		samtools index -@ $threads mapped/${input}_merged.bam
 	fi
 	printf "\nStarting single ChIP sample analysis for $name\n"
-	qsub -N ${name} -V -cwd -sync y -pe threads 2 -l m_mem_free=8G -l tmp_free=50G -j y -o logs/analysis_${name}.log <<-'EOF1' &
+	qsub -N ${name} -V -cwd -sync y -pe threads 2 -l m_mem_free=2G -l tmp_free=50G -j y -o logs/analysis_${name}.log <<-'EOF1' &
 		#!/bin/bash
 		set -e -o pipefail		
 		export threads=$NSLOTS
@@ -126,7 +126,7 @@ do
 						export clean="No";;
 			esac		
 			printf "\nStarting single ChIP sample analysis for $name $filetype\n"
-			qsub -N ${name}_${filetype} -V -cwd -sync y -pe threads 10 -l m_mem_free=8G -l tmp_free=50G -j y -o logs/analysis_${name}_${filetype}.log <<-'EOF2' &
+			qsub -N ${name}_${filetype} -V -cwd -sync y -pe threads 10 -l m_mem_free=6G -l tmp_free=50G -j y -o logs/analysis_${name}_${filetype}.log <<-'EOF2' &
 				#!/bin/bash
 				set -e -o pipefail
 				export threads=$NSLOTS
