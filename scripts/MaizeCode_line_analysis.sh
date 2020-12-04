@@ -492,20 +492,8 @@ if [ ${#rnaseq_tissue_list[@]} -ge 2 ]; then
 			fi
 		done		
 		computeMatrixOperations subset -m combined/matrix/${analysisname}_DEG.gz -o combined/matrix/${analysisname}_DEG_${mark}.gz --samples ${selected_samples[@]}
-		computeMatrixOperations dataRange -m combined/matrix/${analysisname}_DEG_${mark}.gz > combined/matrix/values_${analysisname}_DEG_${mark}.txt
-		mins=()
-		maxs=()
-		for sample in ${selected_labels[@]}
-		do
-			mini=$(grep $sample combined/matrix/values_${analysisname}_DEG_${mark}.txt | awk '{print $5}')
-			mins+=("$mini")
-			maxi=$(grep $sample combined/matrix/values_${analysisname}_DEG_${mark}.txt | awk '{print $6}')
-			maxs+=("$maxi")
-		done
 		printf "\nPlotting ${mark} profiles for DEG for each sample pairs from $analysisname\n"
 		plotProfile -m combined/matrix/${analysisname}_DEG_${mark}.gz -out combined/plots/${analysisname}_profile_DEG_${mark}.pdf --plotType 'lines' --averageType 'median' --samplesLabel ${selected_labels[@]} --regionsLabel ${regions_labels[@]} --perGroup --numPlotsPerRow 2
-		printf "\nPlotting ${mark} heatmap for DEG for each sample pairs from $analysisname\n"
-		plotHeatmap -m combined/matrix/${analysisname}_DEG_${mark}.gz -out combined/plots/${analysisname}_heatmap_DEG_${mark}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${selected_labels[@]} --regionsLabel ${regions_labels[@]} --zMin ${mins[@]} --zMax ${maxs[@]} --colorMap 'seismic' --interpolationMethod 'bilinear'
 	done
 	#### To plot tissue-specific DEGs
 	if [ ${#rnaseq_tissue_list[@]} -ge 3 ]; then
