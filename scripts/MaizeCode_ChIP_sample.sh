@@ -2,7 +2,7 @@
 #$ -V
 #$ -cwd
 #$ -pe threads 20
-#$ -l m_mem_free=1G
+#$ -l m_mem_free=1.5G
 #$ -l tmp_free=10G
 #$ -o logs/ChIPsample.log
 #$ -j y
