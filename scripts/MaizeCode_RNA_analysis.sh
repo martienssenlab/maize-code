@@ -2,11 +2,11 @@
 #$ -V
 #$ -cwd
 #$ -pe threads 1
-#$ -l m_mem_free=12G
+#$ -l m_mem_free=2G
 #$ -l tmp_free=100G
-#$ -o ChIPanalysis.log
+#$ -o RNAanalysis.log
 #$ -j y
-#$ -N ChIPanalysis
+#$ -N RNAanalysis
 
 usage="
 ##### Script for Maize code RNA data analysis, used by script MaizeCode_analysis.sh for RNA data
@@ -82,7 +82,7 @@ do
 	export ref_dir=${ref_dir}
 	export ref=${ref_dir##*/}
 	export annotated_gene_number=$(cat tracks/${ref}_all_genes.bed | wc -l)
-	qsub -N ${name} -V -cwd -sync y -pe threads 20 -l m_mem_free=8G -l tmp_free=50G -j y -o logs/analysis_${name}.log <<-'EOF' &
+	qsub -N ${name} -V -cwd -sync y -pe threads 20 -l m_mem_free=5G -l tmp_free=50G -j y -o logs/analysis_${name}.log <<-'EOF' &
 		#!/bin/bash
 		set -e -o pipefail
 		
