@@ -2,7 +2,7 @@
 #$ -V
 #$ -cwd
 #$ -pe threads 20
-#$ -l m_mem_free=10G
+#$ -l m_mem_free=2G
 #$ -l tmp_free=50G
 #$ -o env.log
 #$ -j y
@@ -165,3 +165,4 @@ rm -f ${ref_dir}/temp*
 
 printf "\nScript finished successfully!\n"
 touch $datatype/chkpts/env_${ref}
+

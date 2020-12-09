@@ -2,8 +2,8 @@
 #$ -V
 #$ -cwd
 #$ -pe threads 20
-#$ -l m_mem_free=12G
-#$ -l tmp_free=100G
+#$ -l m_mem_free=3G
+#$ -l tmp_free=50G
 #$ -o ChIPanalysis.log
 #$ -j y
 #$ -N ChIPanalysis
@@ -75,20 +75,20 @@ do
 	export paired
 	if [ ! -s mapped/${input}_merged.bam ]; then
 		printf "\nMerging replicates of $input\n"
-		samtools merge -@ $threads mapped/temp_${input}.bam mapped/rmdup_${input}_Rep1.bam mapped/rmdup_${input}_Rep2.bam
+		samtools merge -@ $threads mapped/temp_${input}.bam mapped/${input}_Rep1.bam mapped/${input}_Rep2.bam
 		samtools sort -@ $threads -o mapped/${input}_merged.bam mapped/temp_${input}.bam
 		rm -f mapped/temp_${input}.bam
 		samtools index -@ $threads mapped/${input}_merged.bam
 	fi
 	printf "\nStarting single ChIP sample analysis for $name\n"
-	qsub -N ${name} -V -cwd -sync y -pe threads 2 -l m_mem_free=8G -l tmp_free=50G -j y -o logs/analysis_${name}.log <<-'EOF1' &
+	qsub -N ${name} -V -cwd -sync y -pe threads 2 -l m_mem_free=2G -l tmp_free=50G -j y -o logs/analysis_${name}.log <<-'EOF1' &
 		#!/bin/bash
 		set -e -o pipefail		
 		export threads=$NSLOTS
 		
 		if [ ! -s mapped/${name}_merged.bam ]; then
 			printf "\nMerging replicates of $name\n"
-			samtools merge -f -@ $threads mapped/temp_${name}.bam mapped/rmdup_${name}_Rep1.bam mapped/rmdup_${name}_Rep2.bam
+			samtools merge -f -@ $threads mapped/temp_${name}.bam mapped/${name}_Rep1.bam mapped/${name}_Rep2.bam
 			samtools sort -@ $threads -o mapped/${name}_merged.bam mapped/temp_${name}.bam
 			rm -f mapped/temp_${name}.bam
 			samtools index -@ $threads mapped/${name}_merged.bam
@@ -98,10 +98,8 @@ do
 			samtools view -b -h -s 1.5 -@ $threads -U mapped/temp_${name}_pseudo2.bam -o mapped/temp_${name}_pseudo1.bam mapped/${name}_merged.bam
 			samtools sort -@ $threads -o mapped/${name}_pseudo1.bam mapped/temp_${name}_pseudo1.bam
 			rm -f mapped/temp_${name}_pseudo1.bam
-			samtools index -@ $threads mapped/${name}_pseudo1.bam
 			samtools sort -@ $threads -o mapped/${name}_pseudo2.bam mapped/temp_${name}_pseudo2.bam
 			rm -f mapped/temp_${name}_pseudo2.bam
-			samtools index -@ $threads mapped/${name}_pseudo2.bam
 		fi
 		#### To call either broad or narrow peaks if not already exisiting
 		case "$mark" in
@@ -114,18 +112,21 @@ do
 		do
 			export filetype
 			case "$filetype" in
-				Rep1|Rep2) 	export namefiletype=mapped/rmdup_${name}_${filetype}.bam
-							export inputfiletype=mapped/rmdup_${input}_${filetype}.bam
-							export param="";;
+				Rep1|Rep2) 	export namefiletype=mapped/${name}_${filetype}.bam
+							export inputfiletype=mapped/${input}_${filetype}.bam
+							export param=""
+							export clean="No";;
 				pseudo1|pseudo2)	export namefiletype=mapped/${name}_${filetype}.bam
 									export inputfiletype=mapped/${input}_merged.bam
-									export param="";;
+									export param=""
+									export clean="Yes";;
 				merged)	export namefiletype=mapped/${name}_${filetype}.bam
 						export inputfiletype=mapped/${input}_${filetype}.bam
-						export param="-B";;
+						export param="-B"
+						export clean="No";;
 			esac		
 			printf "\nStarting single ChIP sample analysis for $name $filetype\n"
-			qsub -N ${name}_${filetype} -V -cwd -sync y -pe threads 10 -l m_mem_free=8G -l tmp_free=50G -j y -o logs/analysis_${name}_${filetype}.log <<-'EOF2' &
+			qsub -N ${name}_${filetype} -V -cwd -sync y -pe threads 10 -l m_mem_free=6G -l tmp_free=50G -j y -o logs/analysis_${name}_${filetype}.log <<-'EOF2' &
 				#!/bin/bash
 				set -e -o pipefail
 				export threads=$NSLOTS
@@ -142,7 +143,7 @@ do
 					elif [ -s peaks/${name}_${filetype}_peaks.${peaktype}Peak ]; then
 						printf "\n$peaktype peaks already called for $namefiletype\n"
 					else
-						printf "\nSomething is wrong with the information about PE/SE! Returning script usage:\n"
+						printf "\nSomething is wrong with the information about peak type to call! Check usage:\n"
 						printf "$usage\n"
 						exit 1
 					fi
@@ -166,21 +167,26 @@ do
 					printf "\nData format missing: paired-end (PE) or single-end (SE)?\n"
 					exit 1
 				fi
-				#### To create bw files if not already exisiting
-				if [ ! -s tracks/${name}_${filetype}.bw ]; then
-					printf "\nMaking bigwig files for $namefiletype with deeptools version:\n"
-					deeptools --version
-					bamCompare -b1 ${namefiletype} -b2 ${inputfiletype} -o tracks/${name}_${filetype}.bw -p $threads --binSize 1 --scaleFactorsMethod "None" --normalizeUsing CPM
+				if [[ $clean == "Yes" ]]; then
+					#### To delete unnecessary bam files for pseudo-replicates
+					rm -f ${namefiletype}*
 				else
-					printf "\nBigwig file for $namefiletype already exists\n"
-				fi
-				#### To create fingerprint plots if not already exisiting
-				if [ ! -s plots/Fingerprint_${name}_${filetype}.png ]; then
-					printf "\nPlotting Fingerprint for $namefiletype with deeptools version:\n"
-					deeptools --version
-					plotFingerprint -b ${namefiletype} ${inputfiletype} -o plots/Fingerprint_${name}_${filetype}.png -p $threads -l ${name} ${input}
-				else
-					printf "\nFingerprint plot for $namefiletype already exists\n"
+					#### To create bw files if not already exisiting (not for pseudo-replicates)
+					if [ ! -s tracks/${name}_${filetype}.bw ]; then
+						printf "\nMaking bigwig files for $namefiletype with deeptools version:\n"
+						deeptools --version
+						bamCompare -b1 ${namefiletype} -b2 ${inputfiletype} -o tracks/${name}_${filetype}.bw -p $threads --binSize 1 --scaleFactorsMethod "None" --normalizeUsing CPM
+					else
+						printf "\nBigwig file for $namefiletype already exists\n"
+					fi
+					#### To create fingerprint plots if not already exisiting (not for pseudo-replicates)
+					if [ ! -s plots/Fingerprint_${name}_${filetype}.png ]; then
+						printf "\nPlotting fingerprint for $namefiletype with deeptools version:\n"
+						deeptools --version
+						plotFingerprint -b ${namefiletype} ${inputfiletype} -o plots/Fingerprint_${name}_${filetype}.png -p $threads -l ${name} ${input}
+					else
+						printf "\nFingerprint plot for $namefiletype already exists\n"
+					fi
 				fi
 			EOF2
 			pidsb+=("$!")
@@ -193,13 +199,10 @@ do
 			printf "\nDoing IDR analysis on both replicates from ${line}_${tissue}_${mark} ($peaktype peaks) with idr version:\n"
 			idr --version
 			idr --input-file-type ${peaktype}Peak --output-file-type ${peaktype}Peak --samples peaks/${name}_Rep1_peaks.${peaktype}Peak peaks/${name}_Rep2_peaks.${peaktype}Peak -o peaks/idr_${name}.${peaktype}Peak -l reports/idr_${name}.log --plot || true
-			if [ -e peaks/idr_${name}.${peaktype}Peak.png }; then
-				mv peaks/idr_${name}.${peaktype}Peak.png plots/
-			fi
 		else
 			printf "\nIDR analysis already done for ${name}\n"
 		fi
-		#### To get the final selected peak file (peaks called in merged also present in both replicates)
+		#### To get the final selected peak file (peaks called in merged also present in both pseudo replicates)
 		awk -v OFS="\t" '{print $1,$2,$3}' peaks/${name}_merged_peaks.${peaktype}Peak | sort -k1,1 -k2,2n -u > peaks/temp_${name}_merged.bed
 		awk -v OFS="\t" '{print $1,$2,$3}' peaks/${name}_pseudo1_peaks.${peaktype}Peak | sort -k1,1 -k2,2n -u > peaks/temp_${name}_pseudo1.bed
 		awk -v OFS="\t" '{print $1,$2,$3}' peaks/${name}_pseudo2_peaks.${peaktype}Peak | sort -k1,1 -k2,2n -u > peaks/temp_${name}_pseudo2.bed
@@ -225,4 +228,6 @@ done < $samplefile
 
 printf "\nWaiting for each sample to be processed individually\n"
 wait ${pidsa[*]}
+mv peaks/idr_*.png plots/
 printf "\nScript finished successfully!\n"
+

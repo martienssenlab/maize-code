@@ -6,13 +6,14 @@
 
 ### Step-by-Step pipeline
 
-1) Make a MaizeCode folder somewhere
-2) Copy the MaizeCode scripts folder somewhere
-3) In MaizeCode.sh, MaizeCode_analysis.sh and MaizeCode_line_analysis.sh, replace the path to the folder containing the MaizeCode scripts with yours:\
-`export mc_dir="${HOME}/data/Scripts/MaizeCode/"` with\
-`export mc_dir="${HOME}/YOUR/PATH/TO/SCRIPTS/MaizeCode/"`\
-__This is one of the TODO things to improve!!__
-4) Check that the following required packages are installed and in your $PATH (the versions noted here are working for sure, no guarantees for different versions). Recommended installation using conda (except grit that should be installed with pip, but finding an alternative to using it is being looked at)
+
+1) Clone the git repository anywhere you want, for example in a new folder called projects\
+`git clone https://github.com/eernst/maize-code.git ./projects/maize-code`\ or to clone a spceific branch 'edits'\
+`git clone --branch edits https://github.com/eernst/maize-code.git ./projects/maize-code`\
+You will be prompted to input your GitHub username and password
+2) cd into the maize-code folder that has been created, so following the same example\
+`cd ./projects/maize-code/`
+3) Check that the following required packages are installed and in your $PATH (the versions noted here are working for sure, no guarantees for different versions). Recommended installation using conda (except grit that should be installed with pip, but finding an alternative to using it is being looked at)
 ```
 pigz 2.3.4
 samtools 1.10 (Using htslib 1.10.2)
@@ -29,30 +30,33 @@ bedGraphToBigWig v 2.8
 R 3.6.3
 R libraries: ggplot2 3.3.2; UpSetR 1.4.0; limma 3.42.2; edgeR 3.28.1; dplyr 1.0.2; tidyr 1.1.2; stringr 1.4.0; cowplot 1.1.0; gplots 3.1.0; RColorBrewer 1.1.2
 ```
-5) Organize your reference genome folders so that they are all in the same main folder and that each contain ONE fasta file (.fa extension), ONE GFF file (.gff or .gff* extension) and ONE GTF (.gtf extension) file.\
+4) Organize your reference genome directories so that they are all in the same main folder and that each contain ONE fasta file (.fa extension), ONE GFF file (.gff or .gff* extension) and ONE GTF (.gtf extension) file.\ 
+For example, having a `genomes/` folder that contains the `genomes/B73/` directory where you can find `genomes/B73/B73.fa`, `genomes/B73/B73.gff` and `genomes/B73/B73.gtf` files\
+Other references should be in the same `genomes/` folder, following the same pattern, i.e. `genomes/W22/W22.fa`, `genomes/W22/W22.gff` and `genomes/W22/W22.gtf`\
 The GTF file can be created from a GFF file with cufflinks `gffread -T <gff_file> -o <gtf_file>` and check that 'transcript_id' and 'gene_id' look good in the 9th column.\
 The GFF file should have 'gene' in the 3rd column.\
 All files can be gzipped (.gz extension).
-6) Make the samplefiles you want. An example of a samplefile is in the data folder (B73_endosperm_samplefile.txt) and a quick way to make them is at the bottom of the `MaizeCode.sh` file. For cleaner naming purposes, use "\_samplefile.txt" as a suffix.
-7) Submit the `MaizeCode.sh` script, giving as argument `-f <samplefile.txt>` the samplefile of your choice and `-p <path>` the path to your directory that contains the different genome directories.
-8) By default, it will proceed with the analysis. `-s` can be set so that it does not proceed with the analysis at all or `-c` can be set if only single sample analysis should be performed but no combined analysis per line or between lines.
-9) If the analysis has not proceeded or if you want to analyze different samples together, make the analysis_samplefile you want. An example of an analysis samplefile is in the data folder (B73_endosperm_analysis_samplefile.txt) and a quick way to make them is at the bottom of the `MaizeCode_analysis.sh` file. For better naming purposes, use "\_analysis_samplefile.txt" as a suffix.
-10) Submit the `MaizeCode_analysis.sh` script, giving as argument `-f <analysisfile>` the analysis_samplefile and `-r <regionfile>` the regions (in bed6 format) to be plotted on. `-s` can be set if the combined analysis should not be performed (only single-sample analysis will be done, i.e calling peaks and making bigwig files). It also stops there if the regionfile is missing.
-11) Have a look at the results: mapping statistics, peak statistics and various plots (see Output below).
+5) Make the samplefiles you want. An example of a samplefile is in the data folder (Example_samplefile.txt) and a quick way to make them is at the bottom of the `MaizeCode.sh` script. For cleaner naming purposes, use "\_samplefile.txt" as a suffix.
+6) Submit the `scripts/MaizeCode.sh` script, giving as argument `-f <samplefile.txt>` the samplefile of your choice and `-p <path>` the path to your folder that contains the different genome directories, i.e. the `genomes` folder mentioned above:\
+`qsub scripts/MaizeCode.sh -f example_samplefile.txt -r /path/to/genomes`
+7) By default, it will proceed with the analysis. `-s` can be set so that it does not proceed with the analysis at all or `-c` can be set if only single sample analysis should be performed but no combined analysis per line or between lines.
+8) If the analysis has not proceeded or if you want to analyze different samples together, make the new samplefile of your choice and submit the `scripts/MaizeCode.sh` script again.\
+`qsub scripts/MaizeCode.sh -f new_samplefile.txt -r /path/to/main/folder/containing/genome/directories`\
+The samples that have already been processed will not be repeated but will still be included in the analysis.
+9) Have a look at the results! (see Output below).
 
 ---
 
 ### Comments
 
 - There is one wrapper script `MaizeCode.sh` that launches sub-scripts depending on what needs to be done.
-- The `MaizeCode_analysis.sh` script is called by default by the `MaizeCode.sh` script but can be used seperately for any additional analysis. Combining samplefiles and running the `MaizeCode.sh` script would also work, would not take much longer and will produce the mapping_stats plot specific for the new combination of samples.
-- Check out the usage of each script before as it could give some information about the details and requirements for the scripts. Submitting each script without arguments (or followed by `-h`) will return its usage.
+- Potentially, each script could be submitted on its own but it could be tricky. Check out the usage of each script before by running the script without arguments (or followed by `-h`).
 - The shRNA and complete RAMPAGE pipelines are not ready yet
 - It should work for both Single-end or Paired-end data but the SE part has not been tested (and I might not have edited it well as I was changing the PE part). A non-issue for now since all the ChIP data is PE, but to keep in mind for potential future use.
 - The whole pipeline creates a lot of report files and probably files that are not necessary to keep but for now I keep them like this for potential troubleshooting.
 - For now I’ve used the `MaizeCode.sh` script from scratch for 16 samples at a time (all ChIPs and RNAseq from two tissues of the same line). It runs in ~19h (depending on the size of the files). Once that the mapping and single-sample analysis have been done, reusing these samples in a different analysis is much quicker though, the limitations are for mapping ChIPseq samples and calling ChIPseq peaks (since it does it for each biological replicate, the merge file and both pseudo-replicates and cannot be multi-threaded). That is probably the first step that could be optimized for faster runs.
 - Always process the Input samples with their corresponding ChIP in the `MaizeCode.sh` script. (It can also be done separately, before or after) but they need to be done for the `MaizeCode_analysis.sh` script to run successfully.
-- The analysis will have to be adapted to the desired output, but running the `MaizeCode_analysis.sh` script should give a first look at the data and generate all the files required for further analysis.
+- The analysis will have to be adapted to the desired output, but running the default complete pipeline should give a first look at the data and generate all the files required for further analysis.
 - These are still preliminary version of the scripts!
 
 ---

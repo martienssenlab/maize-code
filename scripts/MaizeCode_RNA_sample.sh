@@ -2,7 +2,7 @@
 #$ -V
 #$ -cwd
 #$ -pe threads 20
-#$ -l m_mem_free=12G
+#$ -l m_mem_free=4G
 #$ -l tmp_free=100G
 #$ -o ChIPsample.log
 #$ -j y
@@ -168,3 +168,4 @@ fi
 
 printf "\nScript finished successfully!\n"
 touch chkpts/${name}_${ref}
+
