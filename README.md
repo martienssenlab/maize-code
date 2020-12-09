@@ -6,6 +6,7 @@
 
 ### Step-by-Step pipeline
 
+
 1) Clone the git repository anywhere you want, for example in a new folder called projects\
 `git clone https://github.com/eernst/maize-code.git ./projects/maize-code`\ or to clone a spceific branch 'edits'\
 `git clone --branch edits https://github.com/eernst/maize-code.git ./projects/maize-code`\
