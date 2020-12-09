@@ -5,6 +5,7 @@
 - [x] Rename deeptools folder
 - [x] Change type variable to datatype
 - [x] Change hard-linked paths to relative for scripts (alternative to dirname "$0")
+- [ ] Store reference genomes on server for normalization and make a script to download them if needed, that can be edited for downloading from the web 
 - [ ] Work on intermediate file hygiene (many intermediate files that could be removed). Maybe add option -output (or something) to chose what should be kept?
 - [ ] Work on the compatiblity with other systems (no cluster, no qsub ...)
 - [ ] Compute PBC1 and PBC2 (PCR Bottlenecking Coefficient) (https://www.encodeproject.org/data-standards/terms/#library)
@@ -13,7 +14,7 @@
 - [ ] Manage the way to get the fastq files depending on where they are coming from (server, sra, ...)
 - [ ] Archive raw fastq files
 - [x] Add the references in the sample file to be able to map to different references form the same samplefile and can then be processed together later on +
-get the data type from the samplefile too (if H* or Input it is ChIP, if *RNA* or RAMPAGE it is RNA)
+get the data type from the samplefile too (if H* or Input it is ChIP, if \*RNA* or RAMPAGE it is RNA)
 - [x] Make the RNA pipeline
 - [ ] Make the shRNA pipeline
 - [ ] Continue analysis pipeline
