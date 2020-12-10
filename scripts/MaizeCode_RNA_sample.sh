@@ -77,7 +77,7 @@ case "$rnatype" in
 	RAMPAGE) 	param_map="--outFilterMultimapNmax 500"
 				param_dedup="--bamRemoveDuplicatesMate2basesN 15"
 				param_bg="--outWigType bedGraph read1_5p"
-				strandedness="reverse";;				
+				strandedness="forward";;				
 esac
 	
 if [[ $paired == "PE" ]]; then
