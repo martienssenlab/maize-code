@@ -9,7 +9,7 @@
 
 1) Clone the git repository anywhere you want, for example in a new folder called projects\
 `git clone https://github.com/eernst/maize-code.git ./projects/maize-code`\
-or to clone a speecific branch 'edits'\
+or to clone a specific branch 'edits'\
 `git clone --branch edits https://github.com/eernst/maize-code.git ./projects/maize-code`\
 You will be prompted to input your GitHub username and password
 2) cd into the maize-code folder that has been created, so following the same example\
