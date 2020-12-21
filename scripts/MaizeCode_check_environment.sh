@@ -161,8 +161,6 @@ else
 	exit 1
 fi
 
-rm -f ${ref_dir}/temp*
-
 printf "\nScript finished successfully!\n"
 touch $datatype/chkpts/env_${ref}
 
