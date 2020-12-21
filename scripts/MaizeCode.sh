@@ -180,6 +180,9 @@ else
 			exit 1
 		else
 			printf "\nEnvironment for $datatype with $ref genome now good to go\n"
+			if [ -e ${pathtoref}/${ref}/temp_${ref}.fa ]; then
+				rm -f ${pathtoref}/${ref}/temp_${ref}.fa
+			fi
 		fi
 	done
 fi
