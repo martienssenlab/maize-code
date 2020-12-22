@@ -195,12 +195,15 @@ fi
 ################# Differential gene expression analysis between tissues ####################
 ############################################################################################
 
+printf "\nsample list: ${rnaseq_sample_list[*]}\n"
+printf "\nname list: ${rnaseq_name_list[*]}\n"
 if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 	#### To make a count table for all RNAseq samples in samplefile
 	printf "\nPreparing count table for RNAseq samples in $analysisname\n"
 	printf "Replicate\tSample\n" > combined/DEG/samples_${analysisname}.txt
 	grep "gene:" RNA/mapped/map_${rnaseq_sample_list[0]}_Rep1_ReadsPerGene.out.tab > combined/DEG/temp_${ref}_check.txt
 	if [ -s combined/DEG/temp_check.txt ]; then
+		printf "\nOption 1\n"
 		i=0
 		for sample in ${rnaseq_sample_list[@]}
 		do
@@ -214,6 +217,7 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 			i=$((i+1))
 		done
 	else
+		printf "\nOption 2\n"
 		i=0
 		for sample in ${rnaseq_sample_list[@]}
 		do
