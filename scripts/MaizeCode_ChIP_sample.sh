@@ -11,13 +11,14 @@
 usage="
 ##### Script for Maize code ChIP data analysis, used by script MaizeCode.sh for ChIP samples
 #####
-##### sh MaizeCode_ChIP_sample.sh -d reference directory -l inbred line -t tissue -m histone mark -e replicate ID -p paired
+##### sh MaizeCode_ChIP_sample.sh -d reference directory -l inbred line -t tissue -m histone mark -e replicate ID -p paired -s step
 ##### 	-d: folder containing the reference directory (e.g. ~/data/Genomes/Zea_mays/B73_v4)
 ##### 	-l: inbred line (e.g. B73)
 ##### 	-t: tissue (e.g. endosperm)
 ##### 	-m: ChIP-seq mark (e.g. H3K4me1)
 ##### 	-e: replicate ID (e.g. Rep1)
 ##### 	-p: if data is paired-end (PE) or single-end (SE) [ PE | SE ]
+#####	-s: set to "trim" if trimming has to be performed (when it has not been done on these fastq before)
 ##### 	-h: help, returns usage
 #####
 ##### It runs fastQC, trims adapters with cutadapt, aligns with bowtie2,
@@ -39,7 +40,7 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts "d:l:t:m:r:p:h" opt; do
+while getopts "d:l:t:m:r:p:s:h" opt; do
 	case $opt in
 		h) 	printf "$usage\n"
 			exit 0;;
@@ -49,13 +50,14 @@ while getopts "d:l:t:m:r:p:h" opt; do
 		m)	export mark=${OPTARG};;
 		r)	export rep=${OPTARG};;
 		p)	export paired=${OPTARG};;
+		s)	export step=${OPTARG};;
 		*)	printf "$usage\n"
 			exit 1;;
 	esac
 done
 shift $((OPTIND - 1))
 
-if [ ! $ref_dir ] || [ ! $line ] || [ ! $tissue ] || [ ! $mark ] || [ ! $rep ] || [ ! $paired ]; then
+if [ ! $ref_dir ] || [ ! $line ] || [ ! $tissue ] || [ ! $mark ] || [ ! $rep ] || [ ! $paired ] || [ ! $step ]; then
 	printf "Missing arguments!\n"
 	printf "$usage\n"
 	exit 1
@@ -66,40 +68,44 @@ export ref=${ref_dir##*/}
 name=${line}_${tissue}_${mark}_${rep}
 
 if [[ $paired == "PE" ]]; then
-	#### FastQC on raw data
-	printf "\nRunning fastQC for $name with fastqc version:\n"
-	fastqc --version
-	fastqc -o reports/ fastq/${name}_R1.fastq.gz
-	fastqc -o reports/ fastq/${name}_R2.fastq.gz	
-	#### Trimming illumina adapters with Cutadapt
-	printf "\nTrimming Illumina adapters for $name with cutadapt version:\n"
-	cutadapt --version
-	cutadapt -j $threads -q 10 -m 20 -a AGATCGGAAGAGCACACGTCTGAAC -A AGATCGGAAGAGCGTCGTGTAGGGA -o fastq/trimmed_${name}_R1.fastq.gz -p fastq/trimmed_${name}_R2.fastq.gz fastq/${name}_R1.fastq.gz fastq/${name}_R2.fastq.gz |& tee reports/trimming_${name}.txt
-	#### Removing untrimmed fastq
-	rm -f fastq/${name}_R*.fastq.gz
-	#### FastQC on trimmed data
-	printf "\nRunning fastQC on trimmed files for $name\n"
-	fastqc -o reports/ fastq/trimmed_${name}_R1.fastq.gz
-	fastqc -o reports/ fastq/trimmed_${name}_R2.fastq.gz
+	if [[ $step == "trim" ]]; then
+		#### FastQC on raw data
+		printf "\nRunning fastQC for $name with fastqc version:\n"
+		fastqc --version
+		fastqc -o reports/ fastq/${name}_R1.fastq.gz
+		fastqc -o reports/ fastq/${name}_R2.fastq.gz	
+		#### Trimming illumina adapters with Cutadapt
+		printf "\nTrimming Illumina adapters for $name with cutadapt version:\n"
+		cutadapt --version
+		cutadapt -j $threads -q 10 -m 20 -a AGATCGGAAGAGCACACGTCTGAAC -A AGATCGGAAGAGCGTCGTGTAGGGA -o fastq/trimmed_${name}_R1.fastq.gz -p fastq/trimmed_${name}_R2.fastq.gz fastq/${name}_R1.fastq.gz fastq/${name}_R2.fastq.gz |& tee reports/trimming_${name}.txt
+		#### Removing untrimmed fastq
+		rm -f fastq/${name}_R*.fastq.gz
+		#### FastQC on trimmed data
+		printf "\nRunning fastQC on trimmed files for $name\n"
+		fastqc -o reports/ fastq/trimmed_${name}_R1.fastq.gz
+		fastqc -o reports/ fastq/trimmed_${name}_R2.fastq.gz
+	fi
 	#### Aligning reads to reference genome with Bowtie2
 	#### maxins 1500 used after seeing that average insert size from first round of mapping was ~500bp (for most B73 marks) but ~900bp for Inputs
 	printf "\nMaping $name to $ref\n"
 	bowtie2 --version
 	bowtie2 -p $threads --end-to-end --maxins 1500 --met-file reports/bt2_${name}.txt -x $ref_dir/$ref -1 fastq/trimmed_${name}_R1.fastq.gz -2 fastq/trimmed_${name}_R2.fastq.gz -S mapped/${name}.sam |& tee reports/mapping_${name}.txt
 elif [[ $paired == "SE" ]]; then
-	#### FastQC on raw data
-	printf "\nRunning fastQC for $name with fastqc version:\n"
-	fastqc --version
-	fastqc -o reports/ fastq/${name}.fastq.gz
-	#### Trimming illumina adapters with Cutadapt
-	printf "\nTrimming Illumina adapters for $name with cutadapt version:\n"
-	cutadapt --version
-	cutadapt -j $threads -q 10 -m 20 -a AGATCGGAAGAGCACACGTCTGAAC -o fastq/trimmed_${name}.fastq.gz fastq/${name}.fastq.gz |& tee reports/trimming_${name}.txt
-	#### Removing untrimmed fastq
-	rm -f fastq/${name}.fastq.gz
-	#### FastQC on trimmed data
-	printf "\nRunning fastQC on trimmed files for $name\n"
-	fastqc -o reports/ fastq/trimmed_${name}.fastq.gz
+	if [[ $step == "trim" ]]; then
+		#### FastQC on raw data
+		printf "\nRunning fastQC for $name with fastqc version:\n"
+		fastqc --version
+		fastqc -o reports/ fastq/${name}.fastq.gz
+		#### Trimming illumina adapters with Cutadapt
+		printf "\nTrimming Illumina adapters for $name with cutadapt version:\n"
+		cutadapt --version
+		cutadapt -j $threads -q 10 -m 20 -a AGATCGGAAGAGCACACGTCTGAAC -o fastq/trimmed_${name}.fastq.gz fastq/${name}.fastq.gz |& tee reports/trimming_${name}.txt
+		#### Removing untrimmed fastq
+		rm -f fastq/${name}.fastq.gz
+		#### FastQC on trimmed data
+		printf "\nRunning fastQC on trimmed files for $name\n"
+		fastqc -o reports/ fastq/trimmed_${name}.fastq.gz
+	fi
 	#### Aligning reads to reference genome with Bowtie2
 	printf "\nMaping $name to $ref with bowtie2 version:\n"
 	bowtie2 --version
