@@ -239,7 +239,9 @@ do
 		check_list+=("$check")
 		if ls ./$datatype/fastq/trimmed_${name}*.fastq.gz 1> /dev/null 2>&1; then
 			printf "\nFastq file(s) for ${name} already exist\n"
+			export step="done"
 		else
+			export step="trim"
 			if [[ $paired == "PE" ]]; then
 				printf "\nCopying PE fastq for $name ($sampleID in $path)\n"
 				cp $path/${sampleID}*R1*q.gz ./$datatype/fastq/${name}_R1.fastq.gz
@@ -254,7 +256,7 @@ do
 		fi
 		printf "\nRunning $datatype mapping script for $name on $ref genome\n"
 		cd $datatype
-		qsub -sync y -N ${name} -o logs/${name}.log ${mc_dir}/MaizeCode_${datatype}_sample.sh -d $ref_dir -l $line -t $tissue -m $sample -r $rep -p $paired &
+		qsub -sync y -N ${name} -o logs/${name}.log ${mc_dir}/MaizeCode_${datatype}_sample.sh -d $ref_dir -l $line -t $tissue -m $sample -r $rep -p $paired -s $step &
 		pids+=("$!")
 		cd ..
 	fi
