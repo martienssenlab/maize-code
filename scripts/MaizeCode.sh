@@ -206,9 +206,7 @@ fi
 
 tmp1=${samplefile%%_samplefile*}
 analysisfile="${tmp1}_analysis_samplefile.txt"
-
-tmp2=${samplefile##*/}
-samplename=${tmp1%%_samplefile*}
+samplename=${tmp1##*/}
 
 if [ -s ${analysisfile} ]; then
 	rm -f ${analysisfile}
