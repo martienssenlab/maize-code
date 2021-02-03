@@ -23,8 +23,8 @@ usage="
 ##### col #2: Tissue (e.g endosperm) 
 ##### col #3: Sample (e.g. H3K4me3 or 'Input' for ChIP, (sh)RNA or RAMPAGE for RNA). Histone marks must start with capital 'H'. 'Input', 'RNA' and 'RAMPAGE' are case-sensitive.
 ##### col #4: Replicate ID [Rep1 | Rep2]
-##### col #5: SequencingID (e.g. S01). Unique identifier for the name of the sample in the raw sequencing folder which path is given in the next column.
-##### col #6: Path to the fastq files (e.g. /seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846)
+##### col #5: SequencingID (e.g. S01). Unique identifier for the name of the sample in the raw sequencing folder which path is given in the next column. If downloading from SRA, put the SRR ID here.
+##### col #6: Path to the fastq files (e.g. /seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846). If downloading from SRA, put 'SRR'.
 ##### col #7: If data is paired-end or single-end [PE | SE]. 
 ##### col #8: Name of the genome reference to map (e.g. B73_v4). Each genome reference should have a unique folder that contains a single fasta file and a single gff3 file (can be gzipped).
 ##### The gff3 files should have 'gene' in column 3 and exons should be linked by 'Parent' in column 9
@@ -38,7 +38,7 @@ usage="
 ##### It uses all the genes of the reference genome (if all samples are mapping to the same reference) as a region file or a combined analysis,
 ##### or only proceed with single sample analysis if different references are used. In the latter case, MaizeCode_analysis.sh script will need to be run independantly with the regionfile of your choice.
 #####
-##### Requirements for the mapping pipeline: pigz, samtools, fastQC, Cutadapt, Bowtie2 for ChIP data, STAR for RNA data, R and R packages: ggplot2,dplyr,tidyr,RColorBrewer,cowplot)
+##### Requirements for the mapping pipeline: pigz, samtools, fastQC, Cutadapt, Bowtie2 for ChIP data, STAR for RNA data, R and R packages: ggplot2,dplyr,tidyr,RColorBrewer,cowplot), parallel-fastq-dump (if downloading from SRA)
 ##### Additional requirements for the analysis pipeline: bedtools, deeptools, macs2, idr, R packages: UpSetR for ChIP and RNA data, and limma,edgeR,stringr,gplots for RNAseq data
 "
 
@@ -240,16 +240,30 @@ do
 			export step="done"
 		else
 			export step="trim"
-			if [[ $paired == "PE" ]]; then
-				printf "\nCopying PE fastq for $name ($sampleID in $path)\n"
-				cp $path/${sampleID}*R1*q.gz ./$datatype/fastq/${name}_R1.fastq.gz
-				cp $path/${sampleID}*R2*q.gz ./$datatype/fastq/${name}_R2.fastq.gz
-			elif [[ $paired == "SE" ]]; then
-				printf "\nCopying SE fastq for $name ($sampleID in $path)\n"
-				cp $path/${sampleID}*q.gz ./$datatype/fastq/${name}.fastq.gz
+			if [[ $path == "SRA" ]]; then
+				printf "\nUsing parallel fastq-dump for $name ($sampleID)\n"
+				parallel-fastq-dump --threads $threads --split-files --gzip --sra-id ${sampleID} --outdir ./$datatype/fastq 
+				printf "\n$name ($sampleID) downloaded\nRenaming files..."
+				if [[ $paired == "PE" ]]; then
+					mv ./$datatype/fastq/${sampleID}_1.fastq.gz ./$datatype/fastq/${name}_R1.fastq.gz
+					mv ./$datatype/fastq/${sampleID}_2.fastq.gz ./$datatype/fastq/${name}_R2.fastq.gz
+				elif [[ $paired == "SE" ]]; then
+					mv ./$datatype/fastq/${sampleID}_1.fastq.gz ./$datatype/fastq/${name}.fastq.gz
+				else
+					printf "\nData format unknown: paired-end (PE) or single-end (SE)?\n"
+				fi
 			else
-				printf "\nData format unknown: paired-end (PE) or single-end (SE)?\n"
-				exit 1
+				if [[ $paired == "PE" ]]; then
+					printf "\nCopying PE fastq for $name ($sampleID in $path)\n"
+					cp $path/${sampleID}*R1*q.gz ./$datatype/fastq/${name}_R1.fastq.gz
+					cp $path/${sampleID}*R2*q.gz ./$datatype/fastq/${name}_R2.fastq.gz
+				elif [[ $paired == "SE" ]]; then
+					printf "\nCopying SE fastq for $name ($sampleID in $path)\n"
+					cp $path/${sampleID}*q.gz ./$datatype/fastq/${name}.fastq.gz
+				else
+					printf "\nData format unknown: paired-end (PE) or single-end (SE)?\n"
+					exit 1
+				fi
 			fi
 		fi
 		printf "\nRunning $datatype mapping script for $name on $ref genome\n"
