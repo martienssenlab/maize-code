@@ -11,7 +11,8 @@
 `git clone https://github.com/eernst/maize-code.git ./projects/maize-code`\
 or to clone a specific branch 'edits'\
 `git clone --branch edits https://github.com/eernst/maize-code.git ./projects/maize-code`\
-You will be prompted to input your GitHub username and password
+You will be prompted to input your GitHub username and password.\
+If you only want to update the scripts, use `git pull`. If you want to update from a specific branch 'edits' `git pull origin edits`.\
 2) cd into the maize-code folder that has been created, so following the same example\
 `cd ./projects/maize-code/`
 3) Check that the following required packages are installed and in your $PATH (the versions noted here are working for sure, no guarantees for different versions). Recommended installation using conda (except grit that should be installed with pip, but finding an alternative to using it is being looked at)
