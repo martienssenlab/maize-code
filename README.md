@@ -29,6 +29,7 @@ macs2 2.2.7.1
 IDR 2.0.4.2
 (grit 2.0.5)
 bedGraphToBigWig v 2.8
+parallel-fastq-dump (if downloading from SRA)
 R 3.6.3
 R libraries: ggplot2 3.3.2; UpSetR 1.4.0; limma 3.42.2; edgeR 3.28.1; dplyr 1.0.2; tidyr 1.1.2; stringr 1.4.0; cowplot 1.1.0; gplots 3.1.0; RColorBrewer 1.1.2
 ```
