@@ -129,12 +129,14 @@ rm -f mapped/temp*_${name}.bam
 
 #### Summary stats
 printf "\nMaking mapping statistics summary\n"
-tot=$(grep "Total read pairs processed:" reports/trimming_${name}.txt | awk '{print $NF}' | sed 's/,//g')
-filt=$(grep "reads" reports/mapping_${name}.txt | awk '{print $1}')
-multi=$(grep "aligned concordantly >1 times" reports/mapping_${name}.txt | awk '{print $1}')
-single=$(grep "aligned concordantly exactly 1 time" reports/mapping_${name}.txt | awk '{print $1}')
-allmap=$((multi+single))
-awk -v OFS="\t" -v l=$line -v t=$tissue -v m=$mark -v r=$rep -v g=$ref -v a=$tot -v b=$filt -v c=$allmap -v d=$single 'BEGIN {print l,t,m,r,g,a,b" ("b/a*100"%)",c" ("c/a*100"%)",d" ("d/a*100"%)"}' >> reports/summary_mapping_stats.txt
-
+if [[ $paired == "PE" ]]; then
+	tot=$(grep "Total read pairs processed:" reports/trimming_${name}.txt | awk '{print $NF}' | sed 's/,//g')
+	filt=$(grep "reads" reports/mapping_${name}.txt | awk '{print $1}')
+	multi=$(grep "aligned concordantly >1 times" reports/mapping_${name}.txt | awk '{print $1}')
+	single=$(grep "aligned concordantly exactly 1 time" reports/mapping_${name}.txt | awk '{print $1}')
+	allmap=$((multi+single))
+	awk -v OFS="\t" -v l=$line -v t=$tissue -v m=$mark -v r=$rep -v g=$ref -v a=$tot -v b=$filt -v c=$allmap -v d=$single 'BEGIN {print l,t,m,r,g,a,b" ("b/a*100"%)",c" ("c/a*100"%)",d" ("d/a*100"%)"}' >> reports/summary_mapping_stats.txt
+else
+fi
 printf "\nScript finished successfully!\n"
 touch chkpts/${name}_${ref}
