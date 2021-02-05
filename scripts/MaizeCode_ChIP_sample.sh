@@ -115,27 +115,32 @@ else
 	exit 1
 fi
 
+#### Removing duplicates, sorting, converting to bam and indexing file with samtools
+printf "\nRemoving duplicates, sorting and indexing file with samtools version:\n"
+samtools --version
+samtools fixmate -@ $threads -m mapped/${name}.sam mapped/temp1_${name}.bam
+rm -f mapped/${name}.sam
+samtools sort -@ $threads -o mapped/temp2_${name}.bam mapped/temp1_${name}.bam
+samtools markdup -r -s -f reports/markdup_${name}.txt -@ $threads mapped/temp2_${name}.bam mapped/${name}.bam
+samtools index -@ $threads mapped/${name}.bam
+printf "\nGetting some stats\n"
+samtools flagstat -@ $threads mapped/${name}.bam > reports/flagstat_${name}.txt
+rm -f mapped/temp*_${name}.bam
+#### Summary stats
+printf "\nMaking mapping statistics summary\n"
 if [[ $paired == "PE" ]]; then
-	#### Removing duplicates, sorting, converting to bam and indexing file with samtools
-	printf "\nRemoving duplicates, sorting and indexing file with samtools version:\n"
-	samtools --version
-	samtools fixmate -@ $threads -m mapped/${name}.sam mapped/temp1_${name}.bam
-	rm -f mapped/${name}.sam
-	samtools sort -@ $threads -o mapped/temp2_${name}.bam mapped/temp1_${name}.bam
-	samtools markdup -r -s -f reports/markdup_${name}.txt -@ $threads mapped/temp2_${name}.bam mapped/${name}.bam
-	samtools index -@ $threads mapped/${name}.bam
-	printf "\nGetting some stats\n"
-	samtools flagstat -@ $threads mapped/${name}.bam > reports/flagstat_${name}.txt
-	rm -f mapped/temp*_${name}.bam
-	#### Summary stats
-	printf "\nMaking mapping statistics summary\n"
 	tot=$(grep "Total read pairs processed:" reports/trimming_${name}.txt | awk '{print $NF}' | sed 's/,//g')
 	filt=$(grep "reads" reports/mapping_${name}.txt | awk '{print $1}')
 	multi=$(grep "aligned concordantly >1 times" reports/mapping_${name}.txt | awk '{print $1}')
 	single=$(grep "aligned concordantly exactly 1 time" reports/mapping_${name}.txt | awk '{print $1}')
-	allmap=$((multi+single))
-	awk -v OFS="\t" -v l=$line -v t=$tissue -v m=$mark -v r=$rep -v g=$ref -v a=$tot -v b=$filt -v c=$allmap -v d=$single 'BEGIN {print l,t,m,r,g,a,b" ("b/a*100"%)",c" ("c/a*100"%)",d" ("d/a*100"%)"}' >> reports/summary_mapping_stats.txt
 else
+	tot=$(grep "Total reads processed:" reports/trimming_${name}.txt | awk '{print $NF}' | sed 's/,//g')
+	filt=$(grep "reads" reports/mapping_${name}.txt | awk '{print $1}')
+	multi=$(grep "aligned >1 times" reports/mapping_${name}.txt | awk '{print $1}')
+	single=$(grep "aligned exactly 1 time" reports/mapping_${name}.txt | awk '{print $1}')
 fi
+allmap=$((multi+single))
+awk -v OFS="\t" -v l=$line -v t=$tissue -v m=$mark -v r=$rep -v g=$ref -v a=$tot -v b=$filt -v c=$allmap -v d=$single 'BEGIN {print l,t,m,r,g,a,b" ("b/a*100"%)",c" ("c/a*100"%)",d" ("d/a*100"%)"}' >> reports/summary_mapping_stats.txt
+
 printf "\nScript finished successfully!\n"
 touch chkpts/${name}_${ref}
