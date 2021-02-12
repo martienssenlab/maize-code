@@ -204,9 +204,9 @@ elif [[ $paired == "SE" ]]; then
 	### Summary stats
 	printf "\nMaking mapping statistics summary\n"
 	tot=$(grep "Total reads processed:" reports/trimming_${name}.txt | awk '{print $NF}' | sed 's/,//g')
-	filt=$(grep "reads" reports/mapping_${name}.txt | awk '{print $1}')
-	multi=$(grep "aligned >1 times" reports/mapping_${name}.txt | awk '{print $1}')
-	single=$(grep "aligned exactly 1 time" reports/mapping_${name}.txt | awk '{print $1}')
+	filt=$(grep "Number of input reads" reports/map_${name}_Log.final.out | awk '{print $NF}')
+	multi=$(grep "Number of reads mapped to multiple loci" reports/map_${name}_Log.final.out | awk '{print $NF}')
+	single=$(grep "Uniquely mapped reads number" reports/map_${name}_Log.final.out | awk '{print $NF}')
 	allmap=$((multi+single))
 	awk -v OFS="\t" -v l=$line -v t=$tissue -v m=$rnatype -v r=$rep -v g=$ref -v a=$tot -v b=$filt -v c=$allmap -v d=$single 'BEGIN {print l,t,m,r,g,a,b" ("b/a*100"%)",c" ("c/a*100"%)",d" ("d/a*100"%)"}' >> reports/summary_mapping_stats.txt
 else
