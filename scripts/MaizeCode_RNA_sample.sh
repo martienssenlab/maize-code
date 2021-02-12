@@ -198,7 +198,6 @@ elif [[ $paired == "SE" ]]; then
 	mv mapped/*${name}*Log* reports/
 	mv tracks/*${name}*Log* reports/
 	### Cleaning up
-	rm -f mapped/*${name}_Aligned*
 	rm -f tracks/*${name}_Signal*
 	### Summary stats
 	printf "\nMaking mapping statistics summary\n"
