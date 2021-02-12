@@ -238,6 +238,9 @@ do
 		if ls ./$datatype/fastq/trimmed_${name}*.fastq.gz 1> /dev/null 2>&1; then
 			printf "\nFastq file(s) for ${name} already exist\n"
 			export step="done"
+		elif ls ./$datatype/fastq/${name}.fastq.gz 1> /dev/null 2>&1; then
+			printf "\nFastq file(s) for ${name} already exist\n"
+			export step="trim"
 		else
 			export step="trim"
 			if [[ $path == "SRA" ]]; then
