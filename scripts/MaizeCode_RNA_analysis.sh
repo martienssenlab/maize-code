@@ -99,6 +99,7 @@ do
 				samtools merge -@ $threads mapped/temp_${name}.bam mapped/mrkdup_${name}_Rep*_Processed.out.bam
 			else
 				samtools merge -@ $threads mapped/temp_${name}.bam mapped/map_${name}_Rep*_Aligned.sortedByCoord.out.bam
+			fi
 			samtools sort -@ $threads -o mapped/${name}_merged.bam mapped/temp_${name}.bam
 			rm -f mapped/temp_${name}.bam
 			samtools index -@ $threads mapped/${name}_merged.bam
