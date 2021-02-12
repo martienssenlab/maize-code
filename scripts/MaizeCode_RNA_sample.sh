@@ -113,7 +113,7 @@ if [[ $paired == "PE" ]]; then
 	### Making BedGraph files
 	printf "\nMaking bedGraph files\n"
 	STAR --runMode inputAlignmentsFromBAM --inputBAMfile mapped/mrkdup_${name}_Processed.out.bam --outWigStrand Stranded ${param_bg} --outFileNamePrefix tracks/bg_${name}_
-	### Converting to bigwig files	
+	### Converting to bigwig files
 	printf "\nConverting bedGraphs to bigWigs\n"
 	sort -k1,1 -k2,2n tracks/bg_${name}_Signal.UniqueMultiple.str1.out.bg > tracks/${name}_Signal.sorted.UniqueMultiple.str1.out.bg
 	sort -k1,1 -k2,2n tracks/bg_${name}_Signal.Unique.str1.out.bg > tracks/${name}_Signal.sorted.Unique.str1.out.bg
@@ -165,16 +165,16 @@ elif [[ $paired == "SE" ]]; then
 	printf "\nMaping $name to $ref with STAR version:\n"
 	printf "\nMaping $name to $ref with STAR version:\n"
 	STAR --version
-	STAR --runMode alignReads --genomeDir ${ref_dir}/STAR_index --readFilesIn fastq/trimmed_${name}.fastq.gz --readFilesCommand zcat --runThreadN $threads --genomeLoad NoSharedMemory --outMultimapperOrder Random --outFileNamePrefix mapped/${name} --outSAMtype BAM SortedByCoordinate --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNmax 999 --outFilterMismatchNoverReadLmax 0.04 ${param_map} --quantMode GeneCounts |& tee reports/mapping_${name}.txt	
+	STAR --runMode alignReads --genomeDir ${ref_dir}/STAR_index --readFilesIn fastq/trimmed_${name}.fastq.gz --readFilesCommand zcat --runThreadN $threads --genomeLoad NoSharedMemory --outMultimapperOrder Random --outFileNamePrefix mapped/map_${name}_ --outSAMtype BAM SortedByCoordinate --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNmax 999 --outFilterMismatchNoverReadLmax 0.04 ${param_map} --quantMode GeneCounts |& tee reports/mapping_${name}.txt	
 	#### Indexing bam file
 	printf "\nIndexing bam file\n"
-	samtools index -@ $threads mapped/mrkdup_${name}_Processed.out.bam
+	samtools index -@ $threads mapped/map_${name}_Aligned.sortedByCoord.out.bam
 	#### Getting stats from bam file
 	printf "\nGetting some stats\n"
-	samtools flagstat -@ $threads mapped/mrkdup_${name}_Processed.out.bam > reports/flagstat_${name}.txt
+	samtools flagstat -@ $threads mapped/map_${name}_Aligned.sortedByCoord.out.bam > reports/flagstat_${name}.txt
 	### Making BedGraph files
 	printf "\nMaking bedGraph files\n"
-	STAR --runMode inputAlignmentsFromBAM --inputBAMfile mapped/mrkdup_${name}_Processed.out.bam --outWigStrand Stranded ${param_bg} --outFileNamePrefix tracks/bg_${name}_
+	STAR --runMode inputAlignmentsFromBAM --inputBAMfile mapped/map_${name}_Aligned.sortedByCoord.out.bam --outWigStrand Stranded ${param_bg} --outFileNamePrefix tracks/bg_${name}_
 	### Converting to bigwig files	
 	printf "\nConverting bedGraphs to bigWigs\n"
 	sort -k1,1 -k2,2n tracks/bg_${name}_Signal.UniqueMultiple.str1.out.bg > tracks/${name}_Signal.sorted.UniqueMultiple.str1.out.bg
