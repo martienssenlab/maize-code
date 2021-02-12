@@ -4,9 +4,9 @@
 #$ -pe threads 20
 #$ -l m_mem_free=4G
 #$ -l tmp_free=100G
-#$ -o ChIPsample.log
+#$ -o RNAsample.log
 #$ -j y
-#$ -N ChIPsample
+#$ -N RNAsample
 
 usage="
 ##### Script for Maize code RNA data analysis, used by script MaizeCode.sh with RNA argument
@@ -40,7 +40,7 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts "d:l:t:m:r:p:h" opt; do
+while getopts "d:l:t:m:r:p:s:h" opt; do
 	case $opt in
 		h) 	printf "$usage\n"
 			exit 0;;
