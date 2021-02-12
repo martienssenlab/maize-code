@@ -55,7 +55,8 @@ The samples that have already been processed will not be repeated but will still
 - There is one wrapper script `MaizeCode.sh` that launches sub-scripts depending on what needs to be done.
 - Potentially, each script could be submitted on its own but it could be tricky. Check out the usage of each script before by running the script without arguments (or followed by `-h`).
 - The shRNA and complete RAMPAGE pipelines are not ready yet
-- It should work for both Single-end or Paired-end data but the SE part has not been tested (and I might not have edited it well as I was changing the PE part). A non-issue for now since all the ChIP data is PE, but to keep in mind for potential future use.
+- It should work for both Single-end or Paired-end data
+- It works perfectly with 2 replicates for every type of data (including two different inputs for ChIP). Adapting the scripts to allow for more variation in the number of replicates is under development.
 - The whole pipeline creates a lot of report files and probably files that are not necessary to keep but for now I keep them like this for potential troubleshooting.
 - For now I’ve used the `MaizeCode.sh` script from scratch for 16 samples at a time (all ChIPs and RNAseq from two tissues of the same line). It runs in ~19h (depending on the size of the files). Once that the mapping and single-sample analysis have been done, reusing these samples in a different analysis is much quicker though, the limitations are for mapping ChIPseq samples and calling ChIPseq peaks (since it does it for each biological replicate, the merge file and both pseudo-replicates and cannot be multi-threaded). That is probably the first step that could be optimized for faster runs.
 - Always process the Input samples with their corresponding ChIP in the `MaizeCode.sh` script. (It can also be done separately, before or after) but they need to be done for the `MaizeCode_analysis.sh` script to run successfully.
