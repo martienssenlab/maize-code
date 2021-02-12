@@ -30,11 +30,11 @@ y<-DGEList(counts=filtered, group = samples)
 y<-calcNormFactors(y)
 
 colors<-c("black","blue","red","pink","green","purple","lightblue")
-
-color_samples<-c()
-for (i in 1:length(tissues)) {
-  color_samples<-c(color_samples, rep(colors[i],2))
-}
+color_samples<-factor(target$Color, labels=head(colors, max(target$Color))
+#color_samples<-c()
+#for (i in 1:length(tissues)) {
+#  color_samples<-c(color_samples, rep(colors[i],2))
+#}
 
 pdf(paste0("combined/plots/MDS_",analysisname,".pdf"),10,8)
 plotMDS(y, col=color_samples, labels=samples)
