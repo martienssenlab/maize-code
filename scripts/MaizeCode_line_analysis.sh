@@ -198,7 +198,7 @@ fi
 if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 	#### To make a count table for all RNAseq samples in samplefile
 	printf "\nPreparing count table for RNAseq samples in $analysisname\n"
-	printf "Replicate\tSample\n" > combined/DEG/samples_${analysisname}.txt
+	printf "Replicate\tSample\tColor\n" > combined/DEG/samples_${analysisname}.txt
 	if [ grep "gene:" RNA/mapped/map_${rnaseq_sample_list[0]}_Rep1_ReadsPerGene.out.tab ]; then
 		i=0
 		for sample in ${rnaseq_sample_list[@]}
@@ -207,7 +207,7 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 			numreps=$(ls -1f | grep ${namei} | wc -l)
 			for j in {1..$numreps}
 			do
-				printf "${namei}_Rep$j\t${namei}\n" >> combined/DEG/samples_${analysisname}.txt
+				printf "${namei}_Rep${j}\t${namei}\t${i}\n" >> combined/DEG/samples_${analysisname}.txt
 				grep "gene:" RNA/mapped/map_${sample}_Rep${j}_ReadsPerGene.out.tab | sed 's/gene://' | awk -v OFS="\t" -v t=$namei -v j =$j 'BEGIN {print t"_Rep"j} {print $2}' > combined/DEG/col_AZ_${i}_${analysisname}_${sample}_Rep${j}.txt
 				if [ $i -eq 0 ] && [ $j -eq 1 ]; then
 					grep "gene:" RNA/mapped/map_${sample}_Rep${j}_ReadsPerGene.out.tab | sed 's/gene://' | awk -v OFS="\t" 'BEGIN {print "gene_ID"} {print $1}' > combined/DEG/col_AA_0_${analysisname}.txt
@@ -223,7 +223,7 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 			numreps=$(ls -1f | grep ${namei} | wc -l)
 			for j in {1..$numreps}
 			do
-				printf "${namei}_Rep${j}\t${namei}\n" >> combined/DEG/samples_${analysisname}.txt
+				printf "${namei}_Rep${j}\t${namei}\t${i}\n" >> combined/DEG/samples_${analysisname}.txt
 				awk -v OFS="\t" -v t=$namei -v j=$j 'BEGIN {print t"_Rep"j}  $1 !~ /^N_/ {print $2}' RNA/mapped/map_${sample}_Rep${j}_ReadsPerGene.out.tab > combined/DEG/col_AZ_${i}_${analysisname}_${sample}_Rep${j}.txt
 				if [ $i -eq 0 ] && [ $j -eq 1 ]; then
 					awk -v OFS="\t" 'BEGIN {print "gene_ID"}  $1 !~ /^N_/ {print $1}' RNA/mapped/map_${sample}_Rep${j}_ReadsPerGene.out.tab > combined/DEG/col_AA_0_${analysisname}.txt
