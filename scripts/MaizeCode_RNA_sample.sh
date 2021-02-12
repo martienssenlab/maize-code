@@ -163,7 +163,6 @@ elif [[ $paired == "SE" ]]; then
 	fi
 	#### Aligning reads to reference genome with STAR
 	printf "\nMaping $name to $ref with STAR version:\n"
-	printf "\nMaping $name to $ref with STAR version:\n"
 	STAR --version
 	STAR --runMode alignReads --genomeDir ${ref_dir}/STAR_index --readFilesIn fastq/trimmed_${name}.fastq.gz --readFilesCommand zcat --runThreadN $threads --genomeLoad NoSharedMemory --outMultimapperOrder Random --outFileNamePrefix mapped/map_${name}_ --outSAMtype BAM SortedByCoordinate --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNmax 999 --outFilterMismatchNoverReadLmax 0.04 ${param_map} --quantMode GeneCounts |& tee reports/mapping_${name}.txt	
 	#### Indexing bam file
