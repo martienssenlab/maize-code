@@ -38,7 +38,7 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts ":f:sh" opt; do
+while getopts ":f:h" opt; do
 	case $opt in
 		h) 	printf "$usage\n"
 			exit 0;;
@@ -73,12 +73,19 @@ do
 	export name=${line}_${tissue}_${mark}
 	export input=${line}_${tissue}_Input
 	export paired
-	if [ ! -s mapped/${input}_merged.bam ]; then
+	if [ ! -s mapped/${input}_merged.bam ] && [ -e mapped/${input}_Rep2.bam ]; then
 		printf "\nMerging replicates of $input\n"
 		samtools merge -@ $threads mapped/temp_${input}.bam mapped/${input}_Rep1.bam mapped/${input}_Rep2.bam
 		samtools sort -@ $threads -o mapped/${input}_merged.bam mapped/temp_${input}.bam
 		rm -f mapped/temp_${input}.bam
 		samtools index -@ $threads mapped/${input}_merged.bam
+		export inputrep="two"
+	elif [ -e mapped/${input}_Rep1.bam ] && [ ! -e mapped/${input}_Rep2.bam ]; then
+		printf "\nOnly one replicate of $input\nIt will be used for all replicates\n"
+		export inputrep="one"
+	elif [ ! -e mapped/${input}_Rep1.bam ]; then
+		printf "\nNo Input file found, cannot proceed!\n"
+		exit 1
 	fi
 	printf "\nStarting single ChIP sample analysis for $name\n"
 	qsub -N ${name} -V -cwd -sync y -pe threads 2 -l m_mem_free=2G -l tmp_free=50G -j y -o logs/analysis_${name}.log <<-'EOF1' &
@@ -111,20 +118,41 @@ do
 		for filetype in merged Rep1 Rep2 pseudo1 pseudo2
 		do
 			export filetype
-			case "$filetype" in
-				Rep1|Rep2) 	export namefiletype=mapped/${name}_${filetype}.bam
+			if [[ "$inputrep" == "two" ]]; then
+				case "$filetype" in
+					Rep1|Rep2) 	export namefiletype=mapped/${name}_${filetype}.bam
 							export inputfiletype=mapped/${input}_${filetype}.bam
 							export param=""
 							export clean="No";;
-				pseudo1|pseudo2)	export namefiletype=mapped/${name}_${filetype}.bam
+					pseudo1|pseudo2)	export namefiletype=mapped/${name}_${filetype}.bam
 									export inputfiletype=mapped/${input}_merged.bam
 									export param=""
 									export clean="Yes";;
-				merged)	export namefiletype=mapped/${name}_${filetype}.bam
+					merged)	export namefiletype=mapped/${name}_${filetype}.bam
 						export inputfiletype=mapped/${input}_${filetype}.bam
 						export param="-B"
 						export clean="No";;
-			esac		
+				esac
+			elif [[ "$inputrep" == "one" ]]; then
+				case "$filetype" in
+					Rep1) 	export namefiletype=mapped/${name}_${filetype}.bam
+						export inputfiletype=mapped/${input}_${filetype}.bam
+						export param=""
+						export clean="No";;
+					Rep2)	export namefiletype=mapped/${name}_${filetype}.bam
+						export inputfiletype=mapped/${input}_Rep1.bam
+						export param=""
+						export clean="No";;
+					pseudo1|pseudo2)	export namefiletype=mapped/${name}_${filetype}.bam
+									export inputfiletype=mapped/${input}_Rep1.bam
+									export param=""
+									export clean="Yes";;
+					merged)	export namefiletype=mapped/${name}_${filetype}.bam
+						export inputfiletype=mapped/${input}_Rep1.bam
+						export param="-B"
+						export clean="No";;
+				esac
+			fi
 			printf "\nStarting single ChIP sample analysis for $name $filetype\n"
 			qsub -N ${name}_${filetype} -V -cwd -sync y -pe threads 10 -l m_mem_free=6G -l tmp_free=50G -j y -o logs/analysis_${name}_${filetype}.log <<-'EOF2' &
 				#!/bin/bash
