@@ -165,9 +165,7 @@ elif [[ $paired == "SE" ]]; then
 	printf "\nMaping $name to $ref with STAR version:\n"
 	printf "\nMaping $name to $ref with STAR version:\n"
 	STAR --version
-	STAR --runMode alignReads --genomeDir ${ref_dir}/STAR_index --readFilesIn fastq/trimmed_${name}.fastq.gz --readFilesCommand zcat --runThreadN $threads --genomeLoad NoSharedMemory --outMultimapperOrder Random --outFileNamePrefix mapped/${name} --outSAMtype BAM SortedByCoordinate --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNmax 999 --outFilterMismatchNoverReadLmax 0.04 --alignIntronMin 20 --alignIntronMax 1000000 --alignMatesGapMax 1000000 ${param_map} --quantMode GeneCounts |& tee reports/mapping_${name}.txt	
-		### Marking duplicates
-	STAR --runMode inputAlignmentsFromBAM --inputBAMfile mapped/map_${name}_Aligned.sortedByCoord.out.bam --bamRemoveDuplicatesType UniqueIdentical ${param_dedup} --outFileNamePrefix mapped/mrkdup_${name}_
+	STAR --runMode alignReads --genomeDir ${ref_dir}/STAR_index --readFilesIn fastq/trimmed_${name}.fastq.gz --readFilesCommand zcat --runThreadN $threads --genomeLoad NoSharedMemory --outMultimapperOrder Random --outFileNamePrefix mapped/${name} --outSAMtype BAM SortedByCoordinate --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNmax 999 --outFilterMismatchNoverReadLmax 0.04 ${param_map} --quantMode GeneCounts |& tee reports/mapping_${name}.txt	
 	#### Indexing bam file
 	printf "\nIndexing bam file\n"
 	samtools index -@ $threads mapped/mrkdup_${name}_Processed.out.bam
