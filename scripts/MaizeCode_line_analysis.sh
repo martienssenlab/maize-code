@@ -205,8 +205,6 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 		do
 			namei=${rnaseq_name_list[i]}
 			numreps=$(ls -1f RNA/mapped/map_${sample}_Rep*_ReadsPerGene.out.tab | wc -l)
-			printf "name: $namei\nsample: $sample\n"
-			printf "numreps: $numreps\n"
 			for ((j=1;j<=numreps;j++))
 			do
 				printf "${namei}_Rep${j}\t${namei}\t${i}\n" >> combined/DEG/samples_${analysisname}.txt
