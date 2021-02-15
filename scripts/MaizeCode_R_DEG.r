@@ -10,6 +10,7 @@ library(gplots)
 args = commandArgs(trailingOnly=TRUE)
 
 genecount<-read.delim(args[1], header = TRUE, row.names = "gene_ID")
+header(genecount)
 keep.exprs<-rowSums(cpm(genecount)>1)>=2
 filtered<-genecount[keep.exprs,]
 
