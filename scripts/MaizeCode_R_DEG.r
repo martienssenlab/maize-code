@@ -15,6 +15,7 @@ filtered<-genecount[keep.exprs,]
 
 targets<-read.delim(args[2], header = TRUE)
 samples<-as.factor(targets$Sample)
+reps<-as.factor(targets$Replicate)
 tissues<-unique(samples)
 
 targets$Color<-as.numeric(targets$Color)
@@ -40,7 +41,7 @@ y<-calcNormFactors(y)
 #}
 
 pdf(paste0("combined/plots/MDS_",analysisname,".pdf"),10,8)
-plotMDS(y, col=color_samples, labels=samples)
+plotMDS(y, col=color_samples, labels=reps)
 dev.off()
 
 y<-estimateCommonDisp(y, verbose = TRUE)
