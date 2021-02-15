@@ -199,7 +199,7 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 	#### To make a count table for all RNAseq samples in samplefile
 	printf "\nPreparing count table for RNAseq samples in $analysisname\n"
 	printf "Replicate\tSample\tColor\n" > combined/DEG/samples_${analysisname}.txt
-	if [[ grep "gene:" RNA/mapped/map_${rnaseq_sample_list[0]}_Rep1_ReadsPerGene.out.tab ]]; then
+	if [ $(grep "gene:" RNA/mapped/map_${rnaseq_sample_list[0]}_Rep1_ReadsPerGene.out.tab | wc -l) -gt 0 ]; then
 		i=0
 		for sample in ${rnaseq_sample_list[@]}
 		do
