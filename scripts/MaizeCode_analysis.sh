@@ -254,7 +254,7 @@ rm -f combined/temp_reports_*
 
 if [[ $keepgoing == "STOP" ]]; then
 	printf "\nScript finished successfully without combined analysis\n"
-	touch chkpts/${analysisname}
+	touch combined/chkpts/${analysisname}
 	exit 0
 fi	
 
