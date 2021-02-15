@@ -228,6 +228,7 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 				if [ $i -eq 0 ] && [ $j -eq 1 ]; then
 					awk -v OFS="\t" 'BEGIN {print "gene_ID"}  $1 !~ /^N_/ {print $1}' RNA/mapped/map_${sample}_Rep${j}_ReadsPerGene.out.tab > combined/DEG/col_AA_0_${analysisname}.txt
 				fi
+			done
 			i=$((i+1))
 		done
 	fi
