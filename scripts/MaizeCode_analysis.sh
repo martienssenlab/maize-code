@@ -213,8 +213,8 @@ fi
 
 if [ -s combined/temp_reports_${samplename}_RNA.txt ]; then
 	#### To get gene expression stats for RNAseq samples
-	grep "RNAseq" combined/temp_reports_${samplename}_RNA.txt > combined/reports/temp1_${samplename}.txt
-	exist=$( cat combined/reports/temp1_${samplename}.txt | wc -l)
+	grep "RNAseq" combined/temp_reports_${samplename}_RNA.txt > combined/reports/temp_${samplename}.txt
+	exist=$( cat combined/reports/temp_${samplename}.txt | wc -l)
 	if [ $exist -gt 0 ]; then
 		printf "\nSummarizing gene expression stats for ${samplename}\n"
 		if [ -s combined/reports/temp_gene_expression_${samplename}.txt ]; then
@@ -223,7 +223,7 @@ if [ -s combined/temp_reports_${samplename}_RNA.txt ]; then
 		while read line tissue sample paired ref_dir
 		do
 			awk -v a=$line -v b=$tissue -v c=$sample '$1==a && $2==b && $3==c' RNA/reports/summary_gene_expression.txt >> combined/reports/temp_gene_expression_${samplename}.txt
-		done < combined/reports/temp1_${samplename}.txt
+		done < combined/reports/temp_${samplename}.txt
 		printf "Line\tTissue\tType\tTotal_annotated_genes\tNot_expressed_in_Rep1\tLow_expression_in_Rep1(<1cpm)\tHigh_expression_in_Rep1(>1cpm)\tNot_expressed_in_Rep2\tLow_expression_in_Rep2(<1cpm)\tHigh_expression_in_Rep2(>1cpm)\tNo_mean\tLow_mean(<1cpm)\tHigh_mean(>1cpm)\n" > combined/reports/summary_gene_expression_${samplename}.txt
 		sort combined/reports/temp_gene_expression_${samplename}.txt -u >> combined/reports/summary_gene_expression_${samplename}.txt
 		rm -f combined/reports/temp_gene_expression_${samplename}.txt
@@ -231,28 +231,23 @@ if [ -s combined/temp_reports_${samplename}_RNA.txt ]; then
 		R --version
 		Rscript --vanilla ${mc_dir}/MaizeCode_R_gene_ex_stats.r combined/reports/summary_gene_expression_${samplename}.txt ${samplename}
 	fi
-	rm -f combined/reports/temp1_${samplename}.txt
-	printf "Got to here 1\n"
-	#### To get tss stats for RAMPAGE samples
-	printf "Got to here 2\n"
-	grep "RAMPAGE" combined/temp_reports_${samplename}_RNA.txt > combined/reports/temp2_${samplename}.txt
-	printf "Got to here 3\n"
-	exist=$( cat combined/reports/temp2_${samplename}.txt | wc -l)
-	printf "Got to here 4\n"
-	if [ $exist -gt 0 ]; then
-		printf "\nSummarizing tss stats for ${samplename}\n"
-		if [ -s combined/reports/temp_RAMPAGE_tss_${samplename}.txt ]; then
-			rm -f combined/reports/temp_RAMPAGE_tss_${samplename}.txt
-		fi
-		while read line tissue sample paired ref_dir
-		do
-			awk -v a=$line -v b=$tissue -v c=$sample '$1==a && $2==b && $3==c' RNA/reports/summary_RAMPAGE_tss.txt >> combined/reports/temp_RAMPAGE_tss_${samplename}.txt
-		done < combined/reports/temp2_${samplename}.txt
-		printf "Line\tTissue\tType\tTotal_annotated_genes\tTSS_in_rep1\tTSS_in_Rep2\tCommon_TSS\tCommon_TSS_IDR<=0.05\n" > combined/reports/summary_RAMPAGE_tss_${samplename}.txt
-		sort combined/reports/temp_RAMPAGE_tss_${samplename}.txt -u >> combined/reports/summary_RAMPAGE_tss_${samplename}.txt
-		rm -f combined/reports/temp_RAMPAGE_tss_${samplename}.txt
-	fi
-	rm -f combined/reports/temp2_${samplename}.txt
+	rm -f combined/reports/temp_${samplename}.txt
+	grep "RAMPAGE" combined/temp_reports_${samplename}_RNA.txt > combined/reports/temp_${samplename}.txt
+##	exist=$( cat combined/reports/temp_${samplename}.txt | wc -l)
+##	if [ $exist -gt 0 ]; then
+##		printf "\nSummarizing tss stats for ${samplename}\n"
+##		if [ -s combined/reports/temp_RAMPAGE_tss_${samplename}.txt ]; then
+##			rm -f combined/reports/temp_RAMPAGE_tss_${samplename}.txt
+##		fi
+##		while read line tissue sample paired ref_dir
+##		do
+##			awk -v a=$line -v b=$tissue -v c=$sample '$1==a && $2==b && $3==c' RNA/reports/summary_RAMPAGE_tss.txt >> combined/reports/temp_RAMPAGE_tss_${samplename}.txt
+##		done < combined/reports/temp_${samplename}.txt
+##		printf "Line\tTissue\tType\tTotal_annotated_genes\tTSS_in_rep1\tTSS_in_Rep2\tCommon_TSS\tCommon_TSS_IDR<=0.05\n" > combined/reports/summary_RAMPAGE_tss_${samplename}.txt
+##		sort combined/reports/temp_RAMPAGE_tss_${samplename}.txt -u >> combined/reports/summary_RAMPAGE_tss_${samplename}.txt
+##		rm -f combined/reports/temp_RAMPAGE_tss_${samplename}.txt
+##	fi
+##	rm -f combined/reports/temp_${samplename}.txt
 fi
 
 rm -f combined/temp_reports_*
