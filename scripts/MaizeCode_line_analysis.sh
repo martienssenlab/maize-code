@@ -201,10 +201,12 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 	printf "Replicate\tSample\tColor\n" > combined/DEG/samples_${analysisname}.txt
 	if [ $(grep "gene:" RNA/mapped/map_${rnaseq_sample_list[0]}_Rep1_ReadsPerGene.out.tab | wc -l) -gt 0 ]; then
 		i=0
+		printf "Got here 1\n"
 		for sample in ${rnaseq_sample_list[@]}
 		do
 			namei=${rnaseq_name_list[i]}
 			numreps=$(ls -1f | grep ${namei} | wc -l)
+			printf "$namei $numreps\n"
 			for j in {1..$numreps}
 			do
 				printf "${namei}_Rep${j}\t${namei}\t${i}\n" >> combined/DEG/samples_${analysisname}.txt
@@ -216,6 +218,7 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 			i=$((i+1))
 		done
 	else
+		printf "Got here 2\n"
 		i=0
 		for sample in ${rnaseq_sample_list[@]}
 		do
@@ -232,6 +235,7 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 			i=$((i+1))
 		done
 	fi
+	printf "Got here 3\n"
 	paste combined/DEG/col_A*_${analysisname}* > combined/DEG/counts_${analysisname}.txt
 	rm -f combined/DEG/col_A*_${analysisname}*
 	#### To run the DEG analysis on R
