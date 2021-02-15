@@ -356,15 +356,17 @@ do
 done
 
 pids=()
-analysisname="${samplename}_on_all_genes"
-check="combined/chkpts/${analysisname}"
 
 if [[ "$wholeanalysis" == "STOP" ]]; then
 	printf "\nPerforming only the single sample analysis\n"
 	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f $analysisfile -r all_genes.txt -s &
+	analysisname="${samplename}_no_region"
+	check="combined/chkpts/${analysisname}"
 else
 	printf "\nPerforming the complete analysis on all genes\n"
 	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f $analysisfile -r all_genes.txt &
+	analysisname="${samplename}_on_all_genes"
+	check="combined/chkpts/${analysisname}"
 fi	
 pids+=("$!")
 
