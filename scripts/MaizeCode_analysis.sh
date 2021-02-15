@@ -234,9 +234,11 @@ if [ -s combined/temp_reports_${samplename}_RNA.txt ]; then
 	rm -f combined/reports/temp1_${samplename}.txt
 	printf "Got to here 1\n"
 	#### To get tss stats for RAMPAGE samples
-	grep "RAMPAGE" combined/temp_reports_${samplename}_RNA.txt > combined/reports/temp2_${samplename}.txt
-	exist=$( cat combined/reports/temp2_${samplename}.txt| wc -l)
 	printf "Got to here 2\n"
+	grep "RAMPAGE" combined/temp_reports_${samplename}_RNA.txt > combined/reports/temp2_${samplename}.txt
+	printf "Got to here 3\n"
+	exist=$( cat combined/reports/temp2_${samplename}.txt | wc -l)
+	printf "Got to here 4\n"
 	if [ $exist -gt 0 ]; then
 		printf "\nSummarizing tss stats for ${samplename}\n"
 		if [ -s combined/reports/temp_RAMPAGE_tss_${samplename}.txt ]; then
