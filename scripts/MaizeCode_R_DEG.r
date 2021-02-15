@@ -40,7 +40,11 @@ y<-calcNormFactors(y)
 #  color_samples<-c(color_samples, rep(colors[i],2))
 #}
 
-pdf(paste0("combined/plots/MDS_",analysisname,".pdf"),10,8)
+pdf(paste0("combined/plots/MDS_",analysisname,"_v1.pdf"),10,8)
+plotMDS(y, col=color_samples, labels=samples)
+dev.off()
+
+pdf(paste0("combined/plots/MDS_",analysisname,"_v2.pdf"),10,8)
 plotMDS(y, col=color_samples, labels=reps)
 dev.off()
 
