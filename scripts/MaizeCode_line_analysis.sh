@@ -205,9 +205,10 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 		do
 			namei=${rnaseq_name_list[i]}
 			numreps=$(ls -1f RNA/mapped/map_${sample}_Rep*_ReadsPerGene.out.tab | wc -l)
+			n=$((i+1))
 			for ((j=1;j<=numreps;j++))
 			do
-				printf "${namei}_Rep${j}\t${namei}\t${i}\n" >> combined/DEG/samples_${analysisname}.txt
+				printf "${namei}_Rep${j}\t${namei}\t${n}\n" >> combined/DEG/samples_${analysisname}.txt
 				grep "gene:" RNA/mapped/map_${sample}_Rep${j}_ReadsPerGene.out.tab | sed 's/gene://' | awk -v OFS="\t" -v t=$namei -v j=$j 'BEGIN {print t"_Rep"j} {print $2}' > combined/DEG/col_AZ_${i}_${analysisname}_${sample}_Rep${j}.txt
 				if [ $i -eq 0 ] && [ $j -eq 1 ]; then
 					grep "gene:" RNA/mapped/map_${sample}_Rep${j}_ReadsPerGene.out.tab | sed 's/gene://' | awk -v OFS="\t" 'BEGIN {print "gene_ID"} {print $1}' > combined/DEG/col_AA_0_${analysisname}.txt
@@ -221,9 +222,10 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 		do
 			namei=${rnaseq_name_list[i]}
 			numreps=$(ls -1f RNA/mapped/map_${sample}_Rep*_ReadsPerGene.out.tab | wc -l)
+			n=$((i+1))
 			for ((j=1;j<=numreps;j++))
 			do
-				printf "${namei}_Rep${j}\t${namei}\t${i}\n" >> combined/DEG/samples_${analysisname}.txt
+				printf "${namei}_Rep${j}\t${namei}\t${n}\n" >> combined/DEG/samples_${analysisname}.txt
 				awk -v OFS="\t" -v t=$namei -v j=$j 'BEGIN {print t"_Rep"j}  $1 !~ /^N_/ {print $2}' RNA/mapped/map_${sample}_Rep${j}_ReadsPerGene.out.tab > combined/DEG/col_AZ_${i}_${analysisname}_${sample}_Rep${j}.txt
 				if [ $i -eq 0 ] && [ $j -eq 1 ]; then
 					awk -v OFS="\t" 'BEGIN {print "gene_ID"}  $1 !~ /^N_/ {print $1}' RNA/mapped/map_${sample}_Rep${j}_ReadsPerGene.out.tab > combined/DEG/col_AA_0_${analysisname}.txt
