@@ -231,6 +231,7 @@ if [ -s combined/temp_reports_${samplename}_RNA.txt ]; then
 		R --version
 		Rscript --vanilla ${mc_dir}/MaizeCode_R_gene_ex_stats.r combined/reports/summary_gene_expression_${samplename}.txt ${samplename}
 	fi
+	printf "\nAll good 1\n"
 	#### To get tss stats for RAMPAGE samples
 	grep "RAMPAGE" combined/temp_reports_${samplename}_RNA.txt > combined/reports/temp_${samplename}.txt
 	exist=$(cat combined/reports/temp_${samplename}.txt | wc -l)
@@ -252,6 +253,7 @@ if [ -s combined/temp_reports_${samplename}_RNA.txt ]; then
 	fi
 fi
 
+printf "\nAll good 2\n"
 rm -f combined/temp_reports_*
 
 if [[ $keepgoing == "STOP" ]]; then
