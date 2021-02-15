@@ -232,7 +232,7 @@ if [ -s combined/temp_reports_${samplename}_RNA.txt ]; then
 		Rscript --vanilla ${mc_dir}/MaizeCode_R_gene_ex_stats.r combined/reports/summary_gene_expression_${samplename}.txt ${samplename}
 	fi
 	rm -f combined/reports/temp_${samplename}.txt
-	grep "RAMPAGE" combined/temp_reports_${samplename}_RNA.txt > combined/reports/temp_${samplename}.txt
+##	grep "RAMPAGE" combined/temp_reports_${samplename}_RNA.txt > combined/reports/temp_${samplename}.txt
 ##	exist=$( cat combined/reports/temp_${samplename}.txt | wc -l)
 ##	if [ $exist -gt 0 ]; then
 ##		printf "\nSummarizing tss stats for ${samplename}\n"
