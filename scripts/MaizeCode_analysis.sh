@@ -215,7 +215,6 @@ if [ -s combined/temp_reports_${samplename}_RNA.txt ]; then
 	#### To get gene expression stats for RNAseq samples
 	grep "RNAseq" combined/temp_reports_${samplename}_RNA.txt > combined/reports/temp_${samplename}.txt
 	exist=$(cat combined/reports/temp_${samplename}.txt | wc -l)
-	printf "Got to here 0 ($exist)\n"
 	if [ $exist -gt 0 ]; then
 		printf "\nSummarizing gene expression stats for ${samplename}\n"
 		if [ -s combined/reports/temp_gene_expression_${samplename}.txt ]; then
@@ -231,14 +230,14 @@ if [ -s combined/temp_reports_${samplename}_RNA.txt ]; then
 		printf "\nPlotting gene expression stats for all RNAseq samples in the samplefile with R:\n"
 		R --version
 		Rscript --vanilla ${mc_dir}/MaizeCode_R_gene_ex_stats.r combined/reports/summary_gene_expression_${samplename}.txt ${samplename}
+		printf "Got to here 1\n"
 	fi
+	printf "Got to here 2\n"
 	#### To get tss stats for RAMPAGE samples
 	grep "RAMPAGE" combined/temp_reports_${samplename}_RNA.txt > combined/reports/temp_${samplename}.txt
-	printf "Got to here 1\n"
+	printf "Got to here 3\n"
 	exist=$(cat combined/reports/temp_${samplename}.txt | wc -l)
-	printf "Got to here 2 ($exist)\n"
 	if [ $exist -gt 0 ]; then
-		printf "Got to here 3A\n"
 		printf "\nSummarizing tss stats for ${samplename}\n"
 		if [ -s combined/reports/temp_RAMPAGE_tss_${samplename}.txt ]; then
 			rm -f combined/reports/temp_RAMPAGE_tss_${samplename}.txt
@@ -251,7 +250,6 @@ if [ -s combined/temp_reports_${samplename}_RNA.txt ]; then
 		sort combined/reports/temp_RAMPAGE_tss_${samplename}.txt -u >> combined/reports/summary_RAMPAGE_tss_${samplename}.txt
 		rm -f combined/reports/temp_RAMPAGE_tss_${samplename}.txt
 	fi
-	printf "Got to here 3B\n"
 	if [ -e combined/reports/temp_${samplename}.txt ]; then
 		rm -f combined/reports/temp_${samplename}.txt
 	fi
