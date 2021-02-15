@@ -56,7 +56,10 @@ plot.expression.stats<-function(stattable, name) {
   plot
 }    
 
+print("Before plotting")
+
 pdf(paste0("combined/plots/gene_expression_stats_",analysisname,".pdf"), height=10, width=12)
 plot.expression.stats(summary_stats, analysisname)
 dev.off()
 
+print("Script finished")
