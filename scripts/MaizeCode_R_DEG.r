@@ -30,7 +30,7 @@ y<-DGEList(counts=filtered, group = samples)
 y<-calcNormFactors(y)
 
 colors<-c("black","blue","red","pink","green","purple","lightblue")
-color_samples<-factor(target$Color, labels=head(colors, max(target$Color)))
+color_samples<-factor(targets$Color, labels=head(colors, max(targets$Color)))
 color_samples
 #color_samples<-c()
 #for (i in 1:length(tissues)) {
