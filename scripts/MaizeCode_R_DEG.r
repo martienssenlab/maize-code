@@ -17,6 +17,11 @@ targets<-read.delim(args[2], header = TRUE)
 samples<-as.factor(targets$Sample)
 tissues<-unique(samples)
 
+targets$Color<-as.numeric(targets$Color)
+
+colors<-c("black","blue","red","pink","green","purple","lightblue")
+color_samples<-colors[targets$Color]
+
 analysisname<-args[3]
 
 ref_genes<-read.delim(args[4], header = FALSE, 
@@ -29,9 +34,6 @@ ref_genes<-mutate(ref_genes, GeneID=str_extract(ref_genes$Name,gene_names)) %>%
 y<-DGEList(counts=filtered, group = samples)
 y<-calcNormFactors(y)
 
-colors<-c("black","blue","red","pink","green","purple","lightblue")
-color_samples<-factor(targets$Color, labels=head(colors, max(targets$Color)))
-color_samples
 #color_samples<-c()
 #for (i in 1:length(tissues)) {
 #  color_samples<-c(color_samples, rep(colors[i],2))
