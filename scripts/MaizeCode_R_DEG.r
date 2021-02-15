@@ -10,7 +10,6 @@ library(gplots)
 args = commandArgs(trailingOnly=TRUE)
 
 genecount<-read.delim(args[1], header = TRUE, row.names = "gene_ID")
-head(genecount)
 keep.exprs<-rowSums(cpm(genecount)>1)>=2
 filtered<-genecount[keep.exprs,]
 
@@ -25,13 +24,14 @@ ref_genes<-read.delim(args[4], header = FALSE,
 gene_names<-row.names(genecount)
 ref_genes<-mutate(ref_genes, GeneID=str_extract(ref_genes$Name,gene_names)) %>%
   select(-Name, -Value)
-  
+
 # EdgeR analysis
 y<-DGEList(counts=filtered, group = samples)
 y<-calcNormFactors(y)
 
 colors<-c("black","blue","red","pink","green","purple","lightblue")
-color_samples<-factor(target$Color, labels=head(colors, max(target$Color))
+color_samples<-factor(target$Color, labels=head(colors, max(target$Color)))
+color_samples
 #color_samples<-c()
 #for (i in 1:length(tissues)) {
 #  color_samples<-c(color_samples, rep(colors[i],2))
