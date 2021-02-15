@@ -230,11 +230,12 @@ if [ -s combined/temp_reports_${samplename}_RNA.txt ]; then
 		printf "\nPlotting gene expression stats for all RNAseq samples in the samplefile with R:\n"
 		R --version
 		Rscript --vanilla ${mc_dir}/MaizeCode_R_gene_ex_stats.r combined/reports/summary_gene_expression_${samplename}.txt ${samplename}
+		printf "Got to here 1\n"
 	fi
+	printf "Got to here 2\n"
 	#### To get tss stats for RAMPAGE samples
 	grep "RAMPAGE" combined/temp_reports_${samplename}_RNA.txt > combined/reports/temp_${samplename}.txt
 	exist=$(cat combined/reports/temp_${samplename}.txt | wc -l)
-	printf "\nAll good 2\nexits? $exist\n"
 	if [ $exist -gt 0 ]; then
 		printf "\nSummarizing tss stats for ${samplename}\n"
 		if [ -s combined/reports/temp_RAMPAGE_tss_${samplename}.txt ]; then
@@ -244,7 +245,6 @@ if [ -s combined/temp_reports_${samplename}_RNA.txt ]; then
 		do
 			awk -v a=$line -v b=$tissue -v c=$sample '$1==a && $2==b && $3==c' RNA/reports/summary_RAMPAGE_tss.txt >> combined/reports/temp_RAMPAGE_tss_${samplename}.txt
 		done < combined/reports/temp_${samplename}.txt
-		printf "\nAll good 3\n"
 		printf "Line\tTissue\tType\tTotal_annotated_genes\tTSS_in_rep1\tTSS_in_Rep2\tCommon_TSS\tCommon_TSS_IDR<=0.05\n" > combined/reports/summary_RAMPAGE_tss_${samplename}.txt
 		sort combined/reports/temp_RAMPAGE_tss_${samplename}.txt -u >> combined/reports/summary_RAMPAGE_tss_${samplename}.txt
 		rm -f combined/reports/temp_RAMPAGE_tss_${samplename}.txt
