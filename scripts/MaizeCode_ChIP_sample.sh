@@ -11,14 +11,14 @@
 usage="
 ##### Script for Maize code ChIP data analysis, used by script MaizeCode.sh for ChIP samples
 #####
-##### sh MaizeCode_ChIP_sample.sh -d reference directory -l inbred line -t tissue -m histone mark -r replicate ID -i sample ID -d path to sample -p paired -s step
+##### sh MaizeCode_ChIP_sample.sh -d reference directory -l inbred line -t tissue -m histone mark -r replicate ID -i sample ID -f path to sample -p paired -s step
 ##### 	-d: folder containing the reference directory (e.g. ~/data/Genomes/Zea_mays/B73_v4)
 ##### 	-l: inbred line (e.g. B73)
 ##### 	-t: tissue (e.g. endosperm)
 ##### 	-m: ChIP-seq mark (e.g. H3K4me1)
 ##### 	-r: replicate ID (e.g. Rep1)
 #####	-i: sample ID (name in original folder or SRR number)
-#####	-d: path to original folder or SRA
+#####	-f: path to original folder or SRA
 ##### 	-p: if data is paired-end (PE) or single-end (SE) [ PE | SE ]
 #####	-s: [ download | trim | done ] 'download' if sample needs to be copied/downloaded, 'trim' if only trimming has to be performed ('done' if trimming has already been performed)
 ##### 	-h: help, returns usage
@@ -42,7 +42,7 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts "d:l:t:m:r:i:d:p:s:h" opt; do
+while getopts "d:l:t:m:r:i:f:p:s:h" opt; do
 	case $opt in
 		h) 	printf "$usage\n"
 			exit 0;;
@@ -52,7 +52,7 @@ while getopts "d:l:t:m:r:i:d:p:s:h" opt; do
 		m)	export mark=${OPTARG};;
 		r)	export rep=${OPTARG};;
 		i)	export sampleID=${OPTARG};;
-		d)	export path=${OPTARG};;
+		f)	export path=${OPTARG};;
 		p)	export paired=${OPTARG};;
 		s)	export step=${OPTARG};;
 		*)	printf "$usage\n"
