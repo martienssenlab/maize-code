@@ -238,7 +238,7 @@ do
 		if ls ./$datatype/fastq/trimmed_${name}*.fastq.gz 1> /dev/null 2>&1; then
 			printf "\nTrimmed fastq file(s) for ${name} already exist\n"
 			export step="done"
-		elif ls ./$datatype/fastq/${name}.fastq.gz 1> /dev/null 2>&1; then
+		elif ls ./$datatype/fastq/${name}*.fastq.gz 1> /dev/null 2>&1; then
 			printf "\nFastq file(s) for ${name} already exist\n"
 			export step="trim"
 		else
