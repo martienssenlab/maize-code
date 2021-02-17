@@ -11,20 +11,22 @@
 usage="
 ##### Script for Maize code ChIP data analysis, used by script MaizeCode.sh for ChIP samples
 #####
-##### sh MaizeCode_ChIP_sample.sh -d reference directory -l inbred line -t tissue -m histone mark -e replicate ID -p paired -s step
+##### sh MaizeCode_ChIP_sample.sh -d reference directory -l inbred line -t tissue -m histone mark -r replicate ID -i sample ID -d path to sample -p paired -s step
 ##### 	-d: folder containing the reference directory (e.g. ~/data/Genomes/Zea_mays/B73_v4)
 ##### 	-l: inbred line (e.g. B73)
 ##### 	-t: tissue (e.g. endosperm)
 ##### 	-m: ChIP-seq mark (e.g. H3K4me1)
-##### 	-e: replicate ID (e.g. Rep1)
+##### 	-r: replicate ID (e.g. Rep1)
+#####	-i: sample ID (name in original folder or SRR number)
+#####	-d: path to original folder or SRA
 ##### 	-p: if data is paired-end (PE) or single-end (SE) [ PE | SE ]
-#####	-s: set to "trim" if trimming has to be performed (when it has not been done on these fastq before)
+#####	-s: [ download | trim | done ] 'download' if sample needs to be copied/downloaded, 'trim' if only trimming has to be performed ('done' if trimming has already been performed)
 ##### 	-h: help, returns usage
 #####
-##### It runs fastQC, trims adapters with cutadapt, aligns with bowtie2,
+##### It downloads or copies the files, runs fastQC, trims adapters with cutadapt, aligns with bowtie2,
 ##### filters duplicates with samtools, and get some mapping stats
 #####
-##### Requirements: samtools, fastQC, Cutadapt, Bowtie2
+##### Requirements: samtools, fastQC, Cutadapt, Bowtie2, parallel-fastq-dump (if downloading SRA data)
 "
 
 set -e -o pipefail
@@ -40,7 +42,7 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts "d:l:t:m:r:p:s:h" opt; do
+while getopts "d:l:t:m:r:i:d:p:s:h" opt; do
 	case $opt in
 		h) 	printf "$usage\n"
 			exit 0;;
@@ -49,6 +51,8 @@ while getopts "d:l:t:m:r:p:s:h" opt; do
 		t)	export tissue=${OPTARG};;
 		m)	export mark=${OPTARG};;
 		r)	export rep=${OPTARG};;
+		i)	export sampleID=${OPTARG};;
+		d)	export path=${OPTARG};;
 		p)	export paired=${OPTARG};;
 		s)	export step=${OPTARG};;
 		*)	printf "$usage\n"
@@ -57,7 +61,7 @@ while getopts "d:l:t:m:r:p:s:h" opt; do
 done
 shift $((OPTIND - 1))
 
-if [ ! $ref_dir ] || [ ! $line ] || [ ! $tissue ] || [ ! $mark ] || [ ! $rep ] || [ ! $paired ] || [ ! $step ]; then
+if [ ! $ref_dir ] || [ ! $line ] || [ ! $tissue ] || [ ! $mark ] || [ ! $rep ] || [ ! $sampleID ] || [ ! $path ] || [ ! $paired ] || [ ! $step ]; then
 	printf "Missing arguments!\n"
 	printf "$usage\n"
 	exit 1
@@ -68,7 +72,19 @@ export ref=${ref_dir##*/}
 name=${line}_${tissue}_${mark}_${rep}
 
 if [[ $paired == "PE" ]]; then
-	if [[ $step == "trim" ]]; then
+	if [[ $step == "download" ]]; then
+		if [[ $path == "SRA" ]]; then
+			printf "\nUsing parallel fastq-dump for $name ($sampleID)\n"
+			parallel-fastq-dump --threads $threads --split-files --gzip --sra-id ${sampleID} --outdir ./fastq 
+			printf "\n$name ($sampleID) downloaded\nRenaming files..."
+			mv ./fastq/${sampleID}_1.fastq.gz ./fastq/${name}_R1.fastq.gz
+			mv ./fastq/${sampleID}_2.fastq.gz ./fastq/${name}_R2.fastq.gz
+		else
+			printf "\nCopying PE fastq for $name ($sampleID in $path)\n"
+			cp $path/${sampleID}*R1*q.gz ./fastq/${name}_R1.fastq.gz
+			cp $path/${sampleID}*R2*q.gz ./fastq/${name}_R2.fastq.gz
+		fi
+	elif [[ $step == "trim" ]]; then
 		#### FastQC on raw data
 		printf "\nRunning fastQC for $name with fastqc version:\n"
 		fastqc --version
@@ -91,7 +107,17 @@ if [[ $paired == "PE" ]]; then
 	bowtie2 --version
 	bowtie2 -p $threads --end-to-end --maxins 1500 --met-file reports/bt2_${name}.txt -x $ref_dir/$ref -1 fastq/trimmed_${name}_R1.fastq.gz -2 fastq/trimmed_${name}_R2.fastq.gz -S mapped/${name}.sam |& tee reports/mapping_${name}.txt
 elif [[ $paired == "SE" ]]; then
-	if [[ $step == "trim" ]]; then
+	if [[ $step == "download" ]]; then
+		if [[ $path == "SRA" ]]; then
+			printf "\nUsing parallel fastq-dump for $name ($sampleID)\n"
+			parallel-fastq-dump --threads $threads --split-files --gzip --sra-id ${sampleID} --outdir ./fastq 
+			printf "\n$name ($sampleID) downloaded\nRenaming files..."
+			mv ./fastq/${sampleID}_1.fastq.gz ./fastq/${name}.fastq.gz
+		else
+			printf "\nCopying SE fastq for $name ($sampleID in $path)\n"
+			cp $path/${sampleID}*q.gz ./fastq/${name}.fastq.gz
+		fi
+	elif [[ $step == "trim" ]]; then
 		#### FastQC on raw data
 		printf "\nRunning fastQC for $name with fastqc version:\n"
 		fastqc --version
