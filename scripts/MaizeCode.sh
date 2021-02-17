@@ -236,42 +236,18 @@ do
 		checkdatatype_list+=("$datatype")
 		check_list+=("$check")
 		if ls ./$datatype/fastq/trimmed_${name}*.fastq.gz 1> /dev/null 2>&1; then
-			printf "\nFastq file(s) for ${name} already exist\n"
+			printf "\nTrimmed fastq file(s) for ${name} already exist\n"
 			export step="done"
 		elif ls ./$datatype/fastq/${name}.fastq.gz 1> /dev/null 2>&1; then
 			printf "\nFastq file(s) for ${name} already exist\n"
 			export step="trim"
 		else
-			export step="trim"
-			if [[ $path == "SRA" ]]; then
-				printf "\nUsing parallel fastq-dump for $name ($sampleID)\n"
-				parallel-fastq-dump --threads $threads --split-files --gzip --sra-id ${sampleID} --outdir ./$datatype/fastq 
-				printf "\n$name ($sampleID) downloaded\nRenaming files..."
-				if [[ $paired == "PE" ]]; then
-					mv ./$datatype/fastq/${sampleID}_1.fastq.gz ./$datatype/fastq/${name}_R1.fastq.gz
-					mv ./$datatype/fastq/${sampleID}_2.fastq.gz ./$datatype/fastq/${name}_R2.fastq.gz
-				elif [[ $paired == "SE" ]]; then
-					mv ./$datatype/fastq/${sampleID}_1.fastq.gz ./$datatype/fastq/${name}.fastq.gz
-				else
-					printf "\nData format unknown: paired-end (PE) or single-end (SE)?\n"
-				fi
-			else
-				if [[ $paired == "PE" ]]; then
-					printf "\nCopying PE fastq for $name ($sampleID in $path)\n"
-					cp $path/${sampleID}*R1*q.gz ./$datatype/fastq/${name}_R1.fastq.gz
-					cp $path/${sampleID}*R2*q.gz ./$datatype/fastq/${name}_R2.fastq.gz
-				elif [[ $paired == "SE" ]]; then
-					printf "\nCopying SE fastq for $name ($sampleID in $path)\n"
-					cp $path/${sampleID}*q.gz ./$datatype/fastq/${name}.fastq.gz
-				else
-					printf "\nData format unknown: paired-end (PE) or single-end (SE)?\n"
-					exit 1
-				fi
-			fi
+			printf "\nNew sample ${name} to be copied/downloaded\n"
+			export step="download"
 		fi
 		printf "\nRunning $datatype mapping script for $name on $ref genome\n"
 		cd $datatype
-		qsub -sync y -N ${name} -o logs/${name}.log ${mc_dir}/MaizeCode_${datatype}_sample.sh -d $ref_dir -l $line -t $tissue -m $sample -r $rep -p $paired -s $step &
+		qsub -sync y -N ${name} -o logs/${name}.log ${mc_dir}/MaizeCode_${datatype}_sample.sh -d $ref_dir -l $line -t $tissue -m $sample -r $rep -i $sampleID -d $path -p $paired -s $step &
 		pids+=("$!")
 		cd ..
 	fi
