@@ -139,6 +139,17 @@ else
 	export ref=${ref_list[0]}
 fi
 
+if [[ $ref =~ "B73_v4" ]]; then
+	if [ ! -s combined/matrix/leaf_ACRs.bed ]; then
+		wget ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3398nnn/GSM3398046/suppl/GSM3398046_ATAC_B73_leaf.filtered_ACR.bed.gz
+		pigz -d GSM3398046_ATAC_B73_leaf.filtered_ACR.bed.gz && mv GSM3398046_ATAC_B73_leaf.filtered_ACR.bed combined/matrix/leaf_ACRs.bed
+	fi
+	if [ ! -s combined/matrix/ears_ACRs.bed ]; then
+		wget ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3398nnn/GSM3398046/suppl/GSM3398047_ATAC_B73_ear.filtered_ACR.bed.gz
+		pigz -d GSM3398047_ATAC_B73_ear.filtered_ACR.bed.gz && mv GSM3398047_ATAC_B73_ear.filtered_ACR.bed combined/matrix/ears_ACRs.bed
+	fi
+fi	
+
 #############################################################################################
 ########################################### PART2 ###########################################
 ########################## Overlapping ChIPseq peaks - Upset plot  ##########################
