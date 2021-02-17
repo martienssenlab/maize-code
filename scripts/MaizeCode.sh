@@ -247,7 +247,7 @@ do
 		fi
 		printf "\nRunning $datatype mapping script for $name on $ref genome\n"
 		cd $datatype
-		qsub -sync y -N ${name} -o logs/${name}.log ${mc_dir}/MaizeCode_${datatype}_sample.sh -d $ref_dir -l $line -t $tissue -m $sample -r $rep -i $sampleID -d $path -p $paired -s $step &
+		qsub -sync y -N ${name} -o logs/${name}.log ${mc_dir}/MaizeCode_${datatype}_sample.sh -d $ref_dir -l $line -t $tissue -m $sample -r $rep -i $sampleID -f $path -p $paired -s $step &
 		pids+=("$!")
 		cd ..
 	fi
