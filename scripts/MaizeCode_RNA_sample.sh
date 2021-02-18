@@ -94,12 +94,15 @@ if [[ $paired == "PE" ]]; then
 			printf "\n$name ($sampleID) downloaded\nRenaming files..."
 			mv ./fastq/${sampleID}_1.fastq.gz ./fastq/${name}_R1.fastq.gz
 			mv ./fastq/${sampleID}_2.fastq.gz ./fastq/${name}_R2.fastq.gz
+			step="trim"
 		else
 			printf "\nCopying PE fastq for $name ($sampleID in $path)\n"
 			cp $path/${sampleID}*R1*q.gz ./fastq/${name}_R1.fastq.gz
 			cp $path/${sampleID}*R2*q.gz ./fastq/${name}_R2.fastq.gz
+			step="trim"
 		fi
-	elif [[ $step == "trim" ]]; then
+	fi
+	if [[ $step == "trim" ]]; then
 		#### FastQC on raw data
 		printf "\nRunning fastQC for $name with fastqc version:\n"
 		fastqc --version
@@ -170,11 +173,14 @@ elif [[ $paired == "SE" ]]; then
 			parallel-fastq-dump --threads $threads --split-files --gzip --sra-id ${sampleID} --outdir ./fastq 
 			printf "\n$name ($sampleID) downloaded\nRenaming files..."
 			mv ./fastq/${sampleID}_1.fastq.gz ./fastq/${name}.fastq.gz
+			step="trim"
 		else
 			printf "\nCopying SE fastq for $name ($sampleID in $path)\n"
 			cp $path/${sampleID}*q.gz ./fastq/${name}.fastq.gz
+			step="trim"
 		fi
-	elif [[ $step == "trim" ]]; then
+	fi
+	if [[ $step == "trim" ]]; then
 		#### FastQC on raw data
 		printf "\nRunning fastQC for $name with fastqc version:\n"
 		fastqc --version
