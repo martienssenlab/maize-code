@@ -112,6 +112,8 @@ if [[ $paired == "PE" ]]; then
 		printf "\nTrimming Illumina adapters for $name with cutadapt version:\n"
 		cutadapt --version
 		cutadapt -j $threads -q 10 -m 15 -a AGATCGGAAGAGCACACGTCTGAAC -A AGATCGGAAGAGCGTCGTGTAGGGA -o fastq/trimmed_${name}_R1.fastq.gz -p fastq/trimmed_${name}_R2.fastq.gz fastq/${name}_R1.fastq.gz fastq/${name}_R2.fastq.gz |& tee reports/trimming_${name}.txt
+		#### Removing untrimmed fastq
+		rm -f fastq/${name}_R*.fastq.gz
 		#### FastQC on trimmed data
 		printf "\nRunning fastQC on trimmed files for $name\n"
 		fastqc -o reports/ fastq/trimmed_${name}_R1.fastq.gz
@@ -189,6 +191,8 @@ elif [[ $paired == "SE" ]]; then
 		printf "\nTrimming Illumina adapters for $name with cutadapt version:\n"
 		cutadapt --version
 		cutadapt -j $threads -q 10 -m 15 -a AGATCGGAAGAGCACACGTCTGAAC -o fastq/trimmed_${name}.fastq.gz fastq/${name}.fastq.gz |& tee reports/trimming_${name}.txt
+		#### Removing untrimmed fastq
+		rm -f fastq/${name}.fastq.gz
 		#### FastQC on trimmed data
 		printf "\nRunning fastQC on trimmed files for $name\n"
 		fastqc -o reports/ fastq/trimmed_${name}.fastq.gz
