@@ -20,6 +20,8 @@ macs2 2.2.7.1
 
 IDR 2.0.4.2
 
+kent utils (bedGraphToBigWig; bedSort)
+
 parallel-fastq-dump : 0.6.6 
 fastq-dump : 2.8.0
 
