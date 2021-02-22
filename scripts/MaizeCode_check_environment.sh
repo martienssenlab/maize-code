@@ -127,7 +127,7 @@ fi
 if [ ! -s ${ref_dir}/chrom.sizes ]; then
 	printf "\nMaking chrom.sizes file for $ref\n"
 	samtools faidx $fasta
-	cut -f1,2 ${fasta}.fai | sort -k1,1 > ${ref_dir}/chrom.sizes
+	cut -f1,2 ${fasta}.fai > ${ref_dir}/chrom.sizes
 fi
 
 if [ ! -s $datatype/tracks/${ref}_all_genes.bed ]; then
