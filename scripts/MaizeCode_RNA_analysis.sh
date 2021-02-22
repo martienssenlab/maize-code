@@ -111,10 +111,10 @@ do
 			STAR --runMode inputAlignmentsFromBAM --inputBAMfile mapped/${name}_merged.bam --outWigStrand Stranded ${param_bg} --outFileNamePrefix tracks/bg_${name}_merged_
 			### Converting to bigwig files
 			printf "\nConverting bedGraphs to bigWigs\n"
-			sort -k1,1 -k2,2n tracks/bg_${name}_merged_Signal.UniqueMultiple.str1.out.bg > tracks/${name}_merged_Signal.sorted.UniqueMultiple.str1.out.bg
-			sort -k1,1 -k2,2n tracks/bg_${name}_merged_Signal.Unique.str1.out.bg > tracks/${name}_merged_Signal.sorted.Unique.str1.out.bg
-			sort -k1,1 -k2,2n tracks/bg_${name}_merged_Signal.UniqueMultiple.str2.out.bg > tracks/${name}_merged_Signal.sorted.UniqueMultiple.str2.out.bg
-			sort -k1,1 -k2,2n tracks/bg_${name}_merged_Signal.Unique.str2.out.bg > tracks/${name}_merged_Signal.sorted.Unique.str2.out.bg
+			bedSort tracks/bg_${name}_merged_Signal.UniqueMultiple.str1.out.bg tracks/${name}_merged_Signal.sorted.UniqueMultiple.str1.out.bg
+			bedSort tracks/bg_${name}_merged_Signal.Unique.str1.out.bg tracks/${name}_merged_Signal.sorted.Unique.str1.out.bg
+			bedSort tracks/bg_${name}_merged_Signal.UniqueMultiple.str2.out.bg tracks/${name}_merged_Signal.sorted.UniqueMultiple.str2.out.bg
+			bedSort tracks/bg_${name}_merged_Signal.Unique.str2.out.bg tracks/${name}_merged_Signal.sorted.Unique.str2.out.bg
 			if [[ $strandedness == "forward" ]]; then
 				bedGraphToBigWig tracks/${name}_merged_Signal.sorted.UniqueMultiple.str1.out.bg ${ref_dir}/chrom.sizes tracks/${name}_merged_plus.bw
 				bedGraphToBigWig tracks/${name}_merged_Signal.sorted.Unique.str1.out.bg ${ref_dir}/chrom.sizes tracks/${name}_merged_unique_plus.bw
