@@ -73,7 +73,10 @@ do
 	export name=${line}_${tissue}_${mark}
 	export input=${line}_${tissue}_Input
 	export paired
-	if [ ! -s mapped/${input}_merged.bam ] && [ -e mapped/${input}_Rep2.bam ]; then
+	if [ -s mapped/${input}_merged.bam ]; then
+		printf "\nReplicates of $input already merged\n"
+		export inputrep="two"
+	elif [ ! -s mapped/${input}_merged.bam ] && [ -e mapped/${input}_Rep2.bam ]; then
 		printf "\nMerging replicates of $input\n"
 		samtools merge -@ $threads mapped/temp_${input}.bam mapped/${input}_Rep1.bam mapped/${input}_Rep2.bam
 		samtools sort -@ $threads -o mapped/${input}_merged.bam mapped/temp_${input}.bam
