@@ -38,7 +38,7 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts ":f:sh" opt; do
+while getopts ":f:h" opt; do
 	case $opt in
 		h) 	printf "$usage\n"
 			exit 0;;
@@ -73,12 +73,22 @@ do
 	export name=${line}_${tissue}_${mark}
 	export input=${line}_${tissue}_Input
 	export paired
-	if [ ! -s mapped/${input}_merged.bam ]; then
+	if [ -s mapped/${input}_merged.bam ]; then
+		printf "\nReplicates of $input already merged\n"
+		export inputrep="two"
+	elif [ ! -s mapped/${input}_merged.bam ] && [ -e mapped/${input}_Rep2.bam ]; then
 		printf "\nMerging replicates of $input\n"
 		samtools merge -@ $threads mapped/temp_${input}.bam mapped/${input}_Rep1.bam mapped/${input}_Rep2.bam
 		samtools sort -@ $threads -o mapped/${input}_merged.bam mapped/temp_${input}.bam
 		rm -f mapped/temp_${input}.bam
 		samtools index -@ $threads mapped/${input}_merged.bam
+		export inputrep="two"
+	elif [ -e mapped/${input}_Rep1.bam ] && [ ! -e mapped/${input}_Rep2.bam ]; then
+		printf "\nOnly one replicate of $input\nIt will be used for all replicates\n"
+		export inputrep="one"
+	elif [ ! -e mapped/${input}_Rep1.bam ]; then
+		printf "\nNo Input file found, cannot proceed!\n"
+		exit 1
 	fi
 	printf "\nStarting single ChIP sample analysis for $name\n"
 	qsub -N ${name} -V -cwd -sync y -pe threads 2 -l m_mem_free=2G -l tmp_free=50G -j y -o logs/analysis_${name}.log <<-'EOF1' &
@@ -111,20 +121,41 @@ do
 		for filetype in merged Rep1 Rep2 pseudo1 pseudo2
 		do
 			export filetype
-			case "$filetype" in
-				Rep1|Rep2) 	export namefiletype=mapped/${name}_${filetype}.bam
+			if [[ "$inputrep" == "two" ]]; then
+				case "$filetype" in
+					Rep1|Rep2) 	export namefiletype=mapped/${name}_${filetype}.bam
 							export inputfiletype=mapped/${input}_${filetype}.bam
 							export param=""
 							export clean="No";;
-				pseudo1|pseudo2)	export namefiletype=mapped/${name}_${filetype}.bam
+					pseudo1|pseudo2)	export namefiletype=mapped/${name}_${filetype}.bam
 									export inputfiletype=mapped/${input}_merged.bam
 									export param=""
 									export clean="Yes";;
-				merged)	export namefiletype=mapped/${name}_${filetype}.bam
+					merged)	export namefiletype=mapped/${name}_${filetype}.bam
 						export inputfiletype=mapped/${input}_${filetype}.bam
 						export param="-B"
 						export clean="No";;
-			esac		
+				esac
+			elif [[ "$inputrep" == "one" ]]; then
+				case "$filetype" in
+					Rep1) 	export namefiletype=mapped/${name}_${filetype}.bam
+						export inputfiletype=mapped/${input}_${filetype}.bam
+						export param=""
+						export clean="No";;
+					Rep2)	export namefiletype=mapped/${name}_${filetype}.bam
+						export inputfiletype=mapped/${input}_Rep1.bam
+						export param=""
+						export clean="No";;
+					pseudo1|pseudo2)	export namefiletype=mapped/${name}_${filetype}.bam
+									export inputfiletype=mapped/${input}_Rep1.bam
+									export param=""
+									export clean="Yes";;
+					merged)	export namefiletype=mapped/${name}_${filetype}.bam
+						export inputfiletype=mapped/${input}_Rep1.bam
+						export param="-B"
+						export clean="No";;
+				esac
+			fi
 			printf "\nStarting single ChIP sample analysis for $name $filetype\n"
 			qsub -N ${name}_${filetype} -V -cwd -sync y -pe threads 10 -l m_mem_free=6G -l tmp_free=50G -j y -o logs/analysis_${name}_${filetype}.log <<-'EOF2' &
 				#!/bin/bash
@@ -199,6 +230,9 @@ do
 			printf "\nDoing IDR analysis on both replicates from ${line}_${tissue}_${mark} ($peaktype peaks) with idr version:\n"
 			idr --version
 			idr --input-file-type ${peaktype}Peak --output-file-type ${peaktype}Peak --samples peaks/${name}_Rep1_peaks.${peaktype}Peak peaks/${name}_Rep2_peaks.${peaktype}Peak -o peaks/idr_${name}.${peaktype}Peak -l reports/idr_${name}.log --plot || true
+			if [ -s peaks/idr_${name}.${peaktype}Peak.png ]; then
+				mv peaks/idr_${name}.${peaktype}Peak.png plots/
+			fi
 		else
 			printf "\nIDR analysis already done for ${name}\n"
 		fi
@@ -220,7 +254,7 @@ do
 		pseudos=$(awk '{print $1,$2,$3}' peaks/temp_${name}_pseudos.bed | sort -k1,1 -k2,2n -u | wc -l)
 		selected=$(cat peaks/temp_${name}_selected.bed | sort -k1,1 -k2,2n -u | wc -l)
 		awk -v OFS="\t" -v a=$line -v b=$tissue -v c=$mark -v d=$rep1 -v e=$rep2 -v f=$common -v g=$idr -v h=$merged -v i=$pseudos -v j=$selected 'BEGIN {print a,b,c,d,e,f" ("f/d*100"%rep1;"f/e*100"%rep2)",g" ("g/f*100"%common)",h,i,j" ("j/h*100"%merged)"}' >> reports/summary_ChIP_peaks.txt
-		rm -f peaks/temp*
+		rm -f peaks/temp_${name}*
 		touch chkpts/analysis_${name}
 	EOF1
 	pidsa+=("$!")
@@ -228,6 +262,5 @@ done < $samplefile
 
 printf "\nWaiting for each sample to be processed individually\n"
 wait ${pidsa[*]}
-mv peaks/idr_*.png plots/
 printf "\nScript finished successfully!\n"
 

@@ -15,7 +15,13 @@ filtered<-genecount[keep.exprs,]
 
 targets<-read.delim(args[2], header = TRUE)
 samples<-as.factor(targets$Sample)
+reps<-as.factor(targets$Replicate)
 tissues<-unique(samples)
+
+targets$Color<-as.numeric(targets$Color)
+
+colors<-c("black","blue","red","pink","green","purple","lightblue")
+color_samples<-colors[targets$Color]
 
 analysisname<-args[3]
 
@@ -24,20 +30,22 @@ ref_genes<-read.delim(args[4], header = FALSE,
 gene_names<-row.names(genecount)
 ref_genes<-mutate(ref_genes, GeneID=str_extract(ref_genes$Name,gene_names)) %>%
   select(-Name, -Value)
-  
+
 # EdgeR analysis
 y<-DGEList(counts=filtered, group = samples)
 y<-calcNormFactors(y)
 
-colors<-c("black","blue","red","pink","green","purple","lightblue")
+#color_samples<-c()
+#for (i in 1:length(tissues)) {
+#  color_samples<-c(color_samples, rep(colors[i],2))
+#}
 
-color_samples<-c()
-for (i in 1:length(tissues)) {
-  color_samples<-c(color_samples, rep(colors[i],2))
-}
-
-pdf(paste0("combined/plots/MDS_",analysisname,".pdf"),10,8)
+pdf(paste0("combined/plots/MDS_",analysisname,"_v1.pdf"),10,8)
 plotMDS(y, col=color_samples, labels=samples)
+dev.off()
+
+pdf(paste0("combined/plots/MDS_",analysisname,"_v2.pdf"),10,8)
+plotMDS(y, col=color_samples, labels=reps)
 dev.off()
 
 y<-estimateCommonDisp(y, verbose = TRUE)

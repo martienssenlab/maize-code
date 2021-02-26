@@ -23,8 +23,8 @@ usage="
 ##### col #2: Tissue (e.g endosperm) 
 ##### col #3: Sample (e.g. H3K4me3 or 'Input' for ChIP, (sh)RNA or RAMPAGE for RNA). Histone marks must start with capital 'H'. 'Input', 'RNA' and 'RAMPAGE' are case-sensitive.
 ##### col #4: Replicate ID [Rep1 | Rep2]
-##### col #5: SequencingID (e.g. S01). Unique identifier for the name of the sample in the raw sequencing folder which path is given in the next column.
-##### col #6: Path to the fastq files (e.g. /seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846)
+##### col #5: SequencingID (e.g. S01). Unique identifier for the name of the sample in the raw sequencing folder which path is given in the next column. If downloading from SRA, put the SRR ID here.
+##### col #6: Path to the fastq files (e.g. /seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846). If downloading from SRA, put 'SRA'.
 ##### col #7: If data is paired-end or single-end [PE | SE]. 
 ##### col #8: Name of the genome reference to map (e.g. B73_v4). Each genome reference should have a unique folder that contains a single fasta file and a single gff3 file (can be gzipped).
 ##### The gff3 files should have 'gene' in column 3 and exons should be linked by 'Parent' in column 9
@@ -38,7 +38,7 @@ usage="
 ##### It uses all the genes of the reference genome (if all samples are mapping to the same reference) as a region file or a combined analysis,
 ##### or only proceed with single sample analysis if different references are used. In the latter case, MaizeCode_analysis.sh script will need to be run independantly with the regionfile of your choice.
 #####
-##### Requirements for the mapping pipeline: pigz, samtools, fastQC, Cutadapt, Bowtie2 for ChIP data, STAR for RNA data, R and R packages: ggplot2,dplyr,tidyr,RColorBrewer,cowplot)
+##### Requirements for the mapping pipeline: pigz, samtools, fastQC, Cutadapt, Bowtie2 for ChIP data, STAR for RNA data, R and R packages: ggplot2,dplyr,tidyr,RColorBrewer,cowplot), parallel-fastq-dump (if downloading from SRA)
 ##### Additional requirements for the analysis pipeline: bedtools, deeptools, macs2, idr, R packages: UpSetR for ChIP and RNA data, and limma,edgeR,stringr,gplots for RNAseq data
 "
 
@@ -180,6 +180,9 @@ else
 			exit 1
 		else
 			printf "\nEnvironment for $datatype with $ref genome now good to go\n"
+			if [ -e ${pathtoref}/${ref}/temp_${ref}.fa ]; then
+				rm -f ${pathtoref}/${ref}/temp_${ref}.fa
+			fi
 		fi
 	done
 fi
@@ -203,9 +206,7 @@ fi
 
 tmp1=${samplefile%%_samplefile*}
 analysisfile="${tmp1}_analysis_samplefile.txt"
-
-tmp2=${samplefile##*/}
-samplename=${tmp1%%_samplefile*}
+samplename=${tmp1##*/}
 
 if [ -s ${analysisfile} ]; then
 	rm -f ${analysisfile}
@@ -235,23 +236,18 @@ do
 		checkdatatype_list+=("$datatype")
 		check_list+=("$check")
 		if ls ./$datatype/fastq/trimmed_${name}*.fastq.gz 1> /dev/null 2>&1; then
+			printf "\nTrimmed fastq file(s) for ${name} already exist\n"
+			export step="done"
+		elif ls ./$datatype/fastq/${name}*.fastq.gz 1> /dev/null 2>&1; then
 			printf "\nFastq file(s) for ${name} already exist\n"
+			export step="trim"
 		else
-			if [[ $paired == "PE" ]]; then
-				printf "\nCopying PE fastq for $name ($sampleID in $path)\n"
-				cp $path/${sampleID}*R1*q.gz ./$datatype/fastq/${name}_R1.fastq.gz
-				cp $path/${sampleID}*R2*q.gz ./$datatype/fastq/${name}_R2.fastq.gz
-			elif [[ $paired == "SE" ]]; then
-				printf "\nCopying SE fastq for $name ($sampleID in $path)\n"
-				cp $path/${sampleID}*q.gz ./$datatype/fastq/${name}.fastq.gz
-			else
-				printf "\nData format unknown: paired-end (PE) or single-end (SE)?\n"
-				exit 1
-			fi
+			printf "\nNew sample ${name} to be copied/downloaded\n"
+			export step="download"
 		fi
 		printf "\nRunning $datatype mapping script for $name on $ref genome\n"
 		cd $datatype
-		qsub -sync y -N ${name} -o logs/${name}.log ${mc_dir}/MaizeCode_${datatype}_sample.sh -d $ref_dir -l $line -t $tissue -m $sample -r $rep -p $paired &
+		qsub -sync y -N ${name} -o logs/${name}.log ${mc_dir}/MaizeCode_${datatype}_sample.sh -d $ref_dir -l $line -t $tissue -m $sample -r $rep -i $sampleID -f $path -p $paired -s $step &
 		pids+=("$!")
 		cd ..
 	fi
@@ -336,15 +332,17 @@ do
 done
 
 pids=()
-analysisname="${samplename}_on_all_genes"
-check="combined/chkpts/${analysisname}"
 
 if [[ "$wholeanalysis" == "STOP" ]]; then
 	printf "\nPerforming only the single sample analysis\n"
 	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f $analysisfile -r all_genes.txt -s &
+	analysisname="${samplename}_no_region"
+	check="combined/chkpts/${analysisname}"
 else
 	printf "\nPerforming the complete analysis on all genes\n"
 	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f $analysisfile -r all_genes.txt &
+	analysisname="${samplename}_on_all_genes"
+	check="combined/chkpts/${analysisname}"
 fi	
 pids+=("$!")
 

@@ -76,7 +76,7 @@ do
 		shRNA) 	export param_bg="--outWigType bedGraph"
 				export strandedness="reverse";;
 		RAMPAGE)	export param_bg="--outWigType bedGraph read1_5p"
-					export strandedness="reverse";;
+					export strandedness="forward";;
 	esac
 	printf "\nStarting single RNA sample analysis for $name\n"	
 	export ref_dir=${ref_dir}
@@ -95,7 +95,11 @@ do
 		#### To merge bam files of replicates
 		if [ ! -s mapped/${name}_merged.bam ]; then
 			printf "\nMerging replicates of $name\n"
-			samtools merge -@ $threads mapped/temp_${name}.bam mapped/mrkdup_${name}_Rep1_Processed.out.bam mapped/mrkdup_${name}_Rep2_Processed.out.bam
+			if [ -e mapped/mrkdup_${name}_Rep1_Processed.out.bam ]; then
+				samtools merge -@ $threads mapped/temp_${name}.bam mapped/mrkdup_${name}_Rep*_Processed.out.bam
+			else
+				samtools merge -@ $threads mapped/temp_${name}.bam mapped/map_${name}_Rep*_Aligned.sortedByCoord.out.bam
+			fi
 			samtools sort -@ $threads -o mapped/${name}_merged.bam mapped/temp_${name}.bam
 			rm -f mapped/temp_${name}.bam
 			samtools index -@ $threads mapped/${name}_merged.bam
@@ -107,10 +111,10 @@ do
 			STAR --runMode inputAlignmentsFromBAM --inputBAMfile mapped/${name}_merged.bam --outWigStrand Stranded ${param_bg} --outFileNamePrefix tracks/bg_${name}_merged_
 			### Converting to bigwig files
 			printf "\nConverting bedGraphs to bigWigs\n"
-			sort -k1,1 -k2,2n tracks/bg_${name}_merged_Signal.UniqueMultiple.str1.out.bg > tracks/${name}_merged_Signal.sorted.UniqueMultiple.str1.out.bg
-			sort -k1,1 -k2,2n tracks/bg_${name}_merged_Signal.Unique.str1.out.bg > tracks/${name}_merged_Signal.sorted.Unique.str1.out.bg
-			sort -k1,1 -k2,2n tracks/bg_${name}_merged_Signal.UniqueMultiple.str2.out.bg > tracks/${name}_merged_Signal.sorted.UniqueMultiple.str2.out.bg
-			sort -k1,1 -k2,2n tracks/bg_${name}_merged_Signal.Unique.str2.out.bg > tracks/${name}_merged_Signal.sorted.Unique.str2.out.bg
+			bedSort tracks/bg_${name}_merged_Signal.UniqueMultiple.str1.out.bg tracks/${name}_merged_Signal.sorted.UniqueMultiple.str1.out.bg
+			bedSort tracks/bg_${name}_merged_Signal.Unique.str1.out.bg tracks/${name}_merged_Signal.sorted.Unique.str1.out.bg
+			bedSort tracks/bg_${name}_merged_Signal.UniqueMultiple.str2.out.bg tracks/${name}_merged_Signal.sorted.UniqueMultiple.str2.out.bg
+			bedSort tracks/bg_${name}_merged_Signal.Unique.str2.out.bg tracks/${name}_merged_Signal.sorted.Unique.str2.out.bg
 			if [[ $strandedness == "forward" ]]; then
 				bedGraphToBigWig tracks/${name}_merged_Signal.sorted.UniqueMultiple.str1.out.bg ${ref_dir}/chrom.sizes tracks/${name}_merged_plus.bw
 				bedGraphToBigWig tracks/${name}_merged_Signal.sorted.Unique.str1.out.bg ${ref_dir}/chrom.sizes tracks/${name}_merged_unique_plus.bw

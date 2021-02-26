@@ -8,9 +8,11 @@
 
 
 1) Clone the git repository anywhere you want, for example in a new folder called projects\
-`git clone https://github.com/eernst/maize-code.git ./projects/maize-code`\ or to clone a spceific branch 'edits'\
-`git clone --branch edits https://github.com/eernst/maize-code.git ./projects/maize-code`\
-You will be prompted to input your GitHub username and password
+`git clone https://github.com/eernst/maize-code.git ./projects/maize-code`\
+or to clone a specific branch 'devel'\
+`git clone --branch devel https://github.com/eernst/maize-code.git ./projects/maize-code`\
+You will be prompted to input your GitHub username and password.\
+If you only want to update the scripts, use `git pull`. If you want to update from a specific branch 'devel' `git pull origin devel`.
 2) cd into the maize-code folder that has been created, so following the same example\
 `cd ./projects/maize-code/`
 3) Check that the following required packages are installed and in your $PATH (the versions noted here are working for sure, no guarantees for different versions). Recommended installation using conda (except grit that should be installed with pip, but finding an alternative to using it is being looked at)
@@ -27,6 +29,8 @@ macs2 2.2.7.1
 IDR 2.0.4.2
 (grit 2.0.5)
 bedGraphToBigWig v 2.8
+bedSort
+parallel-fastq-dump (if downloading from SRA)
 R 3.6.3
 R libraries: ggplot2 3.3.2; UpSetR 1.4.0; limma 3.42.2; edgeR 3.28.1; dplyr 1.0.2; tidyr 1.1.2; stringr 1.4.0; cowplot 1.1.0; gplots 3.1.0; RColorBrewer 1.1.2
 ```
@@ -52,10 +56,11 @@ The samples that have already been processed will not be repeated but will still
 - There is one wrapper script `MaizeCode.sh` that launches sub-scripts depending on what needs to be done.
 - Potentially, each script could be submitted on its own but it could be tricky. Check out the usage of each script before by running the script without arguments (or followed by `-h`).
 - The shRNA and complete RAMPAGE pipelines are not ready yet
-- It should work for both Single-end or Paired-end data but the SE part has not been tested (and I might not have edited it well as I was changing the PE part). A non-issue for now since all the ChIP data is PE, but to keep in mind for potential future use.
+- It should work for both Single-end or Paired-end data
+- It works perfectly with 2 replicates for every type of data (including two different inputs for ChIP). Adapting the scripts to allow for more variation in the number of replicates is under development (having only one ChIP input replicate works, as well as multiple RNAseq replicates).
 - The whole pipeline creates a lot of report files and probably files that are not necessary to keep but for now I keep them like this for potential troubleshooting.
 - For now I’ve used the `MaizeCode.sh` script from scratch for 16 samples at a time (all ChIPs and RNAseq from two tissues of the same line). It runs in ~19h (depending on the size of the files). Once that the mapping and single-sample analysis have been done, reusing these samples in a different analysis is much quicker though, the limitations are for mapping ChIPseq samples and calling ChIPseq peaks (since it does it for each biological replicate, the merge file and both pseudo-replicates and cannot be multi-threaded). That is probably the first step that could be optimized for faster runs.
-- Always process the Input samples with their corresponding ChIP in the `MaizeCode.sh` script. (It can also be done separately, before or after) but they need to be done for the `MaizeCode_analysis.sh` script to run successfully.
+- Always process the Input samples with their corresponding ChIP in the `MaizeCode.sh` script.
 - The analysis will have to be adapted to the desired output, but running the default complete pipeline should give a first look at the data and generate all the files required for further analysis.
 - These are still preliminary version of the scripts!
 
@@ -66,7 +71,6 @@ The samples that have already been processed will not be repeated but will still
 - __MaizeCode.sh__ - _wrapper script for the whole pipeline_\
 Creates the different folders\
 Runs the `MaizeCode_check_environment.sh` script for each environment (datatype * reference) that needs to be created\
-Copies fastq files from their original folder to the fastq/ folder (if not already done)\
 Runs an instance of `MaizeCode_ChIP_sample.sh` or `MaizeCode_RNA_sample.sh` for each sample\
 Waits for the samples to be mapped\
 Runs the `MaizeCode_R_mapping_stats.r` script to plot the mapping statitistics of all the samples in samplefile into bar plots\ 
@@ -82,6 +86,7 @@ Create the template for the stat files\
 Makes the bowtie2 or STAR indexes (for ChIP and RNA, respectively) if not already there
 
 - __MaizeCode_ChIP_sample.sh__\
+Copies fastq files from their original folder or GEO to the fastq/ folder (if not already done)\
 Runs fastQC on the raw data\
 Trims adapters, low quality and small reads (<20bp) with cutadapt\
 Runs fastQC on trimmed data\
@@ -89,7 +94,8 @@ Maps with bowtie2\
 Removes PCR duplicates with samtools\
 Gets some mapping stats
 
-- __MaizeCode_RNA_sample.sh__ ___shRNA NOT DONE YET, but expectations are similar than other datatypes___\
+- __MaizeCode_RNA_sample.sh__ ___shRNA NOT DONE YET and will be processed by a different pipeline (using shortStack)___\
+Copies fastq files from their original folder or GEO to the fastq/ folder (if not already done)\
 Runs fastQC on the raw data\
 Trims adapters and low quality with cutadapt\
 Runs fastQC on trimmed data\
@@ -127,9 +133,6 @@ Make some stats on the number of peaks/tss\
 For RNAseq data:\
 Merges biological replicates and creates stranded tracks (bigwigs) with STAR and bedGraphToBigWig\
 Makes some stats on the number of expressed genes\
-For shRNA data: ___NOT DONE YET, but expectations are:___\
-Merges biological replicates and creates stranded tracks (bigwigs) with STAR and bedGraphToBigWig\
-Makes some stats on the number of clusters
 
 - __MaizeCode_line_analysis.sh__ ___Analyses marked by *** are still under development:___\
 Splits the samplefile into ChIPseq and RNA samples\
