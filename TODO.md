@@ -5,7 +5,7 @@
 - [x] Rename deeptools folder
 - [x] Change type variable to datatype
 - [x] Change hard-linked paths to relative for scripts (alternative to dirname "$0")
-- [ ] Store reference genomes on server for normalization and make a script to download them if needed, that can be edited for downloading from the web 
+- [x] Store reference genomes on server for normalization and make a script to download them if needed, that can be edited for downloading from the web: reference folder exists, but needs to be copied first, not sure we want to create a new genome folder everytime. Maybe can be added as an option (if genome folder exists, use it, if not, download?)
 - [ ] Work on intermediate file hygiene (many intermediate files that could be removed). Maybe add option -output (or something) to chose what should be kept?
 - [ ] Work on the compatiblity with other systems (no cluster, no qsub ...)
 - [ ] Compute PBC1 and PBC2 (PCR Bottlenecking Coefficient) (https://www.encodeproject.org/data-standards/terms/#library)
