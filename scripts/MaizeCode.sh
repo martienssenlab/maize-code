@@ -154,7 +154,7 @@ else
 				qsub -sync y -N env_${ref}_${datatype} -o $datatype/logs/env_${ref}.log ${mc_dir}/MaizeCode_check_environment.sh -p $pathtoref -r $ref -d $datatype &
 				pids+=("$!")
 			elif [[ ! " ${data_ref_list[@]} " =~ " ${datatype}_${ref} " ]]; then
-			### Combination datetype * ref does not exist in the sample file, moving on
+			### Combination datatype * ref does not exist in the sample file, moving on
 				:
 			elif [ ! -d $pathtoref/$ref ]; then
 				printf "\nNo $ref folder found in $pathtoref\n"
