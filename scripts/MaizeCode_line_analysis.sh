@@ -545,18 +545,20 @@ rm -f combined/matrix/temp_regions_${analysisname}*.bed
 rm -f combined/matrix/*${analysisname}*.gz
 rm -f combined/matrix/values*${analysisname}*
 
-#### To make heatmaps and profiles with deeptools on the ACRs called in Ricci et al. 2019 paper (if B73_v4 is the reference used)
 
-if [[ $ref =~ "B73_v4" ]]; then
-	if [ ! -s combined/matrix/leaf_ACRs.bed ]; then
-		wget ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3398nnn/GSM3398046/suppl/GSM3398046_ATAC_B73_leaf.filtered_ACR.bed.gz
-		pigz -d GSM3398046_ATAC_B73_leaf.filtered_ACR.bed.gz && mv GSM3398046_ATAC_B73_leaf.filtered_ACR.bed combined/matrix/leaf_ACRs.bed
-	fi
-	if [ ! -s combined/matrix/ears_ACRs.bed ]; then
-		wget ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3398nnn/GSM3398046/suppl/GSM3398047_ATAC_B73_ear.filtered_ACR.bed.gz
-		pigz -d GSM3398047_ATAC_B73_ear.filtered_ACR.bed.gz && mv GSM3398047_ATAC_B73_ear.filtered_ACR.bed combined/matrix/ears_ACRs.bed
-	fi
-fi	
+#### To make heatmaps and profiles with deeptools on the ACRs called in Ricci et al. 2019 paper (if B73_v4 is the reference used)
+#### Not yet used so commented
+
+# if [[ $ref =~ "B73_v4" ]]; then
+#	if [ ! -s combined/matrix/leaf_ACRs.bed ]; then
+#		wget ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3398nnn/GSM3398046/suppl/GSM3398046_ATAC_B73_leaf.filtered_ACR.bed.gz
+#		pigz -d GSM3398046_ATAC_B73_leaf.filtered_ACR.bed.gz && mv GSM3398046_ATAC_B73_leaf.filtered_ACR.bed combined/matrix/leaf_ACRs.bed
+#	fi
+#	if [ ! -s combined/matrix/ears_ACRs.bed ]; then
+#		wget ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3398nnn/GSM3398046/suppl/GSM3398047_ATAC_B73_ear.filtered_ACR.bed.gz
+#		pigz -d GSM3398047_ATAC_B73_ear.filtered_ACR.bed.gz && mv GSM3398047_ATAC_B73_ear.filtered_ACR.bed combined/matrix/ears_ACRs.bed
+#	fi
+# fi	
 
 
 printf "\nCombined analysis script finished successfully for $analysisname\n"
