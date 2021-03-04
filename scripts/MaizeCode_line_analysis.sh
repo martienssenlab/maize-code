@@ -88,6 +88,7 @@ chip_bw_list=()
 rna_type_list=()
 rnaseq_sample_list=()
 rnaseq_tissue_list=()
+rnaseq_name_list=()
 rampage_sample_list=()
 rampage_tissue_list=()
 shrna_sample_list=()
@@ -117,6 +118,7 @@ do
 			rnaseq_bw_list_plus+=("$datatype/tracks/${name}_merged_plus.bw")
 			rnaseq_bw_list_minus+=("$datatype/tracks/${name}_merged_minus.bw")
 			rnaseq_sample_list+=("${name}")
+			rnaseq_tissue_list+=("${tissue}")
 			rnaseq_name_list+=("${line}_${tissue}")
 		elif [[ "$sample" == "RAMPAGE" ]]; then
 			rampage_sample_list+=("${name}")
@@ -545,6 +547,105 @@ rm -f combined/matrix/temp_regions_${analysisname}*.bed
 rm -f combined/matrix/*${analysisname}*.gz
 rm -f combined/matrix/values*${analysisname}*
 
+#### To make heatmap and profile with deeptools for each tissue based on grouped expression levels (if both RNA and ChIP samples are present in a tissue)
+#### Only works when chromosomes starts with 1-10, not Chr. Need to be updated.
+
+for tissue in ${rnaseq_tissue_list[*]}
+do
+	if [[ " ${chip_tissue_list[@]} " =~ " ${tissue} " ]]; then
+		printf "Clustering genes by expression levels (20% quantiles)\n"
+		cols=($(awk -v ORS=" " -v t=$tissue 'NR==1 {for(i=1;i<=NF;i++) if ($i~t) print i}' combined/DEG/counts_${analysisname}.txt))
+		reps=${#cols[@]}
+		awk -v d="$cols" -v t=$reps 'BEGIN {split(d, a, " ")} {b=0; for (i in a) b+=$(a[i]); c=b/t; print $1,c}' combined/DEG/counts_${analysisname}.txt > combined/DEG/temp_counts_${analysisname}_${tissue}.txt
+		if [ -s combined/DEG/temp_${analysisname}_B73_genes.bed ]; then
+			rm -f combined/DEG/temp_${analysisname}_B73_genes.bed
+		fi
+		while read ID exp
+		do
+			grep "$ID" $regionfile | awk -v OFS="\t" -v c=$exp '$1 ~ /^[0-9]/ {l=$3-$2; $5=1000*c/l; print $0}' >> combined/DEG/temp_expression_${analysisname}_${tissue}.bed
+		done < combined/DEG/temp_counts_${analysisname}_tissue.txt
+		sort -k5,5gr combined/DEG/temp_expression_${analysisname}_${tissue}.bed > combined/DEG/sorted_expression_${analysisname}_${tissue}.bed
+		
+		awk -v OFS="\t" -v a=${analysisname} -v b=${tissue} '{if ($5==0) printf $0"\n" > "combined/DEG/sorted_"a"_"b"_exp0.bed"; else printf $0"\n" > "combined/DEG/sorted_"a"_"b"_expA.bed"}' combined/DEG/sorted_expression_${analysisname}_${tissue}.bed
+		tot=$(wc -l combined/DEG/sorted_${analysisname}_${tissue}_expA.bed | awk '{print $1}')
+		bin=$((tot/5))
+		min=0
+		max=$bin
+		for (( i = 1; i <= 5; i++ ))
+		do
+			awk -v n=$min -v m=$max 'NR>=n && NR <=m' combined/DEG/sorted_${analysisname}_${tissue}_expA.bed > combined/DEG/sorted_${analysisname}_${tissue}_exp${i}.bed
+			min=$((min+bin))
+			max=$((max+bin))
+		done
+
+		sorted_regions=()
+		regions_labels=()
+		for i in 1 2 3 4 5 0
+		do
+			case "$i" in
+				1) name="Top20%";;
+				2) name="20-40%";;
+				3) name="40-60%";;
+				4) name="60-80%";;
+				5) name="Bottom20%";;
+				0) name="Not_expressed";;
+			esac
+			n=$(wc -l combined/DEG/sorted_${analysisname}_${tissue}_exp${i}.bed | awk '{print $1}')
+			regions_labels+=("$name($n)")	
+			sorted_regions+=("combined/DEG/sorted_${analysisname}_${tissue}_exp${i}.bed")
+			cp combined/DEG/sorted_${analysisname}_${tissue}_exp${i}.bed combined/DEG/sorted_${analysisname}_${tissue}_exp${i}.txt
+		done	
+		for strand in plus minus
+		do
+			case "$strand" in
+				plus) 	bw_list="ChIP/tracks/B73_ears_H3K4me3_merged.bw ChIP/tracks/B73_ears_H3K27ac_merged.bw ChIP/tracks/B73_ears_H3K4me1_merged.bw RNA/tracks/B73_ears_RNAseq_merged_plus.bw"
+					sign="+";;
+				minus) 	bw_list="ChIP/tracks/B73_ears_H3K4me3_merged.bw ChIP/tracks/B73_ears_H3K27ac_merged.bw ChIP/tracks/B73_ears_H3K4me1_merged.bw RNA/tracks/B73_ears_RNAseq_merged_minus.bw"
+					sign="-";;
+			esac
+			regions=()
+			for i in 1 2 3 4 5 0
+			do
+				awk -v OFS="\t" -v s=$sign '$6==s' combined/DEG/sorted_${analysisname}_B73_genes_exp${i}.txt > combined/DEG/sorted_${analysisname}_B73_genes_exp${i}.bed
+			done
+			printf "\nComputing scale-regions $strand strand matrix\n"
+			computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${sorted_regions[@]} -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o combined/matrix/regions_${analysisname}_${strand}.gz
+			printf "\nComputing reference-point on TSS $strand strand matrix for $analysisname\n"
+			computeMatrix reference-point --referencePoint "TSS" --missingDataAsZero --skipZeros -R ${sorted_regions[@]} -S ${bw_list} -bs 50 -b 2000 -a 8000 -p $threads -o combined/matrix/tss_${analysisname}_${strand}.gz
+		done
+		
+		for i in 1 2 3 4 5 0
+		do
+			\cp -r combined/DEG/sorted_${analysisname}_B73_genes_exp${i}.txt combined/DEG/sorted_${analysisname}_B73_genes_exp${i}.bed
+		done
+
+		### Merging stranded matrix, extracting scales and plotting heatmaps
+		for matrix in regions tss
+		do
+			labels="B73_ears_H3K4me3 B73_ears_H3K27ac B73_ears_H3K4me1 B73_ears_RNAseq"
+			# ymaxs="1 1 0.5 6"
+			ymaxs="0.25 0.25 0.1 4"
+			printf "\nMerging stranded matrices aligned by $matrix of $analysisname\n"
+			computeMatrixOperations rbind -m combined/matrix/${matrix}_${analysisname}_plus.gz combined/matrix/${matrix}_${analysisname}_minus.gz -o combined/matrix/${matrix}_${analysisname}.gz
+			printf "\nGetting scales (10th and 90th quantiles) for $matrix matrix of $analysisname\n"
+			computeMatrixOperations dataRange -m combined/matrix/${matrix}_${analysisname}.gz > combined/matrix/values_${matrix}_${analysisname}.txt
+			mins2=()
+			maxs2=()
+			for sample in ${labels[@]}
+			do
+				mini=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $5}')
+				mins2+=("$mini")
+				maxi=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $6}')
+				maxs2+=("$maxi")
+			done
+			computeMatrixOperations sort -m combined/matrix/${matrix}_${analysisname}.gz -R ${sorted_regions[@]} -o combined/matrix/final_${matrix}_${analysisname}.gz
+			printf "\nPlotting heatmap for $matrix matrix of $analysisname scaling by sample\n"
+			plotHeatmap -m combined/matrix/final_${matrix}_${analysisname}.gz -out combined/plots/bbb_${analysisname}_heatmap_${matrix}.pdf --sortRegions keep --samplesLabel ${labels[@]} --regionsLabel ${regions_labels[@]} --colorMap 'seismic' --zMin ${mins2[@]} --zMax ${maxs2[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
+			printf "\nPlotting profile for $matrix matrix of $analysisname scaling by sample\n"
+			plotProfile -m combined/matrix/final_${matrix}_${analysisname}.gz -out combined/plots/bbb_${analysisname}_profile_${matrix}.pdf --samplesLabel ${labels[@]} --regionsLabel ${regions_labels[@]} --yMax ${ymaxs} --averageType mean
+		done
+	fi
+done
 
 #### To make heatmaps and profiles with deeptools on the ACRs called in Ricci et al. 2019 paper (if B73_v4 is the reference used)
 #### Not yet used so commented
