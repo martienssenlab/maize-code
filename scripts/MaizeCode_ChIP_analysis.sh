@@ -12,8 +12,8 @@ usage="
 ##### Script for Maize code ChIP data analysis, used by script MaizeCode_analysis.sh for ChIP data
 #####
 ##### sh MaiCode_ChIP_analysis.sh -f samplefile [-h]
-#####	-f: samplefile containing the samples to compare and in 4 tab-delimited columns:
-##### 		Line, Tissue, Mark, PE or SE
+#####	-f: samplefile containing the samples to compare and the reference directory in 5 tab-delimited columns:
+##### 		Line, Tissue, Mark, PE or SE, Reference directory
 ##### 	-h: help, returns usage
 ##### 
 ##### It merges the two replicate files, and creates pseudo-replicates by splitting the merged bam file into 2 halves
