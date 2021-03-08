@@ -12,7 +12,7 @@ usage="
 ##### Script for Maize code RNA data analysis, used by script MaizeCode_analysis.sh for RNA data
 #####
 ##### sh MaiCode_RNA_analysis.sh -f samplefile [-h]
-#####	-f: samplefile containing the samples to compare and in 4 tab-delimited columns:
+#####	-f: samplefile containing the samples to compare and in 5 tab-delimited columns:
 ##### 		Line, Tissue, Mark, PE or SE, Reference genome directory
 ##### 	-h: help, returns usage
 ##### 
