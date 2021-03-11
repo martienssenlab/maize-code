@@ -9,7 +9,7 @@ inputable<-read.delim(args[1], header = TRUE)
 samplename<-args[2]
 
 set1<-colnames(inputable)
-set2<-set1[! set1 %in% c("PeakID","Distance")]
+set2<-set1[! set1 %in% c("PeakID","Distance","Group")]
 
 plot1<-upset(inputable, set2, name="Peaks",
       mode='exclusive_intersection',
