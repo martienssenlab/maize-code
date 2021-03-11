@@ -324,7 +324,7 @@ do
 	if [ -s ChIP/tracks/${ref}_all_genes.bed ]; then
 		printf "ChIP/tracks/${ref}_all_genes.bed\n" >> all_genes.txt
 	elif [ -s RNA/tracks/${ref}_all_genes.bed ]; then
-		printf "ChIP/tracks/${ref}_all_genes.bed\n" >> all_genes.txt
+		printf "RNA/tracks/${ref}_all_genes.bed\n" >> all_genes.txt
 	else
 		printf "Problem: no region file found for ${ref}!\n"
 		exit 1
