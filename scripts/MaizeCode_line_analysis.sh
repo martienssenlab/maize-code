@@ -465,83 +465,85 @@ if [ ${#rnaseq_name_list[@]} -ge 2 ]; then
 			fi
 		done
 	done
-	#### To plot all pairwise DEGs together
-	regions_labels=()
-	regions_files=()
-	if [ -e combined/matrix/temp_regions_${analysisname}_all_DEGs.bed ]; then
-		rm -f combined/matrix/temp_regions_${analysisname}_all_DEGs.bed
-	fi
-	for file in $(ls combined/DEG/DEG_${analysisname}*vs*.txt)
-	do
-		tmp3=${file##*${analysisname}_}
-		filename=${tmp3%.txt}
-		for DEG in UP DOWN
+	if [ ${#sorted_marks[@]} -ge 1 ]; then
+		#### To plot all pairwise DEGs together
+		regions_labels=()
+		regions_files=()
+		if [ -e combined/matrix/temp_regions_${analysisname}_all_DEGs.bed ]; then
+			rm -f combined/matrix/temp_regions_${analysisname}_all_DEGs.bed
+		fi
+		for file in $(ls combined/DEG/DEG_${analysisname}*vs*.txt)
 		do
-			awk -v OFS="\t" -v d=$DEG '$11==d' $file > combined/matrix/temp_regions_${analysisname}_DEG_${filename}_${DEG}.bed
+			tmp3=${file##*${analysisname}_}
+			filename=${tmp3%.txt}
+			for DEG in UP DOWN
+			do
+				awk -v OFS="\t" -v d=$DEG '$11==d' $file > combined/matrix/temp_regions_${analysisname}_DEG_${filename}_${DEG}.bed
+			done
+			regions_files+=("combined/matrix/temp_regions_${analysisname}_DEG_${filename}_UP.bed" "combined/matrix/temp_regions_${analysisname}_DEG_${filename}_DOWN.bed")
+			regions_labels+=("${filename}_UP" "${filename}_DOWN")
+			awk -v OFS="\t" 'NR>1 {print $1,$2,$3}' $file >> combined/matrix/temp_regions_${analysisname}_all_DEGs.bed		
 		done
-		regions_files+=("combined/matrix/temp_regions_${analysisname}_DEG_${filename}_UP.bed" "combined/matrix/temp_regions_${analysisname}_DEG_${filename}_DOWN.bed")
-		regions_labels+=("${filename}_UP" "${filename}_DOWN")
-		awk -v OFS="\t" 'NR>1 {print $1,$2,$3}' $file >> combined/matrix/temp_regions_${analysisname}_all_DEGs.bed		
-	done
-	sort -k1,1n -k2,2n combined/matrix/temp_regions_${analysisname}_all_DEGs.bed -u > combined/matrix/temp_regions_${analysisname}_all_DEGs_unique.bed
-	printf "\nComputing matrix for DEG for each sample pairs from $analysisname\n"
-	computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${regions_files[@]} -S ${sorted_marks[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o combined/matrix/${analysisname}_DEG.gz
-	printf "\nComputing matrix for all DEGs from $analysisname\n"
-	computeMatrix scale-regions --missingDataAsZero --skipZeros -R combined/matrix/temp_regions_${analysisname}_all_DEGs_unique.bed -S ${sorted_marks[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o combined/matrix/${analysisname}_all_DEGs.gz
-	printf "\nGetting scales (10th and 90th quantiles) for the DEG matrix of $analysisname\n"
-	computeMatrixOperations dataRange -m combined/matrix/${analysisname}_DEG.gz > combined/matrix/values_${analysisname}_DEG.txt
-	mins=()
-	maxs=()
-	for sample in ${sorted_labels[@]}
-	do
-		mini=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $5}')
-		mins+=("$mini")
-		maxi=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $6}')
-		maxs+=("$maxi")
-	done
-	# #### Not very useful right now, too messy ####
-	# k=$(( ${#regions_files[@]} / 2 ))
-	# printf "\nPlotting complete heatmap for DEG for each sample pairs from $analysisname\n"
-	# plotHeatmap -m combined/matrix/${analysisname}_DEG.gz -out combined/plots/${analysisname}_heatmap_DEG.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} --regionsLabel ${regions_labels[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --interpolationMethod 'bilinear'
-	# printf "\nPlotting complete heatmap for all DEGs from $analysisname\n"
-	# plotHeatmap -m combined/matrix/${analysisname}_all_DEGs.gz -out combined/plots/${analysisname}_heatmap_all_DEGs_${k}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} --colorMap 'seismic' --interpolationMethod 'bilinear' --kmeans ${k}
-	
-	for mark in ${uniq_chip_mark_list[@]}
-	do
-		selected_samples=()
-		selected_labels=()
+		sort -k1,1n -k2,2n combined/matrix/temp_regions_${analysisname}_all_DEGs.bed -u > combined/matrix/temp_regions_${analysisname}_all_DEGs_unique.bed
+		printf "\nComputing matrix for DEG for each sample pairs from $analysisname\n"
+		computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${regions_files[@]} -S ${sorted_marks[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o combined/matrix/${analysisname}_DEG.gz
+		printf "\nComputing matrix for all DEGs from $analysisname\n"
+		computeMatrix scale-regions --missingDataAsZero --skipZeros -R combined/matrix/temp_regions_${analysisname}_all_DEGs_unique.bed -S ${sorted_marks[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o combined/matrix/${analysisname}_all_DEGs.gz
+		printf "\nGetting scales (10th and 90th quantiles) for the DEG matrix of $analysisname\n"
+		computeMatrixOperations dataRange -m combined/matrix/${analysisname}_DEG.gz > combined/matrix/values_${analysisname}_DEG.txt
+		mins=()
+		maxs=()
 		for sample in ${sorted_labels[@]}
 		do
-			if [[ $sample =~ $mark ]]; then
-				selected_samples+=("${sample}_merged")
-				selected_labels+=("${sample}")
-			fi
-		done		
-		computeMatrixOperations subset -m combined/matrix/${analysisname}_DEG.gz -o combined/matrix/${analysisname}_DEG_${mark}.gz --samples ${selected_samples[@]}
-		printf "\nPlotting ${mark} profiles for DEG for each sample pairs from $analysisname\n"
-		plotProfile -m combined/matrix/${analysisname}_DEG_${mark}.gz -out combined/plots/${analysisname}_profile_DEG_${mark}.pdf --plotType 'lines' --averageType 'median' --samplesLabel ${selected_labels[@]} --regionsLabel ${regions_labels[@]} --perGroup --numPlotsPerRow 2
-	done
-	#### To plot tissue-specific DEGs
-	if [ ${#rnaseq_name_list[@]} -ge 3 ]; then
-		for namei in ${rnaseq_name_list[@]}
+			mini=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $5}')
+			mins+=("$mini")
+			maxi=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $6}')
+			maxs+=("$maxi")
+		done
+		# #### Not very useful right now, too messy ####
+		# k=$(( ${#regions_files[@]} / 2 ))
+		# printf "\nPlotting complete heatmap for DEG for each sample pairs from $analysisname\n"
+		# plotHeatmap -m combined/matrix/${analysisname}_DEG.gz -out combined/plots/${analysisname}_heatmap_DEG.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} --regionsLabel ${regions_labels[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --interpolationMethod 'bilinear'
+		# printf "\nPlotting complete heatmap for all DEGs from $analysisname\n"
+		# plotHeatmap -m combined/matrix/${analysisname}_all_DEGs.gz -out combined/plots/${analysisname}_heatmap_all_DEGs_${k}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} --colorMap 'seismic' --interpolationMethod 'bilinear' --kmeans ${k}
+	
+		for mark in ${uniq_chip_mark_list[@]}
 		do
-			filenames="combined/DEG/only_${namei}_DEG_UP_${analysisname}.bed combined/DEG/only_${namei}_DEG_DOWN_${analysisname}.bed"
-			printf "\nComputing matrix for $namei specific DEG from $analysisname\n"
-			computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${filenames} -S ${sorted_marks[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o combined/matrix/${analysisname}_only_${namei}_DEG.gz
-			printf "\nGetting scales (10th and 90th quantiles) for the $tissue specific DEG matrix of $analysisname\n"
-			computeMatrixOperations dataRange -m combined/matrix/${analysisname}_only_${namei}_DEG.gz > combined/matrix/values_${analysisname}_only_${namei}_DEG.gz
-			mins=()
-			maxs=()
+			selected_samples=()
+			selected_labels=()
 			for sample in ${sorted_labels[@]}
 			do
-				mini=$(grep $sample combined/matrix/values_${analysisname}_only_${namei}_DEG.gz | awk '{print $5}')
-				mins+=("$mini")
-				maxi=$(grep $sample combined/matrix/values_${analysisname}_only_${namei}_DEG.gz | awk '{print $6}')
-				maxs+=("$maxi")
-			done	
-			printf "\nPlotting heatmap for $namei specific DEG from $analysisname\n"
-			plotHeatmap -m combined/matrix/${analysisname}_only_${namei}_DEG.gz -out combined/plots/${analysisname}_heatmap_only_${namei}_DEG.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} --regionsLabel "${namei}_UP" "${namei}_DOWN" --zMin ${mins[@]} --zMax ${maxs[@]} --colorMap 'seismic' --interpolationMethod 'bilinear'
+				if [[ $sample =~ $mark ]]; then
+					selected_samples+=("${sample}_merged")
+					selected_labels+=("${sample}")
+				fi
+			done		
+			computeMatrixOperations subset -m combined/matrix/${analysisname}_DEG.gz -o combined/matrix/${analysisname}_DEG_${mark}.gz --samples ${selected_samples[@]}
+			printf "\nPlotting ${mark} profiles for DEG for each sample pairs from $analysisname\n"
+			plotProfile -m combined/matrix/${analysisname}_DEG_${mark}.gz -out combined/plots/${analysisname}_profile_DEG_${mark}.pdf --plotType 'lines' --averageType 'median' --samplesLabel ${selected_labels[@]} --regionsLabel ${regions_labels[@]} --perGroup --numPlotsPerRow 2
 		done
+		#### To plot tissue-specific DEGs
+		if [ ${#rnaseq_name_list[@]} -ge 3 ]; then
+			for namei in ${rnaseq_name_list[@]}
+			do
+				filenames="combined/DEG/only_${namei}_DEG_UP_${analysisname}.bed combined/DEG/only_${namei}_DEG_DOWN_${analysisname}.bed"
+				printf "\nComputing matrix for $namei specific DEG from $analysisname\n"
+				computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${filenames} -S ${sorted_marks[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o combined/matrix/${analysisname}_only_${namei}_DEG.gz
+				printf "\nGetting scales (10th and 90th quantiles) for the $tissue specific DEG matrix of $analysisname\n"
+				computeMatrixOperations dataRange -m combined/matrix/${analysisname}_only_${namei}_DEG.gz > combined/matrix/values_${analysisname}_only_${namei}_DEG.gz
+				mins=()
+				maxs=()
+				for sample in ${sorted_labels[@]}
+				do
+					mini=$(grep $sample combined/matrix/values_${analysisname}_only_${namei}_DEG.gz | awk '{print $5}')
+					mins+=("$mini")
+					maxi=$(grep $sample combined/matrix/values_${analysisname}_only_${namei}_DEG.gz | awk '{print $6}')
+					maxs+=("$maxi")
+				done	
+				printf "\nPlotting heatmap for $namei specific DEG from $analysisname\n"
+				plotHeatmap -m combined/matrix/${analysisname}_only_${namei}_DEG.gz -out combined/plots/${analysisname}_heatmap_only_${namei}_DEG.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} --regionsLabel "${namei}_UP" "${namei}_DOWN" --zMin ${mins[@]} --zMax ${maxs[@]} --colorMap 'seismic' --interpolationMethod 'bilinear'
+			done
+		fi
 	fi
 fi
 rm -f combined/matrix/temp_regions_${analysisname}*.bed
