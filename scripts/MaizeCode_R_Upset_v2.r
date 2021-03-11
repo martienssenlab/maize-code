@@ -22,7 +22,7 @@ plot1<-upset(inputable, set2, name="Peaks",
       annotations = list(
         'Distance'=(
           ggplot(mapping=aes(y=Distance)) +
-          geom_violin(alpha=0.1, na.rm=TRUE)
+            geom_boxplot(outlier.alpha = 0.1, na.rm=TRUE)
         ))
       )
 
