@@ -27,6 +27,6 @@ plot1<-upset(inputable, set2, name="Peaks",
       )
 
 
-pdf(paste0("combined/plots/Upset_",samplename,".pdf"),10,8)
+pdf(paste0("combined/plots/Upset_",samplename,"_v2.pdf"),10,8)
 print(plot1)
 dev.off()
