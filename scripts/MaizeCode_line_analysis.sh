@@ -564,11 +564,32 @@ if [[ $ref == "B73_v4" ]]; then
 					tissue_chip_bw_list+=("$bw")
 				fi
 			done
-			tissue_labels=()
+			tissue_labels_chip=()
 			for sample in ${chip_sample_list[*]}
 			do
 				if [[ $sample =~ $tissue ]]; then
-					tissue_labels+=("$sample")
+					tissue_labels_chip+=("$sample")
+				fi
+			done
+			tissue_rnaseq_bw_list_plus=()
+			for bw in ${rnaseq_bw_list_plus[*]}
+			do					
+				if [[ $bw ~= $tissue ]]; then
+					tissue_rnaseq_bw_list_plus+=("$bw")
+				fi
+			done
+			tissue_rnaseq_bw_list_minus=()
+			for bw in ${rnaseq_bw_list_minus[*]}
+			do					
+				if [[ $bw ~= $tissue ]]; then
+					tissue_rnaseq_bw_list_minus+=("$bw")
+				fi
+			done
+			tissue_labels_rna=()
+			for sample in ${rnaseq_sample_list[*]}
+			do
+				if [[ $sample =~ $tissue ]]; then
+					tissue_labels_rna+=("$sample")
 				fi
 			done
 
@@ -617,9 +638,9 @@ if [[ $ref == "B73_v4" ]]; then
 			for strand in plus minus
 			do
 				case "$strand" in
-					plus) 	bw_list="${tissue_chip_bw_list[*]} RNA/tracks/${ref}_${tissue}_RNAseq_merged_${strand}.bw"
+					plus) 	bw_list="${tissue_chip_bw_list[*]} ${tissue_rnaseq_bw_list_plus[*]}"
 						sign="+";;
-					minus) 	bw_list="${tissue_chip_bw_list[*]} RNA/tracks/${ref}_${tissue}_RNAseq_merged_${strand}.bw"
+					minus) 	bw_list="${tissue_chip_bw_list[*]} ${tissue_rnaseq_bw_list_minus[*]}"
 						sign="-";;
 				esac
 				regions=()
@@ -641,7 +662,7 @@ if [[ $ref == "B73_v4" ]]; then
 			### Merging stranded matrix, extracting scales and plotting heatmaps
 			for matrix in regions tss
 			do
-				labels="${tissue_labels[*]} ${ref}_${tissue}_RNAseq"
+				labels="${tissue_labels_chip[*]} ${tissue_labels_rna[*]}"
 				printf "\nMerging stranded matrices aligned by $matrix for ${tissue} in $analysisname\n"
 				computeMatrixOperations rbind -m combined/matrix/${matrix}_${analysisname}_plus.gz combined/matrix/${matrix}_${analysisname}_minus.gz -o combined/matrix/${matrix}_${analysisname}.gz
 				printf "\nGetting scales (10th and 90th quantiles) for $matrix matrix for ${tissue} in $analysisname\n"
