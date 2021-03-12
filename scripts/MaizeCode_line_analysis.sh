@@ -576,7 +576,6 @@ if [[ $ref == "B73_v4" ]]; then
 			cols=($(awk -v ORS=" " -v t=$tissue 'NR==1 {for(i=1;i<=NF;i++) if ($i~t) print i}' combined/DEG/counts_${analysisname}.txt))
 			reps=${#cols[@]}
 			awk -v d="$cols" -v t=$reps 'BEGIN {split(d, a, " ")} NR > 1 {b=0; for (i in a) b+=$(a[i]); c=b/t; print $1,c}' combined/DEG/counts_${analysisname}.txt > combined/DEG/temp_counts_${analysisname}_${tissue}.txt
-			head combined/DEG/temp_counts_${analysisname}_${tissue}.txt
 			if [ -s combined/DEG/temp_expression_${analysisname}_${tissue}.bed ]; then
 				rm -f combined/DEG/temp_expression_${analysisname}_${tissue}.bed
 			fi
@@ -613,7 +612,7 @@ if [[ $ref == "B73_v4" ]]; then
 				n=$(wc -l combined/DEG/sorted_${analysisname}_${tissue}_exp${i}.bed | awk '{print $1}')
 				regions_labels+=("$name($n)")	
 				sorted_regions+=("combined/DEG/sorted_${analysisname}_${tissue}_exp${i}.bed")
-				\cp -r combined/DEG/sorted_${analysisname}_${tissue}_exp${i}.bed combined/DEG/sorted_${analysisname}_${tissue}_exp${i}.txt
+				\cp -Tf combined/DEG/sorted_${analysisname}_${tissue}_exp${i}.bed combined/DEG/sorted_${analysisname}_${tissue}_exp${i}.txt
 			done	
 			for strand in plus minus
 			do
@@ -626,7 +625,7 @@ if [[ $ref == "B73_v4" ]]; then
 				regions=()
 				for i in 1 2 3 4 5 0
 				do
-					awk -v OFS="\t" -v s=$sign '$6==s' combined/DEG/sorted_${analysisname}_B73_genes_exp${i}.txt > combined/DEG/sorted_${analysisname}_B73_genes_exp${i}.bed
+					awk -v OFS="\t" -v s=$sign '$6==s' combined/DEG/sorted_${analysisname}_${tissue}_exp${i}.txt > combined/DEG/sorted_${analysisname}_${tissue}_exp${i}.bed
 				done
 				printf "\nComputing scale-regions $strand strand matrix for ${tissue} in ${analysisname}\n"
 				computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${sorted_regions[@]} -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o combined/matrix/regions_${analysisname}_${strand}.gz
@@ -636,7 +635,7 @@ if [[ $ref == "B73_v4" ]]; then
 		
 			for i in 1 2 3 4 5 0
 			do
-				\cp -r combined/DEG/sorted_${analysisname}_B73_genes_exp${i}.txt combined/DEG/sorted_${analysisname}_B73_genes_exp${i}.bed
+				\cp -Tf combined/DEG/sorted_${analysisname}_${tissue}_exp${i}.txt combined/DEG/sorted_${analysisname}_${tissue}_exp${i}.bed
 			done
 
 			### Merging stranded matrix, extracting scales and plotting heatmaps
