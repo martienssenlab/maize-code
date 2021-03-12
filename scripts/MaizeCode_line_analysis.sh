@@ -176,7 +176,7 @@ if [ ${#chip_sample_list[@]} -ge 1 ]; then
 		awk -v OFS="\t" -v s=$sample '{if ($0 ~ s) print "1"; else print "0"}' combined/peaks/peaks_${analysisname}.bed >> combined/peaks/temp_col_${analysisname}_${sample}.txt
 	done
 	#### To group peaks based on their distance (gene body (x=0), promoter (0<x<2kb upstream), terminator (0<x<2kb downstream), distal)
-	awk -v OFS="\t" 'BEGIN {printf "PeakID\tDistance\tGroup\n"} {if ($5<-2000) d="Distal"; else if ($5<0) d="Promoter"; else if ($5==0) d="Gene_body"; else if ($5>2000) d="Distal"; else d="Terminator"; print $4,$5,d}' combined/peaks/peaks_${analysisname}.bed > combined/peaks/temp_col_${analysisname}_AAA.txt
+	awk -v OFS="\t" 'BEGIN {printf "PeakID\tDistance\tGroup\n"} {if ($5<-2000) {d="Distal_upstream"; a=-$5}; else if ($5<0) {d="Promoter"; a=-$5}; else if ($5==0) {d="Gene_body"; a=$5}; else if ($5>2000) {d="Distal_downstream"; a=$5}; else {d="Terminator"; a=$5}; print $4,a,d}' combined/peaks/peaks_${analysisname}.bed > combined/peaks/temp_col_${analysisname}_AAA.txt
 	paste combined/peaks/temp_col_${analysisname}_*.txt | uniq > combined/peaks/matrix_upset_${analysisname}.txt
 	rm -f combined/peaks/temp_col_${analysisname}_*.txt
 	#### To make an Upset plot highlighting peaks in gene bodies
