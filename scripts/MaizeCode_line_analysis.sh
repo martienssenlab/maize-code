@@ -662,7 +662,7 @@ if [[ $ref == "B73_v4" ]]; then
 			### Merging stranded matrix, extracting scales and plotting heatmaps
 			for matrix in regions tss
 			do
-				labels="${tissue_labels_chip[*]} ${tissue_labels_rna[*]}"
+				tissue_labels="${tissue_labels_chip[*]} ${tissue_labels_rna[*]}"
 				printf "\nMerging stranded matrices aligned by $matrix for ${tissue} in $analysisname\n"
 				computeMatrixOperations rbind -m combined/matrix/${matrix}_${analysisname}_plus.gz combined/matrix/${matrix}_${analysisname}_minus.gz -o combined/matrix/${matrix}_${analysisname}.gz
 				printf "\nGetting scales (10th and 90th quantiles) for $matrix matrix for ${tissue} in $analysisname\n"
