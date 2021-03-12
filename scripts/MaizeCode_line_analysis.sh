@@ -574,14 +574,14 @@ if [[ $ref == "B73_v4" ]]; then
 			tissue_rnaseq_bw_list_plus=()
 			for bw in ${rnaseq_bw_list_plus[*]}
 			do					
-				if [[ $bw ~= $tissue ]]; then
+				if [[ $bw =~ $tissue ]]; then
 					tissue_rnaseq_bw_list_plus+=("$bw")
 				fi
 			done
 			tissue_rnaseq_bw_list_minus=()
 			for bw in ${rnaseq_bw_list_minus[*]}
 			do					
-				if [[ $bw ~= $tissue ]]; then
+				if [[ $bw =~ $tissue ]]; then
 					tissue_rnaseq_bw_list_minus+=("$bw")
 				fi
 			done
