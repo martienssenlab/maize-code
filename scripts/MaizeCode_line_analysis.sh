@@ -572,10 +572,11 @@ if [[ $ref == "B73_v4" ]]; then
 				fi
 			done
 
-			printf "Clustering genes by expression levels\n"
+			printf "Clustering genes by expression levels for ${tissue}\n"
 			cols=($(awk -v ORS=" " -v t=$tissue 'NR==1 {for(i=1;i<=NF;i++) if ($i~t) print i}' combined/DEG/counts_${analysisname}.txt))
 			reps=${#cols[@]}
 			awk -v d="$cols" -v t=$reps 'BEGIN {split(d, a, " ")} NR > 0 {b=0; for (i in a) b+=$(a[i]); c=b/t; print $1,c}' combined/DEG/counts_${analysisname}.txt > combined/DEG/temp_counts_${analysisname}_${tissue}.txt
+			head combined/DEG/temp_counts_${analysisname}_${tissue}.txt
 			if [ -s combined/DEG/temp_expression_${analysisname}_${tissue}.bed ]; then
 				rm -f combined/DEG/temp_expression_${analysisname}_${tissue}.bed
 			fi
@@ -627,9 +628,9 @@ if [[ $ref == "B73_v4" ]]; then
 				do
 					awk -v OFS="\t" -v s=$sign '$6==s' combined/DEG/sorted_${analysisname}_B73_genes_exp${i}.txt > combined/DEG/sorted_${analysisname}_B73_genes_exp${i}.bed
 				done
-				printf "\nComputing scale-regions $strand strand matrix\n"
+				printf "\nComputing scale-regions $strand strand matrix for ${tissue} in ${analysisname}\n"
 				computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${sorted_regions[@]} -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o combined/matrix/regions_${analysisname}_${strand}.gz
-				printf "\nComputing reference-point on TSS $strand strand matrix for $analysisname\n"
+				printf "\nComputing reference-point on TSS $strand strand matrix for ${tissue} in $analysisname\n"
 				computeMatrix reference-point --referencePoint "TSS" --missingDataAsZero --skipZeros -R ${sorted_regions[@]} -S ${bw_list} -bs 50 -b 2000 -a 8000 -p $threads -o combined/matrix/tss_${analysisname}_${strand}.gz
 			done
 		
@@ -642,9 +643,9 @@ if [[ $ref == "B73_v4" ]]; then
 			for matrix in regions tss
 			do
 				labels="${tissue_labels[*]} ${ref}_${tissue}_RNAseq"
-				printf "\nMerging stranded matrices aligned by $matrix of $analysisname\n"
+				printf "\nMerging stranded matrices aligned by $matrix for ${tissue} in $analysisname\n"
 				computeMatrixOperations rbind -m combined/matrix/${matrix}_${analysisname}_plus.gz combined/matrix/${matrix}_${analysisname}_minus.gz -o combined/matrix/${matrix}_${analysisname}.gz
-				printf "\nGetting scales (10th and 90th quantiles) for $matrix matrix of $analysisname\n"
+				printf "\nGetting scales (10th and 90th quantiles) for $matrix matrix for ${tissue} in $analysisname\n"
 				computeMatrixOperations dataRange -m combined/matrix/${matrix}_${analysisname}.gz > combined/matrix/values_${matrix}_${analysisname}.txt
 				mins=()
 				maxs=()
@@ -656,9 +657,9 @@ if [[ $ref == "B73_v4" ]]; then
 					maxs+=("$maxi")
 				done
 				computeMatrixOperations sort -m combined/matrix/${matrix}_${analysisname}.gz -R ${sorted_regions[@]} -o combined/matrix/final_${matrix}_${analysisname}.gz
-				printf "\nPlotting heatmap for $matrix matrix of $analysisname scaling by sample\n"
+				printf "\nPlotting heatmap for $matrix matrix for ${tissue} in $analysisname scaling by sample\n"
 				plotHeatmap -m combined/matrix/final_${matrix}_${analysisname}.gz -out combined/plots/split_expression_${tissue}_${analysisname}_heatmap_${matrix}.pdf --sortRegions keep --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --interpolationMethod 'bilinear'
-				printf "\nPlotting profile for $matrix matrix of $analysisname scaling by sample\n"
+				printf "\nPlotting profile for $matrix matrix for ${tissue} in $analysisname scaling by sample\n"
 				plotProfile -m combined/matrix/final_${matrix}_${analysisname}.gz -out combined/plots/split_expression_${tissue}_${analysisname}_profile_${matrix}.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType mean
 			done
 		fi
