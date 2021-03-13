@@ -362,8 +362,8 @@ uniq_chip_mark_list=($(printf "%s\n" "${chip_mark_list[@]}" | sort -u))
 #### To make heatmaps on the region file
 
 #### Splitting the region file by strand
-#awk -v OFS="\t" '$6=="+"' $regionfile > combined/matrix/temp_regions_${regionname}_plus.bed
-#awk -v OFS="\t" '$6=="-"' $regionfile > combined/matrix/temp_regions_${regionname}_minus.bed
+awk -v OFS="\t" '$6=="+"' $regionfile > combined/matrix/temp_regions_${regionname}_plus.bed
+awk -v OFS="\t" '$6=="-"' $regionfile > combined/matrix/temp_regions_${regionname}_minus.bed
 
 #### Reordering the samples by ChIPseq mark
 for mark in ${uniq_chip_mark_list[@]}
