@@ -62,7 +62,7 @@ inputable <- inputable %>%
 
 colmarks<-c("H3K27ac"="#EE616E","H3K4me1"="#8D9BEE","H3K4me3"="#F1C062","Mix"="black")
 
-upset(inputable, sampleCols, name="Peaks", 
+plot<-upset(inputable, sampleCols, name="Peaks", 
       mode='exclusive_intersection',
       n_intersections=30, 
       sort_sets=FALSE,
@@ -115,3 +115,7 @@ upset(inputable, sampleCols, name="Peaks",
       ),
       stripes = alpha("white", 0)
 )
+
+pdf(paste0("combined/plots/Upset_",samplename,"_v2.pdf"),10,8)
+print(plot)
+dev.off()
