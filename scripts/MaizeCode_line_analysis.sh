@@ -677,17 +677,16 @@ if [[ $ref == "B73_v4" ]]; then
 					maxs+=("$maxi")
 				done
 				computeMatrixOperations sort -m combined/matrix/${matrix}_${analysisname}.gz -R ${sorted_regions[@]} -o combined/matrix/final_${matrix}_${analysisname}.gz
-				plotProfile -m combined/matrix/final_${matrix}_${analysisname}.gz -out combined/plots/split_expression_${tissue}_${analysisname}_profile_${matrix}.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType mean --outFileNameData combined/matrix/values_${matrix}_${analysisname}.txt
+				plotProfile -m combined/matrix/final_${matrix}_${analysisname}.gz -out combined/plots/split_expression_${tissue}_${analysisname}_profile_${matrix}.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType mean --outFileNameData combined/matrix/values_${matrix}_${tissue}_${analysisname}.txt
 				ymins=()
 				ymax=()
 				for sample in ${tissue_labels[@]}
 				do
-				 	ymini=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m*1.1}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {print m}')
+				 	ymini=$(grep $sample combined/matrix/values_${matrix}_${tissue}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
 					ymins+=("$ymini")
-					ymaxi=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m*1.1}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m}')
+					ymaxi=$(grep $sample combined/matrix/values_${matrix}_${tissue}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.2}')
 					ymaxs+=("$ymaxi")		
 				done
-				printf "yMins = ${ymins[*]}\nyMaxs = ${ymaxs[*]}\n"
 				printf "\nPlotting heatmap for $matrix matrix for ${tissue} in $analysisname scaling by sample\n"
 				plotHeatmap -m combined/matrix/final_${matrix}_${analysisname}.gz -out combined/plots/split_expression_${tissue}_${analysisname}_heatmap_${matrix}.pdf --sortRegions keep --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
 				printf "\nPlotting profile for $matrix matrix for ${tissue} in $analysisname scaling by sample\n"
