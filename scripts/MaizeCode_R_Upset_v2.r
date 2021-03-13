@@ -7,9 +7,11 @@ library(purrr)
 
 args = commandArgs(trailingOnly=TRUE)
 
-inputable<-read.delim(args[1], header = TRUE)
+inputable<-read.delim(args[1], header = TRUE) %>%
+  mutate(Distance=Distance+1)
 samplename<-args[2]
 
+inputable$Group<-factor(inputable$Group, levels=c("Distal_downstream","Terminator","Gene_body","Promoter","Distal_upstream"))
 set1<-colnames(inputable)
 sampleCols<-set1[! set1 %in% c("PeakID","Distance","Group")]
 
