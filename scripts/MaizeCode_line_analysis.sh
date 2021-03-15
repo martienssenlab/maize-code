@@ -3,7 +3,6 @@
 #$ -cwd
 #$ -pe threads 20
 #$ -l m_mem_free=4G
-#$ -l tmp_free=100G
 #$ -o lineanalysis.log
 #$ -j y
 #$ -N lineanalysis
