@@ -91,5 +91,7 @@ plotGOs<-function(TopGoResults, ont, name) {
 
 for ( ont in c("BP","MF","CC") ) {
   TopGOresults<-getGO(ont)
+  if ( dim(TopGOresults)[1] > 0 ) {
   plotGOs(TopGOresults, ont, samplename)
+    }
 }
