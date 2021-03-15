@@ -6,6 +6,11 @@ library(dplyr)
 library(tidyr)
 library(stringr)
 library(gplots)
+library(AnnotationForge)
+library(rrvgo)
+library(topGO)
+library(purrr)
+library(org.Zmays.eg.db)
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -75,6 +80,45 @@ create.DEG.table<-function(sample1, sample2, y) {
   table
 }
 
+getGO<-function(ont, genelist) {
+  GOdata<-new("topGOdata", 
+              ontology = ont, 
+              allGenes = genelist,
+              annot = annFUN.gene2GO, 
+              gene2GO = gene2GO)
+  resultFisher<-runTest(GOdata, algorithm = "weight01", statistic = "fisher")
+  summary<-GenTable(GOdata, classicFisher = resultFisher, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 1000, numChar=1000)
+  return(summary %>% mutate(classicFisher = as.numeric(classicFisher)) %>% filter(classicFisher < 0.01))
+}
+
+plotGOs<-function(TopGoResults, ont, name) {
+  simMatrix<-calculateSimMatrix(TopGoResults$GO.ID,
+                                orgdb="org.Zmays.eg.db",
+                                ont=ont,
+                                method="Rel")
+  if ( !is.null(dim(simMatrix)) ) {
+    scores<-setNames(-log10(as.numeric(TopGoResults$classicFisher)), TopGoResults$GO.ID)
+    reducedTerms<-reduceSimMatrix(simMatrix,
+                                  scores,
+                                  threshold = 0.7,
+                                  orgdb="org.Zmays.eg.db")
+    pdf(paste0("combined/plots/topGO_",ont,"_",name,"_treemap.pdf"), width=8, height=8)
+    treemapPlot(reducedTerms, size = "score")
+    dev.off()
+  }
+}
+
+filtered$GID<-row.names(filtered)
+allGenes<-unique(unlist(filtered$GID))
+
+info<-read.delim("/grid/martienssen/data_nlsas/jcahn/Genomes/GO/B73_v4_infoGO.tab", header=FALSE)
+fGOzm<-info[,c(2,5,7)]
+colnames(fGOzm)<-c("GID","GO","EVIDENCE")
+geneid2GO<-fGOzm[,c(1,2)]
+rn1<-paste(geneid2GO[,1], sep="")
+gene2GO<-geneid2GO[,-1]
+names(gene2GO)<-rn1
+
 allDEG<-c()
 for (i in 1:(length(tissues)-1)) {
   sample1<-tissues[i]
@@ -91,6 +135,29 @@ for (i in 1:(length(tissues)-1)) {
 		arrange(DEG,Chr,Start)
 	write.table(DEGtable,paste0("combined/DEG/DEG_",analysisname,"_",sample1,"_vs_",sample2,".txt"),sep="\t",row.names=FALSE,col.names=TRUE,quote=FALSE)
 	allDEG<-c(allDEG,DEGtable$GeneID)
+	
+	updeg<-filter(DEGtable, DEG=="UP")
+	myInterestedGenes<-unique(unlist(updeg$GeneID))
+	geneList<-factor(as.integer(allGenes %in% myInterestedGenes))
+	names(geneList)<-allGenes
+	samplename<-paste0("UP_in",sample1,"_vs_",sample2)
+	for ( ont in c("BP","MF") ) {
+		TopGOresults<-getGO(ont, geneList)
+		if ( dim(TopGOresults)[1] > 0 ) {
+			plotGOs(TopGOresults, ont, samplename)
+		}
+	} 
+	downdeg<-filter(DEGtable, DEG=="DOWN")
+	myInterestedGenes<-unique(unlist(downdeg$GeneID))
+	geneList<-factor(as.integer(allGenes %in% myInterestedGenes))
+	names(geneList)<-allGenes
+	samplename<-paste0("DOWN_in",sample1,"_vs_",sample2)
+	for ( ont in c("BP","MF") ) {
+		TopGOresults<-getGO(ont, geneList)
+		if ( dim(TopGOresults)[1] > 0 ) {
+			plotGOs(TopGOresults, ont, samplename)
+		}
+	}
   }
 }
 
