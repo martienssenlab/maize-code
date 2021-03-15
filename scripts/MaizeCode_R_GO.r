@@ -40,7 +40,7 @@ args = commandArgs(trailingOnly=TRUE)
 library(org.Zmays.eg.db)
 
 genecount<-read.delim(args[1], header = TRUE, row.names = "gene_ID")
-sampletable<-read.delim(args[2], header = c("Chr","Start","End","GID","Score","Strand"))
+sampletable<-read.delim(args[2], header = FALSE)
 samplename<-args[3]
 
 keep.exprs<-rowSums(cpm(genecount)>1)>=2
@@ -56,7 +56,7 @@ gene2GO<-geneid2GO[,-1]
 names(gene2GO)<-rn1
 
 allGenes<-unique(unlist(filtered$GID))
-myInterestedGenes<-unique(unlist(sampletable$GID))
+myInterestedGenes<-unique(unlist(sampletable[,4]))
 geneList<-factor(as.integer(allGenes %in% myInterestedGenes))
 names(geneList)<-allGenes
 
