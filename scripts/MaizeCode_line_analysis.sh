@@ -279,6 +279,12 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 			cat combined/DEG/temp_tissue_spec_DEG_${analysisname}_UP_${max}.txt > combined/DEG/only_${namei}_DEG_UP_${analysisname}.bed
 			rm -f combined/DEG/DEG_${analysisname}_*.temp.bed
 			rm -f combined/DEG/temp_tissue_spec_DEG_${analysisname}*
+			if [[ $ref == "B73_v4" ]]; then
+				printf "Making GO enrichment plot for ${namei} tissue with R version:\n"
+				R --version
+				Rscript --vanilla ${mc_dir}/MaizeCode_R_GO.r DEG combined/DEG/counts_${analysisname}.txt combined/DEG/only_${namei}_DEG_DOWN_${analysisname}.bed ${namei}_DOWN_in_${analysisname}
+				Rscript --vanilla ${mc_dir}/MaizeCode_R_GO.r DEG combined/DEG/counts_${analysisname}.txt combined/DEG/only_${namei}_DEG_UP_${analysisname}.bed ${namei}_UP_in_${analysisname}
+			fi
 		done
 	fi
 else 
