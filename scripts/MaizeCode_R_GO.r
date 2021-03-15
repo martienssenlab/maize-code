@@ -5,6 +5,7 @@ library(AnnotationForge)
 library(rrvgo)
 library(dplyr)
 library(topGO)
+library(purrr)
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -76,17 +77,19 @@ plotGOs<-function(TopGoResults, ont, name) {
                                 orgdb="org.Zmays.eg.db",
                                 ont=ont,
                                 method="Rel")
-  scores<-setNames(-log10(as.numeric(TopGoResults$classicFisher)), TopGoResults$GO.ID)
-  reducedTerms<-reduceSimMatrix(simMatrix,
-                                scores,
-                                threshold = 0.7,
-                                orgdb="org.Zmays.eg.db")
-  pdf(paste0("combined/plots/topGO_",ont,"_",name,"_scatter.pdf"), width=8, height=8)
-  print(scatterPlot(simMatrix, reducedTerms, size = "score"))
-  dev.off()
-  pdf(paste0("combined/plots/topGO_",ont,"_",name,"_treemap.pdf"), width=8, height=8)
-  treemapPlot(reducedTerms, size = "score")
-  dev.off()
+  if ( !is.null(dim(simMatrix)) ) {
+    scores<-setNames(-log10(as.numeric(TopGoResults$classicFisher)), TopGoResults$GO.ID)
+    reducedTerms<-reduceSimMatrix(simMatrix,
+                                  scores,
+                                  threshold = 0.7,
+                                  orgdb="org.Zmays.eg.db")
+    pdf(paste0("combined/plots/topGO_",ont,"_",name,"_scatter.pdf"), width=8, height=8)
+    print(scatterPlot(simMatrix, reducedTerms, size = "score"))
+    dev.off()
+    pdf(paste0("combined/plots/topGO_",ont,"_",name,"_treemap.pdf"), width=8, height=8)
+    treemapPlot(reducedTerms, size = "score")
+    dev.off()
+  }
 }
 
 for ( ont in c("BP","MF","CC") ) {
