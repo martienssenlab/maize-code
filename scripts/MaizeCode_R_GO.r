@@ -84,7 +84,7 @@ plotGOs<-function(TopGoResults, ont, name) {
                                   threshold = 0.7,
                                   orgdb="org.Zmays.eg.db")
     pdf(paste0("combined/plots/topGO_",ont,"_",name,"_scatter.pdf"), width=8, height=8)
-    print(scatterPlot(simMatrix, reducedTerms, size = "score"))
+    scatterPlot(simMatrix, reducedTerms, size = "score")
     dev.off()
     pdf(paste0("combined/plots/topGO_",ont,"_",name,"_treemap.pdf"), width=8, height=8)
     treemapPlot(reducedTerms, size = "score")
