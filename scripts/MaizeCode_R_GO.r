@@ -83,16 +83,16 @@ plotGOs<-function(TopGoResults, ont, name) {
                                   scores,
                                   threshold = 0.7,
                                   orgdb="org.Zmays.eg.db")
-    # pdf(paste0("combined/plots/topGO_",ont,"_",name,"_scatter.pdf"), width=8, height=8)
-    # scatterPlot(simMatrix, reducedTerms, size = "score")
-    # dev.off()
+    pdf(paste0("combined/plots/topGO_",ont,"_",name,"_scatter.pdf"), width=8, height=8)
+    scatterPlot(simMatrix, reducedTerms, size = "score")
+    dev.off()
     pdf(paste0("combined/plots/topGO_",ont,"_",name,"_treemap.pdf"), width=8, height=8)
     treemapPlot(reducedTerms, size = "score")
     dev.off()
   }
 }
 
-for ( ont in c("BP","MF","CC") ) {
+for ( ont in c("BP","MF") ) {
   TopGOresults<-getGO(ont)
   if ( dim(TopGOresults)[1] > 0 ) {
   plotGOs(TopGOresults, ont, samplename)
