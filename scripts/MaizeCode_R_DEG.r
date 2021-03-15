@@ -1,15 +1,15 @@
 #!/usr/bin/env Rscript
 
+library(AnnotationForge)
+library(rrvgo)
+library(topGO)
+library(purrr)
 library(limma)
 library(edgeR)
 library(dplyr)
 library(tidyr)
 library(stringr)
 library(gplots)
-library(AnnotationForge)
-library(rrvgo)
-library(topGO)
-library(purrr)
 library(org.Zmays.eg.db)
 
 args = commandArgs(trailingOnly=TRUE)
