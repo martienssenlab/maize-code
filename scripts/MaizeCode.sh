@@ -3,7 +3,6 @@
 #$ -cwd
 #$ -pe threads 1
 #$ -l m_mem_free=2G
-#$ -l tmp_free=10G
 #$ -o maizecode.log
 #$ -j y
 #$ -N maizecode
