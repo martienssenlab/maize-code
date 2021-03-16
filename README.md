@@ -343,10 +343,3 @@ Heatmap of the enrichment for all ChIP samples in the `<samplefile_name>_analysi
 Tool details: https://deeptools.readthedocs.io/en/develop/content/tools/plotHeatmap.html \
 \[ generated in R by deeptools from `MaizeCode_line_analysis.sh` ]
 
-
-**-l tmp_free to be readded after Todd works on it**
-line analysis = 100G
-maizecode = 10G
-maizecode_analysis = 1G
-
-
