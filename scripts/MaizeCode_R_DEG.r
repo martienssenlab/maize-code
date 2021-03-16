@@ -140,7 +140,7 @@ for (i in 1:(length(tissues)-1)) {
 	myInterestedGenes<-unique(unlist(updeg$GeneID))
 	geneList<-factor(as.integer(allGenes %in% myInterestedGenes))
 	names(geneList)<-allGenes
-	samplename<-paste0("UP_in",sample1,"_vs_",sample2)
+	samplename<-paste0("UP_in_",sample1,"_vs_",sample2)
 	for ( ont in c("BP","MF") ) {
 		TopGOresults<-getGO(ont, geneList)
 		if ( dim(TopGOresults)[1] > 0 ) {
