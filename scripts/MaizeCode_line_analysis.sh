@@ -556,7 +556,6 @@ fi
 #rm -f combined/matrix/values*${analysisname}*
 #
 ##### To make heatmap and profile with deeptools for each tissue based on grouped expression levels (if both RNA and ChIP samples are present in a tissue)
-##### Only works when chromosomes starts with 1-10, not Chr. Need to be updated.
 #
 #for tissue in ${rnaseq_tissue_list[*]}
 #do
