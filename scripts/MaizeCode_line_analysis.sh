@@ -240,9 +240,15 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 	paste combined/DEG/col_A*_${analysisname}* > combined/DEG/counts_${analysisname}.txt
 	rm -f combined/DEG/col_A*_${analysisname}*
 	#### To run the DEG analysis on R
-	printf "\nLaunching DEG analysis with R version:\n"
-	R --version
-	Rscript --vanilla ${mc_dir}/MaizeCode_R_DEG.r combined/DEG/counts_${analysisname}.txt combined/DEG/samples_${analysisname}.txt ${analysisname} $regionfile
+	if [[ $ref == "B73_v4" ]]; then
+		printf "\nLaunching DEG analysis (and GO) with R version:\n"
+		R --version
+		Rscript --vanilla ${mc_dir}/MaizeCode_R_DEG_GO.r combined/DEG/counts_${analysisname}.txt combined/DEG/samples_${analysisname}.txt ${analysisname} $regionfile
+	else
+		printf "\nLaunching DEG analysis with R version:\n"
+		R --version
+		Rscript --vanilla ${mc_dir}/MaizeCode_R_DEG.r combined/DEG/counts_${analysisname}.txt combined/DEG/samples_${analysisname}.txt ${analysisname} $regionfile
+	fi
 	#### To extract DEG only called in one tissue
 	if [ ${#rnaseq_name_list[@]} -ge 3 ]; then
 		for namei in ${rnaseq_name_list[@]}
