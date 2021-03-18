@@ -285,14 +285,14 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 			rm -f combined/DEG/DEG_${analysisname}_*.temp.bed
 			rm -f combined/DEG/temp_tissue_spec_DEG_${analysisname}*
 			if [[ $ref == "B73_v4" ]]; then
-				printf "Making GO enrichment plot for ${namei} tissue with R version:\n"
+				printf "\nMaking GO enrichment plot for ${namei} tissue with R version:\n"
 				R --version
 				Rscript --vanilla ${mc_dir}/MaizeCode_R_GO.r combined/DEG/counts_${analysisname}.txt combined/DEG/only_${namei}_DEG_DOWN_${analysisname}.bed ${namei}_DOWN_in_${analysisname}
 				Rscript --vanilla ${mc_dir}/MaizeCode_R_GO.r combined/DEG/counts_${analysisname}.txt combined/DEG/only_${namei}_DEG_UP_${analysisname}.bed ${namei}_UP_in_${analysisname}
 			fi
 		done
 	fi
-	printf "Calculating DEG summary stats\n"
+	printf "\nCalculating DEG summary stats\n"
 	numsample=${#rnaseq_name_list[@]}
 	numsamplemin1=$((numsample - 1))
 
