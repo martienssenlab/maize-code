@@ -281,8 +281,8 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 				bedtools intersect -wa -a combined/DEG/temp_tissue_spec_DEG_${analysisname}_UP_${i}.txt -b ${filearrayup[j]} > combined/DEG/temp_tissue_spec_DEG_${analysisname}_UP_${j}.txt
 				i=$((i+1))
 			done
-			cat combined/DEG/temp_tissue_spec_DEG_${analysisname}_DOWN_${max}.txt > combined/DEG/only_${namei}_DEG_DOWN_${analysisname}.bed
-			cat combined/DEG/temp_tissue_spec_DEG_${analysisname}_UP_${max}.txt > combined/DEG/only_${namei}_DEG_UP_${analysisname}.bed
+			cat combined/DEG/temp_tissue_spec_DEG_${analysisname}_DOWN_${max}.txt | sort -u > combined/DEG/only_${namei}_DEG_DOWN_${analysisname}.bed
+			cat combined/DEG/temp_tissue_spec_DEG_${analysisname}_UP_${max}.txt | sort -u > combined/DEG/only_${namei}_DEG_UP_${analysisname}.bed
 			rm -f combined/DEG/DEG_${analysisname}_*.temp.bed
 			rm -f combined/DEG/temp_tissue_spec_DEG_${analysisname}*
 			if [[ $ref == "B73_v4" ]]; then
@@ -293,6 +293,40 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 			fi
 		done
 	fi
+	printf "Calculating DEG summary stats\n"
+	numsample=${#rnaseq_name_list[@]}
+	numsamplemin1=$((numsample - 1))
+
+	if [ -e summary_DEG_numbers_${analysisname}.txt ]; then
+		rm -f summary_DEG_numbers_${analysisname}.txt
+	fi
+
+	for ((i=0; i<=numsamplemin1; i++))
+	do
+		namei=${rnaseq_name_list[i]}
+		for ((j=(i+1); j<=numsamplemin1; j++))
+		do
+			namej=${rnaseq_name_list[j]}
+			if [ -s combined/DEG/DEG_${analysisname}_${namei}_vs_${namej}.txt ]; then
+				awk -v a=$namei -v b=$namej -v OFS="\t" '{if ($11== "UP") c+=1; else d+=1} END {print a" vs "b,"UP:"c,"DOWN:"d}' combined/DEG/DEG_${analysisname}_${namei}_vs_${namej}.txt >> summary_DEG_numbers_${analysisname}.txt
+			elif [ -s combined/DEG/DEG_${analysisname}_${namej}_vs_${namei}.txt ]; then
+				awk -v a=$namei -v b=$namej -v OFS="\t" '{if ($11== "DOWN") c+=1; else d+=1} END {print a" vs "b,"UP:"c,"DOWN:"d}' combined/DEG/DEG_${analysisname}_${namej}_vs_${namei}.txt >> summary_DEG_numbers_${analysisname}.txt
+			fi
+		done
+		if [ -s combined/DEG/only_${namei}_DEG_UP_${analysisname}.bed ] && [ -s combined/DEG/only_${namei}_DEG_DOWN_${analysisname}.bed ]; then
+			up=$(wc -l combined/DEG/only_${namei}_DEG_UP_${analysisname}.bed | awk '{print $1}')
+			down=$(wc -l combined/DEG/only_${namei}_DEG_DOWN_${analysisname}.bed | awk '{print $1}')
+			awk -v a=$namei -v u=$up -v d=$down -v OFS="\t" 'BEGIN {print a" only","UP:"u,"DOWN:"d}' >> summary_DEG_numbers_${analysisname}.txt
+		elif [ -s combined/DEG/only_${namei}_DEG_UP_${analysisname}.bed ]; then
+			up=$(wc -l combined/DEG/only_${namei}_DEG_UP_${analysisname}.bed | awk '{print $1}')
+			down="0"
+			awk -v a=$namei -v u=$up -v d=$down -v OFS="\t" 'BEGIN {print a" only","UP:"u,"DOWN:"d}' >> summary_DEG_numbers_${analysisname}.txt
+		elif [ -s combined/DEG/only_${namei}_DEG_DOWN_${analysisname}.bed ]; then
+			up="0"
+			down=$(wc -l combined/DEG/only_${namei}_DEG_DOWN_${analysisname}.bed | awk '{print $1}')
+			awk -v a=$namei -v u=$up -v d=$down -v OFS="\t" 'BEGIN {print a" only","UP:"u,"DOWN:"d}' >> summary_DEG_numbers_${analysisname}.txt
+		fi
+	done
 else 
 	printf "\nNo differential gene expression analysis performed (not enough samples)\n"
 fi
