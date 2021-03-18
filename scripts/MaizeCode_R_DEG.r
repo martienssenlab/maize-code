@@ -33,7 +33,7 @@ analysisname<-args[3]
 ref_genes<-read.delim(args[4], header = FALSE, 
                       col.names = c("Chr","Start","Stop","Name","Value","Strand"))
 gene_names<-row.names(genecount)
-ref_genes<-mutate(ref_genes, GeneID=str_extract(ref_genes$Name,gene_names)) %>%
+ref_genes<-mutate(ref_genes, GeneID=str_replace(ref_genes$Name, pattern = ".*ID=(gene:)?([^;]+).*", replacement = "\\2")) %>%
   select(-Name, -Value)
 
 # EdgeR analysis
