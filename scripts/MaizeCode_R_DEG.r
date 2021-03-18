@@ -34,17 +34,16 @@ ref_genes<-mutate(ref_genes, GeneID=str_replace(ref_genes$Name, pattern = ".*ID=
 y<-DGEList(counts=filtered, group = samples)
 y<-calcNormFactors(y)
 
-#color_samples<-c()
-#for (i in 1:length(tissues)) {
-#  color_samples<-c(color_samples, rep(colors[i],2))
-#}
-
 pdf(paste0("combined/plots/MDS_",analysisname,"_v1.pdf"),10,8)
 plotMDS(y, col=color_samples, labels=samples)
 dev.off()
 
 pdf(paste0("combined/plots/MDS_",analysisname,"_v2.pdf"),10,8)
 plotMDS(y, col=color_samples, labels=reps)
+dev.off()
+
+pdf(paste0("combined/plots/MDS_",analysisname,"_v3.pdf"),10,8)
+plotMDS(y, col=color_samples, labels=samples, dim.plot=c(2,3))
 dev.off()
 
 y<-estimateCommonDisp(y, verbose = TRUE)
