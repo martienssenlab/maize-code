@@ -85,7 +85,8 @@ plot<-upset(inputable, sampleCols, name="Peaks",
             scale_fill_manual(values=colmarks, name="Exclusive marks"))
       ),
       queries = queries,
-      set_sizes = (upset_set_size() + ylab("Total peaks")),
+      set_sizes = (upset_set_size() + ylab("Total peaks") +
+        theme(axis.text.x = element_text(angle = 45))),
       matrix = (intersection_matrix(geom = geom_point(shape = "circle",size = 3),
           segment = geom_segment(size = 1.5),
           outline_color = list(active = alpha("white", 0),inactive = alpha("white", 0))) +
@@ -118,6 +119,6 @@ plot<-upset(inputable, sampleCols, name="Peaks",
       stripes = alpha("white", 0)
 )
 
-pdf(paste0("combined/plots/Upset_",samplename,"_v2.pdf"),10,8)
+pdf(paste0("combined/plots/Upset_",samplename,".pdf"),10,8)
 print(plot)
 dev.off()
