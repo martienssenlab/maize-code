@@ -738,6 +738,9 @@ do
 	fi
 done
 
+rm -f combined/DEG/sorted_${analysisname}*
+rm -f combined/DEG/temp_counts_${analysisname}*
+
 #### To make heatmaps and profiles with deeptools on the ACRs called in Ricci et al. 2019 paper (if B73_v4 is the reference used)
 #### Not yet used so commented
 
