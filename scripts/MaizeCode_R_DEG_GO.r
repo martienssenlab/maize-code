@@ -78,7 +78,7 @@ create.DEG.table<-function(sample1, sample2, y) {
   table
 }
 
-getGO<-function(ont, genelist) {
+getGO<-function(ont, genelist, sampletable, name) {
   GOdata<-new("topGOdata", 
               ontology = ont, 
               allGenes = genelist,
@@ -86,7 +86,23 @@ getGO<-function(ont, genelist) {
               gene2GO = gene2GO)
   resultFisher<-runTest(GOdata, algorithm = "weight01", statistic = "fisher")
   summary<-GenTable(GOdata, classicFisher = resultFisher, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 1000, numChar=1000)
-  return(summary %>% mutate(classicFisher = as.numeric(classicFisher)) %>% filter(classicFisher < 0.01))
+  tab<-summary %>%
+	mutate(classicFisher = as.numeric(classicFisher)) %>%
+	filter(classicFisher < 0.01) 
+  tab2<-tab %>%
+	rename(GO=GO.ID) %>%
+	merge(geneid2GO, by="GO") %>%
+	rename(GeneID=GID) %>%
+	merge(sampletable, by="GeneID") %>%
+	rowwise() %>%
+	mutate(Sig=paste0(Significant,"/",Annotated)) %>%
+	select(Chr, Start, Stop, GeneID, GO, Term, Sig) %>%
+	arrange(GO) %>%
+	unique()
+  if (nrow(tab2) > 0) {
+	write.table(tab2,paste0("DEG/topGO_",name,"_",ont,"_GIDs.txt"),sep="\t",row.names=FALSE,col.names=TRUE,quote=FALSE)
+  }  
+  return(tab)
 }
 
 plotGOs<-function(TopGoResults, ont, name) {
@@ -140,8 +156,8 @@ for (i in 1:(length(tissues)-1)) {
 	names(geneList)<-allGenes
 	samplename<-paste0("UP_in_",sample1,"_vs_",sample2)
 	for ( ont in c("BP","MF") ) {
-		TopGOresults<-getGO(ont, geneList)
-		if ( dim(TopGOresults)[1] > 0 ) {
+		TopGOresults<-getGO(ont, geneList, updeg, samplename)
+		if ( nrow(TopGOresults) > 0 ) {
 			plotGOs(TopGOresults, ont, samplename)
 		}
 	} 
@@ -151,8 +167,8 @@ for (i in 1:(length(tissues)-1)) {
 	names(geneList)<-allGenes
 	samplename<-paste0("DOWN_in_",sample1,"_vs_",sample2)
 	for ( ont in c("BP","MF") ) {
-		TopGOresults<-getGO(ont, geneList)
-		if ( dim(TopGOresults)[1] > 0 ) {
+		TopGOresults<-getGO(ont, geneList, downdeg, samplename)
+		if ( nrow(TopGOresults) > 0 ) {
 			plotGOs(TopGOresults, ont, samplename)
 		}
 	}
