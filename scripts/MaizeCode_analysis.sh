@@ -48,7 +48,8 @@ while getopts ":f:r:sth" opt; do
 		r)	export regionfile=${OPTARG};;
 		s)	printf "\nOption not to perform combined analysis selected\n"
 			export keepgoing="STOP";;
-		t)	export total="No";;
+		t)	printf "\nOption to perform partial combined analysis selected\n"
+			export total="No";;
 		h) 	printf "$usage\n"
 			exit 0;;
 		*)	printf "\nArgument unknown, retunring usage:\n$usage\n"
