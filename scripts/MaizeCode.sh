@@ -69,7 +69,7 @@ while getopts "f:p:scth" opt; do
 			export keepgoing="STOP";;
 		c)	printf "\nOption not to perform combined analysis selected\n"
 			export wholeanalysis="STOP";;
-		t)	printf "\nOption not to perform total combined analysis selected\n"
+		t)	printf "\nOption to perform partial combined analysis selected\n"
 			export total="No";;
 		*)	printf "$usage\n"
 			exit 1;;
@@ -342,12 +342,12 @@ if [[ "$wholeanalysis" == "STOP" ]]; then
 	analysisname="${samplename}_no_region"
 	check="combined/chkpts/${analysisname}"
 elif [[ "$total" == "No" ]]; then
-	printf "\nPerforming the partial analysis on all genes\n"
+	printf "\nPerforming partial analysis on all genes\n"
 	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f $analysisfile -r all_genes.txt -t &
 	analysisname="${samplename}_on_all_genes"
 	check="combined/chkpts/${analysisname}"
 else
-	printf "\nPerforming the complete analysis on all genes\n"
+	printf "\nPerforming complete analysis on all genes\n"
 	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f $analysisfile -r all_genes.txt &
 	analysisname="${samplename}_on_all_genes"
 	check="combined/chkpts/${analysisname}"
