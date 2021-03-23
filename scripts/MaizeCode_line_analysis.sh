@@ -11,7 +11,7 @@
 usage="
 ##### Script for Maize code inbred line data analysis, used by script MaizeCode_analyis.sh if -s was not set and region file exists
 #####
-##### sh MaiCode_line_analysis.sh -f samplefile -r regionfile
+##### sh MaiCode_line_analysis.sh -f samplefile -r regionfile [-t]
 #####	-f: samplefile containing the samples to compare and in 5 tab-delimited columns:
 ##### 		Line, Tissue, Sample, PE or SE, Reference genome directory
 ##### 	-r: bedfile containing the regions that are to be ploted over
