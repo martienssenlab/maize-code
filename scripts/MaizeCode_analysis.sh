@@ -42,7 +42,7 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts ":f:r:sh" opt; do
+while getopts ":f:r:sph" opt; do
 	case $opt in
 		f) 	export samplefile=${OPTARG};;
 		r)	export regionfile=${OPTARG};;
