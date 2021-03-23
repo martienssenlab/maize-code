@@ -62,7 +62,7 @@ myInterestedGenes<-unique(unlist(sampletable$GID))
 geneList<-factor(as.integer(allGenes %in% myInterestedGenes))
 names(geneList)<-allGenes
 
-getGO<-function(ont) {
+getGO<-function(ont, name) {
   GOdata<-new("topGOdata", 
               ontology = ont, 
               allGenes = geneList,
