@@ -94,9 +94,7 @@ getGO<-function(ont, genelist, sampletable, name) {
 	merge(geneid2GO, by="GO") %>%
 	rename(GeneID=GID) %>%
 	merge(sampletable, by="GeneID") %>%
-	rowwise() %>%
-	mutate(Sig=paste0(Significant,"/",Annotated)) %>%
-	select(Chr, Start, Stop, GeneID, GO, Term, Sig) %>%
+	select(Chr, Start, Stop, GeneID, GO, Term) %>%
 	arrange(GO) %>%
 	unique()
   if (nrow(tab2) > 0) {
