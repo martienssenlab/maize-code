@@ -15,7 +15,7 @@ usage="
 #####	-f: samplefile containing the samples to compare and in 5 tab-delimited columns:
 ##### 		Line, Tissue, Sample, PE or SE, Reference genome directory
 ##### 	-r: bedfile containing the regions that are to be ploted over
-#####	-p: If set, partial analysis will be performed (no heatmap with deeptools)	
+#####	-t: If set, partial analysis will be performed (no heatmap with deeptools)	
 ##### 	-h: help, returns usage
 ##### 
 ##### It produces an Upset plot of the intersection between all ChIP samples, highlighting peaks in the input regions
@@ -43,13 +43,13 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts ":f:r:ph" opt; do
+while getopts ":f:r:th" opt; do
 	case $opt in
 		h) 	printf "$usage\n"
 			exit 0;;
 		f) 	export samplefile=${OPTARG};;
 		r)	export regionfile=${OPTARG};;
-		p)	export total="No";;
+		t)	export total="No";;
 		*)	printf "$usage\n"
 			exit 1;;
 	esac
