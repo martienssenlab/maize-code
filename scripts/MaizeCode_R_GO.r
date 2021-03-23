@@ -42,6 +42,7 @@ library(org.Zmays.eg.db)
 
 genecount<-read.delim(args[1], header = TRUE, row.names = "gene_ID")
 sampletable<-read.delim(args[2], header = FALSE)
+colnames(sampletable)<-c("Chr","Start","Stop","GID","score","strand")
 samplename<-args[3]
 
 keep.exprs<-rowSums(cpm(genecount)>1)>=2
@@ -57,7 +58,7 @@ gene2GO<-geneid2GO[,-1]
 names(gene2GO)<-rn1
 
 allGenes<-unique(unlist(filtered$GID))
-myInterestedGenes<-unique(unlist(sampletable[,4]))
+myInterestedGenes<-unique(unlist(sampletable$GID))
 geneList<-factor(as.integer(allGenes %in% myInterestedGenes))
 names(geneList)<-allGenes
 
@@ -69,7 +70,22 @@ getGO<-function(ont) {
               gene2GO = gene2GO)
   resultFisher<-runTest(GOdata, algorithm = "weight01", statistic = "fisher")
   summary<-GenTable(GOdata, classicFisher = resultFisher, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 1000, numChar=1000)
-  return(summary %>% mutate(classicFisher = as.numeric(classicFisher)) %>% filter(classicFisher < 0.01))
+  tab<-summary %>%
+  	mutate(classicFisher = as.numeric(classicFisher)) %>%
+  	filter(classicFisher < 0.01) 
+  tab2<-tab %>%
+	  rename(GO=GO.ID) %>%
+	  merge(geneid2GO, by="GO") %>%
+	  merge(sampletable, by="GID") %>%
+	  rowwise() %>%
+	  mutate(Sig=paste0(Significant,"/",Annotated)) %>%
+	  select(Chr, Start, Stop, GID, GO, Term, Sig) %>%
+	  arrange(GO) %>%
+	  unique()
+  if (nrow(tab2) > 0) {
+	  write.table(tab2,paste0("DEG/topGO_",name,"_",ont,"_GIDs.txt"),sep="\t",row.names=FALSE,col.names=TRUE,quote=FALSE)
+  }  
+  return(tab)
 }
 
 plotGOs<-function(TopGoResults, ont, name) {
@@ -93,7 +109,7 @@ plotGOs<-function(TopGoResults, ont, name) {
 }
 
 for ( ont in c("BP","MF") ) {
-  TopGOresults<-getGO(ont)
+  TopGOresults<-getGO(ont, samplename)
   if ( dim(TopGOresults)[1] > 0 ) {
   plotGOs(TopGOresults, ont, samplename)
     }
