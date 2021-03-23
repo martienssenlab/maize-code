@@ -11,11 +11,12 @@
 usage="
 ##### Main script for Maize code data analysis
 ##### 
-##### sh MaizeCode.sh -f <samplefile> -p <path to genome reference> [-s] [-c] [-h]
+##### sh MaizeCode.sh -f <samplefile> -p <path to genome reference> [-s] [-c] [-t] [-h]
 ##### 	-f: samplefile
 ##### 	-p: path to the folder containing all the different genome references (e.g. ~/data/Genomes/Zea_mays)
 #####	-s: if set, the whole analysis does not proceed (default=not set, keep going with the analysis over all the samples in the samplefile)
 #####	-c: if set, only single samples analysis proceeds, not grouped analysis per line (default=not set, keep going with the complete analysis)
+#####	-t: if set, only partial grouped analysis per line, no heatmaps with deeptools (default=not set, keep going with the complete analysis)
 ##### 	-h: help, returns usage
 #####
 ##### The samplefile should be a tab-delimited text file with 8 columns:
@@ -58,7 +59,7 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts "f:p:sch" opt; do
+while getopts "f:p:scth" opt; do
 	case $opt in
 		h) 	printf "$usage\n"
 			exit 0;;
@@ -68,6 +69,8 @@ while getopts "f:p:sch" opt; do
 			export keepgoing="STOP";;
 		c)	printf "\nOption not to perform combined analysis selected\n"
 			export wholeanalysis="STOP";;
+		t)	printf "\nOption not to perform total combined analysis selected\n"
+			export total="No";;
 		*)	printf "$usage\n"
 			exit 1;;
 	esac
@@ -337,6 +340,11 @@ if [[ "$wholeanalysis" == "STOP" ]]; then
 	printf "\nPerforming only the single sample analysis\n"
 	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f $analysisfile -r all_genes.txt -s &
 	analysisname="${samplename}_no_region"
+	check="combined/chkpts/${analysisname}"
+elif [[ "$total" == "No" ]]; then
+	printf "\nPerforming the partial analysis on all genes\n"
+	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f $analysisfile -r all_genes.txt -t &
+	analysisname="${samplename}_on_all_genes"
 	check="combined/chkpts/${analysisname}"
 else
 	printf "\nPerforming the complete analysis on all genes\n"
