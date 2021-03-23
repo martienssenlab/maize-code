@@ -11,14 +11,14 @@
 usage="
 ##### Script for Maize code data analysis
 #####
-##### sh MaiCode_analysis.sh -f samplefile [-r regionfile] [-s] [-p]
+##### sh MaiCode_analysis.sh -f samplefile [-r regionfile] [-s] [-t]
 #####	-f: samplefile containing the samples to compare and in 5 tab-delimited columns:
 ##### 		Line, Tissue, Sample, PE or SE, Reference genome directory
 ##### 	-r: textfile containing the name of region files that are to be plotted over (bed files)
 ##### 		It is safest to use a full paths.
 #####		If no region file is given, the analysis will behave as if -s was set.
 #####	-s: If set, the script does not progress into the line data analysis, only single sample analysis will be performed
-#####	-p: If set, partial analysis will be performed (no heatmap with deeptools)
+#####	-t: If set, partial analysis will be performed (no heatmap with deeptools)
 ##### 	-h: help, returns usage
 ##### 
 ##### It sends each type of sample to its specific analysis file (MaizeCode_ChIP_analysis.sh or MaizeCode_RNA_analysis.sh)
@@ -42,13 +42,13 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts ":f:r:sph" opt; do
+while getopts ":f:r:sth" opt; do
 	case $opt in
 		f) 	export samplefile=${OPTARG};;
 		r)	export regionfile=${OPTARG};;
 		s)	printf "\nOption not to perform combined analysis selected\n"
 			export keepgoing="STOP";;
-		p)	export total="No";;
+		t)	export total="No";;
 		h) 	printf "$usage\n"
 			exit 0;;
 		*)	printf "\nArgument unknown, retunring usage:\n$usage\n"
