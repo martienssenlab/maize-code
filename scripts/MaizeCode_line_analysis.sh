@@ -49,7 +49,8 @@ while getopts ":f:r:th" opt; do
 			exit 0;;
 		f) 	export samplefile=${OPTARG};;
 		r)	export regionfile=${OPTARG};;
-		t)	export total="No";;
+		t)	printf "\nPartial analysis to be performed (no heatmaps)\n" 
+			export total="No";;
 		*)	printf "$usage\n"
 			exit 1;;
 	esac
