@@ -402,7 +402,7 @@ fi
 #### By default, it does heatmap on all the data, heatmap with 5 kmeans, and corresponding profiles
 #### Probably need to edit many parameters depending on the purpose of the analysis
 
-if [[ "$total" == "No" ]; then
+if [[ "$total" == "No" ]]; then
 	printf "\nPartial combined analysis script finished successfully for $analysisname\n"
 	touch combined/chkpts/analysis_${analysisname}
 	exit 0
