@@ -77,9 +77,7 @@ getGO<-function(ont) {
 	  rename(GO=GO.ID) %>%
 	  merge(geneid2GO, by="GO") %>%
 	  merge(sampletable, by="GID") %>%
-	  rowwise() %>%
-	  mutate(Sig=paste0(Significant,"/",Annotated)) %>%
-	  select(Chr, Start, Stop, GID, GO, Term, Sig) %>%
+	  select(Chr, Start, Stop, GID, GO, Term) %>%
 	  arrange(GO) %>%
 	  unique()
   if (nrow(tab2) > 0) {
