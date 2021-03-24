@@ -32,7 +32,7 @@ bedGraphToBigWig v 2.8
 bedSort
 parallel-fastq-dump (if downloading from SRA)
 R 3.6.3
-R libraries: ggplot2 3.3.2; UpSetR 1.4.0; limma 3.42.2; edgeR 3.28.1; dplyr 1.0.2; tidyr 1.1.2; stringr 1.4.0; cowplot 1.1.0; gplots 3.1.0; RColorBrewer 1.1.2
+R libraries: ggplot2 3.3.2; UpSetR 1.4.0; limma 3.42.2; edgeR 3.28.1; dplyr 1.0.2; tidyr 1.1.2; stringr 1.4.0; cowplot 1.1.0; gplots 3.1.0; RColorBrewer 1.1.2; ComplexUpset ; purrr ; AnnotationForge ; rrvgo ;
 ```
 4) Organize your reference genome directories so that they are all in the same main folder and that each contain ONE fasta file (.fa extension), ONE GFF file (.gff or .gff* extension) and ONE GTF (.gtf extension) file.\ 
 For example, having a `genomes/` folder that contains the `genomes/B73/` directory where you can find `genomes/B73/B73.fa`, `genomes/B73/B73.gff` and `genomes/B73/B73.gtf` files\
@@ -59,7 +59,7 @@ The samples that have already been processed will not be repeated but will still
 - It should work for both Single-end or Paired-end data
 - It works perfectly with 2 replicates for every type of data (including two different inputs for ChIP). Adapting the scripts to allow for more variation in the number of replicates is under development (having only one ChIP input replicate works, as well as multiple RNAseq replicates).
 - The whole pipeline creates a lot of report files and probably files that are not necessary to keep but for now I keep them like this for potential troubleshooting.
-- For now I’ve used the `MaizeCode.sh` script from scratch for 16 samples at a time (all ChIPs and RNAseq from two tissues of the same line). It runs in ~19h (depending on the size of the files). Once that the mapping and single-sample analysis have been done, reusing these samples in a different analysis is much quicker though, the limitations are for mapping ChIPseq samples and calling ChIPseq peaks (since it does it for each biological replicate, the merge file and both pseudo-replicates and cannot be multi-threaded). That is probably the first step that could be optimized for faster runs.
+- For now I’ve used the `MaizeCode.sh` script from scratch for all samples of one inbred line at a time (all ChIPs and RNAseq from 5 tissues). It runs in ~19h (but it depends on the size of the files and how busy the cluster is...). Once that the mapping and single-sample analysis have been done, reusing these samples in a different analysis is much quicker though (~2h), the limitations are for mapping ChIPseq samples and calling ChIPseq peaks (since it does it for each biological replicate, the merge file and both pseudo-replicates and cannot be multi-threaded). That is probably the first step that could be optimized for faster runs.
 - Always process the Input samples with their corresponding ChIP in the `MaizeCode.sh` script.
 - The analysis will have to be adapted to the desired output, but running the default complete pipeline should give a first look at the data and generate all the files required for further analysis.
 - These are still preliminary version of the scripts!

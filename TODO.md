@@ -26,3 +26,4 @@ get the data type from the samplefile too (if H* or Input it is ChIP, if \*RNA* 
 - [ ] Make a genome browser session? (trackhub for UCSC? Cyverse?)
 - [ ] Improve flexibility of scripts based on number of replicates
 - [ ] Increase efficiency of the whole pipeline? As of now, the whole pipeline on all ChIP samples for B73 roots took ~12h to run.
+- [ ] Add "CC" ontology to GO analysis (weird NA error) and work around corner cases for scatter plots

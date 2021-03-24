@@ -11,13 +11,14 @@
 usage="
 ##### Script for Maize code data analysis
 #####
-##### sh MaiCode_analysis.sh -f samplefile [-r regionfile] [-s]
+##### sh MaiCode_analysis.sh -f samplefile [-r regionfile] [-s] [-t]
 #####	-f: samplefile containing the samples to compare and in 5 tab-delimited columns:
 ##### 		Line, Tissue, Sample, PE or SE, Reference genome directory
 ##### 	-r: textfile containing the name of region files that are to be plotted over (bed files)
 ##### 		It is safest to use a full paths.
 #####		If no region file is given, the analysis will behave as if -s was set.
 #####	-s: If set, the script does not progress into the line data analysis, only single sample analysis will be performed
+#####	-t: If set, partial analysis will be performed (no heatmap with deeptools)
 ##### 	-h: help, returns usage
 ##### 
 ##### It sends each type of sample to its specific analysis file (MaizeCode_ChIP_analysis.sh or MaizeCode_RNA_analysis.sh)
@@ -41,12 +42,14 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts ":f:r:sh" opt; do
+while getopts ":f:r:sth" opt; do
 	case $opt in
 		f) 	export samplefile=${OPTARG};;
 		r)	export regionfile=${OPTARG};;
 		s)	printf "\nOption not to perform combined analysis selected\n"
 			export keepgoing="STOP";;
+		t)	printf "\nOption to perform partial combined analysis selected\n"
+			export total="No";;
 		h) 	printf "$usage\n"
 			exit 0;;
 		*)	printf "\nArgument unknown, retunring usage:\n$usage\n"
@@ -252,7 +255,7 @@ fi
 
 rm -f combined/temp_reports_*
 
-if [[ $keepgoing == "STOP" ]]; then
+if [[ "$keepgoing" == "STOP" ]]; then
 	printf "\nScript finished successfully without combined analysis\n"
 	touch combined/chkpts/${analysisname}
 	exit 0
@@ -281,7 +284,11 @@ do
 	check_list+=("combined/chkpts/analysis_${samplename}_on_${regioniname}")
 	region_list+=("${regioniname}")
 	printf "\nLaunching line analysis script for samplefile $samplename on regionfile $regioniname\n"
-	qsub -sync y -N ${ref}_analysis -o combined/logs/analysis_${samplename}_on_${regioniname}_${ref}.log ${mc_dir}/MaizeCode_line_analysis.sh -f combined/${samplename}_analysis_samplefile.temp_${ref}.txt -r ${regioni} &
+	if [[ "$total" == "No" ]]; then
+		qsub -sync y -N ${ref}_analysis -o combined/logs/analysis_${samplename}_on_${regioniname}_${ref}.log ${mc_dir}/MaizeCode_line_analysis.sh -f combined/${samplename}_analysis_samplefile.temp_${ref}.txt -r ${regioni} -t &
+	else
+		qsub -sync y -N ${ref}_analysis -o combined/logs/analysis_${samplename}_on_${regioniname}_${ref}.log ${mc_dir}/MaizeCode_line_analysis.sh -f combined/${samplename}_analysis_samplefile.temp_${ref}.txt -r ${regioni} &
+	fi
 	pids+=("$!")
 done
 
