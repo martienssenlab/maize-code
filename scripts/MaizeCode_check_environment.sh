@@ -132,8 +132,8 @@ fi
 
 if [ ! -s $datatype/tracks/${ref}_all_genes.bed ]; then
 	printf "\nMaking a bed file with gene coordinates from $ref\n"
-	awk -v OFS="\t" '$3=="gene" {print $1,$4-1,$5,$9,".",$7}' $gff | sort -k1,1 -k2,2n > $datatype/tracks/${ref}_protein_coding_genes.bed
-	awk -v OFS="\t" '$3~"gene" {print $1,$4-1,$5,$9,".",$7}' $gff | sort -k1,1 -k2,2n > $datatype/tracks/${ref}_all_genes.bed
+	awk -v OFS="\t" '$3=="gene" {print $1,$4-1,$5,$9,".",$7}' $gff | bedtools sort -g ${ref_dir}/chrom.sizes > $datatype/tracks/${ref}_protein_coding_genes.bed
+	awk -v OFS="\t" '$3~"gene" {print $1,$4-1,$5,$9,".",$7}' $gff | bedtools sort -g ${ref_dir}/chrom.sizes > $datatype/tracks/${ref}_all_genes.bed
 fi
 
 if [[ $datatype == "ChIP" ]]; then
