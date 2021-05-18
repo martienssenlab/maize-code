@@ -84,6 +84,7 @@ printf "\nStarting analysis: $analysisname\n"
 
 #### To append the lists (used for labels and other stuff)
 
+ref_dir_list=()
 chip_sample_list=()
 chip_tissue_list=()
 chip_mark_list=()
@@ -109,6 +110,7 @@ do
 	ref=${ref_dir##*/}
 	if [[ ! "${ref_list[@]}" =~ "${ref}" ]]; then
 		ref_list+=("$ref")
+		ref_dir_list+=("$ref_dir")
 	fi
 	if [[ "$datatype" == "ChIP" ]]; then
 		chip_bw_list+=("$datatype/tracks/${name}_merged.bw")
@@ -142,6 +144,7 @@ if [ ! ${#ref_list[@]} -eq 1 ]; then
 	exit 1
 else
 	export ref=${ref_list[0]}
+	export ref_dir=${ref_dir_list[0]}
 fi
 
 #############################################################################################
@@ -169,7 +172,7 @@ if [ ${#chip_sample_list[@]} -ge 1 ]; then
 	bedtools merge -i combined/peaks/tmp2_peaks_${analysisname}.bed -c 4 -o distinct | sort -k1,1 -k2,2n | awk -v OFS="\t" '{print $1,$2,$3,"Peak_"NR,$4}'> combined/peaks/tmp3_peaks_${analysisname}.bed
 	#### To get distance to closest gene (and the gene model name)
 	printf "\nGetting closest region of $samplename to $regionfile\n"
-	bedtools closest -a combined/peaks/tmp3_peaks_${analysisname}.bed -b $regionfile -D ref | awk -v OFS="\t" '{print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$9,$7}' > combined/peaks/peaks_${analysisname}.bed
+	bedtools closest -a combined/peaks/tmp3_peaks_${analysisname}.bed -b $regionfile -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$9,$7}' > combined/peaks/peaks_${analysisname}.bed
 	rm -f combined/peaks/tmp*_peaks_${analysisname}.bed
 	#### To create a matrix of peak presence in each sample
 	printf "\nCreating matrix file for $samplename\n"
