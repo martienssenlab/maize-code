@@ -243,6 +243,8 @@ do
 		bedtools intersect -a peaks/temp_${name}_pseudo1.bed -b peaks/temp_${name}_pseudo2.bed > peaks/temp_${name}_pseudos.bed
 		bedtools intersect -a peaks/temp_${name}_merged.bed -b peaks/temp_${name}_pseudos.bed -u > peaks/temp_${name}_selected.bed
 		bedtools intersect -a peaks/${name}_merged_peaks.${peaktype}Peak -b peaks/temp_${name}_selected.bed -u > peaks/selected_peaks_${name}.${peaktype}Peak
+		printf "Getting best peak for $ref $sample $mark\n"
+		sort -k1,1 -k2,2n -k5nr peaks/selected_peaks_${name}.${peaktype}Peak | awk -v OFS="\t" '{print $1";"$2";"$3,$4,$5,$6,$7,$8,$9,$10}' | awk 'BEGIN {a=0} {b=$1; if (b!=a) print $0; a=$1}' | awk -F"[;\t]" -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10}' > combined/peaks/best_peaks_${name}.bed
 
 		#### To get some peaks stats for each mark
 		printf "\nCalculating peak stats for ${name} in ${peaktype} peaks\n"
