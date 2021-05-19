@@ -171,15 +171,15 @@ if [ ${#chip_sample_list[@]} -ge 1 ]; then
 	sort -k1,1 -k2,2n combined/peaks/tmp_peaks_${analysisname}.bed > combined/peaks/tmp2_peaks_${analysisname}.bed
 	bedtools merge -i combined/peaks/tmp2_peaks_${analysisname}.bed -c 4 -o distinct | bedtools sort -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{print $1,$2,$3,"Peak_"NR,$4}'> combined/peaks/tmp3_peaks_${analysisname}.bed
 	#### To get distance to closest gene (and the gene model name)
-	printf "\nGetting closest region of $samplename to $regionfile\n"
+	printf "\nGetting closest region of $analysisname\n"
 	if [[ ${ref} == "B73_v4" ]]; then
-		bedtools closest -a combined/peaks/tmp3_peaks_${analysisname}.bed -b $regionfile -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$8}' > combined/peaks/peaks_${analysisname}.bed
+		bedtools closest -a combined/peaks/tmp3_peaks_${analysisname}.bed -b $regionfile -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$12,".",$5,$9}' > combined/peaks/peaks_${analysisname}.bed
 	else
-		bedtools closest -a combined/peaks/tmp3_peaks_${analysisname}.bed -b $regionfile -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:=;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$8}' > combined/peaks/peaks_${analysisname}.bed
+		bedtools closest -a combined/peaks/tmp3_peaks_${analysisname}.bed -b $regionfile -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:=;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$12,".",$5,$9}' > combined/peaks/peaks_${analysisname}.bed
 	fi
 	rm -f combined/peaks/tmp*_peaks_${analysisname}.bed
 	#### To create a matrix of peak presence in each sample
-	printf "\nCreating matrix file for $samplename\n"
+	printf "\nCreating matrix file for $analysisname\n"
 	for sample in ${chip_sample_list[@]}
 	do
 		printf "$sample\n" > combined/peaks/temp_col_${analysisname}_${sample}.txt
@@ -190,7 +190,7 @@ if [ ${#chip_sample_list[@]} -ge 1 ]; then
 	paste combined/peaks/temp_col_${analysisname}_*.txt | uniq > combined/peaks/matrix_upset_${analysisname}.txt
 	rm -f combined/peaks/temp_col_${analysisname}_*.txt
 	#### To make an Upset plot highlighting peaks in gene bodies
-	printf "\nCreating Upset plot for $samplename with R version:\n"
+	printf "\nCreating Upset plot for $analysisname with R version:\n"
 	R --version
 	Rscript --vanilla ${mc_dir}/MaizeCode_R_Upset.r combined/peaks/matrix_upset_${analysisname}.txt ${analysisname}
 fi
