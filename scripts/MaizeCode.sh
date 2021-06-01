@@ -99,8 +99,6 @@ fi
 
 #### To prepare the lists of samples, reference genomes and type of data
 
-export uniq_samplefile=$(sort -u ${samplefile})
-
 newdatatype_list=()
 newref_list=()
 datat_ref_list=()
@@ -128,7 +126,7 @@ do
 		newref_list+=("$ref")
 		data_ref_list+=("${datatype}_${ref}")
 	fi
-done < ${uniq_samplefile}
+done < $samplefile
 
 #### To check if new environments need to be prepapred
 if [[ ${new_env} == 0 ]]; then
@@ -259,7 +257,7 @@ do
 		printf "${line}\t${tissue}\t${sample}\t${paired}\t${ref_dir}\n" >> $analysisfile
 		sample_list+=("$shortname")
 	fi
-done < ${uniq_samplefile}
+done < $samplefile
 
 if [[ ${new_sample} != 0 ]]; then
 #### Wait for the mapping sample scripts to finish
@@ -293,7 +291,7 @@ do
 		*RNA*|RAMPAGE) datatype="RNA";;
 	esac
 	awk -v a=$line -v b=$tissue -v c=$sample -v d=$rep -v e=$ref '$1==a && $2==b && $3==c && $4==d && $5==e' ${datatype}/reports/summary_mapping_stats.txt >> combined/reports/temp_mapping_stats_${samplename}.txt
-done < ${uniq_samplefile}
+done < $samplefile
 
 printf "Line\tTissue\tSample\tRep\tReference_genome\tTotal_reads\tPassing_filtering\tAll_mapped_reads\tUniquely_mapped_reads\n" > combined/reports/summary_mapping_stats_${samplename}.txt
 sort combined/reports/temp_mapping_stats_${samplename}.txt -u >> combined/reports/summary_mapping_stats_${samplename}.txt
