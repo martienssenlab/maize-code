@@ -20,14 +20,14 @@ usage="
 ##### 	-h: help, returns usage
 #####
 ##### The samplefile should be a tab-delimited text file with 8 columns:
-##### col #1: Type of data [RNAseq | RAMPAGE | ChIPseq | TF_*] (shRNA in development). All options are case-sensitive. For TF_*, the star should be replaced by the name of the TF, e.g. TF_TB1.
+##### col #1: Type of data [ RNAseq | RAMPAGE | ChIP | TF_*] (shRNA in development). All options are case-sensitive. For TF_*, the star should be replaced by the name of the TF, e.g. TF_TB1.
 ##### col #2: Line (e.g. B73)
 ##### col #3: Tissue (e.g endosperm) 
-##### col #4: Sample (e.g. 'H3K4me3' or 'Input' for ChIP, 'IP' or 'Input' for TF CHIPseq, (sh)RNA or RAMPAGE for RNA).
-##### col #5: Replicate ID [Rep1 | Rep2]
+##### col #4: Sample (e.g. 'H3K4me3' or 'Input' for ChIP, 'IP' or 'Input' for TF CHIPseq, shRNA, RNAseq or RAMPAGE for RNA (same as data type).
+##### col #5: Replicate ID [ Rep1 | Rep2 ]
 ##### col #6: SequencingID (e.g. S01). Unique identifier for the name of the sample in the raw sequencing folder which path is given in the next column. If downloading from SRA, put the SRR ID here.
 ##### col #7: Path to the fastq files (e.g. /seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846). If downloading from SRA, put 'SRA'.
-##### col #8: If data is paired-end or single-end [PE | SE]. 
+##### col #8: If data is paired-end or single-end [ PE | SE ]. 
 ##### col #9: Name of the genome reference to map (e.g. B73_v4). Each genome reference should have a unique folder that contains a single fasta file and a single gff3 file (can be gzipped).
 ##### The gff3 files should have 'gene' in column 3 and exons should be linked by 'Parent' in column 9
 ##### The fasta and gff3 files should have the same chromosome names (i.e. 1 2 3... and 1 2 3... or Chr1 Chr2 Chr3... and Chr1 Chr2 Chr3...)
