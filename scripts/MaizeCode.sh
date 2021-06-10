@@ -164,6 +164,7 @@ else
 						mkdir ./$folder/reports
 						mkdir ./$folder/logs
 						mkdir ./$folder/chkpts
+						mkdir ./$folder/plots
 					fi
 					printf "\nPreparing environment of ${ref} genome for ${env} data in ${folder} folder\n"
 					qsub -sync y -N env_${ref}_${env}_in_${folder} -o $folder/logs/env_${ref}.log ${mc_dir}/MaizeCode_check_environment.sh -p $pathtoref -r $ref -d $env &
