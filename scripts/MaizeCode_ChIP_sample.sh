@@ -11,8 +11,9 @@
 usage="
 ##### Script for Maize code ChIP data analysis, used by script MaizeCode.sh for ChIP samples
 #####
-##### sh MaizeCode_ChIP_sample.sh -d reference directory -l inbred line -t tissue -m histone mark -r replicate ID -i sample ID -f path to sample -p paired -s step
+##### sh MaizeCode_ChIP_sample.sh -d reference directory -x datatype -l inbred line -t tissue -m histone mark -r replicate ID -i sample ID -f path to sample -p paired -s step
 ##### 	-d: folder containing the reference directory (e.g. ~/data/Genomes/Zea_mays/B73_v4)
+##### 	-x: type of data (not used here yet mandatory, should be 'ChIP')
 ##### 	-l: inbred line (e.g. B73)
 ##### 	-t: tissue (e.g. endosperm)
 ##### 	-m: ChIP-seq mark (e.g. H3K4me1)
@@ -20,7 +21,7 @@ usage="
 #####	-i: sample ID (name in original folder or SRR number)
 #####	-f: path to original folder or SRA
 ##### 	-p: if data is paired-end (PE) or single-end (SE) [ PE | SE ]
-#####	-s: [ download | trim | done ] 'download' if sample needs to be copied/downloaded, 'trim' if only trimming has to be performed ('done' if trimming has already been performed)
+#####	-s: status of the raw data [ download | trim | done ] 'download' if sample needs to be copied/downloaded, 'trim' if only trimming has to be performed, 'done' if trimming has already been performed
 ##### 	-h: help, returns usage
 #####
 ##### It downloads or copies the files, runs fastQC, trims adapters with cutadapt, aligns with bowtie2,
@@ -42,11 +43,12 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts "d:l:t:m:r:i:f:p:s:h" opt; do
+while getopts "d:x:l:t:m:r:i:f:p:s:h" opt; do
 	case $opt in
 		h) 	printf "$usage\n"
 			exit 0;;
 		d) 	export ref_dir=${OPTARG};;
+		x)	export data=${OPTARG};;
 		l)	export line=${OPTARG};;
 		t)	export tissue=${OPTARG};;
 		m)	export mark=${OPTARG};;
@@ -61,7 +63,7 @@ while getopts "d:l:t:m:r:i:f:p:s:h" opt; do
 done
 shift $((OPTIND - 1))
 
-if [ ! $ref_dir ] || [ ! $line ] || [ ! $tissue ] || [ ! $mark ] || [ ! $rep ] || [ ! $sampleID ] || [ ! $path ] || [ ! $paired ] || [ ! $step ]; then
+if [ ! $ref_dir ] || [ ! $data ] || [ ! $line ] || [ ! $tissue ] || [ ! $mark ] || [ ! $rep ] || [ ! $sampleID ] || [ ! $path ] || [ ! $paired ] || [ ! $step ]; then
 	printf "Missing arguments!\n"
 	printf "$usage\n"
 	exit 1
