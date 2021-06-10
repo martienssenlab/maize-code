@@ -12,11 +12,11 @@ usage="
 ##### Script for Maize code RNA data analysis, used by script MaizeCode.sh with RNA argument
 #####
 ##### sh MaizeCode_RNA_sample.sh -x data -d reference directory -l inbred line -t tissue -m RNA -r replicate ID -i sample ID -f path to sample -p paired -s step
-##### 	-x: type of data (not used here yet mandatory, should be 'RNA')
+##### 	-x: type of data [ RNAseq | RAMPAGE ]
 ##### 	-d: folder containing the reference directory (e.g. ~/data/Genomes/Zea_mays/B73_v4)
 ##### 	-l: sample line (e.g. B73)
 ##### 	-t: tissue (e.g. endosperm)
-##### 	-m: type of RNA sample [RNA | sRNA | RAMPAGE]
+##### 	-m: type of RNA sample [ RNAseq | RAMPAGE ]
 ##### 	-r: replicate ID (e.g. Rep1)
 #####	-i: sample ID (name in original folder or SRR number)
 #####	-f: path to original folder or SRA
