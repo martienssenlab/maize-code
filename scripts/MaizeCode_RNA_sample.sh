@@ -11,7 +11,8 @@
 usage="
 ##### Script for Maize code RNA data analysis, used by script MaizeCode.sh with RNA argument
 #####
-##### sh MaizeCode_RNA_sample.sh -d reference directory -l inbred line -t tissue -m RNA -r replicate ID -i sample ID -f path to sample -p paired -s step
+##### sh MaizeCode_RNA_sample.sh -x data -d reference directory -l inbred line -t tissue -m RNA -r replicate ID -i sample ID -f path to sample -p paired -s step
+##### 	-x: type of data (not used here yet mandatory, should be 'RNA')
 ##### 	-d: folder containing the reference directory (e.g. ~/data/Genomes/Zea_mays/B73_v4)
 ##### 	-l: sample line (e.g. B73)
 ##### 	-t: tissue (e.g. endosperm)
@@ -20,7 +21,7 @@ usage="
 #####	-i: sample ID (name in original folder or SRR number)
 #####	-f: path to original folder or SRA
 ##### 	-p: if data is paired-end (PE) or single-end (SE)
-#####	-s: [ download | trim | done ] 'download' if sample needs to be copied/downloaded, 'trim' if only trimming has to be performed ('done' if trimming has already been performed)
+#####	-s: status of the raw data [ download | trim | done ] 'download' if sample needs to be copied/downloaded, 'trim' if only trimming has to be performed, 'done' if trimming has already been performed
 ##### 	-h: help, returns usage
 #####
 ##### It downloads or copies the files, runs fastQC, trims adapters with cutadapt, aligns with STAR (different parameters based on type of RNA),
@@ -42,10 +43,11 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts "d:l:t:m:r:i:f:p:s:h" opt; do
+while getopts "x:d:l:t:m:r:i:f:p:s:h" opt; do
 	case $opt in
 		h) 	printf "$usage\n"
 			exit 0;;
+		x)	export data=${OPTARG};;
 		d) 	export ref_dir=${OPTARG};;
 		l)	export line=${OPTARG};;
 		t)	export tissue=${OPTARG};;
@@ -61,7 +63,7 @@ while getopts "d:l:t:m:r:i:f:p:s:h" opt; do
 done
 shift $((OPTIND - 1))
 
-if [ ! $ref_dir ] || [ ! $line ] || [ ! $tissue ] || [ ! $rnatype ] || [ ! $rep ] || [ ! $sampleID ] || [ ! $path ] || [ ! $paired ] || [ ! $step ]; then
+if [ ! $data ] || [ ! $ref_dir ] || [ ! $line ] || [ ! $tissue ] || [ ! $rnatype ] || [ ! $rep ] || [ ! $sampleID ] || [ ! $path ] || [ ! $paired ] || [ ! $step ]; then
 	printf "Missing arguments!\n"
 	printf "$usage\n"
 	exit 1
@@ -83,7 +85,7 @@ case "$rnatype" in
 	RAMPAGE) 	param_map="--outFilterMultimapNmax 500"
 				param_dedup="--bamRemoveDuplicatesMate2basesN 15"
 				param_bg="--outWigType bedGraph read1_5p"
-				strandedness="reverse";;				
+				strandedness="forward";;				
 esac
 	
 if [[ $paired == "PE" ]]; then
