@@ -102,6 +102,7 @@ fi
 
 newdatatype_list=()
 newref_list=()
+folders_list=()
 datat_ref_list=()
 new_env=0
 new_sample=0
@@ -109,11 +110,16 @@ while read data line tissue sample rep sampleID path paired ref
 do
 	name=${line}_${tissue}_${sample}_${rep}
 	case "$data" in
-		ChIP) env="ChIP";;
-		RNAseq) env="RNA";;
-		RAMPAGE) env="RNA";;
-		shRNA) env="shRNA";;
-		TF_*) env="ChIP";;
+		ChIP) 	env="ChIP"
+			folder="ChIP";;
+		RNAseq) env="RNA"
+			folder="RNA";;
+		RAMPAGE) env="RNA"
+			folder="RNA";;
+		shRNA) env="shRNA"
+			folder="shRNA";;
+		TF_*) env="ChIP"
+			folder="TFs";;
 		*) env="unknown";;
 	esac
 	if [[ "$env" == "unknown" ]]; then
@@ -121,14 +127,15 @@ do
 		printf "$usage\n"
 		exit 1
 	fi
-	if [ ! -e $env/chkpts/${name}_${ref} ]; then
+	if [ ! -e ${folder}/chkpts/${name}_${ref} ]; then
 		new_sample=1
 	fi
-	if [ ! -e $env/chkpts/env_${ref} ]; then
+	if [ ! -e ${folder}/chkpts/env_${ref} ]; then
 		new_env=1
 		newdatatype_list+=("$env")
 		newref_list+=("$ref")
-		data_ref_list+=("${env}_${ref}")
+		folders_list+=("${folder}")
+		data_ref_list+=("${folder}_${env}_${ref}")
 	fi
 done < $samplefile
 
@@ -138,6 +145,7 @@ if [[ ${new_env} == 0 ]]; then
 else
 	uniq_newref_list=($(printf "%s\n" "${newref_list[@]}" | sort -u))
 	uniq_newdatatype_list=($(printf "%s\n" "${newdatatype_list[@]}" | sort -u))
+	uniq_folders_list=($(printf "%s\n" "${folders_list[@]}" | sort -u))
 
 	check_list=()
 	pids=()
@@ -145,32 +153,34 @@ else
 	do
 		for env in ${uniq_newdatatype_list[@]}
 		do
-			if [[ " ${data_ref_list[@]} " =~ " ${env}_${ref} " ]]; then
-				check_list+=("$env/chkpts/env_${ref}")
-				if [ ! -d ./$env ]; then
-					mkdir ./$env
-					mkdir ./$env/fastq
-					mkdir ./$env/mapped
-					mkdir ./$env/tracks
-					mkdir ./$env/reports
-					mkdir ./$env/logs
-					mkdir ./$env/chkpts
-				fi
-				printf "\nPreparing environment of ${ref} genome for ${env} data\n"
-				qsub -sync y -N env_${ref}_${env} -o $env/logs/env_${ref}.log ${mc_dir}/MaizeCode_check_environment.sh -p $pathtoref -r $ref -d $env &
-				pids+=("$!")
-			elif [[ ! " ${data_ref_list[@]} " =~ " ${env}_${ref} " ]]; then
-			### Combination datatype * ref does not exist in the sample file, moving on
-				:
-			elif [ ! -d $pathtoref/$ref ]; then
-				printf "\nNo $ref folder found in $pathtoref\n"
-				printf "$usage\n"
-				exit 1
-			else
-				printf "\nError!\n"
-				printf "$usage\n"
-				exit 1
-			fi	
+			for folder in ${uniq_folders_list[@]}
+				if [[ " ${data_ref_list[@]} " =~ " ${folder}_${env}_${ref} " ]]; then
+					check_list+=("$folder/chkpts/env_${ref}")
+					if [ ! -d ./$folder ]; then
+						mkdir ./$folder
+						mkdir ./$folder/fastq
+						mkdir ./$folder/mapped
+						mkdir ./$folder/tracks
+						mkdir ./$folder/reports
+						mkdir ./$folder/logs
+						mkdir ./$folder/chkpts
+					fi
+					printf "\nPreparing environment of ${ref} genome for ${env} data in ${folder} folder\n"
+					qsub -sync y -N env_${ref}_${env}_in_${folder} -o $folder/logs/env_${ref}.log ${mc_dir}/MaizeCode_check_environment.sh -p $pathtoref -r $ref -d $env &
+					pids+=("$!")
+				elif [[ ! " ${data_ref_list[@]} " =~ " ${folder}_${env}_${ref} " ]]; then
+				### Combination folder * datatype * ref does not exist in the sample file, moving on
+					:
+				elif [ ! -d $pathtoref/$ref ]; then
+					printf "\nNo $ref folder found in $pathtoref\n"
+					printf "$usage\n"
+					exit 1
+				else
+					printf "\nError!\n"
+					printf "$usage\n"
+					exit 1
+				fi	
+			done
 		done
 	done
 	#### Wait for the check_environment scripts to finish
@@ -179,13 +189,13 @@ else
 	#### Check if the environment are good or if an error occurred
 	for check in ${check_list[@]}
 	do
-		env=${check%%/*}
+		folder=${check%%/*}
 		ref=${check##*/env_}
 		if [ ! -e $check ]; then
-			printf "\nProblem while making environment for $env with $ref genome!\nCheck log: $env/logs/env_${ref}.log\n"
+			printf "\nProblem while making environment with $ref genome in $folder folder!\nCheck log: $folder/logs/env_${ref}.log\n"
 			exit 1
 		else
-			printf "\nEnvironment for $env with $ref genome now good to go\n"
+			printf "\nEnvironment for $env with $ref genome in ${folder} folder now good to go\n"
 			if [ -e ${pathtoref}/${ref}/temp_${ref}.fa ]; then
 				rm -f ${pathtoref}/${ref}/temp_${ref}.fa
 			fi
