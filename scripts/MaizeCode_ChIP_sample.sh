@@ -9,7 +9,7 @@
 #$ -N ChIPsample
 
 usage="
-##### Script for Maize code ChIP data analysis, used by script MaizeCode.sh for ChIP samples
+##### Script for Maize code Histone ChIP data analysis, used by script MaizeCode.sh for ChIP samples
 #####
 ##### sh MaizeCode_ChIP_sample.sh -x datatype -d reference directory -l inbred line -t tissue -m histone mark -r replicate ID -i sample ID -f path to sample -p paired -s step
 ##### 	-x: type of data (not used here yet mandatory, should be 'ChIP')
