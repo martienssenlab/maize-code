@@ -12,8 +12,8 @@ usage="
 ##### Script for Maize code data analysis
 #####
 ##### sh MaiCode_analysis.sh -f samplefile [-r regionfile] [-s] [-t]
-#####	-f: samplefile containing the samples to compare and in 5 tab-delimited columns:
-##### 		Line, Tissue, Sample, PE or SE, Reference genome directory
+#####	-f: samplefile containing the samples to compare and in 6 tab-delimited columns:
+##### 		Data, Line, Tissue, Sample, PE or SE, Reference genome directory
 ##### 	-r: textfile containing the name of region files that are to be plotted over (bed files)
 ##### 		It is safest to use a full paths.
 #####		If no region file is given, the analysis will behave as if -s was set.
