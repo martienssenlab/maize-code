@@ -238,35 +238,35 @@ while read data line tissue sample rep sampleID path paired ref
 do
 	ref_dir=$pathtoref/$ref
 	case "$data" in
-		ChIP) 	env="ChIP"
+		ChIP) 	folder="ChIP"
 			script="ChIP"
 			shortname=${line}_${tissue}_${sample}
 			name=${line}_${tissue}_${sample}_${rep};;
-		RNAseq) env="RNA"
+		RNAseq) folder="RNA"
 			script="RNA"
 			shortname=${line}_${tissue}_${sample}
 			name=${line}_${tissue}_${sample}_${rep};;
-		RAMPAGE) 	env="RNA"
+		RAMPAGE) 	folder="RNA"
 				script="RNA"
 				shortname=${line}_${tissue}_${sample}
 				name=${line}_${tissue}_${sample}_${rep};;
-		shRNA) 	env="shRNA"
+		shRNA) 	folder="shRNA"
 			script="shRNA"
 			shortname=${line}_${tissue}_${sample}
 			name=${line}_${tissue}_${sample}_${rep};;
-		TF_*) 	env="ChIP"
+		TF_*) 	folder="TFs"
 			script="TF"
 			tmp=${data##TF_}
 			shortname=${line}_${tmp}_${sample}
 			name=${line}_${tmp}_${sample}_${rep};;
 	esac
-	check=$env/chkpts/${name}_${ref}
+	check=$folder/chkpts/${name}_${ref}
 	ref_list+=("$ref")
 	if [ -e $check ]; then
 		printf "Sample $name has already been mapped to $ref genome\n"
 	else
 		checkname_list+=("$name")
-		checkdatatype_list+=("$env")
+		checkdatatype_list+=("$folder")
 		check_list+=("$check")
 		if ls ./$env/fastq/trimmed_${name}*.fastq.gz 1> /dev/null 2>&1; then
 			printf "\nTrimmed fastq file(s) for ${name} already exist\n"
@@ -318,18 +318,18 @@ fi
 while read data line tissue sample rep sampleID path paired ref
 do
 	case "$data" in
-		ChIP) env="ChIP"
+		ChIP) folder="ChIP"
 			name="${tissue}";;
-		RNAseq) env="RNA"
+		RNAseq) folder="RNA"
 			name="${tissue}";;
-		RAMPAGE) env="RNA"
+		RAMPAGE) folder="RNA"
 			name="${tissue}";;
-		shRNA) env="shRNA"
+		shRNA) folder="shRNA"
 			name="${tissue}";;
-		TF_*) env="ChIP"
+		TF_*) folder="TFs"
 			name=${data##TF_};;
 	esac
-	awk -v a=$line -v b=$name -v c=$sample -v d=$rep -v e=$ref '$1==a && $2==b && $3==c && $4==d && $5==e' ${env}/reports/summary_mapping_stats.txt >> combined/reports/temp_mapping_stats_${samplename}.txt
+	awk -v a=$line -v b=$name -v c=$sample -v d=$rep -v e=$ref '$1==a && $2==b && $3==c && $4==d && $5==e' ${folder}/reports/summary_mapping_stats.txt >> combined/reports/temp_mapping_stats_${samplename}.txt
 done < $samplefile
 
 printf "Line\tTissue\tSample\tRep\tReference_genome\tTotal_reads\tPassing_filtering\tAll_mapped_reads\tUniquely_mapped_reads\n" > combined/reports/summary_mapping_stats_${samplename}.txt
@@ -366,6 +366,10 @@ do
 		printf "ChIP/tracks/${ref}_all_genes.bed\n" >> all_genes.txt
 	elif [ -s RNA/tracks/${ref}_all_genes.bed ]; then
 		printf "RNA/tracks/${ref}_all_genes.bed\n" >> all_genes.txt
+	elif [ -s TFs/tracks/${ref}_all_genes.bed ]; then
+		printf "TFs/tracks/${ref}_all_genes.bed\n" >> all_genes.txt
+	elif [ -s shRNA/tracks/${ref}_all_genes.bed ]; then
+		printf "shRNA/tracks/${ref}_all_genes.bed\n" >> all_genes.txt
 	else
 		printf "Problem: no region file found for ${ref}!\n"
 		exit 1
