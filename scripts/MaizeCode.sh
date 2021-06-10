@@ -224,7 +224,7 @@ checkdatatype_list=()
 ref_list=()
 sample_list=()
 pids=()
-while read line data tissue sample rep sampleID path paired ref
+while read data line tissue sample rep sampleID path paired ref
 do
 	ref_dir=$pathtoref/$ref
 	case "$data" in
@@ -236,15 +236,15 @@ do
 			script="RNA"
 			shortname=${line}_${tissue}_${sample}
 			name=${line}_${tissue}_${sample}_${rep};;
-		RAMPAGE) env="RNA"
-			script="RNA"
-			shortname=${line}_${tissue}_${sample}
-			name=${line}_${tissue}_${sample}_${rep};;
-		shRNA) env="shRNA"
+		RAMPAGE) 	env="RNA"
+				script="RNA"
+				shortname=${line}_${tissue}_${sample}
+				name=${line}_${tissue}_${sample}_${rep};;
+		shRNA) 	env="shRNA"
 			script="shRNA"
 			shortname=${line}_${tissue}_${sample}
 			name=${line}_${tissue}_${sample}_${rep};;
-		TF_*) env="ChIP"
+		TF_*) 	env="ChIP"
 			script="TF"
 			tmp=${data##TF_}
 			shortname=${line}_${tmp}_${sample}
@@ -270,7 +270,7 @@ do
 		fi
 		printf "\nRunning $script mapping script for $name on $ref genome\n"
 		cd $env
-		qsub -sync y -N ${name} -o logs/${name}.log ${mc_dir}/MaizeCode_${script}_sample.sh -d $ref_dir -x $data -l $line -t $tissue -m $sample -r $rep -i $sampleID -f $path -p $paired -s $step &
+		qsub -sync y -N ${name} -o logs/${name}.log ${mc_dir}/MaizeCode_${script}_sample.sh -x $data -d $ref_dir -l $line -t $tissue -m $sample -r $rep -i $sampleID -f $path -p $paired -s $step &
 		pids+=("$!")
 		cd ..
 	fi
