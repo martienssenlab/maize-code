@@ -14,7 +14,7 @@ usage="
 ##### sh MaizeCode_check_environment.sh -p path to genome reference -r ref -d datatype
 ##### 	-p: path to the folder containing all the different genome references (e.g. ~/data/Genomes/Zea_mays)
 ##### 	-r: genome reference to use (e.g. B73_v4) 
-#####	-d: type of data [ChIP | RNA]
+#####	-d: type of data [ChIP | RNA] (shRNA in development)
 ##### 	-h: help, returns usage
 #####
 ##### The reference genome folder should contain a single fasta file (.fa or .fasta), a single GFF file (.gff [or .gff*]) and a single GTF file (can be gzipped)
@@ -54,7 +54,7 @@ while getopts "p:r:d:h" opt; do
 done
 shift $((OPTIND - 1))
 
-if [ ! $ref ] || [ ! $pathtoref ]; then
+if [ ! $ref ] || [ ! $pathtoref ] || [ ! $datatype ]; then
 	printf "Missing arguments!\n"
 	printf "$usage\n"
 	exit 1
@@ -156,6 +156,8 @@ elif [[ $datatype == "RNA" ]]; then
 		mkdir ${gen_dir}
 		STAR --runThreadN $threads --runMode genomeGenerate --genomeDir ${gen_dir} --genomeFastaFiles $fasta --sjdbGTFfile $gtf
 	fi
+elif [[ $datatype == "shRNA" ]]; then
+	printf "\nshRNA pipeline selected but not yet ready\n"
 else
 	printf "\nType of data unknown!\n"
 	exit 1
