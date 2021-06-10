@@ -119,7 +119,7 @@ do
 		shRNA) env="shRNA"
 			folder="shRNA";;
 		TF_*) env="ChIP"
-			folder="TFs";;
+			folder="TF";;
 		*) env="unknown";;
 	esac
 	if [[ "$env" == "unknown" ]]; then
@@ -239,28 +239,23 @@ do
 	ref_dir=$pathtoref/$ref
 	case "$data" in
 		ChIP) 	folder="ChIP"
-			script="ChIP"
 			shortname=${line}_${tissue}_${sample}
 			name=${line}_${tissue}_${sample}_${rep};;
 		RNAseq) folder="RNA"
-			script="RNA"
 			shortname=${line}_${tissue}_${sample}
 			name=${line}_${tissue}_${sample}_${rep};;
 		RAMPAGE) 	folder="RNA"
-				script="RNA"
 				shortname=${line}_${tissue}_${sample}
 				name=${line}_${tissue}_${sample}_${rep};;
 		shRNA) 	folder="shRNA"
-			script="shRNA"
 			shortname=${line}_${tissue}_${sample}
 			name=${line}_${tissue}_${sample}_${rep};;
-		TF_*) 	folder="TFs"
-			script="TF"
+		TF_*) 	folder="TF"
 			tmp=${data##TF_}
 			shortname=${line}_${tmp}_${sample}
 			name=${line}_${tmp}_${sample}_${rep};;
 	esac
-	check=$folder/chkpts/${name}_${ref}
+	check=${folder}/chkpts/${name}_${ref}
 	ref_list+=("$ref")
 	if [ -e $check ]; then
 		printf "Sample $name has already been mapped to $ref genome\n"
@@ -268,19 +263,19 @@ do
 		checkname_list+=("$name")
 		checkdatatype_list+=("$folder")
 		check_list+=("$check")
-		if ls ./$env/fastq/trimmed_${name}*.fastq.gz 1> /dev/null 2>&1; then
+		if ls ./${folder}/fastq/trimmed_${name}*.fastq.gz 1> /dev/null 2>&1; then
 			printf "\nTrimmed fastq file(s) for ${name} already exist\n"
 			export step="done"
-		elif ls ./$env/fastq/${name}*.fastq.gz 1> /dev/null 2>&1; then
+		elif ls ./${folder}/fastq/${name}*.fastq.gz 1> /dev/null 2>&1; then
 			printf "\nFastq file(s) for ${name} already exist\n"
 			export step="trim"
 		else
 			printf "\nNew sample ${name} to be copied/downloaded\n"
 			export step="download"
 		fi
-		printf "\nRunning $script mapping script for $name on $ref genome\n"
+		printf "\nRunning ${folder} mapping script for $name on $ref genome\n"
 		cd $env
-		qsub -sync y -N ${name} -o logs/${name}.log ${mc_dir}/MaizeCode_${script}_sample.sh -x $data -d $ref_dir -l $line -t $tissue -m $sample -r $rep -i $sampleID -f $path -p $paired -s $step &
+		qsub -sync y -N ${name} -o logs/${name}.log ${mc_dir}/MaizeCode_${folder}_sample.sh -x $data -d $ref_dir -l $line -t $tissue -m $sample -r $rep -i $sampleID -f $path -p $paired -s $step &
 		pids+=("$!")
 		cd ..
 	fi
@@ -326,7 +321,7 @@ do
 			name="${tissue}";;
 		shRNA) folder="shRNA"
 			name="${tissue}";;
-		TF_*) folder="TFs"
+		TF_*) folder="TF"
 			name=${data##TF_};;
 	esac
 	awk -v a=$line -v b=$name -v c=$sample -v d=$rep -v e=$ref '$1==a && $2==b && $3==c && $4==d && $5==e' ${folder}/reports/summary_mapping_stats.txt >> combined/reports/temp_mapping_stats_${samplename}.txt
@@ -366,8 +361,8 @@ do
 		printf "ChIP/tracks/${ref}_all_genes.bed\n" >> all_genes.txt
 	elif [ -s RNA/tracks/${ref}_all_genes.bed ]; then
 		printf "RNA/tracks/${ref}_all_genes.bed\n" >> all_genes.txt
-	elif [ -s TFs/tracks/${ref}_all_genes.bed ]; then
-		printf "TFs/tracks/${ref}_all_genes.bed\n" >> all_genes.txt
+	elif [ -s TF/tracks/${ref}_all_genes.bed ]; then
+		printf "TF/tracks/${ref}_all_genes.bed\n" >> all_genes.txt
 	elif [ -s shRNA/tracks/${ref}_all_genes.bed ]; then
 		printf "shRNA/tracks/${ref}_all_genes.bed\n" >> all_genes.txt
 	else
