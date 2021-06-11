@@ -14,7 +14,7 @@ usage="
 ##### sh MaizeCode_check_environment.sh -p path to genome reference -r ref -d datatype
 ##### 	-p: path to the folder containing all the different genome references (e.g. ~/data/Genomes/Zea_mays)
 ##### 	-r: genome reference to use (e.g. B73_v4) 
-#####	-d: type of data [ChIP | RNA] (shRNA in development)
+#####	-d: type of data [ ChIP | RNA | TF ] (shRNA in development)
 ##### 	-h: help, returns usage
 #####
 ##### The reference genome folder should contain a single fasta file (.fa or .fasta), a single GFF file (.gff [or .gff*]) and a single GTF file (can be gzipped)
@@ -155,6 +155,16 @@ elif [[ $datatype == "RNA" ]]; then
 		printf "\nBuilding STAR index directory for $ref\n"
 		mkdir ${gen_dir}
 		STAR --runThreadN $threads --runMode genomeGenerate --genomeDir ${gen_dir} --genomeFastaFiles $fasta --sjdbGTFfile $gtf
+	fi
+elif [[ $datatype == "TF" ]]; then
+	if [ ! -s $datatype/reports/summary_mapping_stats.txt ]; then
+		printf "Line\tTissue\tSample\tRep\tReference_genome\tTotal_reads\tPassing_filtering\tAll_mapped_reads\tUniquely_mapped_reads\n" > $datatype/reports/summary_mapping_stats.txt
+	fi
+	if ls ${ref_dir}/*.bt2* 1> /dev/null 2>&1; then
+		printf "\nBowtie2 index already exists for $ref in ${ref_dir}\n"
+	else
+		printf "\nBuilding Bowtie2 index for $ref\n"
+		bowtie2-build --threads $threads $fasta ${ref_dir}/$ref
 	fi
 elif [[ $datatype == "shRNA" ]]; then
 	printf "\nshRNA pipeline selected but not yet ready\n"
