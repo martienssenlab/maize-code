@@ -297,7 +297,7 @@ if [ -s combined/temp_reports_${samplename}_RNA.txt ]; then
 ##	rm -f combined/reports/temp_${samplename}.txt
 fi
 
-#### To get the peaks stats for all ChIPseq samples in the samplefile
+#### To get the peaks stats for all TF samples in the samplefile
 
 if [ -s combined/temp_reports_${samplename}_TF.txt ]; then
 	printf "\nSummarizing peak stats for TFs in ${samplename}\n"
