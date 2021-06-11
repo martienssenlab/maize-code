@@ -119,6 +119,6 @@ plot<-upset(inputable, sampleCols, name="Peaks",
       stripes = alpha("white", 0)
 )
 
-pdf(paste0("combined/plots/Upset_",samplename,".pdf"),10,8)
+pdf(paste0("combined/plots/Upset_Histone_ChIP_",samplename,".pdf"),10,8)
 print(plot)
 dev.off()
