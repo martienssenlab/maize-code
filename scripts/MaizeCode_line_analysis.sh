@@ -459,7 +459,84 @@ fi
 ################################# TF vs DEG peaks - Bar plot  ###############################
 #############################################################################################
 
+if [ ${#tf_sample_list[@]} -ge 1 ]; then
+	i=0
+	for sample in ${tf_sample_list[*]}
+	do
+		tissuei=${tf_tissue_list[$i]}
+		if [ -s combined/DEG/only_${line}_${tissuei}_DEG_DOWN_${analysisname}.bed ]; then
+		
+		
+		if [[ $i -lt $num ]]; then
+			printf "${sample}," >> combined/peaks/temp_TF_names.txt
+		else
+			printf "${sample}" >> combined/peaks/temp_TF_names.txt
+		fi
+		i=$((i+1))
+	done
+	tf_names="$(cat combined/peaks/temp_TF_names.txt)"
+	rm -f combined/peaks/temp_TF_names.txt
+	# #### To make an Upset plot
+	printf "\nCreating a bar plot\n"
+	Rscript --vanilla MaizeCode_R_DEG_TF.r combined/peaks/summary_DEG_TFs.txt ${tf_names}
 
+fi
+
+# ### To check relationship with DEG genes
+printf "\nCreating peak GID file\n"
+rm -f peaks/matrix_GID_TFs.txt
+awk -v OFS="\t" '{if (($3=="Gene_body" || $3=="Promoter" || $3=="Terminator") && $5==0 && $6==1 && $7==1 && $8==0) print $4,"TB1"}' peaks/matrix_upset_TFs.txt | sort -u >> peaks/matrix_GID_TFs.txt
+awk -v OFS="\t" '{if (($3=="Gene_body" || $3=="Promoter" || $3=="Terminator") && $5==0 && $6==1 && $7==0 && $8==1) print $4,"TU1A"}' peaks/matrix_upset_TFs.txt | sort -u >> peaks/matrix_GID_TFs.txt
+awk -v OFS="\t" '{if (($3=="Gene_body" || $3=="Promoter" || $3=="Terminator") && $5==0 && $6==1 && $7==1 && $8==1) print $4,"TB1_TU1A"}' peaks/matrix_upset_TFs.txt | sort -u >> peaks/matrix_GID_TFs.txt
+awk -v OFS="\t" '{if (($3=="Gene_body" || $3=="Promoter" || $3=="Terminator") && $5==1 && $6==1 && $7==0 && $8==0) print $4,"GT1"}' peaks/matrix_upset_TFs.txt | sort -u >> peaks/matrix_GID_TFs.txt
+awk -v OFS="\t" '{if (($3=="Gene_body" || $3=="Promoter" || $3=="Terminator") && $5==1 && $6==1 && $7==1 && $8==1) print $4,"GT1_TB1_TU1A"}' peaks/matrix_upset_TFs.txt | sort -u >> peaks/matrix_GID_TFs.txt
+awk -v OFS="\t" '{if (($3=="Gene_body" || $3=="Promoter" || $3=="Terminator") && $5==1 && $6==1 && $7==1 && $8==0) print $4,"GT1_TB1"}' peaks/matrix_upset_TFs.txt | sort -u >> peaks/matrix_GID_TFs.txt
+awk -v OFS="\t" '{if (($3=="Gene_body" || $3=="Promoter" || $3=="Terminator") && $5==1 && $6==1 && $7==0 && $8==1) print $4,"GT1_TU1A"}' peaks/matrix_upset_TFs.txt | sort -u >> peaks/matrix_GID_TFs.txt
+
+n=$(awk '$2=="TB1"' peaks/matrix_GID_TFs.txt | wc -l | awk '{print $1}')
+awk -v OFS="\t" 'NR>1 {print $1,"Random"}' ../maize-code/combined/DEG/counts_B73_on_B73_v4_all_genes.txt | shuf -n $n >> peaks/matrix_GID_TFs.txt
+
+cat ../maize-code/combined/DEG/DEG_B73_on_B73_v4_all_genes_B73_ears_vs_B73_*.txt | awk '{print $4,$11}' | sort -u > DEG/all_ears_DEG.txt
+
+rm -f peaks/DEG_TFs.txt
+while read GID TF
+do
+	if grep -q $GID ../maize-code/combined/DEG/only_B73_ears_DEG_DOWN_B73_on_B73_v4_all_genes.bed
+	then
+		awk -v OFS="\t" -v g=$GID -v t=$TF 'BEGIN {print g,t,"DOWN"}' >> peaks/DEG_TFs.txt
+	elif grep -q $GID ../maize-code/combined/DEG/only_B73_ears_DEG_UP_B73_on_B73_v4_all_genes.bed
+	then
+		awk -v OFS="\t" -v g=$GID -v t=$TF 'BEGIN {print g,t,"UP"}' >> peaks/DEG_TFs.txt
+	elif grep -q $GID DEG/all_ears_DEG.txt
+	then
+		n=$(grep $GID DEG/all_ears_DEG.txt | wc -l | awk '{print $1}')
+		if [[ $n -eq 1 ]]; then
+			grep $GID DEG/all_ears_DEG.txt | awk -v OFS="\t" -v g=$GID -v t=$TF '{print g,t,"Pairwise_"$2}' >> peaks/DEG_TFs.txt
+		else
+			awk -v OFS="\t" -v g=$GID -v t=$TF 'BEGIN {print g,t,"Pairwise_Mix"}' >> peaks/DEG_TFs.txt
+		fi
+	else
+		awk -v OFS="\t" -v g=$GID -v t=$TF 'BEGIN {print g,t,"ns"}' >> peaks/DEG_TFs.txt
+	fi
+done < peaks/matrix_GID_TFs.txt
+
+awk -v OFS="\t" '{print $2,$3}' peaks/DEG_TFs.txt | sort | uniq -c | awk -v OFS="\t" 'BEGIN {print "Group","DEG","Number"} {print $2,$3,$1}' > peaks/summary_DEG_TFs.txt
+num=${#tf_sample_list[@]}
+i=0
+for sample in ${tf_sample_list[*]}
+do
+	if [[ $i -lt $num ]]; then
+		printf "${sample}," >> combined/peaks/temp_TF_names.txt
+	else
+		printf "${sample}" >> combined/peaks/temp_TF_names.txt
+	fi
+	i=$((i+1))
+done
+tf_names="$(cat combined/peaks/temp_TF_names.txt)"
+
+# #### To make an Upset plot
+printf "\nCreating a bar plot\n"
+Rscript --vanilla MaizeCode_R_DEG_TF.r combined/peaks/summary_DEG_TFs.txt ${tf_names}
 
 ############################################################################################
 ########################################## PART6 ###########################################
