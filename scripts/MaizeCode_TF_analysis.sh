@@ -71,7 +71,7 @@ do
 	export chip
 	export ref_dir
 	export ref=${ref_dir##*/}
-	export name=${line}_${TF}_${chip}
+	export name=${line}_${TF}
 	export input=${line}_${TF}_Input
 	export paired
 	if [ -s mapped/${input}_merged.bam ]; then
@@ -119,7 +119,7 @@ do
 			export filetype
 			if [[ "$inputrep" == "two" ]]; then
 				case "$filetype" in
-					Rep1|Rep2) 	export namefiletype=mapped/${name}_${filetype}.bam
+					Rep1|Rep2) 	export namefiletype=mapped/${name}_IP_${filetype}.bam
 							export inputfiletype=mapped/${input}_${filetype}.bam
 							export param=""
 							export clean="No";;
@@ -134,11 +134,11 @@ do
 				esac
 			elif [[ "$inputrep" == "one" ]]; then
 				case "$filetype" in
-					Rep1) 	export namefiletype=mapped/${name}_${filetype}.bam
+					Rep1) 	export namefiletype=mapped/${name}_IP_${filetype}.bam
 						export inputfiletype=mapped/${input}_${filetype}.bam
 						export param=""
 						export clean="No";;
-					Rep2)	export namefiletype=mapped/${name}_${filetype}.bam
+					Rep2)	export namefiletype=mapped/${name}_IP_${filetype}.bam
 						export inputfiletype=mapped/${input}_Rep1.bam
 						export param=""
 						export clean="No";;
