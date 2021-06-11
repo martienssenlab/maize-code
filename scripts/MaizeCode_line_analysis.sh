@@ -85,10 +85,14 @@ printf "\nStarting analysis: $analysisname\n"
 #### To append the lists (used for labels and other stuff)
 
 ref_dir_list=()
+line_list=()
 chip_sample_list=()
 chip_tissue_list=()
 chip_mark_list=()
 chip_bw_list=()
+tf_sample_list=()
+tf_tissue_list=()
+tf_bw_list=()
 rna_type_list=()
 rnaseq_sample_list=()
 rnaseq_tissue_list=()
@@ -99,18 +103,29 @@ shrna_sample_list=()
 shrna_tissue_list=()
 rnaseq_bw_list_plus=()
 rnaseq_bw_list_minus=()
-while read line tissue sample paired ref_dir
+while read data line tissue sample paired ref_dir
 do
-	name=${line}_${tissue}_${sample}
-	case "$sample" in
-		H*|Input) export datatype="ChIP";;
-		*RNA*|RAMPAGE) export datatype="RNA";;
-		*) export datatype="unknown";;
+	case "$data" in
+		ChIP) 	datatype="ChIP"
+			name=${line}_${tissue}_${sample};;
+		RNAseq) datatype="RNA"
+			name=${line}_${tissue}_${sample};;
+		RAMPAGE) datatype="RNA"
+			name=${line}_${tissue}_${sample};;
+		shRNA) datatype="shRNA"
+			name=${line}_${tissue}_${sample};;
+		TF_*) datatype="TF"
+			tmpname=${data##TF_}
+			name=${line}_${tmpname};;
 	esac
+
 	ref=${ref_dir##*/}
 	if [[ ! "${ref_list[@]}" =~ "${ref}" ]]; then
 		ref_list+=("$ref")
 		ref_dir_list+=("$ref_dir")
+	fi
+	if [[ ! "${line_list[@]}" =~ "${line}" ]]; then
+		line_list+=("$line")
 	fi
 	if [[ "$datatype" == "ChIP" ]]; then
 		chip_bw_list+=("$datatype/tracks/${name}_merged.bw")
@@ -128,82 +143,32 @@ do
 		elif [[ "$sample" == "RAMPAGE" ]]; then
 			rampage_sample_list+=("${name}")
 			rampage_tissue_list+=("${tissue}")
-		elif [[ "$sample" == "shRNA" ]]; then
-			shrna_sample_list+=("${name}")
-			shrna_tissue_list+=("${tissue}")
 		else 
 			printf "\nType of RNA sample unknown\n"
 		fi
+	elif [[ "$datatype" == "shRNA" ]]; then
+		shrna_sample_list+=("${name}")
+		shrna_tissue_list+=("${tissue}")
+	elif [[ "$datatype" == "TF" ]]; then
+		tf_sample_list+=("${name}")
+		tf_tissue_list+=("${tissue}")
+		tf_bw_list+=("$datatype/tracks/${name}_merged.bw")
 	else
 		printf "\nType of data unknown for ${name}\nSample not processed!\n"
 	fi
 done < $samplefile
 
-if [ ! ${#ref_list[@]} -eq 1 ]; then
+if [ ! ${#ref_list[@]} -eq 1 ] || [ ! ${#line_list[@]} -eq 1 ]; then
 	printf "\nThere are multiple references in the samplefile! This analysis cannot be performed!\n"
 	exit 1
 else
 	export ref=${ref_list[0]}
 	export ref_dir=${ref_dir_list[0]}
-fi
-
-#############################################################################################
-########################################### PART2 ###########################################
-########################## Overlapping ChIPseq peaks - Upset plot  ##########################
-#############################################################################################
-
-#### To make a single file containing all overlapping peaks
-
-if [ ${#chip_sample_list[@]} -ge 1 ]; then
-	printf "\nPreparing merged peaks file for $analysisname\n"
-	if [ -s combined/peaks/tmp_peaks_${analysisname}.bed ]; then
-		rm -f combined/peaks/tmp_peaks_${analysisname}.bed
-	fi
-	for sample in ${chip_sample_list[@]}
-	do
-		case "$sample" in
-			*H3K4me1*) export peaktype="broad";;
-			*H3K4me3*) export peaktype="narrow";;
-			*H3K27ac*) export peaktype="narrow";;
-		esac
-		awk -v OFS="\t" -v s=$sample '{print $1,$2,$3,s}' ChIP/peaks/selected_peaks_${sample}.${peaktype}Peak | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_${analysisname}.bed
-	done
-	sort -k1,1 -k2,2n combined/peaks/tmp_peaks_${analysisname}.bed > combined/peaks/tmp2_peaks_${analysisname}.bed
-	bedtools merge -i combined/peaks/tmp2_peaks_${analysisname}.bed -c 4 -o distinct | bedtools sort -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{print $1,$2,$3,"Peak_"NR,$4}'> combined/peaks/tmp3_peaks_${analysisname}.bed
-	#### To get distance to closest gene (and the gene model name)
-	printf "\nGetting closest region of $analysisname\n"
-	if [[ ${ref} == "B73_v4" ]]; then
-		bedtools closest -a combined/peaks/tmp3_peaks_${analysisname}.bed -b $regionfile -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/peaks/peaks_${analysisname}.bed
-	else
-		bedtools closest -a combined/peaks/tmp3_peaks_${analysisname}.bed -b $regionfile -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:=;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/peaks/peaks_${analysisname}.bed
-	fi
-	rm -f combined/peaks/tmp*_peaks_${analysisname}.bed
-	#### To create a matrix of peak presence in each sample
-	printf "\nCreating matrix file for $analysisname\n"
-	for sample in ${chip_sample_list[@]}
-	do
-		printf "$sample\n" > combined/peaks/temp_col_${analysisname}_${sample}.txt
-		awk -v OFS="\t" -v s=$sample '{if ($0 ~ s) print "1"; else print "0"}' combined/peaks/peaks_${analysisname}.bed >> combined/peaks/temp_col_${analysisname}_${sample}.txt
-	done
-	#### To group peaks based on their distance (gene body (x=0), promoter (0<x<2kb upstream), terminator (0<x<2kb downstream), distal)
-	awk -v OFS="\t" 'BEGIN {printf "PeakID\tDistance\tGroup\n"} {if ($5<-2000) {d="Distal_downstream"; a=-$5} else if ($5<0) {d="Terminator"; a=-$5} else if ($5==0) {d="Gene_body"; a=$5} else if ($5>2000) {d="Distal_upstream"; a=$5} else {d="Promoter"; a=$5} print $4,a,d}' combined/peaks/peaks_${analysisname}.bed > combined/peaks/temp_col_${analysisname}_AAA.txt
-	paste combined/peaks/temp_col_${analysisname}_*.txt | uniq > combined/peaks/matrix_upset_${analysisname}.txt
-	rm -f combined/peaks/temp_col_${analysisname}_*.txt
-	#### To make an Upset plot highlighting peaks in gene bodies
-	printf "\nCreating Upset plot for $analysisname with R version:\n"
-	R --version
-	Rscript --vanilla ${mc_dir}/MaizeCode_R_Upset.r combined/peaks/matrix_upset_${analysisname}.txt ${analysisname}
+	export line=${line_list[0]}
 fi
 
 ############################################################################################
-########################################## PART3 ###########################################
-############################# Overlapping TSS - Upset plot  ################################
-############################################################################################
-
-#### To make a single file containing all overlapping TSS
-
-############################################################################################
-########################################## PART4 ###########################################
+########################################## PART2 ###########################################
 ################# Differential gene expression analysis between tissues ####################
 ############################################################################################
 
@@ -340,9 +305,162 @@ else
 	printf "\nNo differential gene expression analysis performed (not enough samples)\n"
 fi
 
+#############################################################################################
+########################################### PART3 ###########################################
+########################## Overlapping ChIPseq peaks - Upset plot  ##########################
+#############################################################################################
+
+#### To make a single file containing all overlapping peaks
+
+if [ ${#chip_sample_list[@]} -ge 1 ]; then
+	printf "\nPreparing merged peaks file for $analysisname\n"
+	if [ -s combined/peaks/tmp_peaks_${analysisname}.bed ]; then
+		rm -f combined/peaks/tmp_peaks_${analysisname}.bed
+	fi
+	for sample in ${chip_sample_list[@]}
+	do
+		case "$sample" in
+			*H3K4me1*) export peaktype="broad";;
+			*H3K4me3*) export peaktype="narrow";;
+			*H3K27ac*) export peaktype="narrow";;
+		esac
+		awk -v OFS="\t" -v s=$sample '{print $1,$2,$3,s}' ChIP/peaks/selected_peaks_${sample}.${peaktype}Peak | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_${analysisname}.bed
+	done
+	sort -k1,1 -k2,2n combined/peaks/tmp_peaks_${analysisname}.bed > combined/peaks/tmp2_peaks_${analysisname}.bed
+	bedtools merge -i combined/peaks/tmp2_peaks_${analysisname}.bed -c 4 -o distinct | bedtools sort -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{print $1,$2,$3,"Peak_"NR,$4}'> combined/peaks/tmp3_peaks_${analysisname}.bed
+	#### To get distance to closest gene (and the gene model name)
+	printf "\nGetting closest region of $analysisname\n"
+	if [[ ${ref} == "B73_v4" ]]; then
+		bedtools closest -a combined/peaks/tmp3_peaks_${analysisname}.bed -b $regionfile -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/peaks/peaks_${analysisname}.bed
+	else
+		bedtools closest -a combined/peaks/tmp3_peaks_${analysisname}.bed -b $regionfile -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:=;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/peaks/peaks_${analysisname}.bed
+	fi
+	rm -f combined/peaks/tmp*_peaks_${analysisname}.bed
+	#### To create a matrix of peak presence in each sample
+	printf "\nCreating matrix file for $analysisname\n"
+	for sample in ${chip_sample_list[@]}
+	do
+		printf "$sample\n" > combined/peaks/temp_col_${analysisname}_${sample}.txt
+		awk -v OFS="\t" -v s=$sample '{if ($0 ~ s) print "1"; else print "0"}' combined/peaks/peaks_${analysisname}.bed >> combined/peaks/temp_col_${analysisname}_${sample}.txt
+	done
+	#### To group peaks based on their distance (gene body (x=0), promoter (0<x<2kb upstream), terminator (0<x<2kb downstream), distal)
+	awk -v OFS="\t" 'BEGIN {printf "PeakID\tDistance\tGroup\n"} {if ($5<-2000) {d="Distal_downstream"; a=-$5} else if ($5<0) {d="Terminator"; a=-$5} else if ($5==0) {d="Gene_body"; a=$5} else if ($5>2000) {d="Distal_upstream"; a=$5} else {d="Promoter"; a=$5} print $4,a,d}' combined/peaks/peaks_${analysisname}.bed > combined/peaks/temp_col_${analysisname}_AAA.txt
+	paste combined/peaks/temp_col_${analysisname}_*.txt | uniq > combined/peaks/matrix_upset_ChIP_${analysisname}.txt
+	rm -f combined/peaks/temp_col_${analysisname}_*.txt
+	#### To make an Upset plot highlighting peaks in gene bodies
+	printf "\nCreating Upset plot for $analysisname with R version:\n"
+	R --version
+	Rscript --vanilla ${mc_dir}/MaizeCode_R_Upset_ChIP.r combined/peaks/matrix_upset_ChIP_${analysisname}.txt ${analysisname}
+fi
+
+#############################################################################################
+########################################### PART4 ###########################################
+############################ Overlapping TF peaks - Upset plot  #############################
+#############################################################################################
+
+#### To make a single file containing all H3K27ac peaks in the same line 
+
+for file in ls ChIP/peaks/selected_peaks_${line}_*_H3K27ac.narrowPeak
+do
+	printf "\nMerging H3K27ac peaks file for $analysisname\n"
+
+if [ -s combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed ]; then
+	rm -f combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed
+fi
+
+nfile=$(ls ChIP/peaks/selected_peaks_B73_*_H3K27ac.narrowPeak | wc -l)
+
+if [ ${#chip_sample_list[@]} -ge 1 ]; then
+	printf "\nPreparing merged H3K27ac peaks from files in $analysisname\n"
+	for sample in ${chip_sample_list[@]}
+	do
+		if [[ "$sample" == *H3K27ac* ]]; then
+			awk -v OFS="\t" -v s=$sample '{print $1,$2,$3,s}' ChIP/peaks/selected_peaks_${sample}.narrowPeak | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed
+		fi
+	done
+	sort -k1,1 -k2,2n combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed > combined/peaks/tmp2_peaks_H3K27ac_${analysisname}.bed
+	bedtools merge -i combined/peaks/tmp2_peaks_H3K27ac_${analysisname}.bed | sort -k1,1 -k2,2n > combined/peaks/merged_peaks_H3K27ac_${analysisname}.bed
+	rm -f combined/peaks/tmp*_peaks_H3K27ac_${analysisname}.bed
+	k27file="yes"
+elif [ $nfile -gt 0 ]; then
+	printf "\nPreparing merged H3K27ac peaks from files of the same $line line previously analyzed\n"
+	for sample in ChIP/peaks/selected_peaks_${line}_*_H3K27ac.narrowPeak
+	do
+		awk -v OFS="\t" -v s=$sample '{print $1,$2,$3,s}' ChIP/peaks/selected_peaks_${sample}.narrowPeak | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed
+	done
+	sort -k1,1 -k2,2n combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed > combined/peaks/tmp2_peaks_H3K27ac_${analysisname}.bed
+	bedtools merge -i combined/peaks/tmp2_peaks_H3K27ac_${analysisname}.bed | sort -k1,1 -k2,2n > combined/peaks/merged_peaks_H3K27ac_${analysisname}.bed
+	rm -f combined/peaks/tmp*_peaks_H3K27ac_${analysisname}.bed
+	k27file="yes"
+else
+	printf "\nNo H3K27ac files found for $line line\n"
+	k27file="no"
+fi
+
+if [ ${#tf_sample_list[@]} -ge 1 ]; then
+	printf "\nPreparing merged TF peaks file for $analysisname\n"
+	if [ -s combined/peaks/tmp_peaks_${analysisname}.bed ]; then
+		rm -f combined/peaks/tmp_peaks_${analysisname}.bed
+	fi
+	if [[ "$k27file" == "yes" ]]; then
+		for sample in ${tf_sample_list[@]} H3K27ac
+		do
+			case "$sample" in
+				H3K27ac)	file="combined/peaks/merged_peaks_H3K27ac_${analysisname}.bed";;
+				*)	file="TF/peaks/idr_${sample}.bed";;
+			esac
+			awk -v OFS="\t" -v s=$sample '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {print $1,$2,$3,s}' ${file} | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_${analysisname}.bed
+		done
+	else 
+		for sample in ${tf_sample_list[@]}
+		do
+			awk -v OFS="\t" -v s=$sample '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {print $1,$2,$3,s}' TF/peaks/idr_${sample}.bed | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_${analysisname}.bed
+		done
+	fi
+	sort -k1,1 -k2,2n combined/peaks/tmp_peaks_${analysisname}.bed > combined/peaks/tmp2_peaks_${analysisname}.bed
+	bedtools merge -i combined/peaks/tmp2_peaks_${analysisname}.bed -c 4 -o distinct | bedtools sort -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{print $1,$2,$3,"Peak_"NR,$4}'> combined/peaks/tmp3_peaks_${analysisname}.bed
+	#### To get distance to closest gene (and the gene model name)
+	printf "\nGetting closest region of $analysisname\n"
+	if [[ ${ref} == "B73_v4" ]]; then
+		bedtools closest -a combined/peaks/tmp3_peaks_${analysisname}.bed -b $regionfile -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/peaks/peaks_${analysisname}.bed
+	else
+		bedtools closest -a combined/peaks/tmp3_peaks_${analysisname}.bed -b $regionfile -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:=;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/peaks/peaks_${analysisname}.bed
+	fi
+	rm -f combined/peaks/tmp*_peaks_${analysisname}.bed
+	#### To create a matrix of peak presence in each sample
+	printf "\nCreating matrix file for $analysisname\n"
+	if [[ "$k27file" == "yes" ]]; then	
+		for sample in ${tf_sample_list[@]} H3K27ac
+		do
+			printf "$sample\n" > combined/peaks/temp_col_${analysisname}_${sample}.txt
+			awk -v OFS="\t" -v s=$sample '{if ($0 ~ s) print "1"; else print "0"}' combined/peaks/peaks_${analysisname}.bed >> combined/peaks/temp_col_${analysisname}_${sample}.txt
+		done
+	else
+		for sample in ${tf_sample_list[@]}
+		do
+			printf "$sample\n" > combined/peaks/temp_col_${analysisname}_${sample}.txt
+			awk -v OFS="\t" -v s=$sample '{if ($0 ~ s) print "1"; else print "0"}' combined/peaks/peaks_${analysisname}.bed >> combined/peaks/temp_col_${analysisname}_${sample}.txt
+		done
+	fi
+	#### To group peaks based on their distance (gene body (x=0), promoter (0<x<2kb upstream), terminator (0<x<2kb downstream), distal)
+	awk -v OFS="\t" 'BEGIN {printf "PeakID\tDistance\tGroup\n"} {if ($5<-2000) {d="Distal_downstream"; a=-$5} else if ($5<0) {d="Terminator"; a=-$5} else if ($5==0) {d="Gene_body"; a=$5} else if ($5>2000) {d="Distal_upstream"; a=$5} else {d="Promoter"; a=$5} print $4,a,d}' combined/peaks/peaks_${analysisname}.bed > combined/peaks/temp_col_${analysisname}_AAA.txt
+	paste combined/peaks/temp_col_${analysisname}_*.txt | uniq > combined/peaks/matrix_upset_TF_${analysisname}.txt
+	rm -f combined/peaks/temp_col_${analysisname}_*.txt
+	#### To make an Upset plot highlighting peaks in gene bodies
+	printf "\nCreating Upset plot for $analysisname with R version:\n"
+	R --version
+	Rscript --vanilla ${mc_dir}/MaizeCode_R_Upset_TF_H3K27ac.r combined/peaks/matrix_upset_TF_${analysisname}.txt ${analysisname} $k27file
+fi
 
 ############################################################################################
 ########################################## PART5 ###########################################
+############################# Overlapping TSS - Upset plot  ################################
+############################################################################################
+
+#### To make a single file containing all overlapping TSS
+
+############################################################################################
+########################################## PART6 ###########################################
 ##################### Differential peaks analysis between tissues ##########################
 ############################################################################################
 
@@ -400,7 +518,7 @@ fi
 
 
 #########################################################################################
-####################################### PART6 ###########################################
+####################################### PART7 ###########################################
 ################################### Making heatmaps  ####################################
 #########################################################################################
 
