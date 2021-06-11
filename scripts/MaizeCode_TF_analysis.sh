@@ -70,6 +70,7 @@ do
 	export TF
 	export chip
 	export ref_dir
+	export ref=${ref_dir##*/}
 	export name=${line}_${TF}_${chip}
 	export input=${line}_${TF}_Input
 	export paired
@@ -244,6 +245,51 @@ do
 		selected=$(cat peaks/temp_${name}_selected.bed | sort -k1,1 -k2,2n -u | wc -l)
 		awk -v OFS="\t" -v a=$line -v b=$tissue -v c=$mark -v d=$rep1 -v e=$rep2 -v f=$common -v g=$idr -v h=$merged -v i=$pseudos -v j=$selected 'BEGIN {print a,b,c,d,e,f" ("f/d*100"%rep1;"f/e*100"%rep2)",g" ("g/f*100"%common)",h,i,j" ("j/h*100"%merged)"}' >> reports/summary_ChIP_peaks.txt
 		rm -f peaks/temp_${name}*
+		
+		#### To find motifs in different peak sets:
+		
+		#### v1="selected" peaks (best peaks from selected, i.e. in merged and both pseudo reps)		
+		printf "\nGetting peak fasta sequences for $name meme v1\n"
+		awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {a=$2+$10; print $1,a-50,a+50,$4}' peaks/best_peaks_${name}.bed > peaks/selected_motifs_${name}.bed
+		bedtools getfasta -name -fi ${ref_dir}/${ref}.fa -bed peaks/selected_motifs_${name}.bed > peaks/selected_sequences_${name}.fa
+		printf "\nGetting motifs for $name with meme\n"
+		meme-chip -oc motifs/${name}/meme -meme-p $threads -meme-nmotifs 10 peaks/selected_sequences_${name}.fa
+		printf "\nLooking for similar motifs in JASPAR database with tomtom\n"
+		tomtom -oc motifs/${name}/tomtom motifs/${name}/meme/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
+		if [ -e motifs/peaks_with_motifs_${name}_meme1.txt ]; then
+			rm -f motifs/peaks_with_motifs_${name}_meme1.txt
+		fi
+		for num in 1 2 3
+		do
+			if [ -s motifs/${name}/meme/fimo_out_${num}/fimo.tsv ]; then
+				printf "Extracting peaks containing motif number ${num}\n"
+				awk -v OFS="\t" -v n=$num '{print $3,$4,$5,"motif_"n}' motifs/${name}/meme/fimo_out_${num}/fimo.tsv > motifs/temp_motifs_${name}.bed
+				bedtools intersect -loj -a peaks/best_peaks_${name}.bed -b motifs/temp_motifs_${name}.bed >> motifs/peaks_with_motifs_${name}_meme1.txt
+				rm -f motifs/temp_motifs_${name}.bed
+			fi
+		done
+		
+		#### v2="selected" peaks (peaks in both biological reps, i.e all peaks in idr)
+		printf "\nGetting peak fasta sequences for $name meme v2\n"
+		awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {a=$2+$10; print $1,a-50,a+50}' peaks/idr_${name}.narrowPeak > peaks/selected_motifs_${name}.bed
+		bedtools getfasta -name -fi ${ref_dir}/${ref}.fa -bed peaks/selected_motifs_${name}.bed > peaks/selected_sequences_${name}.fa
+		printf "\nGetting motifs for $name with meme\n"
+		meme-chip -oc motifs/${name}/meme2 -meme-p $threads -meme-nmotifs 10 peaks/selected_sequences_${name}.fa
+		printf "\nLooking for similar motifs in JASPAR database with tomtom\n"
+		tomtom -oc motifs/${name}/tomtom2 motifs/${name}/meme2/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
+		if [ -e motifs/peaks_with_motifs_${name}_meme2.txt ]; then
+			rm -f motifs/peaks_with_motifs_${name}_meme2.txt
+		fi
+		for num in 1 2 3
+		do
+			if [ -s motifs/${name}/meme2/fimo_out_${num}/fimo.tsv ]; then
+				printf "Extracting peaks containing motif number ${num}\n"
+				awk -v OFS="\t" -v n=$num '{print $3,$4,$5,"motif_"n}' motifs/${name}/meme2/fimo_out_${num}/fimo.tsv > motifs/temp_motifs_${name}.bed
+				bedtools intersect -loj -a peaks/idr_${name}.narrowPeak -b motifs/temp_motifs_${name}.bed >> motifs/peaks_with_motifs_${name}_meme2.txt
+				rm -f motifs/temp_motifs_${name}.bed
+			fi
+		done
+		
 		touch chkpts/analysis_${name}
 	EOF1
 	pidsa+=("$!")
