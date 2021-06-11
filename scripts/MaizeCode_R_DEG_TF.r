@@ -10,7 +10,7 @@ args = commandArgs(trailingOnly=TRUE)
 
 degtable<-read.delim(args[1], header = TRUE)
 samplename<-args[2]
-alltfs<-args[3]
+alltfs<-unlist(strsplit(args[3],","))
 degtable$Group<-factor(degtable$Group, levels=alltfs)
 degtable$DEG<-factor(degtable$DEG, levels=rev(c("ns","DOWN","Pairwise_DOWN","Pairwise_Mix","Pairwise_UP","UP")))
 
