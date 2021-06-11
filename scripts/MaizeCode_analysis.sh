@@ -156,6 +156,10 @@ do
 		if [ ! -d ./TF/peaks ]; then
 			mkdir ./TF/peaks
 		fi
+		if [ ! -s motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt ]; then
+			wget http://jaspar.genereg.net/download/CORE/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
+			mv JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt motifs/
+		fi
 		datatype_list+=("${datatype}")
 		new_tf_sample+=("${name}")
 		printf "$line\t$tmpname\t$sample\t$paired\t${ref_dir}\n" >> $datatype/temp_${samplename}_${datatype}.txt
