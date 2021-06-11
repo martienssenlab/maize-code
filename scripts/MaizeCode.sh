@@ -102,7 +102,6 @@ fi
 
 newdatatype_list=()
 newref_list=()
-folders_list=()
 datat_ref_list=()
 new_env=0
 new_sample=0
@@ -110,16 +109,11 @@ while read data line tissue sample rep sampleID path paired ref
 do
 	name=${line}_${tissue}_${sample}_${rep}
 	case "$data" in
-		ChIP) 	env="ChIP"
-			folder="ChIP";;
-		RNAseq) env="RNA"
-			folder="RNA";;
-		RAMPAGE) env="RNA"
-			folder="RNA";;
-		shRNA) env="shRNA"
-			folder="shRNA";;
-		TF_*) env="ChIP"
-			folder="TF";;
+		ChIP) 	env="ChIP";;
+		RNAseq) env="RNA";;
+		RAMPAGE) env="RNA";;
+		shRNA) env="shRNA";;
+		TF_*) env="TF";;
 		*) env="unknown";;
 	esac
 	if [[ "$env" == "unknown" ]]; then
@@ -127,15 +121,14 @@ do
 		printf "$usage\n"
 		exit 1
 	fi
-	if [ ! -e ${folder}/chkpts/${name}_${ref} ]; then
+	if [ ! -e ${env}/chkpts/${name}_${ref} ]; then
 		new_sample=1
 	fi
-	if [ ! -e ${folder}/chkpts/env_${ref} ]; then
+	if [ ! -e ${env}/chkpts/env_${ref} ]; then
 		new_env=1
 		newdatatype_list+=("$env")
 		newref_list+=("$ref")
-		folders_list+=("${folder}")
-		data_ref_list+=("${folder}_${env}_${ref}")
+		data_ref_list+=("${env}_${ref}")
 	fi
 done < $samplefile
 
@@ -145,7 +138,6 @@ if [[ ${new_env} == 0 ]]; then
 else
 	uniq_newref_list=($(printf "%s\n" "${newref_list[@]}" | sort -u))
 	uniq_newdatatype_list=($(printf "%s\n" "${newdatatype_list[@]}" | sort -u))
-	uniq_folders_list=($(printf "%s\n" "${folders_list[@]}" | sort -u))
 
 	check_list=()
 	pids=()
@@ -153,21 +145,20 @@ else
 	do
 		for env in ${uniq_newdatatype_list[@]}
 		do
-			for folder in ${uniq_folders_list[@]}
-				if [[ " ${data_ref_list[@]} " =~ " ${folder}_${env}_${ref} " ]]; then
-					check_list+=("$folder/chkpts/env_${ref}")
+			if [[ " ${data_ref_list[@]} " =~ " ${env}_${ref} " ]]; then
+				check_list+=("$env/chkpts/env_${ref}")
 					if [ ! -d ./$folder ]; then
-						mkdir ./$folder
-						mkdir ./$folder/fastq
-						mkdir ./$folder/mapped
-						mkdir ./$folder/tracks
-						mkdir ./$folder/reports
-						mkdir ./$folder/logs
-						mkdir ./$folder/chkpts
-						mkdir ./$folder/plots
+						mkdir ./$env
+						mkdir ./$env/fastq
+						mkdir ./$env/mapped
+						mkdir ./$env/tracks
+						mkdir ./$env/reports
+						mkdir ./$env/logs
+						mkdir ./$env/chkpts
+						mkdir ./$env/plots
 					fi
-					printf "\nPreparing environment of ${ref} genome for ${env} data in ${folder} folder\n"
-					qsub -sync y -N env_${ref}_${env}_in_${folder} -o $folder/logs/env_${ref}.log ${mc_dir}/MaizeCode_check_environment.sh -p $pathtoref -r $ref -d $env &
+					printf "\nPreparing environment of ${ref} genome for ${env} data\n"
+					qsub -sync y -N env_${ref}_${env} -o $env/logs/env_${ref}.log ${mc_dir}/MaizeCode_check_environment.sh -p $pathtoref -r $ref -d $env &
 					pids+=("$!")
 				elif [[ ! " ${data_ref_list[@]} " =~ " ${folder}_${env}_${ref} " ]]; then
 				### Combination folder * datatype * ref does not exist in the sample file, moving on
