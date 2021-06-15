@@ -147,32 +147,31 @@ else
 		do
 			if [[ " ${data_ref_list[@]} " =~ " ${env}_${ref} " ]]; then
 				check_list+=("$env/chkpts/env_${ref}")
-					if [ ! -d ./$folder ]; then
-						mkdir ./$env
-						mkdir ./$env/fastq
-						mkdir ./$env/mapped
-						mkdir ./$env/tracks
-						mkdir ./$env/reports
-						mkdir ./$env/logs
-						mkdir ./$env/chkpts
-						mkdir ./$env/plots
-					fi
-					printf "\nPreparing environment of ${ref} genome for ${env} data\n"
-					qsub -sync y -N env_${ref}_${env} -o $env/logs/env_${ref}.log ${mc_dir}/MaizeCode_check_environment.sh -p $pathtoref -r $ref -d $env &
-					pids+=("$!")
-				elif [[ ! " ${data_ref_list[@]} " =~ " ${folder}_${env}_${ref} " ]]; then
-				### Combination folder * datatype * ref does not exist in the sample file, moving on
-					:
-				elif [ ! -d $pathtoref/$ref ]; then
-					printf "\nNo $ref folder found in $pathtoref\n"
-					printf "$usage\n"
-					exit 1
-				else
-					printf "\nError!\n"
-					printf "$usage\n"
-					exit 1
-				fi	
-			done
+				if [ ! -d ./$folder ]; then
+					mkdir ./$env
+					mkdir ./$env/fastq
+					mkdir ./$env/mapped
+					mkdir ./$env/tracks
+					mkdir ./$env/reports
+					mkdir ./$env/logs
+					mkdir ./$env/chkpts
+					mkdir ./$env/plots
+				fi
+				printf "\nPreparing environment of ${ref} genome for ${env} data\n"
+				qsub -sync y -N env_${ref}_${env} -o $env/logs/env_${ref}.log ${mc_dir}/MaizeCode_check_environment.sh -p $pathtoref -r $ref -d $env &
+				pids+=("$!")
+			elif [[ ! " ${data_ref_list[@]} " =~ " ${folder}_${env}_${ref} " ]]; then
+			### Combination folder * datatype * ref does not exist in the sample file, moving on
+				:
+			elif [ ! -d $pathtoref/$ref ]; then
+				printf "\nNo $ref folder found in $pathtoref\n"
+				printf "$usage\n"
+				exit 1
+			else
+				printf "\nError!\n"
+				printf "$usage\n"
+				exit 1
+			fi	
 		done
 	done
 	#### Wait for the check_environment scripts to finish
