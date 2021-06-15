@@ -147,7 +147,7 @@ else
 		do
 			if [[ " ${data_ref_list[@]} " =~ " ${env}_${ref} " ]]; then
 				check_list+=("$env/chkpts/env_${ref}")
-				if [ ! -d ./$folder ]; then
+				if [ ! -d ./$env ]; then
 					mkdir ./$env
 					mkdir ./$env/fastq
 					mkdir ./$env/mapped
