@@ -156,7 +156,7 @@ do
 		if [ ! -d ./TF/peaks ]; then
 			mkdir ./TF/peaks
 		fi
-		if [ ! -s motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt ]; then
+		if [ ! -s ./TF/motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt ]; then
 			wget http://jaspar.genereg.net/download/CORE/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
 			mv JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt ./TF/motifs/
 		fi
