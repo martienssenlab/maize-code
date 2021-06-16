@@ -92,7 +92,7 @@ do
 		printf "\nNo Input file found, cannot proceed!\n"
 		exit 1
 	fi
-	printf "\nStarting single ChIP sample analysis for $name\n"
+	printf "\nStarting single TF ChIP sample analysis for $name\n"
 	qsub -N ${name} -V -cwd -sync y -pe threads 2 -l m_mem_free=2G -l tmp_free=50G -j y -o logs/analysis_${name}.log <<-'EOF1' &
 		#!/bin/bash
 		set -e -o pipefail		
