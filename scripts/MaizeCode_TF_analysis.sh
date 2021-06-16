@@ -72,6 +72,7 @@ do
 	export ref_dir
 	export ref=${ref_dir##*/}
 	export name=${line}_${TF}
+	export file=${line}_${TF}_IP
 	export input=${line}_${TF}_Input
 	export paired
 	if [ -s mapped/${input}_merged.bam ]; then
@@ -99,7 +100,7 @@ do
 		
 		if [ ! -s mapped/${name}_merged.bam ]; then
 			printf "\nMerging replicates of $name\n"
-			samtools merge -f -@ $threads mapped/temp_${name}.bam mapped/${name}_Rep1.bam mapped/${name}_Rep2.bam
+			samtools merge -f -@ $threads mapped/temp_${name}.bam mapped/${file}_Rep1.bam mapped/${file}_Rep2.bam
 			samtools sort -@ $threads -o mapped/${name}_merged.bam mapped/temp_${name}.bam
 			rm -f mapped/temp_${name}.bam
 			samtools index -@ $threads mapped/${name}_merged.bam
@@ -107,9 +108,9 @@ do
 		if [ ! -s mapped/${name}_pseudo1.bam ]; then
 			printf "\nSplitting $name in two pseudo-replicates\n"
 			samtools view -b -h -s 1.5 -@ $threads -U mapped/temp_${name}_pseudo2.bam -o mapped/temp_${name}_pseudo1.bam mapped/${name}_merged.bam
-			samtools sort -@ $threads -o mapped/${name}_pseudo1.bam mapped/temp_${name}_pseudo1.bam
+			samtools sort -@ $threads -o mapped/${file}_pseudo1.bam mapped/temp_${name}_pseudo1.bam
 			rm -f mapped/temp_${name}_pseudo1.bam
-			samtools sort -@ $threads -o mapped/${name}_pseudo2.bam mapped/temp_${name}_pseudo2.bam
+			samtools sort -@ $threads -o mapped/${file}_pseudo2.bam mapped/temp_${name}_pseudo2.bam
 			rm -f mapped/temp_${name}_pseudo2.bam
 		fi
 
@@ -119,11 +120,11 @@ do
 			export filetype
 			if [[ "$inputrep" == "two" ]]; then
 				case "$filetype" in
-					Rep1|Rep2) 	export namefiletype=mapped/${name}_IP_${filetype}.bam
+					Rep1|Rep2) 	export namefiletype=mapped/${file}_${filetype}.bam
 							export inputfiletype=mapped/${input}_${filetype}.bam
 							export param=""
 							export clean="No";;
-					pseudo1|pseudo2)	export namefiletype=mapped/${name}_${filetype}.bam
+					pseudo1|pseudo2)	export namefiletype=mapped/${file}_${filetype}.bam
 									export inputfiletype=mapped/${input}_merged.bam
 									export param=""
 									export clean="Yes";;
@@ -134,15 +135,15 @@ do
 				esac
 			elif [[ "$inputrep" == "one" ]]; then
 				case "$filetype" in
-					Rep1) 	export namefiletype=mapped/${name}_IP_${filetype}.bam
+					Rep1) 	export namefiletype=mapped/${file}_${filetype}.bam
 						export inputfiletype=mapped/${input}_${filetype}.bam
 						export param=""
 						export clean="No";;
-					Rep2)	export namefiletype=mapped/${name}_IP_${filetype}.bam
+					Rep2)	export namefiletype=mapped/${file}_${filetype}.bam
 						export inputfiletype=mapped/${input}_Rep1.bam
 						export param=""
 						export clean="No";;
-					pseudo1|pseudo2)	export namefiletype=mapped/${name}_${filetype}.bam
+					pseudo1|pseudo2)	export namefiletype=mapped/${file}_${filetype}.bam
 									export inputfiletype=mapped/${input}_Rep1.bam
 									export param=""
 									export clean="Yes";;
