@@ -94,8 +94,8 @@ fi
 if [ -e shRNA/temp_${samplename}_shRNA.txt ]; then
 	rm -f shRNA/temp_${samplename}_shRNA.txt
 fi
-if [ -e TFs/temp_${samplename}_TF.txt ]; then
-	rm -f TFs/temp_${samplename}_TF.txt
+if [ -e TF/temp_${samplename}_TF.txt ]; then
+	rm -f TF/temp_${samplename}_TF.txt
 fi
 if [ -e combined/temp_${samplename}_ChIP.txt ]; then
 	rm -f combined/temp_reports_${samplename}_ChIP.txt
