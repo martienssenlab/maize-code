@@ -264,7 +264,7 @@ do
 		do
 			if [ -s motifs/${name}/meme/fimo_out_${num}/fimo.tsv ]; then
 				printf "Extracting peaks containing motif number ${num}\n"
-				awk -v OFS="\t" -v n=$num 'NR > 1 {print $3,$4,$5,"motif_"n,$1}' motifs/${name}/meme/fimo_out_${num}/fimo.tsv > motifs/temp_motifs_${name}.bed
+				awk -v OFS="\t" -v n=$num 'NR > 1 {print $3,$4,$5,"motif_"n,$1}' motifs/${name}/meme/fimo_out_${num}/fimo.tsv | sort -k1,1 -k2,2n > motifs/temp_motifs_${name}.bed
 				bedtools intersect -loj -a peaks/best_peaks_${name}.bed -b motifs/temp_motifs_${name}.bed >> motifs/peaks_with_motifs_${name}_meme1.txt
 				rm -f motifs/temp_motifs_${name}.bed
 			fi
@@ -285,9 +285,10 @@ do
 		do
 			if [ -s motifs/${name}/meme2/fimo_out_${num}/fimo.tsv ]; then
 				printf "Extracting peaks containing motif number ${num}\n"
-				awk -v OFS="\t" -v n=$num '{print $3,$4,$5,"motif_"n}' motifs/${name}/meme2/fimo_out_${num}/fimo.tsv > motifs/temp_motifs_${name}.bed
-				bedtools intersect -loj -a peaks/idr_${name}.narrowPeak -b motifs/temp_motifs_${name}.bed >> motifs/peaks_with_motifs_${name}_meme2.txt
-				rm -f motifs/temp_motifs_${name}.bed
+				awk -v OFS="\t" -v n=$num 'NR > 1 {print $3,$4,$5,"motif_"n}' motifs/${name}/meme2/fimo_out_${num}/fimo.tsv | sort -k1,1 -k2,2n > motifs/temp_motifs_${name}.bed
+				sort -k1,1 -k2,2n peaks/idr_${name}.narrowPeak > peaks/temp_sorted_idr_${name}.bed
+				bedtools intersect -loj -a peaks/temp_sorted_idr_${name}.bed -b motifs/temp_motifs_${name}.bed >> motifs/peaks_with_motifs_${name}_meme2.txt
+				rm -f motifs/temp_motifs_${name}.bed peaks/temp_sorted_idr_${name}.bed
 			fi
 		done
 		
