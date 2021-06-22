@@ -292,7 +292,7 @@ do
 #			fi
 #		done
 		
-		touch chkpts/analysis_${name}
+		touch chkpts/analysis_${name}_IP
 	EOF1
 	pidsa+=("$!")
 done < $samplefile
