@@ -244,7 +244,7 @@ do
 		merged=$(awk '{print $1,$2,$3}' peaks/${name}_merged_peaks.narrowPeak | sort -k1,1 -k2,2n -u | wc -l)
 		pseudos=$(awk '{print $1,$2,$3}' peaks/temp_${name}_pseudos.bed | sort -k1,1 -k2,2n -u | wc -l)
 		selected=$(cat peaks/temp_${name}_selected.bed | sort -k1,1 -k2,2n -u | wc -l)
-		awk -v OFS="\t" -v a=$line -v b=$tissue -v c=$mark -v d=$rep1 -v e=$rep2 -v f=$common -v g=$idr -v h=$merged -v i=$pseudos -v j=$selected 'BEGIN {print a,b,c,d,e,f" ("f/d*100"%rep1;"f/e*100"%rep2)",g" ("g/f*100"%common)",h,i,j" ("j/h*100"%merged)"}' >> reports/summary_ChIP_peaks.txt
+		awk -v OFS="\t" -v a=$line -v b=$tissue -v c=$mark -v d=$rep1 -v e=$rep2 -v f=$common -v g=$idr -v h=$merged -v i=$pseudos -v j=$selected 'BEGIN {print a,b,c,d,e,f" ("f/d*100"%rep1;"f/e*100"%rep2)",g" ("g/f*100"%common)",h,i,j" ("j/h*100"%merged)"}' >> reports/summary_TF_peaks.txt
 		rm -f peaks/temp_${name}*
 		
 		#### To find motifs in different peak sets:
