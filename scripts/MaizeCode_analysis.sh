@@ -114,6 +114,7 @@ fi
 new_chip_sample=()
 new_rna_sample=()
 new_tf_sample=()
+new_tf_chk=()
 new_shrna_sample=()
 datatype_list=()
 ref_list=()
@@ -162,6 +163,7 @@ do
 		fi
 		datatype_list+=("${datatype}")
 		new_tf_sample+=("${name}")
+		new_tf_chk+=("${line}_${tmpname}")
 		printf "$line\t$tmpname\t$sample\t$paired\t${ref_dir}\n" >> $datatype/temp_${samplename}_${datatype}.txt
 	elif [[ "$datatype" == "shRNA" ]]; then
 		datatype_list+=("${datatype}")
@@ -220,7 +222,7 @@ if [[ "${test_new}" == 1 ]]; then
 				fi
 			done
 		elif [[ "$datatype" == "TF" ]]; then
-			for tfsample in ${new_tf_sample[@]}
+			for tfsample in ${new_tf_chk[@]}
 			do
 				if [ ! -e ${datatype}/chkpts/analysis_${tfsample} ]; then
 					printf "\nProblem during the processing of TF sample ${tfsample}!\nCheck log: TF/logs/${samplename}.log and TF/logs/analysis_${tfsample}_*.log\n"
@@ -308,10 +310,11 @@ if [ -s combined/temp_reports_${samplename}_TF.txt ]; then
 	if [ -s combined/reports/temp_peaks_${samplename}.txt ]; then
 		rm -f combined/reports/temp_peaks_${samplename}.txt
 	fi
+	sort -u combined/temp_reports_${samplename}_TF.txt > combined/temp2_reports_${samplename}_TF.txt
 	while read line name mark paired ref_dir
 	do
 		awk -v a=$line -v b=$name '$1==a && $2==b' TF/reports/summary_TF_peaks.txt >> combined/reports/temp_peaks_${samplename}.txt
-	done < combined/temp_reports_${samplename}_TF.txt
+	done < combined/temp2_reports_${samplename}_TF.txt
 	printf "Line\tSample\tPeaks_in_Rep1\tPeaks_in_Rep2\tCommon_peaks\tCommon_peaks_IDR_0.05\tPeaks_in_merged\tPeaks_in_pseudo_reps\tSelected_peaks\n" > combined/reports/summary_TF_peaks_${samplename}.txt
 	sort combined/reports/temp_peaks_${samplename}.txt -u >> combined/reports/summary_TF_peaks_${samplename}.txt
 	rm -f combined/reports/temp_peaks_${samplename}.txt
