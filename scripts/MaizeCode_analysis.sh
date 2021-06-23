@@ -315,8 +315,8 @@ if [ -s combined/temp_reports_${samplename}_TF.txt ]; then
 	do
 		awk -v a=$line -v b=$name '$1==a && $2==b' TF/reports/summary_TF_peaks.txt >> combined/reports/temp_peaks_${samplename}.txt
 	done < combined/temp2_reports_${samplename}_TF.txt
-	printf "Line\tSample\tPeaks_in_Rep1\tPeaks_in_Rep2\tCommon_peaks\tCommon_peaks_IDR_0.05\tPeaks_in_merged\tPeaks_in_pseudo_reps\tSelected_peaks\n" > combined/reports/summary_TF_peaks_${samplename}.txt
-	sort combined/reports/temp_peaks_${samplename}.txt -u >> combined/reports/summary_TF_peaks_${samplename}.txt
+	printf "Line\tSample\tChIP\tPeaks_in_Rep1\tPeaks_in_Rep2\tCommon_peaks\tCommon_peaks_IDR_0.05\tPeaks_in_merged\tPeaks_in_pseudo_reps\tSelected_peaks\n" > combined/reports/summary_TF_peaks_${samplename}.txt
+	sort -u combined/reports/temp_peaks_${samplename}.txt >> combined/reports/summary_TF_peaks_${samplename}.txt
 	rm -f combined/reports/temp_peaks_${samplename}.txt
 	printf "\nPlotting peak stats for all samples in the samplefile with R:\n"
 	R --version
