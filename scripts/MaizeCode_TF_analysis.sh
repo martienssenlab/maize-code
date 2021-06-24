@@ -11,7 +11,7 @@
 usage="
 ##### Script for Maize code TF ChIP data analysis, used by script MaizeCode_analysis.sh for TF data
 #####
-##### sh MaiCode_ChIP_analysis.sh -f samplefile [-h]
+##### sh MaiCode_TF_analysis.sh -f samplefile [-h]
 #####	-f: samplefile containing the samples to compare and the reference directory in 6 tab-delimited columns:
 ##### 		Line, TF, ChIP, PE or SE, Reference directory
 ##### 	-h: help, returns usage
@@ -56,10 +56,10 @@ if [ ! $samplefile ]; then
 fi
 
 tmp1=${samplefile##*temp_}
-export samplename=${tmp1%%_ChIP*}
+export samplename=${tmp1%%_TF*}
 
-if [ ! -s reports/summary_ChIP_peaks.txt ]; then
-	printf "Line\tTissue\tMark\tPeaks_in_Rep1\tPeaks_in_Rep2\tCommon_peaks\tCommon_peaks_IDR_0.05\tPeaks_in_merged\tPeaks_in_pseudo_reps\tSelected_peaks\n" > reports/summary_ChIP_peaks.txt
+if [ ! -s reports/summary_TF_peaks.txt ]; then
+	printf "Line\tTissue\tMark\tPeaks_in_Rep1\tPeaks_in_Rep2\tCommon_peaks\tCommon_peaks_IDR_0.05\tPeaks_in_merged\tPeaks_in_pseudo_reps\tSelected_peaks\n" > reports/summary_TF_peaks.txt
 fi
 
 pidsa=()
@@ -235,7 +235,7 @@ do
 		printf "Getting best peak for $name\n"
 		sort -k1,1 -k2,2n -k5nr peaks/selected_peaks_${name}.narrowPeak | awk -v OFS="\t" '{print $1";"$2";"$3,$4,$5,$6,$7,$8,$9,$10}' | awk 'BEGIN {a=0} {b=$1; if (b!=a) print $0; a=$1}' | awk -F"[;\t]" -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10}' > peaks/best_peaks_${name}.bed
 
-		#### To get some peaks stats for each mark
+		#### To get some peaks stats for each TF
 		printf "\nCalculating peak stats for ${name} in narrow peaks\n"
 		rep1=$(awk '{print $1,$2,$3}' peaks/${name}_Rep1_peaks.narrowPeak | sort -k1,1 -k2,2n -u | wc -l)
 		rep2=$(awk '{print $1,$2,$3}' peaks/${name}_Rep2_peaks.narrowPeak | sort -k1,1 -k2,2n -u | wc -l)
