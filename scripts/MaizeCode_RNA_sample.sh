@@ -99,8 +99,8 @@ if [[ $paired == "PE" ]]; then
 			step="trim"
 		else
 			printf "\nCopying PE fastq for $name ($sampleID in $path)\n"
-			cp $path/${sampleID}*R1*q.gz ./fastq/${name}_R1.fastq.gz
-			cp $path/${sampleID}*R2*q.gz ./fastq/${name}_R2.fastq.gz
+			cp $path/*${sampleID}*R1*q.gz ./fastq/${name}_R1.fastq.gz
+			cp $path/*${sampleID}*R2*q.gz ./fastq/${name}_R2.fastq.gz
 			step="trim"
 		fi
 	fi
@@ -180,7 +180,7 @@ elif [[ $paired == "SE" ]]; then
 			step="trim"
 		else
 			printf "\nCopying SE fastq for $name ($sampleID in $path)\n"
-			cp $path/${sampleID}*q.gz ./fastq/${name}.fastq.gz
+			cp $path/*${sampleID}*q.gz ./fastq/${name}.fastq.gz
 			step="trim"
 		fi
 	fi
