@@ -59,21 +59,21 @@ tmp1=${samplefile##*temp_}
 export samplename=${tmp1%%_TF*}
 
 if [ ! -s reports/summary_TF_peaks.txt ]; then
-	printf "Line\tTissue\tMark\tPeaks_in_Rep1\tPeaks_in_Rep2\tCommon_peaks\tCommon_peaks_IDR_0.05\tPeaks_in_merged\tPeaks_in_pseudo_reps\tSelected_peaks\n" > reports/summary_TF_peaks.txt
+	printf "Line\tSample\tMark\tPeaks_in_Rep1\tPeaks_in_Rep2\tCommon_peaks\tCommon_peaks_IDR_0.05\tPeaks_in_merged\tPeaks_in_pseudo_reps\tSelected_peaks\n" > reports/summary_TF_peaks.txt
 fi
 
 pidsa=()
-while read line TF chip paired ref_dir
+while read line tf chip paired ref_dir
 do
 	#### To merge bam files of replicates
 	export line
-	export TF
+	export tf
 	export chip
 	export ref_dir
 	export ref=${ref_dir##*/}
-	export name=${line}_${TF}
-	export file=${line}_${TF}_IP
-	export input=${line}_${TF}_Input
+	export name=${line}_${tf}
+	export file=${line}_${tf}_IP
+	export input=${line}_${tf}_Input
 	export paired
 	if [ -s mapped/${input}_merged.bam ]; then
 		printf "\nReplicates of $input already merged\n"
@@ -216,7 +216,7 @@ do
 	
 		#### To get IDR analysis on biological replicates
 		if [ ! -s peaks/idr_${name}.narrowPeak ]; then
-			printf "\nDoing IDR analysis on both replicates from ${line}_${TF}_${chip} with idr version:\n"
+			printf "\nDoing IDR analysis on both replicates from ${line}_${tf}_${chip} with idr version:\n"
 			idr --version
 			idr --input-file-type narrowPeak --output-file-type narrowPeak --samples peaks/${name}_Rep1_peaks.narrowPeak peaks/${name}_Rep2_peaks.narrowPeak -o peaks/idr_${name}.narrowPeak -l reports/idr_${name}.log --plot || true
 			if [ -s peaks/idr_${name}.narrowPeak.png ]; then
