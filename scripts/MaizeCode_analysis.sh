@@ -122,17 +122,17 @@ while read data line tissue sample paired ref_dir
 do
 	case "$data" in
 		ChIP) 	datatype="ChIP"
-			tmpname="${tissue}";;
+			name=${line}_${tissue}_${sample};;
 		RNAseq) datatype="RNA"
-			tmpname="${tissue}";;
+			name=${line}_${tissue}_${sample};;
 		RAMPAGE) datatype="RNA"
-			tmpname="${tissue}";;
+			name=${line}_${tissue}_${sample};;
 		shRNA) datatype="shRNA"
-			tmpname="${tissue}";;
+			name=${line}_${tissue}_${sample};;
 		TF_*) datatype="TF"
-			tmpname=${data##TF_};;
+			tmpname=${data##TF_}
+			name=${line}_${tmpname};;
 	esac
-	name=${line}_${tmpname}_${sample}
 	printf "$line\t$tmpname\t$sample\t$paired\t${ref_dir}\n" >> combined/temp_reports_${samplename}_${datatype}.txt
 	if [ -e $datatype/chkpts/analysis_${name} ]; then
 		printf "\nSingle sample analysis for $name already done!\n"	
