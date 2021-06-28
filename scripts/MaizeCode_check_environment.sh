@@ -3,7 +3,7 @@
 #$ -cwd
 #$ -pe threads 20
 #$ -l m_mem_free=2G
-#$ -l tmp_free=50G
+#$ -l tmp_free=20G
 #$ -o env.log
 #$ -j y
 #$ -N env
