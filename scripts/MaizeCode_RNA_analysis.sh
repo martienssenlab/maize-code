@@ -3,7 +3,7 @@
 #$ -cwd
 #$ -pe threads 1
 #$ -l m_mem_free=2G
-#$ -l tmp_free=100G
+#$ -l tmp_free=10G
 #$ -o RNAanalysis.log
 #$ -j y
 #$ -N RNAanalysis
