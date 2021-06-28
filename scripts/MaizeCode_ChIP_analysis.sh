@@ -3,7 +3,7 @@
 #$ -cwd
 #$ -pe threads 20
 #$ -l m_mem_free=3G
-#$ -l tmp_free=50G
+#$ -l tmp_free=20G
 #$ -o ChIPanalysis.log
 #$ -j y
 #$ -N ChIPanalysis
