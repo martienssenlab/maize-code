@@ -105,10 +105,10 @@ inputable<-read.delim(args[3], header = TRUE) %>%
       ),
       annotations = list(
         'Distance to closest gene' = (
-          ggplot(mapping = aes(x=intersection, y=Distance), fill="#2e2e2e") +
-            geom_violin(scale="width", na.rm=TRUE, color = "black") +
+          ggplot(mapping = aes(x=intersection, y=Distance)) +
+            geom_violin(scale="width", na.rm=TRUE, color = "black", fill="#2e2e2e") +
             scale_y_continuous(trans = "log10",
-                               labels=scales::label_number_si(accuracy = 1, unit = "bp"))) +
+                               labels=scales::label_number_si(accuracy = 1, unit = "bp")))) +
       set_sizes = (upset_set_size() + ylab("Total peaks") +
         theme(axis.text.x = element_text(angle = 45))),
       matrix = (intersection_matrix(geom = geom_point(shape = "circle",size = 3),
