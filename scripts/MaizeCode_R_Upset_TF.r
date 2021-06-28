@@ -109,7 +109,7 @@ inputable<-read.delim(args[3], header = TRUE) %>%
             geom_violin(scale="width", na.rm=TRUE, color = "black") +
             scale_y_continuous(trans = "log10",
                                labels=scales::label_number_si(accuracy = 1, unit = "bp")) +
-			guides(fill = FALSE)))
+			guides(fill = FALSE)) +
       set_sizes = (upset_set_size() + ylab("Total peaks") +
         theme(axis.text.x = element_text(angle = 45))),
       matrix = (intersection_matrix(geom = geom_point(shape = "circle",size = 3),
