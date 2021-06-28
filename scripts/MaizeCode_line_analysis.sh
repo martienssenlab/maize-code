@@ -452,7 +452,7 @@ if [ ${#tf_sample_list[@]} -ge 1 ]; then
 	#### To make an Upset plot highlighting peaks in gene bodies
 	printf "\nCreating Upset plot for $analysisname with R version:\n"
 	R --version
-	Rscript --vanilla ${mc_dir}/MaizeCode_R_Upset_TF.r combined/peaks/matrix_upset_TF_${analysisname}.txt ${analysisname} $k27file
+	Rscript --vanilla ${mc_dir}/MaizeCode_R_Upset_TF.r $k27file combined/peaks/matrix_upset_TF_${analysisname}.txt ${analysisname}
 fi
 
 #############################################################################################
