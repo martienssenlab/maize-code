@@ -8,20 +8,22 @@ library(stringr)
 
 args = commandArgs(trailingOnly=TRUE)
 
-inputable<-read.delim(args[1], header = TRUE) %>%
-  mutate(Distance=Distance+1) %>%
-  rowwise() %>%
-  mutate(marked=ifelse(H3K27ac==1, "Yes", "No"))
+h3k27file<-args[1]
 samplename<-args[2]
-h3k27file<-args[3]
-
-inputable$Group<-factor(inputable$Group, levels=c("Distal_downstream","Terminator","Gene_body","Promoter","Distal_upstream"))
-set1<-colnames(inputable)
-sampleCols<-set1[! set1 %in% c("PeakID","Distance","Group","GID","marked")]
-
-colmarks<-c("Yes"="#EE616E", "No"="#2e2e2e")
 
 if ( h3k27file == "yes" ) {
+	
+ inputable<-read.delim(args[3], header = TRUE) %>%
+  	mutate(Distance=Distance+1) %>%
+  	rowwise() %>%
+  	mutate(marked=ifelse(H3K27ac==1, "Yes", "No"))
+
+ inputable$Group<-factor(inputable$Group, levels=c("Distal_downstream","Terminator","Gene_body","Promoter","Distal_upstream"))
+ set1<-colnames(inputable)
+ sampleCols<-set1[! set1 %in% c("PeakID","Distance","Group","GID","marked")]
+
+ colmarks<-c("Yes"="#EE616E", "No"="#2e2e2e")
+	
  combosK27ac <- map(seq(1:length(sampleCols)), ~ combn(sampleCols, ., FUN = c, simplify = FALSE)) %>% 
 	unlist(recursive = FALSE)
 
@@ -83,6 +85,13 @@ if ( h3k27file == "yes" ) {
 )
 } else {
 
+inputable<-read.delim(args[3], header = TRUE) %>%
+ 	 mutate(Distance=Distance+1)
+
+ inputable$Group<-factor(inputable$Group, levels=c("Distal_downstream","Terminator","Gene_body","Promoter","Distal_upstream"))
+ set1<-colnames(inputable)
+ sampleCols<-set1[! set1 %in% c("PeakID","Distance","Group","GID")]
+	
  plot<-upset(inputable, sampleCols, name="Peaks", 
       mode='exclusive_intersection',
       n_intersections=30,
@@ -96,11 +105,11 @@ if ( h3k27file == "yes" ) {
       ),
       annotations = list(
         'Distance to closest gene' = (
-          ggplot(mapping = aes(x=intersection, y=Distance, fill=marked)) +
+          ggplot(mapping = aes(x=intersection, y=Distance), fill="#2e2e2e") +
             geom_violin(scale="width", na.rm=TRUE, color = "black") +
             scale_y_continuous(trans = "log10",
                                labels=scales::label_number_si(accuracy = 1, unit = "bp")) +
-			scale_fill_manual(values=colmarks) + guides(fill = FALSE)))
+			guides(fill = FALSE)))
       set_sizes = (upset_set_size() + ylab("Total peaks") +
         theme(axis.text.x = element_text(angle = 45))),
       matrix = (intersection_matrix(geom = geom_point(shape = "circle",size = 3),
