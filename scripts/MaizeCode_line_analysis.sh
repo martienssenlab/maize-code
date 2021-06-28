@@ -2,8 +2,8 @@
 #$ -V
 #$ -cwd
 #$ -pe threads 20
-#$ -l m_mem_free=20G
-#$ -l tmp_free=100G
+#$ -l m_mem_free=4G
+#$ -l tmp_free=8G
 #$ -o lineanalysis.log
 #$ -j y
 #$ -N lineanalysis
