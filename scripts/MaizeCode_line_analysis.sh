@@ -365,9 +365,17 @@ if [ -s combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed ]; then
 fi
 
 nfile=0
-if [ -e ChIP/peaks/selected_peaks_${line}_*_H3K27ac.narrowPeak ]; then
-	nfile=$(ls ChIP/peaks/selected_peaks_${line}_*_H3K27ac.narrowPeak | wc -l)
-fi
+prev_tissues=()
+for file in ChIP/peaks/selected_peaks_${line}_*_H3K27ac.narrowPeak
+do
+	if [ -e "$file" ]; then
+		tmp1=${file##*/selected_peaks_${line}_}
+		tissue=${tmp1%%_H3K27ac.narrowPeak}
+		awk -v OFS="\t" -v s=$tissue '{print $1,$2,$3,s}' ${file} | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed
+		nfile=$((nfile+1))
+		prev_tissues+=("$tissue")
+	fi
+done
 
 if [ ${#chip_sample_list[@]} -ge 1 ]; then
 	printf "\nPreparing merged H3K27ac peaks from files in $analysisname\n"
@@ -382,13 +390,7 @@ if [ ${#chip_sample_list[@]} -ge 1 ]; then
 	rm -f combined/peaks/tmp*_peaks_H3K27ac_${analysisname}.bed
 	k27file="yes"
 elif [ $nfile -gt 0 ]; then
-	printf "\nPreparing merged H3K27ac peaks from files of the same $line line previously analyzed\n"
-	for file in ChIP/peaks/selected_peaks_${line}_*_H3K27ac.narrowPeak
-	do
-		tmp1=${file##*/selected_peaks_${line}_}
-		tissue=${tmp1%%_H3K27ac.narrowPeak}
-		awk -v OFS="\t" -v s=$tissue '{print $1,$2,$3,s}' ${file} | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed
-	done
+	printf "\nPreparing merged H3K27ac peaks from previously analyzed files, containing the following tissue(s):\n${prev_tissues[*]}"
 	sort -k1,1 -k2,2n combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed > combined/peaks/tmp2_peaks_H3K27ac_${analysisname}.bed
 	bedtools merge -i combined/peaks/tmp2_peaks_H3K27ac_${analysisname}.bed | sort -k1,1 -k2,2n > combined/peaks/merged_peaks_H3K27ac_${analysisname}.bed
 	rm -f combined/peaks/tmp*_peaks_H3K27ac_${analysisname}.bed
