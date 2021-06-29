@@ -143,6 +143,6 @@ inputable<-read.delim(args[3], header = TRUE) %>%
 )
 }
 
-pdf(paste0("combined/plots/Upset_TF_",samplename,".pdf"),10,8)
+pdf(paste0("combined/plots/Upset_TF_",samplename,".pdf"),15,8)
 print(plot)
 dev.off()
