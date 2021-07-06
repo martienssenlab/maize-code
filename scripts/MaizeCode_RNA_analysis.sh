@@ -142,14 +142,14 @@ do
 			#### To call TSS/peaks on each biological replicate
 			for rep in Rep1 Rep2
 			do
-				if [ ! -s TSS/${name}_${rep}_peaks.narrowPeak ]; then
+				if [ ! -s TSS/${name}_${rep}_peaks.narrowPeak ] && [ -s mapped/mrkdup_${line}_${tissue}_RNAseq_${rep}_Processed.out.bam ]; then
 					namefile=mapped/mrkdup_${name}_${rep}_Processed.out.bam
 					controlfile=mapped/mrkdup_${line}_${tissue}_RNAseq_${rep}_Processed.out.bam
 					printf "\nCalling peaks for TSS on ${namefile} vs ${controlfile} with macs2 version:\n"
 					macs2 --version
 					macs2 callpeak -t ${namefile} -c ${controlfile} -f BAM -g 2.2e9 -B -n ${name}_${rep} --keep-dup "all" --call-summits --outdir TSS/ --tempdir $TMPDIR --nomodel --extsize 100
 				else
-					printf "\nPeak already called for $name $rep\n"
+					printf "\nPeak already called for $name $rep or no corresponding RNAseq control file found\n"
 				fi
 			done
 			#### To get IDR analysis on biological replicates
