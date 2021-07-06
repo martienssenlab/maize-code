@@ -84,7 +84,7 @@ case "$rnatype" in
 			strandedness="reverse";;
 	RAMPAGE) 	param_map="--outFilterMultimapNmax 500"
 				param_dedup="--bamRemoveDuplicatesMate2basesN 15"
-				param_bg="--outWigType bedGraph read1_5p"
+				param_bg="--outWigType bedGraph read1_5p --outWigNorm None"
 				strandedness="forward";;				
 esac
 	
