@@ -249,6 +249,8 @@ fi
 
 #### To get the peaks stats for all ChIPseq samples in the samplefile
 
+printf "GOT HERE 1!\n"
+
 if [ -s combined/temp_reports_${samplename}_ChIP.txt ]; then
 	printf "\nSummarizing peak stats for ${samplename}\n"
 	if [ -s combined/reports/temp_peaks_${samplename}.txt ]; then
@@ -268,10 +270,15 @@ fi
 
 #### To get the RNA stats for all RNA samples in the samplefile
 
+printf "GOT HERE 2!\n"
+
 if [ -s combined/temp_reports_${samplename}_RNA.txt ]; then
+	printf "GOT HERE 3!\n"
 	#### To get gene expression stats for RNAseq samples
 	grep "RNAseq" combined/temp_reports_${samplename}_RNA.txt > combined/reports/temp_${samplename}.txt
+	printf "GOT HERE 4!\n"
 	exist=$( cat combined/reports/temp_${samplename}.txt | wc -l)
+	printf "GOT HERE 5!\n"
 	if [ $exist -gt 0 ]; then
 		printf "\nSummarizing gene expression stats for ${samplename}\n"
 		if [ -s combined/reports/temp_gene_expression_${samplename}.txt ]; then
