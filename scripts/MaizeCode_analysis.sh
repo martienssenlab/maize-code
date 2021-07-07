@@ -270,7 +270,8 @@ fi
 
 if [ -s combined/temp_reports_${samplename}_RNA.txt ]; then
 	#### To get gene expression stats for RNAseq samples
-	if [ grep -q "RNAseq" combined/temp_reports_${samplename}_RNA.txt ]; then
+	if grep -q -w "RNAseq" combined/temp_reports_${samplename}_RNA.txt
+	then
 		printf "\nSummarizing gene expression stats for ${samplename}\n"
 		grep "RNAseq" combined/temp_reports_${samplename}_RNA.txt > combined/reports/temp_${samplename}.txt
 		if [ -s combined/reports/temp_gene_expression_${samplename}.txt ]; then
@@ -291,7 +292,8 @@ if [ -s combined/temp_reports_${samplename}_RNA.txt ]; then
 	fi
 	
 	rm -f combined/reports/temp_${samplename}.txt
-	if [ grep -q "RAMPAGE" combined/temp_reports_${samplename}_RNA.txt ]; then
+	if grep -q -w "RAMPAGE" combined/temp_reports_${samplename}_RNA.txt
+	then
 		grep "RAMPAGE" combined/temp_reports_${samplename}_RNA.txt > combined/reports/temp_${samplename}.txt
 		printf "\nSummarizing tss stats for ${samplename}\n"
 		if [ -s combined/reports/temp_RAMPAGE_tss_${samplename}.txt ]; then
