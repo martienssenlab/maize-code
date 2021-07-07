@@ -287,7 +287,10 @@ if [ -s combined/temp_reports_${samplename}_RNA.txt ]; then
 		printf "\nPlotting gene expression stats for all RNAseq samples in the samplefile with R:\n"
 		R --version
 		Rscript --vanilla ${mc_dir}/MaizeCode_R_gene_ex_stats.r combined/reports/summary_gene_expression_${samplename}.txt ${samplename}
+	else
+		printf "\nNo RNAseq data\n"
 	fi
+	
 	rm -f combined/reports/temp_${samplename}.txt
 ##	grep "RAMPAGE" combined/temp_reports_${samplename}_RNA.txt > combined/reports/temp_${samplename}.txt
 ##	exist=$( cat combined/reports/temp_${samplename}.txt | wc -l)
@@ -345,7 +348,6 @@ fi
 ##	R --version
 ##	Rscript --vanilla ${mc_dir}/MaizeCode_R_peak_stats.r combined/reports/summary_ChIP_peaks_${samplename}.txt ${samplename}
 ## fi
-
 
 rm -f combined/temp_reports_*
 
