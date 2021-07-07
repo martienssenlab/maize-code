@@ -249,8 +249,6 @@ fi
 
 #### To get the peaks stats for all ChIPseq samples in the samplefile
 
-printf "GOT HERE 1!\n"
-
 if [ -s combined/temp_reports_${samplename}_ChIP.txt ]; then
 	printf "\nSummarizing peak stats for ${samplename}\n"
 	if [ -s combined/reports/temp_peaks_${samplename}.txt ]; then
@@ -270,17 +268,11 @@ fi
 
 #### To get the RNA stats for all RNA samples in the samplefile
 
-printf "GOT HERE 2!\n"
-
 if [ -s combined/temp_reports_${samplename}_RNA.txt ]; then
-	printf "GOT HERE 3!\n"
 	#### To get gene expression stats for RNAseq samples
-	grep "RNAseq" combined/temp_reports_${samplename}_RNA.txt > combined/reports/temp_${samplename}.txt
-	printf "GOT HERE 4!\n"
-	exist=$( cat combined/reports/temp_${samplename}.txt | wc -l)
-	printf "GOT HERE 5!\n"
-	if [ $exist -gt 0 ]; then
+	if [ grep -q -w "RNAseq" combined/temp_reports_${samplename}_RNA.txt ]; then
 		printf "\nSummarizing gene expression stats for ${samplename}\n"
+		grep "RNAseq" combined/temp_reports_${samplename}_RNA.txt > combined/reports/temp_${samplename}.txt
 		if [ -s combined/reports/temp_gene_expression_${samplename}.txt ]; then
 			rm -f combined/reports/temp_gene_expression_${samplename}.txt
 		fi
@@ -299,22 +291,26 @@ if [ -s combined/temp_reports_${samplename}_RNA.txt ]; then
 	fi
 	
 	rm -f combined/reports/temp_${samplename}.txt
-##	grep "RAMPAGE" combined/temp_reports_${samplename}_RNA.txt > combined/reports/temp_${samplename}.txt
-##	exist=$( cat combined/reports/temp_${samplename}.txt | wc -l)
-##	if [ $exist -gt 0 ]; then
-##		printf "\nSummarizing tss stats for ${samplename}\n"
-##		if [ -s combined/reports/temp_RAMPAGE_tss_${samplename}.txt ]; then
-##			rm -f combined/reports/temp_RAMPAGE_tss_${samplename}.txt
-##		fi
-##		while read line tissue sample paired ref_dir
-##		do
-##			awk -v a=$line -v b=$tissue -v c=$sample '$1==a && $2==b && $3==c' RNA/reports/summary_RAMPAGE_tss.txt >> combined/reports/temp_RAMPAGE_tss_${samplename}.txt
-##		done < combined/reports/temp_${samplename}.txt
-##		printf "Line\tTissue\tType\tTotal_annotated_genes\tTSS_in_rep1\tTSS_in_Rep2\tCommon_TSS\tCommon_TSS_IDR<=0.05\n" > combined/reports/summary_RAMPAGE_tss_${samplename}.txt
-##		sort combined/reports/temp_RAMPAGE_tss_${samplename}.txt -u >> combined/reports/summary_RAMPAGE_tss_${samplename}.txt
-##		rm -f combined/reports/temp_RAMPAGE_tss_${samplename}.txt
-##	fi
-##	rm -f combined/reports/temp_${samplename}.txt
+	if [ grep -q -w "RAMPAGE" combined/temp_reports_${samplename}_RNA.txt ]; then
+		grep "RAMPAGE" combined/temp_reports_${samplename}_RNA.txt > combined/reports/temp_${samplename}.txt
+		printf "\nSummarizing tss stats for ${samplename}\n"
+		if [ -s combined/reports/temp_RAMPAGE_tss_${samplename}.txt ]; then
+			rm -f combined/reports/temp_RAMPAGE_tss_${samplename}.txt
+		fi
+		while read line tissue sample paired ref_dir
+		do
+			awk -v a=$line -v b=$tissue -v c=$sample '$1==a && $2==b && $3==c' RNA/reports/summary_RAMPAGE_tss.txt >> combined/reports/temp_RAMPAGE_tss_${samplename}.txt
+		done < combined/reports/temp_${samplename}.txt
+		exist=$( cat combined/reports/temp_RAMPAGE_tss_${samplename}.txt | wc -l)
+		if [ $exist -gt 0]; then
+			printf "Line\tTissue\tType\tTotal_annotated_genes\tTSS_in_rep1\tTSS_in_Rep2\tCommon_TSS\tCommon_TSS_IDR<=0.05\n" > combined/reports/summary_RAMPAGE_tss_${samplename}.txt
+			sort combined/reports/temp_RAMPAGE_tss_${samplename}.txt -u >> combined/reports/summary_RAMPAGE_tss_${samplename}.txt
+		else
+			printf "\nNo tss stats available\n"
+		fi
+		rm -f combined/reports/temp_RAMPAGE_tss_${samplename}.txt
+	fi
+	rm -f combined/reports/temp_${samplename}.txt
 fi
 
 #### To get the peaks stats for all TF samples in the samplefile
