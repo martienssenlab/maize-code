@@ -122,16 +122,16 @@ while read data line tissue sample paired ref_dir
 do
 	case "$data" in
 		ChIP) 	datatype="ChIP"
-			tmpname="$data"
+			tmpname="$tissue"
 			name=${line}_${tissue}_${sample};;
 		RNAseq) datatype="RNA"
-			tmpname="$data"
+			tmpname="$tissue"
 			name=${line}_${tissue}_${sample};;
 		RAMPAGE) datatype="RNA"
-			tmpname="$data"
+			tmpname="$tissue"
 			name=${line}_${tissue}_${sample};;
 		shRNA) datatype="shRNA"
-			tmpname="$data"
+			tmpname="$tissue"
 			name=${line}_${tissue}_${sample};;
 		TF_*) datatype="TF"
 			tmpname=${data##TF_}
