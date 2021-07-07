@@ -304,11 +304,11 @@ if [ -s combined/temp_reports_${samplename}_RNA.txt ]; then
 			awk -v a=$line -v b=$tissue -v c=$sample '$1==a && $2==b && $3==c' RNA/reports/summary_RAMPAGE_tss.txt >> combined/reports/temp_RAMPAGE_tss_${samplename}.txt
 		done < combined/reports/temp_${samplename}.txt
 		exist=$(cat combined/reports/temp_RAMPAGE_tss_${samplename}.txt | wc -l | awk '{print $1}')
-		if [ $exist -gt 0]; then
+		if [ $exist -gt 0 ]; then
 			printf "Line\tTissue\tType\tTotal_annotated_genes\tTSS_in_rep1\tTSS_in_Rep2\tCommon_TSS\tCommon_TSS_IDR<=0.05\n" > combined/reports/summary_RAMPAGE_tss_${samplename}.txt
 			sort combined/reports/temp_RAMPAGE_tss_${samplename}.txt -u >> combined/reports/summary_RAMPAGE_tss_${samplename}.txt
 		else
-			printf "\nNo tss stats available\n"
+			printf "\nNo tss stats available ($exist sample)\n"
 		fi
 		rm -f combined/reports/temp_RAMPAGE_tss_${samplename}.txt
 	fi
