@@ -95,8 +95,8 @@ do
 		#### To merge bam files of replicates
 		if [ ! -s mapped/${name}_merged.bam ]; then
 			printf "\nMerging replicates of $name\n"
-			if [ -e mapped/mrkdup_${name}_Rep1_Processed.out.bam ]; then
-				samtools merge -@ $threads mapped/temp_${name}.bam mapped/mrkdup_${name}_Rep*_Processed.out.bam
+			if [ -e mapped/map_${name}_Rep1_Aligned.sortedByCoord.out.bam ]; then
+				samtools merge -@ $threads mapped/temp_${name}.bam mapped/map_${name}_Rep*_Aligned.sortedByCoord.out.bam
 			else
 				samtools merge -@ $threads mapped/temp_${name}.bam mapped/map_${name}_Rep*_Aligned.sortedByCoord.out.bam
 			fi
