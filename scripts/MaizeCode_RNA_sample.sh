@@ -130,12 +130,13 @@ if [[ $paired == "PE" ]]; then
 	#### Indexing bam file
 	printf "\nIndexing bam file\n"
 	samtools index -@ $threads mapped/mrkdup_${name}_Processed.out.bam
+	samtools index -@ $threads mapped/map_${name}_Aligned.sortedByCoord.out.bam
 	#### Getting stats from bam file
 	printf "\nGetting some stats\n"
 	samtools flagstat -@ $threads mapped/mrkdup_${name}_Processed.out.bam > reports/flagstat_${name}.txt
 	### Making BedGraph files
 	printf "\nMaking bedGraph files\n"
-	STAR --runMode inputAlignmentsFromBAM --inputBAMfile mapped/mrkdup_${name}_Processed.out.bam --outWigStrand Stranded ${param_bg} --outFileNamePrefix tracks/bg_${name}_
+	STAR --runMode inputAlignmentsFromBAM --inputBAMfile map_${name}_Aligned.sortedByCoord.out.bam --outWigStrand Stranded ${param_bg} --outFileNamePrefix tracks/bg_${name}_
 	### Converting to bigwig files
 	printf "\nConverting bedGraphs to bigWigs\n"
 	bedSort tracks/bg_${name}_Signal.UniqueMultiple.str1.out.bg tracks/${name}_Signal.sorted.UniqueMultiple.str1.out.bg
@@ -160,7 +161,6 @@ if [[ $paired == "PE" ]]; then
 	mv mapped/*${name}*Log* reports/
 	mv tracks/*${name}*Log* reports/
 	### Cleaning up
-	rm -f mapped/*${name}_Aligned*
 	rm -f tracks/*${name}_Signal*
 	### Summary stats
 	printf "\nMaking mapping statistics summary\n"
