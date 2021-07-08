@@ -2,8 +2,8 @@
 #$ -V
 #$ -cwd
 #$ -pe threads 20
-#$ -l m_mem_free=6G
-#$ -l tmp_free=10G
+#$ -l m_mem_free=8G
+#$ -l tmp_free=16G
 #$ -o RNAsample.log
 #$ -j y
 #$ -N RNAsample
