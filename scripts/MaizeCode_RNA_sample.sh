@@ -136,7 +136,7 @@ if [[ $paired == "PE" ]]; then
 	samtools flagstat -@ $threads mapped/mrkdup_${name}_Processed.out.bam > reports/flagstat_${name}.txt
 	### Making BedGraph files
 	printf "\nMaking bedGraph files\n"
-	STAR --runMode inputAlignmentsFromBAM --inputBAMfile map_${name}_Aligned.sortedByCoord.out.bam --outWigStrand Stranded ${param_bg} --outFileNamePrefix tracks/bg_${name}_
+	STAR --runMode inputAlignmentsFromBAM --inputBAMfile mapped/map_${name}_Aligned.sortedByCoord.out.bam --outWigStrand Stranded ${param_bg} --outFileNamePrefix tracks/bg_${name}_
 	### Converting to bigwig files
 	printf "\nConverting bedGraphs to bigWigs\n"
 	bedSort tracks/bg_${name}_Signal.UniqueMultiple.str1.out.bg tracks/${name}_Signal.sorted.UniqueMultiple.str1.out.bg
