@@ -624,7 +624,7 @@ if [[ "$total" == "No" ]]; then
 	exit 0
 fi
 
-if [ ${#chip_sample_list[@]} -ge 1 ]; then
+if [ ${#chip_sample_list[@]} -le 1 ]; then
 	printf "\nNot enough ChIP-seq samples for deeptools analysis for $analysisname\n"
 	touch combined/chkpts/analysis_${analysisname}
 	exit 0
