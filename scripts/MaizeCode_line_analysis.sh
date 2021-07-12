@@ -302,7 +302,7 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 		fi
 	done
 else 
-	printf "\nNo differential gene expression analysis performed (not enough samples)\n"
+	printf "\nNo differential gene expression analysis performed (not enough RNAseq samples)\n"
 fi
 
 #############################################################################################
@@ -624,12 +624,16 @@ if [[ "$total" == "No" ]]; then
 	exit 0
 fi
 
+if [ ${#chip_sample_list[@]} -ge 1 ]; then
+	printf "\nNot enough ChIP-seq samples for deeptools analysis for $analysisname\n"
+	touch combined/chkpts/analysis_${analysisname}
+	exit 0
+fi
+
 printf "\nDoing analysis for $analysisname with deeptools version:\n"
 deeptools --version
 
 uniq_chip_mark_list=($(printf "%s\n" "${chip_mark_list[@]}" | sort -u))
-
-#### To make heatmaps on the region file
 
 #### Splitting the region file by strand
 awk -v OFS="\t" '$6=="+"' $regionfile > combined/matrix/temp_regions_${regionname}_plus.bed
