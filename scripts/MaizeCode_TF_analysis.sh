@@ -252,11 +252,13 @@ do
 		#### v1="selected" peaks (best peaks from selected, i.e. in merged and both pseudo reps)		
 		printf "\nGetting peak fasta sequences for $name meme v1\n"
 		awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {a=$2+$10; print $1,a-50,a+50,$4}' peaks/best_peaks_${name}.bed > peaks/selected_motifs_${name}.bed
-		bedtools getfasta -name -fi ${ref_dir}/${ref}.fa -bed peaks/selected_motifs_${name}.bed > peaks/selected_sequences_${name}.fa
+		bedtools intersect -v -a peaks/selected_motifs_${name}.bed -b tracks/${ref}_masked_regions.bed > peaks/temp_selected_motifs_${name}.bed
+		bedtools getfasta -name -fi ${ref_dir}/${ref}.fa -bed peaks/temp_selected_motifs_${name}.bed > peaks/selected_sequences_${name}.fa
+		rm -f peaks/temp_selected_motifs_${name}.bed
 		printf "\nGetting motifs for $name with meme\n"
-		meme-chip -oc motifs/${name}/meme -meme-p $threads -meme-nmotifs 10 -streme-nmotifs 10 peaks/selected_sequences_${name}.fa
+		meme-chip -oc motifs/${name}/meme3 -meme-p $threads -meme-nmotifs 10 -streme-nmotifs 10 peaks/selected_sequences_${name}.fa
 		printf "\nLooking for similar motifs in JASPAR database with tomtom\n"
-		tomtom -oc motifs/${name}/tomtom motifs/${name}/meme/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
+		tomtom -oc motifs/${name}/tomtom3 motifs/${name}/meme3/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
 #		if [ -e motifs/peaks_with_motifs_${name}_meme1.txt ]; then
 #			rm -f motifs/peaks_with_motifs_${name}_meme1.txt
 #		fi
@@ -273,11 +275,13 @@ do
 		#### v2="selected" peaks (peaks in both biological reps, i.e all peaks in idr)
 		printf "\nGetting peak fasta sequences for $name meme v2\n"
 		awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {a=$2+$10; print $1,a-50,a+50}' peaks/idr_${name}.narrowPeak > peaks/selected_motifs_${name}.bed
+		bedtools intersect -v -a peaks/selected_motifs_${name}.bed -b tracks/${ref}_masked_regions.bed > peaks/temp_selected_motifs_${name}.bed
 		bedtools getfasta -name -fi ${ref_dir}/${ref}.fa -bed peaks/selected_motifs_${name}.bed > peaks/selected_sequences_${name}.fa
+		rm -f peaks/temp_selected_motifs_${name}.bed
 		printf "\nGetting motifs for $name with meme\n"
-		meme-chip -oc motifs/${name}/meme2 -meme-p $threads -meme-nmotifs 10 -streme-nmotifs 10 peaks/selected_sequences_${name}.fa
+		meme-chip -oc motifs/${name}/meme4 -meme-p $threads -meme-nmotifs 10 -streme-nmotifs 10 peaks/selected_sequences_${name}.fa
 		printf "\nLooking for similar motifs in JASPAR database with tomtom\n"
-		tomtom -oc motifs/${name}/tomtom2 motifs/${name}/meme2/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
+		tomtom -oc motifs/${name}/tomtom4 motifs/${name}/meme4/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
 #		if [ -e motifs/peaks_with_motifs_${name}_meme2.txt ]; then
 #			rm -f motifs/peaks_with_motifs_${name}_meme2.txt
 #		fi
