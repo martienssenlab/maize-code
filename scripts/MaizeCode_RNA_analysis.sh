@@ -73,10 +73,8 @@ do
 	case "$rnatype" in
 		RNAseq)	export param_bg="--outWigType bedGraph"
 				export strandedness="reverse";;
-		shRNA) 	export param_bg="--outWigType bedGraph"
-				export strandedness="reverse";;
 		RAMPAGE)	export param_bg="--outWigType bedGraph read1_5p"
-					export strandedness="forward";;
+				export strandedness="reverse";;
 	esac
 	printf "\nStarting single RNA sample analysis for $name\n"	
 	export ref_dir=${ref_dir}
