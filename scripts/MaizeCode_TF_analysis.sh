@@ -249,7 +249,7 @@ do
 		
 		#### To find motifs in different peak sets:
 		
-		#### v1="selected" peaks (best peaks from selected, i.e. in merged and both pseudo reps)		
+		#### v1="selected" peaks (best peaks from selected, i.e. in merged and both pseudo reps) with MEME		
 		printf "\nGetting peak fasta sequences for $name meme v1\n"
 		awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {a=$2+$10; print $1,a-50,a+50,$4}' peaks/best_peaks_${name}.bed > peaks/selected_motifs_${name}.bed
 		bedtools getfasta -name -fi ${ref_dir}/${ref}.fa -bed peaks/selected_motifs_${name}.bed > peaks/selected_sequences_${name}.fa
@@ -258,7 +258,7 @@ do
 		printf "\nLooking for similar motifs in JASPAR database with tomtom\n"
 		tomtom -oc motifs/${name}/tomtom motifs/${name}/meme/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
 
-		#### v2="replicated" peaks (peaks in both biological reps, i.e all peaks in idr)
+		#### v2="replicated" peaks (peaks in both biological reps, i.e all peaks in idr) with MEME
 		printf "\nGetting peak fasta sequences for $name meme v2\n"
 		awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {a=$2+$10; print $1,a-50,a+50}' peaks/idr_${name}.narrowPeak > peaks/selected_motifs_${name}.bed
 		bedtools getfasta -name -fi ${ref_dir}/${ref}.fa -bed peaks/selected_motifs_${name}.bed > peaks/selected_sequences_${name}.fa
@@ -267,7 +267,7 @@ do
 		printf "\nLooking for similar motifs in JASPAR database with tomtom\n"
 		tomtom -oc motifs/${name}/tomtom2 motifs/${name}/meme2/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
 		
-		#### v3="selected" peaks (best peaks from selected, i.e. in merged and both pseudo reps) without masked sequences
+		#### v3="selected" peaks (best peaks from selected, i.e. in merged and both pseudo reps) without masked sequences with MEME
 		printf "\nGetting peak fasta sequences for $name meme v3\n"
 		awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {a=$2+$10; print $1,a-50,a+50,$4}' peaks/best_peaks_${name}.bed > peaks/selected_motifs_${name}.bed
 		bedtools intersect -v -wa -a peaks/selected_motifs_${name}.bed -b tracks/${ref}_masked_regions.bed > peaks/masked_selected_motifs_${name}.bed
@@ -277,7 +277,7 @@ do
 		printf "\nLooking for similar motifs in JASPAR database with tomtom\n"
 		tomtom -oc motifs/${name}/tomtom3 motifs/${name}/meme3/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
 
-		#### v4="replicated" peaks (peaks in both biological reps, i.e all peaks in idr) without masked sequences
+		#### v4="replicated" peaks (peaks in both biological reps, i.e all peaks in idr) without masked sequences with MEME
 		printf "\nGetting peak fasta sequences for $name meme v4\n"
 		awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {a=$2+$10; print $1,a-50,a+50}' peaks/idr_${name}.narrowPeak > peaks/selected_motifs_${name}.bed
 		bedtools intersect -v -wa -a peaks/selected_motifs_${name}.bed -b tracks/${ref}_masked_regions.bed > peaks/masked_selected_motifs_${name}.bed
@@ -287,6 +287,10 @@ do
 		printf "\nLooking for similar motifs in JASPAR database with tomtom\n"
 		tomtom -oc motifs/${name}/tomtom4 motifs/${name}/meme4/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
 
+		#### v5="selected" peaks (best peaks from selected, i.e. in merged and both pseudo reps) with HOMER		
+		printf "\nGetting motifs for $name with HOMER\n"
+		findMotifsGenome.pl peaks/best_peaks_${name}.bed motifs/${name}/homer/ -len 6,8,10 -size given
+		
 #		if [ -e motifs/peaks_with_motifs_${name}_meme2.txt ]; then
 #			rm -f motifs/peaks_with_motifs_${name}_meme2.txt
 #		fi
