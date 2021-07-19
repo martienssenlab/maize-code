@@ -75,8 +75,10 @@ name=${line}_${tissue}_${rnatype}_${rep}
 
 case "$rnatype" in
 	RNAseq)		param_bg="--outWigType bedGraph"
+			filesorder="fastq/trimmed_${name}_R1.fastq.gz fastq/trimmed_${name}_R2.fastq.gz"
 			strandedness="reverse";;
 	RAMPAGE) 	param_bg="--outWigType bedGraph read1_5p"
+			filesorder="fastq/trimmed_${name}_R2.fastq.gz fastq/trimmed_${name}_R1.fastq.gz"
 			strandedness="reverse";;				
 esac
 	
@@ -116,7 +118,7 @@ if [[ $paired == "PE" ]]; then
 	#### Aligning reads to reference genome with STAR
 	printf "\nMaping $name to $ref with STAR version:\n"
 	STAR --version
-	STAR --runMode alignReads --genomeDir ${ref_dir}/STAR_index --readFilesIn fastq/trimmed_${name}_R1.fastq.gz fastq/trimmed_${name}_R2.fastq.gz --readFilesCommand zcat --runThreadN $threads --genomeLoad NoSharedMemory --outMultimapperOrder Random --outFileNamePrefix mapped/map_${name}_ --outSAMtype BAM SortedByCoordinate --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNmax 999 --outFilterMismatchNoverReadLmax 0.04 --alignIntronMin 20 --alignIntronMax 1000000 --alignMatesGapMax 1000000 --outFilterMultimapNmax 20 --quantMode GeneCounts	
+	STAR --runMode alignReads --genomeDir ${ref_dir}/STAR_index --readFilesIn ${filesorder} --readFilesCommand zcat --runThreadN $threads --genomeLoad NoSharedMemory --outMultimapperOrder Random --outFileNamePrefix mapped/map_${name}_ --outSAMtype BAM SortedByCoordinate --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNmax 999 --outFilterMismatchNoverReadLmax 0.04 --alignIntronMin 20 --alignIntronMax 1000000 --alignMatesGapMax 1000000 --outFilterMultimapNmax 20 --quantMode GeneCounts	
 	### Marking duplicates
 	STAR --runMode inputAlignmentsFromBAM --inputBAMfile mapped/map_${name}_Aligned.sortedByCoord.out.bam --bamRemoveDuplicatesType UniqueIdentical --outFileNamePrefix mapped/mrkdup_${name}_
 	#### Indexing bam file
