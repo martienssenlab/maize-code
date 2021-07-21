@@ -79,7 +79,7 @@ case "$rnatype" in
 			strandedness="reverse";;
 	RAMPAGE) 	param_bg="--outWigType bedGraph read1_5p"
 			filesorder="fastq/trimmed_${name}_R2.fastq.gz fastq/trimmed_${name}_R1.fastq.gz"
-			strandedness="reverse";;				
+			strandedness="forward";;				
 esac
 	
 if [[ $paired == "PE" ]]; then
