@@ -120,7 +120,7 @@ if [[ $paired == "PE" ]]; then
 	STAR --version
 	STAR --runMode alignReads --genomeDir ${ref_dir}/STAR_index --readFilesIn ${filesorder} --readFilesCommand zcat --runThreadN $threads --genomeLoad NoSharedMemory --outMultimapperOrder Random --outFileNamePrefix mapped/map_${name}_ --outSAMtype BAM SortedByCoordinate --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNmax 999 --outFilterMismatchNoverReadLmax 0.04 --alignIntronMin 20 --alignIntronMax 1000000 --alignMatesGapMax 1000000 --outFilterMultimapNmax 20 --quantMode GeneCounts	
 	### Marking duplicates
-	STAR --runMode inputAlignmentsFromBAM --inputBAMfile mapped/map_${name}_Aligned.sortedByCoord.out.bam --bamRemoveDuplicatesType UniqueIdentical --bamRemoveDuplicatesMate2basesN 15 --outFileNamePrefix mapped/mrkdup_${name}_
+	STAR --runMode inputAlignmentsFromBAM --inputBAMfile mapped/map_${name}_Aligned.sortedByCoord.out.bam --bamRemoveDuplicatesType UniqueIdentical --outFileNamePrefix mapped/mrkdup_${name}_
 	#### Indexing bam file
 	printf "\nIndexing bam file\n"
 	samtools index -@ $threads mapped/mrkdup_${name}_Processed.out.bam
