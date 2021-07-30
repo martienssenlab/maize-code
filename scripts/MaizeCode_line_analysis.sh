@@ -721,9 +721,6 @@ do
 	plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} ${rnaseq_sample_list[@]} --regionsLabel ${regionname} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --interpolationMethod 'bilinear'
 	printf "\nPlotting heatmap for $matrix matrix of $analysisname scaling by sample\n"
 	plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}_v2.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} ${rnaseq_sample_list[@]} --regionsLabel ${regionname} --colorMap 'seismic' --zMin ${mins2[@]} --zMax ${maxs2[@]} --interpolationMethod 'bilinear'
-	# #### Not very useful right now ####
-	# printf "\nPlotting heatmap for $matrix matrix of $analysisname in 5 clusters (kmeans)\n"
-	# plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}_k5.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} ${rnaseq_sample_list[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --interpolationMethod 'bilinear' --kmeans 5 --outFileSortedRegions combined/matrix/${analysisname}_${matrix}_regions_k5.txt
 done
 
 rm -f combined/matrix/*${analysisname}*.gz
@@ -784,12 +781,6 @@ if [ ${#rnaseq_name_list[@]} -ge 2 ]; then
 			maxi=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $6}')
 			maxs+=("$maxi")
 		done
-		# #### Not very useful right now, too messy ####
-		# k=$(( ${#regions_files[@]} / 2 ))
-		# printf "\nPlotting complete heatmap for DEG for each sample pairs from $analysisname\n"
-		# plotHeatmap -m combined/matrix/${analysisname}_DEG.gz -out combined/plots/${analysisname}_heatmap_DEG.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} --regionsLabel ${regions_labels[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --interpolationMethod 'bilinear'
-		# printf "\nPlotting complete heatmap for all DEGs from $analysisname\n"
-		# plotHeatmap -m combined/matrix/${analysisname}_all_DEGs.gz -out combined/plots/${analysisname}_heatmap_all_DEGs_${k}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} --colorMap 'seismic' --interpolationMethod 'bilinear' --kmeans ${k}
 	
 		for mark in ${uniq_chip_mark_list[@]}
 		do
