@@ -103,6 +103,8 @@ shrna_sample_list=()
 shrna_tissue_list=()
 rnaseq_bw_list_plus=()
 rnaseq_bw_list_minus=()
+rampage_bw_list_plus=()
+rampage_bw_list_minus=()
 while read data line tissue sample paired ref_dir
 do
 	case "$data" in
@@ -141,6 +143,8 @@ do
 			rnaseq_tissue_list+=("${tissue}")
 			rnaseq_name_list+=("${line}_${tissue}")
 		elif [[ "$sample" == "RAMPAGE" ]]; then
+			rampage_bw_list_plus+=("$datatype/tracks/${name}_merged_plus.bw")
+			rampage_bw_list_minus+=("$datatype/tracks/${name}_merged_minus.bw")
 			rampage_sample_list+=("${name}")
 			rampage_tissue_list+=("${tissue}")
 		else 
@@ -615,8 +619,8 @@ fi
 
 #### To make heatmaps and profiles with deeptools
 #### By default, it does both scale-regions and reference-point on start of bedfile provided
-#### By default, it does heatmap on all the data, heatmap with 5 kmeans, and corresponding profiles
-#### Probably need to edit many parameters depending on the purpose of the analysis
+#### By default, it does heatmap on all the data and corresponding profiles
+#### Probably need to edit parameters depending on the purpose of the analysis
 
 if [[ "$total" == "No" ]]; then
 	printf "\nPartial combined analysis script finished successfully for $analysisname\n"
@@ -660,8 +664,8 @@ done
 for strand in plus minus
 do
 	case "$strand" in
-		plus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_plus[@]}";;
-		minus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_minus[@]}";;
+		plus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_plus[@]} ${rampage_bw_list_plus[@]}";;
+		minus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]}";;
 	esac
 	printf "\nComputing scale-regions $strand strand matrix for $analysisname\n"
 	computeMatrix scale-regions --missingDataAsZero --skipZeros -R combined/matrix/temp_regions_${regionname}_${strand}.bed -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o combined/matrix/regions_${analysisname}_${strand}.gz
@@ -679,9 +683,15 @@ do
 	computeMatrixOperations dataRange -m combined/matrix/${matrix}_${analysisname}.gz > combined/matrix/values_${matrix}_${analysisname}.txt
 	mins=()
 	maxs=()
-	if [ ${#rnaseq_bw_list_plus[@]} -gt 0 ]; then
+	if [ ${#rnaseq_bw_list_plus[@]} -gt 0 ] && [ ${#rampage_bw_list_plus[@]} -gt 0 ]; then
+		all_samples=("${uniq_chip_mark_list[*]}" "RNAseq" "RAMPAGE")
+		printf "\nincluding RNAseq and RAMPAGE to samples\n"
+	elif [ ${#rnaseq_bw_list_plus[@]} -gt 0 ]; then
 		all_samples=("${uniq_chip_mark_list[*]}" "RNAseq")
 		printf "\nincluding RNAseq to samples\n"
+	elif [ ${#rampage_bw_list_plus[@]} -gt 0 ]; then
+		all_samples=("${uniq_chip_mark_list[*]}" "RAMPAGE")
+		printf "\nincluding RAMPAGE to samples\n"
 	else
 		printf "\nOnly chipseq samples\n"
 		all_samples=("${uniq_chip_mark_list[*]}")
@@ -700,7 +710,7 @@ do
 	done
 	mins2=()
 	maxs2=()
-	for sample in ${sorted_labels[@]} ${rnaseq_sample_list[@]}
+	for sample in ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]}
 	do
 		mini=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $5}')
 		mins2+=("$mini")
