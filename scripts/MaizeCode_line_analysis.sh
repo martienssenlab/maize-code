@@ -677,12 +677,6 @@ rm -f combined/matrix/temp_regions_${regionname}_*.bed
 #### Merging stranded matrix, extracting scales and plotting heatmaps
 for matrix in regions tss
 do
-	printf "\nMerging stranded matrices aligned by $matrix of $analysisname\n"
-	computeMatrixOperations rbind -m combined/matrix/${matrix}_${analysisname}_plus.gz combined/matrix/${matrix}_${analysisname}_minus.gz -o combined/matrix/${matrix}_${analysisname}.gz
-	printf "\nGetting scales (10th and 90th quantiles) for $matrix matrix of $analysisname\n"
-	computeMatrixOperations dataRange -m combined/matrix/${matrix}_${analysisname}.gz > combined/matrix/values_${matrix}_${analysisname}.txt
-	mins=()
-	maxs=()
 	if [ ${#rnaseq_bw_list_plus[@]} -gt 0 ] && [ ${#rampage_bw_list_plus[@]} -gt 0 ]; then
 		all_samples=("${uniq_chip_mark_list[*]}" "RNAseq" "RAMPAGE")
 		printf "\nincluding RNAseq and RAMPAGE to samples\n"
@@ -695,7 +689,17 @@ do
 	else
 		printf "\nOnly chipseq samples\n"
 		all_samples=("${uniq_chip_mark_list[*]}")
-	fi
+	fi	
+	printf "\nMerging stranded matrices aligned by $matrix of $analysisname\n"
+	computeMatrixOperations rbind -m combined/matrix/${matrix}_${analysisname}_plus.gz combined/matrix/${matrix}_${analysisname}_minus.gz -o combined/matrix/${matrix}_${analysisname}.gz
+	printf "\nGetting scales (10th and 90th quantiles) for $matrix matrix of $analysisname\n"
+	computeMatrixOperations dataRange -m combined/matrix/${matrix}_${analysisname}.gz > combined/matrix/values_${matrix}_${analysisname}.txt
+	plotProfile -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/temp_${matrix}_${analysisname}_profile.pdf --samplesLabel ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]} --averageType mean --outFileNameData combined/matrix/values_profile_${matrix}_${analysisname}.txt
+	rm -f combined/plots/temp_${matrix}_${analysisname}_profile.pdf
+	mins=()
+	maxs=()
+	ymins=()
+	ymaxs=()
 	for mark in ${all_samples[@]}
 	do
 		mini=$(grep "$mark" combined/matrix/values_${matrix}_${analysisname}.txt | awk 'BEGIN {m=999999} {a=$5; if (a<m) m=a;} END {print m}')
@@ -707,30 +711,48 @@ do
 		temp4=${temp2[@]//#/}
 		mins+=("$temp3")
 		maxs+=("$temp4")
+		ymini=$(grep "$mark" combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
+		ymaxi=$(grep "$mark" combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.2}')
+		num=$(grep "$mark" combined/matrix/values_profile_${matrix}_${analysisname}.txt | wc -l)
+		temp1=$(eval $(echo printf '"#$ymini %0.s"' {1..$num}))
+		temp2=$(eval $(echo printf '"#$ymaxi %0.s"' {1..$num}))
+		temp3=${temp1[@]//#/}
+		temp4=${temp2[@]//#/}
+		ymins+=("$temp3")
+		ymaxs+=("$temp4")
 	done
 	mins2=()
 	maxs2=()
 	for sample in ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]}
 	do
 		mini=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $5}')
-		mins2+=("$mini")
 		maxi=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $6}')
-		maxs2+=("$maxi")
+		if [ $mini -eq 0 ] && [ $maxi -eq 0 ]; then
+			mins2+=("-0.05")
+			maxs2+=("0.05")
+		else
+			mins2+=("$mini")
+			maxs2+=("$maxi")
+		fi
 	done
-	plotProfile -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/temp_${matrix}_${analysisname}_profile.pdf --samplesLabel ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]} --averageType mean --outFileNameData combined/matrix/values_profile_${matrix}_${analysisname}.txt
-	ymins=()
-	ymaxs=()
-	for sample in ${tissue_labels[@]}
+	ymins2=()
+	ymaxs2=()
+	for sample in ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]}
 	do
 		ymini=$(grep $sample combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
-		ymins+=("$ymini")
 		ymaxi=$(grep $sample combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.2}')
-		ymaxs+=("$ymaxi")		
+		if [ $ymini -eq 0 ] && [ $ymaxi -eq 0 ]; then
+			ymins2+=("-0.05")
+			ymaxs2+=("0.05")
+		else
+			ymins2+=("$mini")
+			ymaxs2+=("$maxi")
+		fi
 	done
 	printf "\nPlotting heatmap for $matrix matrix of $analysisname scaling by mark\n"
-	plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]} --regionsLabel ${regionname} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --interpolationMethod 'bilinear'
+	plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]} --regionsLabel ${regionname} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
 	printf "\nPlotting heatmap for $matrix matrix of $analysisname scaling by sample\n"
-	plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}_v2.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]} --regionsLabel ${regionname} --colorMap 'seismic' --zMin ${mins2[@]} --zMax ${maxs2[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
+	plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}_v2.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]} --regionsLabel ${regionname} --colorMap 'seismic' --zMin ${mins2[@]} --zMax ${maxs2[@]} --yMin ${ymins2[@]} --yMax ${ymaxs2[@]} --interpolationMethod 'bilinear'
 done
 
 rm -f combined/matrix/*${analysisname}*.gz
