@@ -719,11 +719,16 @@ do
 	done
 	printf "\nPlotting heatmap for $matrix matrix of $analysisname scaling by mark\n"
 	plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]} --regionsLabel ${regionname} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --interpolationMethod 'bilinear'
+	plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}_nearest.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]} --regionsLabel ${regionname} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --interpolationMethod 'nearest'
 	printf "\nPlotting heatmap for $matrix matrix of $analysisname scaling by sample\n"
 	plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}_v2.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]} --regionsLabel ${regionname} --colorMap 'seismic' --zMin ${mins2[@]} --zMax ${maxs2[@]} --interpolationMethod 'bilinear'
+	plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}_v2_nearest.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]} --regionsLabel ${regionname} --colorMap 'seismic' --zMin ${mins2[@]} --zMax ${maxs2[@]} --interpolationMethod 'nearest'
 done
 
 rm -f combined/matrix/*${analysisname}*.gz
+
+printf "temporary finished\n"
+exit 0
 
 #### To make heatmaps and profiles with deeptools on the DEG if they were called
 
