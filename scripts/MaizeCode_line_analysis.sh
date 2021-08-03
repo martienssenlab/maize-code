@@ -727,6 +727,7 @@ do
 	do
 		mini=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{if ($5!=0) print $5; else print "-0.05"}')
 		maxi=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{if ($6!=0) print $6; else print "0.05"}')
+		printf "sample: ${sample} ymini: ${mini} ymaxi: ${maxi}\n"
 		mins2+=("$mini")
 		maxs2+=("$maxi")
 	done
@@ -736,8 +737,9 @@ do
 	do
 		ymini=$(grep $sample combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
 		ymaxi=$(grep $sample combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.2}')
-		ymins2+=("$mini")
-		ymaxs2+=("$maxi")
+		printf "sample: ${sample} ymini: ${ymini} ymaxi: ${ymaxi}\n"
+		ymins2+=("$ymini")
+		ymaxs2+=("$ymaxi")
 	done
 	printf "\nPlotting heatmap for $matrix matrix of $analysisname scaling by mark\n"
 	plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]} --regionsLabel ${regionname} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
