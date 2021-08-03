@@ -933,7 +933,7 @@ do
 			n=$(wc -l combined/DEG/sorted_${analysisname}_${tissue}_exp${i}.bed | awk '{print $1}')
 			regions_labels+=("$name($n)")	
 			sorted_regions+=("combined/DEG/sorted_${analysisname}_${tissue}_exp${i}.bed")
-			cp -Tf combined/DEG/sorted_${analysisname}_${tissue}_exp${i}.bed combined/DEG/sorted_${analysisname}_${tissue}_exp${i}.txt
+			\cp -Tf combined/DEG/sorted_${analysisname}_${tissue}_exp${i}.bed combined/DEG/sorted_${analysisname}_${tissue}_exp${i}.txt
 		done	
 		for strand in plus minus
 		do
@@ -956,7 +956,7 @@ do
 	
 		for i in 1 2 3 4 5 0
 		do
-			cp -Tf combined/DEG/sorted_${analysisname}_${tissue}_exp${i}.txt combined/DEG/sorted_${analysisname}_${tissue}_exp${i}.bed
+			\cp -Tf combined/DEG/sorted_${analysisname}_${tissue}_exp${i}.txt combined/DEG/sorted_${analysisname}_${tissue}_exp${i}.bed
 		done
 
 		### Merging stranded matrix, extracting scales and plotting heatmaps
