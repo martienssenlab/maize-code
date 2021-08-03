@@ -709,8 +709,15 @@ do
 		temp2=$(eval $(echo printf '"#$maxi %0.s"' {1..$num}))
 		temp3=${temp1[@]//#/}
 		temp4=${temp2[@]//#/}
-		mins+=("$temp3")
-		maxs+=("$temp4")
+		printf "sample: ${sample}\tmin: ${temp3}\tmax: ${temp4}\n"
+		if [[ $temp3 -eq 0 ]] && [[ $temp4 -eq 0 ]]; then
+			mins+=("-0.01")
+			maxs+=("0.01")
+			printf "NEW min: ${temp3}\tmax: ${temp4}\n"
+		else
+			mins+=("$temp3")
+			maxs+=("$temp4")		
+		fi
 		ymini=$(grep "$mark" combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
 		ymaxi=$(grep "$mark" combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.2}')
 		num=$(grep "$mark" combined/matrix/values_profile_${matrix}_${analysisname}.txt | wc -l)
@@ -727,7 +734,9 @@ do
 	do
 		mini=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $5}')
 		maxi=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $6}')
+		printf "sample: ${sample}\tmin: ${mini}\tmax: ${maxi}\n"
 		if [[ $mini -eq 0 ]] && [[ $maxi -eq 0 ]]; then
+			printf "NEW min: ${mini}\tmax: ${maxi}\n"
 			mins2+=("-0.01")
 			maxs2+=("0.01")
 		else
