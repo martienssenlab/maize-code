@@ -679,15 +679,15 @@ for matrix in regions tss
 do
 	if [ ${#rnaseq_bw_list_plus[@]} -gt 0 ] && [ ${#rampage_bw_list_plus[@]} -gt 0 ]; then
 		all_samples=("${uniq_chip_mark_list[*]}" "RNAseq" "RAMPAGE")
-		printf "\nincluding RNAseq and RAMPAGE to samples\n"
+		printf "\nIncluding RNAseq and RAMPAGE samples\n"
 	elif [ ${#rnaseq_bw_list_plus[@]} -gt 0 ]; then
 		all_samples=("${uniq_chip_mark_list[*]}" "RNAseq")
-		printf "\nincluding RNAseq to samples\n"
+		printf "\nIncluding RNAseq samples\n"
 	elif [ ${#rampage_bw_list_plus[@]} -gt 0 ]; then
 		all_samples=("${uniq_chip_mark_list[*]}" "RAMPAGE")
-		printf "\nincluding RAMPAGE to samples\n"
+		printf "\nIncluding RAMPAGE samples\n"
 	else
-		printf "\nOnly chipseq samples\n"
+		printf "\nOnly using ChIPseq samples\n"
 		all_samples=("${uniq_chip_mark_list[*]}")
 	fi	
 	printf "\nMerging stranded matrices aligned by $matrix of $analysisname\n"
@@ -725,15 +725,10 @@ do
 	maxs2=()
 	for sample in ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]}
 	do
-		mini=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $5}')
-		maxi=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $6}')
-		if [ $mini -eq 0 ] && [ $maxi -eq 0 ]; then
-			mins2+=("-0.05")
-			maxs2+=("0.05")
-		else
-			mins2+=("$mini")
-			maxs2+=("$maxi")
-		fi
+		mini=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{if ($5!=0) print $5; else print "-0.05"}')
+		maxi=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{if ($6!=0) print $6; else print "0.05"}')
+		mins2+=("$mini")
+		maxs2+=("$maxi")
 	done
 	ymins2=()
 	ymaxs2=()
@@ -741,13 +736,8 @@ do
 	do
 		ymini=$(grep $sample combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
 		ymaxi=$(grep $sample combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.2}')
-		if [ $ymini -eq 0 ] && [ $ymaxi -eq 0 ]; then
-			ymins2+=("-0.05")
-			ymaxs2+=("0.05")
-		else
-			ymins2+=("$mini")
-			ymaxs2+=("$maxi")
-		fi
+		ymins2+=("$mini")
+		ymaxs2+=("$maxi")
 	done
 	printf "\nPlotting heatmap for $matrix matrix of $analysisname scaling by mark\n"
 	plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]} --regionsLabel ${regionname} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
