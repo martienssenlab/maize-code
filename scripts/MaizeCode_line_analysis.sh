@@ -767,9 +767,6 @@ done
 
 rm -f combined/matrix/*${analysisname}*.gz
 
-printf "temporary finished\n"
-exit 0
-
 #### To make heatmaps and profiles with deeptools on the DEG if they were called
 
 if [ ${#rnaseq_name_list[@]} -ge 2 ]; then
@@ -910,6 +907,27 @@ do
 				tissue_labels_rna+=("$sample")
 			fi
 		done
+		tissue_rampage_bw_list_plus=()
+		for bw in ${rampage_bw_list_plus[*]}
+		do					
+			if [[ $bw =~ $tissue ]]; then
+				tissue_rampage_bw_list_plus+=("$bw")
+			fi
+		done
+		tissue_rampage_bw_list_minus=()
+		for bw in ${rampage_bw_list_minus[*]}
+		do					
+			if [[ $bw =~ $tissue ]]; then
+				tissue_rampage_bw_list_minus+=("$bw")
+			fi
+		done
+		tissue_labels_rampage=()
+		for sample in ${rampage_sample_list[*]}
+		do
+			if [[ $sample =~ $tissue ]]; then
+				tissue_labels_rampage+=("$sample")
+			fi
+		done
 
 		printf "Clustering genes by expression levels for ${tissue}\n"
 		cols=($(awk -v ORS=" " -v t=$tissue 'NR==1 {for(i=1;i<=NF;i++) if ($i~t) print i}' combined/DEG/counts_${analysisname}.txt))
@@ -956,9 +974,9 @@ do
 		for strand in plus minus
 		do
 			case "$strand" in
-				plus) 	bw_list="${tissue_chip_bw_list[*]} ${tissue_rnaseq_bw_list_plus[*]}"
+				plus) 	bw_list="${tissue_chip_bw_list[*]} ${tissue_rnaseq_bw_list_plus[*]} ${tissue_rampage_bw_list_plus[*]}"
 					sign="+";;
-				minus) 	bw_list="${tissue_chip_bw_list[*]} ${tissue_rnaseq_bw_list_minus[*]}"
+				minus) 	bw_list="${tissue_chip_bw_list[*]} ${tissue_rnaseq_bw_list_minus[*]} ${tissue_rampage_bw_list_minus[*]}"
 					sign="-";;
 			esac
 			regions=()
@@ -980,7 +998,7 @@ do
 		### Merging stranded matrix, extracting scales and plotting heatmaps
 		for matrix in regions tss
 		do
-			tissue_labels="${tissue_labels_chip[*]} ${tissue_labels_rna[*]}"
+			tissue_labels="${tissue_labels_chip[*]} ${tissue_labels_rna[*]} ${tissue_labels_rampage[*]}"
 			printf "\nMerging stranded matrices aligned by $matrix for ${tissue} in $analysisname\n"
 			computeMatrixOperations rbind -m combined/matrix/${matrix}_${analysisname}_plus.gz combined/matrix/${matrix}_${analysisname}_minus.gz -o combined/matrix/${matrix}_${analysisname}.gz
 			printf "\nGetting scales (10th and 90th quantiles) for $matrix matrix for ${tissue} in $analysisname\n"
@@ -990,9 +1008,14 @@ do
 			for sample in ${tissue_labels[@]}
 			do
 				mini=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $5}')
-				mins+=("$mini")
 				maxi=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $6}')
-				maxs+=("$maxi")
+				if [[ $mini -eq 0 ]] && [[ $maxi -eq 0 ]]; then
+					mins+=("-0.01")
+					maxs+=("0.01")
+				else
+					mins+=("$mini")
+					maxs+=("$maxi")
+				fi
 			done
 			computeMatrixOperations sort -m combined/matrix/${matrix}_${analysisname}.gz -R ${sorted_regions[@]} -o combined/matrix/final_${matrix}_${analysisname}.gz
 			plotProfile -m combined/matrix/final_${matrix}_${analysisname}.gz -out combined/plots/split_expression_${tissue}_${analysisname}_profile_${matrix}.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType mean --outFileNameData combined/matrix/values_${matrix}_${tissue}_${analysisname}.txt
@@ -1001,9 +1024,14 @@ do
 			for sample in ${tissue_labels[@]}
 			do
 			 	ymini=$(grep $sample combined/matrix/values_${matrix}_${tissue}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
-				ymins+=("$ymini")
 				ymaxi=$(grep $sample combined/matrix/values_${matrix}_${tissue}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.2}')
-				ymaxs+=("$ymaxi")		
+				if [[ $ymini -eq 0 ]] && [[ $ymaxi -eq 0 ]]; then
+					ymins+=("-0.01")
+					ymaxs+=("0.01")
+				else
+					ymins+=("$ymini")
+					ymaxs+=("$ymaxi")		
+				fi
 			done
 			printf "\nPlotting heatmap for $matrix matrix for ${tissue} in $analysisname scaling by sample\n"
 			plotHeatmap -m combined/matrix/final_${matrix}_${analysisname}.gz -out combined/plots/split_expression_${tissue}_${analysisname}_heatmap_${matrix}.pdf --sortRegions keep --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
