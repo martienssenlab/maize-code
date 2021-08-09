@@ -1014,7 +1014,8 @@ do
 			do
 				mini=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $5}')
 				maxi=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $6}')
-				if [[ $mini -eq 0 ]] && [[ $maxi -eq 0 ]]; then
+				test=$(awk -v a=$mini -v b=$maxi 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+				if [[ $test == "yes" ]]; then
 					mins+=("-0.01")
 					maxs+=("0.01")
 				else
@@ -1030,12 +1031,13 @@ do
 			do
 			 	ymini=$(grep $sample combined/matrix/values_${matrix}_${tissue}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
 				ymaxi=$(grep $sample combined/matrix/values_${matrix}_${tissue}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.2}')
-				if [[ $ymini -eq 0 ]] && [[ $ymaxi -eq 0 ]]; then
+				test=$(awk -v a=$ymini -v b=$ymaxi 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+				if [[ $test == "yes" ]]; then
 					ymins+=("-0.01")
 					ymaxs+=("0.01")
 				else
 					ymins+=("$ymini")
-					ymaxs+=("$ymaxi")		
+					ymaxs+=("$ymaxi")
 				fi
 			done
 			printf "\nPlotting heatmap for $matrix matrix for ${tissue} in $analysisname scaling by sample\n"
