@@ -713,6 +713,7 @@ do
 		temp2=$(eval $(echo printf '"$maxi %0.s"' {1..$num}))
 		mins+=("$temp1")
 		maxs+=("$temp2")
+		printf "mark: $mark\tmins: ${mins[*]}\tmaxs: ${maxs[*]}\n"
 		
 		ymini=$(grep "$mark" combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
 		ymaxi=$(grep "$mark" combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.2}')
@@ -725,6 +726,7 @@ do
 		temp2=$(eval $(echo printf '"$ymaxi %0.s"' {1..$num}))
 		ymins+=("$temp1")
 		ymaxs+=("$temp2")
+		printf "mark: $mark\tymins: ${ymins[*]}\tymaxs: ${ymaxs[*]}\n"
 	done
 	mins2=()
 	maxs2=()
@@ -740,6 +742,7 @@ do
 			mins2+=("$mini")
 			maxs2+=("$maxi")
 		fi
+		printf "sample: $sample\tmins2: ${mins2[*]}\tmaxs2: ${maxs2[*]}\n"
 	done
 	ymins2=()
 	ymaxs2=()
@@ -754,6 +757,7 @@ do
 			ymins2+=("$ymini")
 			ymaxs2+=("$ymaxi")
 		fi
+		printf "sample: $sample\tymins2: ${ymins2[*]}\tymaxs2: ${ymaxs2[*]}\n"
 	done
 	printf "\nPlotting heatmap for $matrix matrix of $analysisname scaling by mark\n"
 	plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]} --regionsLabel ${regionname} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
