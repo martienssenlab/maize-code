@@ -727,8 +727,8 @@ do
 		fi
 		for i in {1..$num}
 		do
-			mins+=("$ymini")
-			maxs+=("$ymaxi")
+			ymins+=("$ymini")
+			ymaxs+=("$ymaxi")
 		done
 		printf "mark: %s\tymins: %s\tymaxs: %s\n" "$mark" "${ymins[*]}" "${ymaxs[*]}"
 	done
