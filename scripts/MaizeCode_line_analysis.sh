@@ -707,7 +707,7 @@ do
 		num=$(grep "$mark" combined/matrix/values_${matrix}_${analysisname}.txt | wc -l)
 		test=$(awk -v a=$mini -v b=$maxi 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
 		if [[ $test == "yes" ]]; then
-			mini=("-0.01")
+			mini=("0")
 			maxi=("0.01")
 		fi
 		for i in $(seq 1 ${num})
@@ -720,7 +720,7 @@ do
 		num=$(grep "$mark" combined/matrix/values_profile_${matrix}_${analysisname}.txt | wc -l)
 		test=$(awk -v a=$ymini -v b=$ymaxi 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
 		if [[ $test == "yes" ]]; then
-			ymini=("-0.01")
+			ymini=("0")
 			ymaxi=("0.01")
 		fi
 		for i in $(seq 1 ${num})
@@ -728,7 +728,6 @@ do
 			ymins+=("$ymini")
 			ymaxs+=("$ymaxi")
 		done
-		printf "mark: %s\tymins: %s\tymaxs: %s\n" "$mark" "${ymins[*]}" "${ymaxs[*]}"
 	done
 	
 	mins2=()
@@ -739,13 +738,12 @@ do
 		maxi=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $6}')
 		test=$(awk -v a=$mini -v b=$maxi 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
 		if [[ $test == "yes" ]]; then
-			mins2+=("-0.01")
+			mins2+=("0")
 			maxs2+=("0.01")
 		else
 			mins2+=("$mini")
 			maxs2+=("$maxi")
 		fi
-		printf "sample: %s\tmins2: %s\tmaxs2: %s\n" "$sample" "${mins2[*]}" "${maxs2[*]}"
 	done
 	ymins2=()
 	ymaxs2=()
@@ -755,13 +753,12 @@ do
 		ymaxi=$(grep $sample combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.2}')
 		test=$(awk -v a=$ymini -v b=$ymaxi 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
 		if [[ $test == "yes" ]]; then
-			ymins2+=("-0.01")
+			ymins2+=("0")
 			ymaxs2+=("0.01")
 		else
 			ymins2+=("$ymini")
 			ymaxs2+=("$ymaxi")
 		fi
-		printf "sample: %s\tymins2: %s\tymaxs2: %s\n" "$sample" "${ymins2[*]}" "${ymaxs2[*]}"
 	done
 	printf "\nPlotting heatmap for $matrix matrix of $analysisname scaling by mark\n"
 	plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]} --regionsLabel ${regionname} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
@@ -1015,7 +1012,7 @@ do
 				maxi=$(grep $sample combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $6}')
 				test=$(awk -v a=$mini -v b=$maxi 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
 				if [[ $test == "yes" ]]; then
-					mins+=("-0.01")
+					mins+=("0")
 					maxs+=("0.01")
 				else
 					mins+=("$mini")
@@ -1032,7 +1029,7 @@ do
 				ymaxi=$(grep $sample combined/matrix/values_${matrix}_${tissue}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.2}')
 				test=$(awk -v a=$ymini -v b=$ymaxi 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
 				if [[ $test == "yes" ]]; then
-					ymins+=("-0.01")
+					ymins+=("0")
 					ymaxs+=("0.01")
 				else
 					ymins+=("$ymini")
