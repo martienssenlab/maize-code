@@ -692,7 +692,7 @@ do
 	fi	
 	printf "\nMerging stranded matrices aligned by $matrix of $analysisname\n"
 	computeMatrixOperations rbind -m combined/matrix/${matrix}_${analysisname}_plus.gz combined/matrix/${matrix}_${analysisname}_minus.gz -o combined/matrix/${matrix}_${analysisname}.gz
-	printf "\nGetting scales (10th and 90th quantiles) for $matrix matrix of $analysisname\n"
+	printf "\nGetting scales for $matrix matrix of $analysisname\n"
 	computeMatrixOperations dataRange -m combined/matrix/${matrix}_${analysisname}.gz > combined/matrix/values_${matrix}_${analysisname}.txt
 	plotProfile -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/temp_${matrix}_${analysisname}_profile.pdf --samplesLabel ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]} --averageType mean --outFileNameData combined/matrix/values_profile_${matrix}_${analysisname}.txt
 	rm -f combined/plots/temp_${matrix}_${analysisname}_profile.pdf
@@ -710,13 +710,11 @@ do
 			mini=("-0.01")
 			maxi=("0.01")
 		fi
-		for i in {1..$num}
+		for i in $(seq 1 ${num})
 		do
 			mins+=("$mini")
 			maxs+=("$maxi")
-		done
-		printf "mark: %s\tmins: %s\tmaxs: %s\n" "$mark" "${mins[*]}" "${maxs[*]}"
-		
+		done		
 		ymini=$(grep "$mark" combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
 		ymaxi=$(grep "$mark" combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.2}')
 		num=$(grep "$mark" combined/matrix/values_profile_${matrix}_${analysisname}.txt | wc -l)
@@ -725,13 +723,14 @@ do
 			ymini=("-0.01")
 			ymaxi=("0.01")
 		fi
-		for i in {1..$num}
+		for i in $(seq 1 ${num})
 		do
 			ymins+=("$ymini")
 			ymaxs+=("$ymaxi")
 		done
 		printf "mark: %s\tymins: %s\tymaxs: %s\n" "$mark" "${ymins[*]}" "${ymaxs[*]}"
 	done
+	
 	mins2=()
 	maxs2=()
 	for sample in ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]}
@@ -817,7 +816,7 @@ if [ ${#rnaseq_name_list[@]} -ge 2 ]; then
 		computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${regions_files[@]} -S ${sorted_marks[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o combined/matrix/${analysisname}_DEG.gz
 		printf "\nComputing matrix for all DEGs from $analysisname\n"
 		computeMatrix scale-regions --missingDataAsZero --skipZeros -R combined/matrix/temp_regions_${analysisname}_all_DEGs_unique.bed -S ${sorted_marks[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o combined/matrix/${analysisname}_all_DEGs.gz
-		printf "\nGetting scales (10th and 90th quantiles) for the DEG matrix of $analysisname\n"
+		printf "\nGetting scales for the DEG matrix of $analysisname\n"
 		computeMatrixOperations dataRange -m combined/matrix/${analysisname}_DEG.gz > combined/matrix/values_${analysisname}_DEG.txt
 		mins=()
 		maxs=()
@@ -851,7 +850,7 @@ if [ ${#rnaseq_name_list[@]} -ge 2 ]; then
 				filenames="combined/DEG/only_${namei}_DEG_UP_${analysisname}.bed combined/DEG/only_${namei}_DEG_DOWN_${analysisname}.bed"
 				printf "\nComputing matrix for $namei specific DEG from $analysisname\n"
 				computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${filenames} -S ${sorted_marks[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o combined/matrix/${analysisname}_only_${namei}_DEG.gz
-				printf "\nGetting scales (10th and 90th quantiles) for the $tissue specific DEG matrix of $analysisname\n"
+				printf "\nGetting scales for the $tissue specific DEG matrix of $analysisname\n"
 				computeMatrixOperations dataRange -m combined/matrix/${analysisname}_only_${namei}_DEG.gz > combined/matrix/values_${analysisname}_only_${namei}_DEG.gz
 				mins=()
 				maxs=()
@@ -1006,7 +1005,7 @@ do
 			tissue_labels="${tissue_labels_chip[*]} ${tissue_labels_rna[*]} ${tissue_labels_rampage[*]}"
 			printf "\nMerging stranded matrices aligned by $matrix for ${tissue} in $analysisname\n"
 			computeMatrixOperations rbind -m combined/matrix/${matrix}_${analysisname}_plus.gz combined/matrix/${matrix}_${analysisname}_minus.gz -o combined/matrix/${matrix}_${analysisname}.gz
-			printf "\nGetting scales (10th and 90th quantiles) for $matrix matrix for ${tissue} in $analysisname\n"
+			printf "\nGetting scales for $matrix matrix for ${tissue} in $analysisname\n"
 			computeMatrixOperations dataRange -m combined/matrix/${matrix}_${analysisname}.gz > combined/matrix/values_${matrix}_${analysisname}.txt
 			mins=()
 			maxs=()
