@@ -240,9 +240,59 @@ do
 	if [[ ${test_k27ac} == "yes" ]] && [[ ${#tissue_bw_plus[@]} -ge 2 ]]; then
 		printf "\nMaking heatmaps of distal enhancers (H3K27ac peak >2kb from TSS) in tissue %s\n" "${tissue}"
 		printf "\nGetting bed file of distal enhancers for %s\n" "${tissue}"
-		bedtools sort -g ${ref_dir}/chrom.sizes -i combined/peaks/best_peaks_${line}_${tissue}_H3K27ac.bed > combined/peaks/temp_${line}_${tissue}.bed
-		bedtools closest -a combined/peaks/temp_${line}_${tissue}.bed -b $regionfile -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" -v s=${sign} '($1~/^[0-9]/ || $1~/^chr[0-9]/ ) {if ($17>= 2000 && $16=="+") print $1,$2+$10,$12,".",$5,$16; else if ($17<= -2000 && $16=="-") print $0}' | sort -k5,5nr > combined/peaks/distal_${line}_${tissue}.bed
-		head combined/peaks/distal_${line}_${tissue}.bed		
+		bedtools sort -g ${ref_dir}/chrom.sizes -i combined/peaks/best_peaks_${line}_${tissue}_H3K27ac.bed > combined/peaks/temp_${analysisname}_${line}_${tissue}.bed
+		bedtools closest -a combined/peaks/temp_${analysisname}_${line}_${tissue}.bed -b $regionfile -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ ) {if ($17>= 2000 && $16=="+") print $1,$2+$10,$12,".",$5,$16; else if ($17<= -2000 && $16=="-") print $1,$2+$10,$13,".",$5,$16}' | sort -k5,5nr > combined/peaks/distal_${analysisname}_${line}_${tissue}.bed
+		tot=$(wc -l combined/peaks/distal_${analysisname}_${line}_${tissue}.bed | awk '{print $1}')
+		bin=$((tot/5))
+		min=0
+		max=$bin
+		for (( i = 1; i <= 5; i++ ))
+		do
+			awk -v n=$min -v m=$max 'NR>=n && NR <=m' combined/peaks/distal_${analysisname}_${line}_${tissue}.bed > combined/peaks/distal_${analysisname}_${line}_${tissue}_group${i}.bed
+			min=$((min+bin))
+			max=$((max+bin))
+		done
+
+		sorted_regions=()
+		regions_labels=()
+		for i in 1 2 3 4 5
+		do
+			case "$i" in
+				1) name="Top20%";;
+				2) name="20-40%";;
+				3) name="40-60%";;
+				4) name="60-80%";;
+				5) name="Bottom20%";;
+			esac
+			n=$(wc -l combined/peaks/distal_${analysisname}_${line}_${tissue}_group${i}.bed | awk '{print $1}')
+			regions_labels+=("$name($n)")	
+			sorted_regions+=("combined/peaks/distal_${analysisname}_${line}_${tissue}_group${i}.bed")
+			\cp -Tf combined/peaks/distal_${analysisname}_${line}_${tissue}_group${i}.bed combined/peaks/distal_${analysisname}_${line}_${tissue}_group${i}.txt
+		done	
+		for strand in plus minus
+		do
+			case "$strand" in
+				plus) 	bw_list="${tissue_bw_list_plus[*]}"
+					sign="+";;
+				minus) 	bw_list="${tissue_bw_list_minus[*]}"
+					sign="-";;
+			esac
+			regions=()
+			for i in 1 2 3 4 5 0
+			do
+				awk -v OFS="\t" -v s=$sign '$6==s' combined/peaks/distal_${analysisname}_${line}_${tissue}_group${i}.txt > combined/peaks/distal_${analysisname}_${line}_${tissue}_group${i}.bed
+			done
+			printf "\nComputing scale-regions $strand strand matrix for ${tissue}\n"
+			computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${sorted_regions[@]} -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o combined/matrix/regions_${analysisname}_distal_${strand}.gz
+			plotHeatmap -m combined/matrix/regions_${analysisname}_distal_${strand}.gz -out combined/plots/000_distal_${tissue}_${analysisname}_heatmap.pdf --sortRegions keep --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --colorMap 'seismic' --interpolationMethod 'bilinear'
+		done
+	
+		for i in 1 2 3 4 5
+		do
+			\cp -Tf combined/peaks/distal_${analysisname}_${line}_${tissue}_group${i}.txt combined/peaks/distal_${analysisname}_${line}_${tissue}_group${i}.bed
+		done		
+
+	
 	else
 		printf "\nTissue %s will not be processed (H3K27ac is present? %s\tNumber of datasets %s\n" "${tissue}" "${test_k27ac}" "${#tissue_labels[*]}"	
 	fi
