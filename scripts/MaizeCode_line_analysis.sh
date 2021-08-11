@@ -238,11 +238,11 @@ do
 	done
 	
 	if [[ ${test_k27ac} == "yes" ]] && [[ ${#tissue_bw_plus[@]} -ge 2 ]]; then
-		printf "\nMaking heatmaps of distal enhancers (H3K27ac peak >2kb from TSS) in tissue\n" "${tissue}"
-		printf "\nGetting bed file of distal enhancers for ${tissue}\n"
-		bedtools sort -g ${ref_dir}/chrom.sizes -i combined/peaks/best_peaks_${ref}_${tissue}_H3K27ac.bed > combined/peaks/temp_${ref}_${tissue}.bed
-		bedtools closest -a combined/peaks/temp_${ref}_${tissue}.bed -b $regionfile -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" -v s=${sign} '($1~/^[0-9]/ || $1~/^chr[0-9]/ ) {if ($17>= 2000 && $16=="+") print $1,$2+$10,$12,".",$5,$16; else if ($17<= -2000 && $16=="-") print $0}' | sort -k5,5nr > combined/peaks/distal_${ref}_${tissue}.bed
-		head combined/peaks/distal_${ref}_${tissue}.bed		
+		printf "\nMaking heatmaps of distal enhancers (H3K27ac peak >2kb from TSS) in tissue %s\n" "${tissue}"
+		printf "\nGetting bed file of distal enhancers for %s\n" "${tissue}"
+		bedtools sort -g ${ref_dir}/chrom.sizes -i combined/peaks/best_peaks_${line}_${tissue}_H3K27ac.bed > combined/peaks/temp_${line}_${tissue}.bed
+		bedtools closest -a combined/peaks/temp_${line}_${tissue}.bed -b $regionfile -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" -v s=${sign} '($1~/^[0-9]/ || $1~/^chr[0-9]/ ) {if ($17>= 2000 && $16=="+") print $1,$2+$10,$12,".",$5,$16; else if ($17<= -2000 && $16=="-") print $0}' | sort -k5,5nr > combined/peaks/distal_${line}_${tissue}.bed
+		head combined/peaks/distal_${line}_${tissue}.bed		
 	else
 		printf "\nTissue %s will not be processed (H3K27ac is present? %s\tNumber of datasets %s\n" "${tissue}" "${test_k27ac}" "${#tissue_labels[*]}"	
 	fi
