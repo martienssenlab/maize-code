@@ -176,7 +176,9 @@ fi
 
 #### To make heatmap and profile with deeptools for each tissue based on grouped H3K27ac levels at distal elements (>2kb)
 
-for tissue in ${chip_tissue_list[@]}
+uniq_chip_tissue_list=($(printf "%s\n" "${chip_tissue_list[@]}" | sort -u))
+
+for tissue in ${uniq_chip_tissue_list[@]}
 do
 	tissue_labels=()
 	tissue_bw_plus=()
@@ -236,7 +238,9 @@ do
 	done
 	
 	if [[ ${test_k27ac} == "yes" ]] && [[ ${#tissue_bw_plus[@]} -ge 2 ]]; then
-		printf "Is k27ac present? %s\nlist of samples: %s\nlist of bw plus: %s\nlist of bw minus: %s\n" "${test_k27ac}" "${tissue_labels[*]}" "${tissue_bw_plus[*]}" "${tissue_bw_minus[*]}"
+		printf "Tissue: %s\nIs k27ac present? %s\nlist of samples: %s\nlist of bw plus: %s\nlist of bw minus: %s\n" "${tissue}" "${test_k27ac}" "${tissue_labels[*]}" "${tissue_bw_plus[*]}" "${tissue_bw_minus[*]}"
+	else
+		printf "Tissue: %s\nIs k27ac present? %s\nlist of samples: %s\nlist of bw plus: %s\nlist of bw minus: %s\n" "${tissue}" "${test_k27ac}" "${tissue_labels[*]}" "${tissue_bw_plus[*]}" "${tissue_bw_minus[*]}"	
 	fi
 done
 
