@@ -236,7 +236,7 @@ do
 	done
 	
 	if [[ ${test_k27ac} == "yes" ]] && [[ ${#tissue_bw_plus[@]} -ge 2 ]]; then
-		printf "Is k27ac present? %s\nlist of samples: %s\nlist of bw plus: %s\nlist of bw minus: %s\n" "${test_k27ac}" "${tissue_labels[@]}" "${tissue_bw_plus[@]}" "${tissue_bw_minus[@]}"
+		printf "Is k27ac present? %s\nlist of samples: %s\nlist of bw plus: %s\nlist of bw minus: %s\n" "${test_k27ac}" "${tissue_labels[*]}" "${tissue_bw_plus[*]}" "${tissue_bw_minus[*]}"
 	fi
 done
 
