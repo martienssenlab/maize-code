@@ -278,7 +278,7 @@ do
 					sign="-";;
 			esac
 			regions=()
-			for i in 1 2 3 4 5 0
+			for i in 1 2 3 4 5
 			do
 				awk -v OFS="\t" -v s=$sign '$6==s' combined/peaks/distal_${analysisname}_${line}_${tissue}_group${i}.txt > combined/peaks/distal_${analysisname}_${line}_${tissue}_group${i}.bed
 			done
