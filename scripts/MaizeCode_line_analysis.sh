@@ -272,9 +272,9 @@ do
 		for strand in plus minus
 		do
 			case "$strand" in
-				plus) 	bw_list="${tissue_bw_list_plus[*]}"
+				plus) 	bw_list="${tissue_bw_plus[*]}"
 					sign="+";;
-				minus) 	bw_list="${tissue_bw_list_minus[*]}"
+				minus) 	bw_list="${tissue_bw_minus[*]}"
 					sign="-";;
 			esac
 			regions=()
