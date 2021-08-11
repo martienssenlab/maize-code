@@ -171,6 +171,86 @@ else
 	export line=${line_list[0]}
 fi
 
+
+###########################################################################################
+
+#### To make heatmap and profile with deeptools for each tissue based on grouped H3K27ac levels at distal elements (>2kb)
+
+for tissue in ${chip_tissue_list[@]}
+do
+	tissue_labels=()
+	tissue_bw_plus=()
+	tissue_bw_minus=()
+	test_k27ac="no"
+	for sample in ${chip_sample_list[@]}
+	do
+		if [[ "$sample" =~ "${tissue}_H3K27ac" ]]; then
+			test_k27ac="yes"
+		fi
+		if [[ $sample =~ $tissue ]]; then
+			tissue_labels+=("$sample")
+		fi
+	done
+	for bw in ${chip_bw_list[@]}
+	do
+		if [[ $bw =~ $tissue ]]; then
+			tissue_bw_plus+=("$bw")
+			tissue_bw_minus+=("$bw")
+		fi
+	done
+	for bw in ${rnaseq_bw_list_plus[*]}
+	do					
+		if [[ $bw =~ $tissue ]]; then
+			tissue_bw_plus+=("$bw")
+		fi
+	done
+	for bw in ${rnaseq_bw_list_minus[*]}
+	do					
+		if [[ $bw =~ $tissue ]]; then
+			tissue_bw_minus+=("$bw")
+		fi
+	done
+	for sample in ${rnaseq_sample_list[*]}
+	do
+		if [[ $sample =~ $tissue ]]; then
+			tissue_labels+=("$sample")
+		fi
+	done
+	for bw in ${rampage_bw_list_plus[*]}
+	do					
+		if [[ $bw =~ $tissue ]]; then
+			tissue_bw_plus+=("$bw")
+		fi
+	done
+	for bw in ${rampage_bw_list_minus[*]}
+	do					
+		if [[ $bw =~ $tissue ]]; then
+			tissue_bw_minus+=("$bw")
+		fi
+	done
+	for sample in ${rampage_sample_list[*]}
+	do
+		if [[ $sample =~ $tissue ]]; then
+			tissue_labels+=("$sample")
+		fi
+	done
+	
+	if [[ ${test_k27ac} == "yes" ]] && [[ ${#tissue_bw_plus[@]} -ge 2 ]]; then
+		printf "Is k27ac present? %s\nlist of samples: %s\nlist of bw plus: %s\nlist of bw minus: %s\n" "${test_k27ac}" "${tissue_labels[@]}" "${tissue_bw_plus[@]}" "${tissue_bw_minus[@]}"
+	fi
+done
+
+
+printf "temporary stop success\n"
+exit 0
+
+
+
+
+###########################################################################################
+
+
+
 ############################################################################################
 ########################################## PART2 ###########################################
 ################# Differential gene expression analysis between tissues ####################
@@ -1047,19 +1127,9 @@ done
 rm -f combined/DEG/sorted_${analysisname}*
 rm -f combined/DEG/temp_counts_${analysisname}*
 
-#### To make heatmaps and profiles with deeptools on the ACRs called in Ricci et al. 2019 paper (if B73_v4 is the reference used)
-#### Not yet used so commented
 
-#if [[ $ref =~ "B73_v4" ]]; then
-#	if [ ! -s combined/matrix/leaf_ACRs.bed ]; then
-#		wget ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3398nnn/GSM3398046/suppl/GSM3398046_ATAC_B73_leaf.filtered_ACR.bed.gz
-#		pigz -d GSM3398046_ATAC_B73_leaf.filtered_ACR.bed.gz && mv GSM3398046_ATAC_B73_leaf.filtered_ACR.bed combined/matrix/leaf_ACRs.bed
-#	fi
-#	if [ ! -s combined/matrix/ears_ACRs.bed ]; then
-#		wget ftp://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3398nnn/GSM3398046/suppl/GSM3398047_ATAC_B73_ear.filtered_ACR.bed.gz
-#		pigz -d GSM3398047_ATAC_B73_ear.filtered_ACR.bed.gz && mv GSM3398047_ATAC_B73_ear.filtered_ACR.bed combined/matrix/ears_ACRs.bed
-#	fi
-# fi	
+
+
 
 
 printf "\nCombined analysis script finished successfully for $analysisname\n"
