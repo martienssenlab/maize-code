@@ -284,15 +284,71 @@ do
 			done
 			printf "\nComputing scale-regions $strand strand matrix for ${tissue}\n"
 			computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${sorted_regions[@]} -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o combined/matrix/regions_${analysisname}_distal_${strand}.gz
-			plotHeatmap -m combined/matrix/regions_${analysisname}_distal_${strand}.gz -out combined/plots/000_distal_${tissue}_${analysisname}_heatmap.pdf --sortRegions keep --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --colorMap 'seismic' --interpolationMethod 'bilinear'
 		done
 	
 		for i in 1 2 3 4 5
 		do
 			\cp -Tf combined/peaks/distal_${analysisname}_${line}_${tissue}_group${i}.txt combined/peaks/distal_${analysisname}_${line}_${tissue}_group${i}.bed
 		done		
-
-	
+		printf "\nMerging stranded matrices for ${tissue}\n"
+		computeMatrixOperations rbind -m combined/matrix/regions_${analysisname}_distal_plus.gz combined/matrix/regions_${analysisname}_distal_minus.gz -o combined/matrix/regions_${analysisname}_distal.gz
+		printf "\nGetting scales for ${tissue}\n"
+		computeMatrixOperations dataRange -m combined/matrix/regions_${analysisname}_distal.gz > combined/matrix/values_regions_distal_${analysisname}.txt
+		mins=()
+		maxs=()
+		for sample in ${tissue_labels[@]}
+		do
+			mini=$(grep $sample combined/matrix/values_regions_distal_${analysisname}.txt | awk '{print $5}')
+			maxi=$(grep $sample combined/matrix/values_regions_distal_${analysisname}.txt | awk '{print $6}')
+			test=$(awk -v a=$mini -v b=$maxi 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+			if [[ $test == "yes" ]]; then
+				mins+=("0")
+				maxs+=("0.01")
+			else
+				mins+=("$mini")
+				maxs+=("$maxi")
+			fi
+		done
+		computeMatrixOperations sort -m combined/matrix/regions_${analysisname}_distal.gz -R ${sorted_regions[@]} -o combined/matrix/final_regions_${analysisname}_distal.gz
+		plotProfile -m combined/matrix/final_regions_${analysisname}_distal.gz -out combined/plots/distal_${tissue}_${analysisname}_profile_mean.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType mean --outFileNameData combined/matrix/values_regions_distal_${analysisname}.txt
+		ymins=()
+		ymaxs=()
+		for sample in ${tissue_labels[@]}
+		do
+		 	ymini=$(grep $sample combined/matrix/values_regions_distal_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
+			ymaxi=$(grep $sample combined/matrix/values_regions_distal_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.2}')
+			test=$(awk -v a=$ymini -v b=$ymaxi 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+			if [[ $test == "yes" ]]; then
+				ymins+=("0")
+				ymaxs+=("0.01")
+			else
+				ymins+=("$ymini")
+				ymaxs+=("$ymaxi")
+			fi
+		done
+		printf "\nPlotting heatmap for ${tissue} in $analysisname scaling by sample\n"
+		plotHeatmap -m combined/matrix/final_regions_${analysisname}_distal.gz -out combined/plots/distal_${tissue}_${analysisname}_heatmap_mean.pdf --sortRegions keep --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
+		printf "\nPlotting mean profile for ${tissue} in $analysisname scaling by sample\n"
+		plotProfile -m combined/matrix/final_regions_${analysisname}_distal.gz -out combined/plots/distal_${tissue}_${analysisname}_profile_mean.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType mean --yMin ${ymins[@]} --yMax ${ymaxs[@]}
+		
+		plotProfile -m combined/matrix/final_regions_${analysisname}_distal.gz -out combined/plots/distal_${tissue}_${analysisname}_profile_median.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType median --outFileNameData combined/matrix/values_regions_distal_${analysisname}.txt
+		ymins=()
+		ymaxs=()
+		for sample in ${tissue_labels[@]}
+		do
+		 	ymini=$(grep $sample combined/matrix/values_regions_distal_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
+			ymaxi=$(grep $sample combined/matrix/values_regions_distal_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.2}')
+			test=$(awk -v a=$ymini -v b=$ymaxi 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+			if [[ $test == "yes" ]]; then
+				ymins+=("0")
+				ymaxs+=("0.01")
+			else
+				ymins+=("$ymini")
+				ymaxs+=("$ymaxi")
+			fi
+		done
+		printf "\nPlotting median profile for ${tissue} in $analysisname scaling by sample\n"
+		plotProfile -m combined/matrix/final_regions_${analysisname}_distal.gz -out combined/plots/distal_${tissue}_${analysisname}_profile_median.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType median --yMin ${ymins[@]} --yMax ${ymaxs[@]}
 	else
 		printf "\nTissue %s will not be processed (H3K27ac is present? %s\tNumber of datasets %s\n" "${tissue}" "${test_k27ac}" "${#tissue_labels[*]}"	
 	fi
