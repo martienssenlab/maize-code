@@ -384,9 +384,9 @@ pids+=("$!")
 
 wait ${pids[*]}
 
-printf "\nPerforming multiQC analysis on all samples from ${analysisnam}\n"
+printf "\nPerforming multiQC analysis on all samples from ${samplename}\n"
 multiqc --version
-multiqc . -n multiqc_${analysisname} -o combined/logs/ -i "multiQC_${analysisname}" -f -ip -e deepTools -e Snippy -z
+multiqc . -n multiqc_${samplename} -o combined/logs/ -i "multiQC_${samplename}" -f -ip -e deeptools -e snippy -z
 
 if [ -e all_genes.txt ]; then
 	rm -f all_genes.txt
