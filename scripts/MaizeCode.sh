@@ -40,7 +40,7 @@ usage="
 ##### It uses all the genes of the reference genome (if all samples are mapping to the same reference) as a region file or a combined analysis,
 ##### or only proceed with single sample analysis if different references are used. In the latter case, MaizeCode_analysis.sh script will need to be run independantly with the regionfile of your choice.
 #####
-##### Requirements for the mapping pipeline: pigz, samtools, fastQC, Cutadapt, Bowtie2 for ChIP data, STAR for RNA data, R and R packages: ggplot2,dplyr,tidyr,RColorBrewer,cowplot), parallel-fastq-dump (if downloading from SRA)
+##### Requirements for the mapping pipeline: pigz, samtools, fastQC, Cutadapt, Bowtie2 for ChIP data, STAR for RNA data, multiQC, R and R packages: ggplot2,dplyr,tidyr,RColorBrewer,cowplot), parallel-fastq-dump (if downloading from SRA)
 ##### Additional requirements for the analysis pipeline: bedtools, deeptools, macs2, idr, R packages: UpSetR for ChIP and RNA data, and limma,edgeR,stringr,gplots for RNAseq data
 "
 
@@ -383,6 +383,10 @@ fi
 pids+=("$!")
 
 wait ${pids[*]}
+
+printf "\nPerforming multiQC analysis on all samples from ${analysisnam}\n"
+multiqc --version
+multiqc . -n multiqc_${analysisname} -o combined/logs/ -i "multiQC_${analysisname}" -f -ip -e deepTools -e Snippy -z
 
 if [ -e all_genes.txt ]; then
 	rm -f all_genes.txt
