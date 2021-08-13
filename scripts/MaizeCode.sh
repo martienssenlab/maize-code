@@ -51,18 +51,18 @@ date
 startdate=`date +%s`
 printf "\n"
 
-export threads=$NSLOTS
+export threads=${NSLOTS}
 export mc_dir="${PWD}/scripts/"
 printf "\nRunning MaizeCode.sh script in working directory ${PWD}\n"
 
 if [ $# -eq 0 ]; then
-	printf "$usage\n"
+	printf "${usage}\n"
 	exit 1
 fi
 
 while getopts "f:p:scth" opt; do
 	case $opt in
-		h) 	printf "$usage\n"
+		h) 	printf "${usage}\n"
 			exit 0;;
 		f) 	export samplefile=${OPTARG};;
 		p)	export pathtoref=${OPTARG};;
@@ -72,20 +72,20 @@ while getopts "f:p:scth" opt; do
 			export wholeanalysis="STOP";;
 		t)	printf "\nOption to perform partial combined analysis selected\n"
 			export total="No";;
-		*)	printf "$usage\n"
+		*)	printf "\nUnknown option\n${usage}\n"
 			exit 1;;
 	esac
 done
 shift $((OPTIND - 1))
 
-if [ ! $samplefile ]; then
+if [ ! ${samplefile} ]; then
 	printf "Samplefile missing!\n"
-	printf "$usage\n"
+	printf "${usage}\n"
 	exit 1
 fi
-if [ ! $pathtoref ]; then
+if [ ! ${pathtoref} ]; then
 	printf "Path to reference genome folders missing!\n"
-	printf "$usage\n"
+	printf "${usage}\n"
 	exit 1
 fi
 
@@ -108,7 +108,7 @@ new_sample=0
 while read data line tissue sample rep sampleID path paired ref
 do
 	name=${line}_${tissue}_${sample}_${rep}
-	case "$data" in
+	case "${data}" in
 		ChIP) 	env="ChIP";;
 		RNAseq) env="RNA";;
 		RAMPAGE) env="RNA";;
@@ -116,9 +116,8 @@ do
 		TF_*) env="TF";;
 		*) env="unknown";;
 	esac
-	if [[ "$env" == "unknown" ]]; then
-		printf "Type of data unknown!\n"
-		printf "$usage\n"
+	if [[ "${env}" == "unknown" ]]; then
+		printf "Type of data unknown!\n${usage}\n"
 		exit 1
 	fi
 	if [ ! -e ${env}/chkpts/${name}_${ref} ]; then
@@ -130,7 +129,7 @@ do
 		newref_list+=("$ref")
 		data_ref_list+=("${env}_${ref}")
 	fi
-done < $samplefile
+done < ${samplefile}
 
 #### To check if new environments need to be prepapred
 if [[ ${new_env} == 0 ]]; then
@@ -146,30 +145,30 @@ else
 		for env in ${uniq_newdatatype_list[@]}
 		do
 			if [[ " ${data_ref_list[@]} " =~ " ${env}_${ref} " ]]; then
-				check_list+=("$env/chkpts/env_${ref}")
-				if [ ! -d ./$env ]; then
-					mkdir ./$env
-					mkdir ./$env/fastq
-					mkdir ./$env/mapped
-					mkdir ./$env/tracks
-					mkdir ./$env/reports
-					mkdir ./$env/logs
-					mkdir ./$env/chkpts
-					mkdir ./$env/plots
+				check_list+=("${env}/chkpts/env_${ref}")
+				if [ ! -d ./${env} ]; then
+					mkdir ./${env}
+					mkdir ./${env}/fastq
+					mkdir ./${env}/mapped
+					mkdir ./${env}/tracks
+					mkdir ./${env}/reports
+					mkdir ./${env}/logs
+					mkdir ./${env}/chkpts
+					mkdir ./${env}/plots
 				fi
 				printf "\nPreparing environment of ${ref} genome for ${env} data\n"
-				qsub -sync y -N env_${ref}_${env} -o $env/logs/env_${ref}.log ${mc_dir}/MaizeCode_check_environment.sh -p $pathtoref -r $ref -d $env &
+				qsub -sync y -N env_${ref}_${env} -o ${env}/logs/env_${ref}.log ${mc_dir}/MaizeCode_check_environment.sh -p ${pathtoref} -r ${ref} -d ${env} &
 				pids+=("$!")
-			elif [[ ! " ${data_ref_list[@]} " =~ " ${folder}_${env}_${ref} " ]]; then
+			elif [[ ! " ${data_ref_list[@]} " =~ " ${env}_${ref} " ]]; then
 			### Combination folder * datatype * ref does not exist in the sample file, moving on
 				:
-			elif [ ! -d $pathtoref/$ref ]; then
-				printf "\nNo $ref folder found in $pathtoref\n"
-				printf "$usage\n"
+			elif [ ! -d ${pathtoref}/${ref} ]; then
+				printf "\nNo ${ref} folder found in ${pathtoref}\n"
+				printf "${usage}\n"
 				exit 1
 			else
 				printf "\nError!\n"
-				printf "$usage\n"
+				printf "${usage}\n"
 				exit 1
 			fi	
 		done
@@ -180,13 +179,13 @@ else
 	#### Check if the environment are good or if an error occurred
 	for check in ${check_list[@]}
 	do
-		folder=${check%%/*}
+		env=${check%%/*}
 		ref=${check##*/env_}
-		if [ ! -e $check ]; then
-			printf "\nProblem while making environment with $ref genome in $folder folder!\nCheck log: $folder/logs/env_${ref}.log\n"
+		if [ ! -e ${check} ]; then
+			printf "\nProblem while making ${env} environment with ${ref} genome!\nCheck log: ${env}/logs/env_${ref}.log\n"
 			exit 1
 		else
-			printf "\nEnvironment for $env with $ref genome in ${folder} folder now good to go\n"
+			printf "\nEnvironment for ${env} with ${ref} genome now good to go\n"
 			if [ -e ${pathtoref}/${ref}/temp_${ref}.fa ]; then
 				rm -f ${pathtoref}/${ref}/temp_${ref}.fa
 			fi
@@ -227,54 +226,54 @@ sample_list=()
 pids=()
 while read data line tissue sample rep sampleID path paired ref
 do
-	ref_dir=$pathtoref/$ref
-	case "$data" in
-		ChIP) 	folder="ChIP"
+	ref_dir=${pathtoref}/${ref}
+	case "${data}" in
+		ChIP) 	env="ChIP"
 			shortname=${line}_${tissue}_${sample}
 			name=${line}_${tissue}_${sample}_${rep};;
-		RNAseq) folder="RNA"
+		RNAseq) env="RNA"
 			shortname=${line}_${tissue}_${sample}
 			name=${line}_${tissue}_${sample}_${rep};;
-		RAMPAGE) 	folder="RNA"
+		RAMPAGE) 	env="RNA"
 				shortname=${line}_${tissue}_${sample}
 				name=${line}_${tissue}_${sample}_${rep};;
-		shRNA) 	folder="shRNA"
+		shRNA) 	env="shRNA"
 			shortname=${line}_${tissue}_${sample}
 			name=${line}_${tissue}_${sample}_${rep};;
-		TF_*) 	folder="TF"
+		TF_*) 	env="TF"
 			tmp=${data##TF_}
 			shortname=${line}_${tmp}_${sample}
 			name=${line}_${tmp}_${sample}_${rep};;
 	esac
-	check=${folder}/chkpts/${name}_${ref}
-	ref_list+=("$ref")
-	if [ -e $check ]; then
-		printf "Sample $name has already been mapped to $ref genome\n"
+	check=${env}/chkpts/${name}_${ref}
+	ref_list+=("${ref}")
+	if [ -e ${check} ]; then
+		printf "Sample ${name} has already been mapped to ${ref} genome\n"
 	else
-		checkname_list+=("$name")
-		checkdatatype_list+=("$folder")
-		check_list+=("$check")
-		if ls ./${folder}/fastq/trimmed_${name}*.fastq.gz 1> /dev/null 2>&1; then
+		checkname_list+=("${name}")
+		checkdatatype_list+=("${env}")
+		check_list+=("${check}")
+		if ls ./${env}/fastq/trimmed_${name}*.fastq.gz 1> /dev/null 2>&1; then
 			printf "\nTrimmed fastq file(s) for ${name} already exist\n"
 			export step="done"
-		elif ls ./${folder}/fastq/${name}*.fastq.gz 1> /dev/null 2>&1; then
+		elif ls ./${env}/fastq/${name}*.fastq.gz 1> /dev/null 2>&1; then
 			printf "\nFastq file(s) for ${name} already exist\n"
 			export step="trim"
 		else
 			printf "\nNew sample ${name} to be copied/downloaded\n"
 			export step="download"
 		fi
-		printf "\nRunning ${folder} mapping script for $name on $ref genome\n"
-		cd $env
-		qsub -sync y -N ${name} -o logs/${name}.log ${mc_dir}/MaizeCode_${folder}_sample.sh -x $data -d $ref_dir -l $line -t $tissue -m $sample -r $rep -i $sampleID -f $path -p $paired -s $step &
+		printf "\nRunning ${env} mapping script for ${name} on ${ref} genome\n"
+		cd ${env}
+		qsub -sync y -N ${name} -o logs/${name}.log ${mc_dir}/MaizeCode_${env}_sample.sh -x ${data} -d ${ref_dir} -l ${line} -t ${tissue} -m ${sample} -r ${rep} -i ${sampleID} -f ${path} -p ${paired} -s ${step} &
 		pids+=("$!")
 		cd ..
 	fi
 	if [[ ! "${sample_list[@]}" =~ "${shortname}" ]] && [[ "${sample}" != "Input" ]]; then
 		printf "${data}\t${line}\t${tissue}\t${sample}\t${paired}\t${ref_dir}\n" >> $analysisfile
-		sample_list+=("$shortname")
+		sample_list+=("${shortname}")
 	fi
-done < $samplefile
+done < ${samplefile}
 
 if [[ ${new_sample} != 0 ]]; then
 #### Wait for the mapping sample scripts to finish
@@ -284,7 +283,7 @@ if [[ ${new_sample} != 0 ]]; then
 	i=0
 	for check in ${check_list[@]}
 	do
-		if [ ! -e $check ]; then
+		if [ ! -e ${check} ]; then
 			printf "\nProblem during mapping of ${checkname_list[i]}!\nCheck log: ${checkdatatype_list[i]}/logs/${checkname_list[i]}.log\n"
 			exit 1
 		else
@@ -303,20 +302,20 @@ fi
 
 while read data line tissue sample rep sampleID path paired ref
 do
-	case "$data" in
-		ChIP) folder="ChIP"
+	case "${data}" in
+		ChIP) env="ChIP"
 			name="${tissue}";;
-		RNAseq) folder="RNA"
+		RNAseq) env="RNA"
 			name="${tissue}";;
-		RAMPAGE) folder="RNA"
+		RAMPAGE) env="RNA"
 			name="${tissue}";;
-		shRNA) folder="shRNA"
+		shRNA) env="shRNA"
 			name="${tissue}";;
-		TF_*) folder="TF"
+		TF_*) env="TF"
 			name=${data##TF_};;
 	esac
-	awk -v a=$line -v b=$name -v c=$sample -v d=$rep -v e=$ref '$1==a && $2==b && $3==c && $4==d && $5==e' ${folder}/reports/summary_mapping_stats.txt >> combined/reports/temp_mapping_stats_${samplename}.txt
-done < $samplefile
+	awk -v a=${line} -v b=${name} -v c=${sample} -v d=${rep} -v e=${ref} '$1==a && $2==b && $3==c && $4==d && $5==e' ${env}/reports/summary_mapping_stats.txt >> combined/reports/temp_mapping_stats_${samplename}.txt
+done < ${samplefile}
 
 printf "Line\tTissue\tSample\tRep\tReference_genome\tTotal_reads\tPassing_filtering\tAll_mapped_reads\tUniquely_mapped_reads\n" > combined/reports/summary_mapping_stats_${samplename}.txt
 sort combined/reports/temp_mapping_stats_${samplename}.txt -u >> combined/reports/summary_mapping_stats_${samplename}.txt
@@ -326,12 +325,17 @@ R --version
 Rscript --vanilla ${mc_dir}/MaizeCode_R_mapping_stats.r combined/reports/summary_mapping_stats_${samplename}.txt ${samplename}
 
 if [[ "$keepgoing" == "STOP" ]]; then
+
+	printf "\nPerforming multiQC analysis on all samples from ${samplename}\n"
+	multiqc --version
+	multiqc . -n multiqc_${samplename} -o combined/logs/ -i "multiQC_${samplename}" -f -ip -e deeptools -e snippy -z
+
 	enddate=`date +%s`
 	runtime=$((enddate-startdate))
 	hours=$((runtime / 3600))
 	minutes=$(( (runtime % 3600) / 60 ))
 	seconds=$(( (runtime % 3600) % 60 ))
-	printf "\nScript finished successfully without analysis in $hours:$minutes:$seconds (hh:mm:ss)!\n"		
+	printf "\nScript finished successfully without analysis in ${hours}:${minutes}:${seconds} (hh:mm:ss)!\n"		
 	exit 0
 fi	
 
@@ -366,17 +370,17 @@ pids=()
 
 if [[ "$wholeanalysis" == "STOP" ]]; then
 	printf "\nPerforming only the single sample analysis\n"
-	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f $analysisfile -r all_genes.txt -s &
+	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -s &
 	analysisname="${samplename}_no_region"
 	check="combined/chkpts/${analysisname}"
 elif [[ "$total" == "No" ]]; then
 	printf "\nPerforming partial analysis on all genes\n"
-	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f $analysisfile -r all_genes.txt -t &
+	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -t &
 	analysisname="${samplename}_on_all_genes"
 	check="combined/chkpts/${analysisname}"
 else
 	printf "\nPerforming complete analysis on all genes\n"
-	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f $analysisfile -r all_genes.txt &
+	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt &
 	analysisname="${samplename}_on_all_genes"
 	check="combined/chkpts/${analysisname}"
 fi	
@@ -401,7 +405,7 @@ else
 	hours=$((runtime / 3600))
 	minutes=$(( (runtime % 3600) / 60 ))
 	seconds=$(( (runtime % 3600) % 60 ))
-	printf "\nMaizeCode script finished successfully in $hours:$minutes:$seconds (hh:mm:ss)!\nCheck out the plots!\n"
+	printf "\nMaizeCode script finished successfully in ${hours}:${minutes}:${seconds} (hh:mm:ss)!\nCheck out the plots!\n"
 fi
 
 ############################################################################################
