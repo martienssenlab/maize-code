@@ -768,7 +768,7 @@ if [ ${#rnaseq_name_list[@]} -ge 2 ]; then
 					maxi=$(grep ${sample} combined/matrix/values_${analysisname}_only_${namei}_DEG.gz | awk '{print $6}')
 					maxs+=("${maxi}")
 				done
-				plotProfile -m combined/matrix/${analysisname}_only_${namei}_DEG.gz -out combined/plots/temp_regions_${analysisname}_profile_only_${namei}_DEG.pdf --plotType 'lines' --averageType 'mean' --samplesLabel ${selected_labels[@]} --regionsLabel "${namei}_UP" "${namei}_DOWN" --outFileNameData combined/matrix/values_${analysisname}_profile_only_${namei}_DEG.txt
+				plotProfile -m combined/matrix/${analysisname}_only_${namei}_DEG.gz -out combined/plots/temp_regions_${analysisname}_profile_only_${namei}_DEG.pdf --plotType 'lines' --averageType 'mean' --samplesLabel ${sorted_labels[@]} --regionsLabel "${namei}_UP" "${namei}_DOWN" --outFileNameData combined/matrix/values_${analysisname}_profile_only_${namei}_DEG.txt
 				ymins=()
 				ymaxs=()
 				for sample in ${sorted_labels[@]}
