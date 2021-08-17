@@ -747,7 +747,7 @@ if [ ${#rnaseq_name_list[@]} -ge 2 ]; then
 			computeMatrixOperations subset -m combined/matrix/${analysisname}_DEG.gz -o combined/matrix/${analysisname}_DEG_${mark}.gz --samples ${selected_samples[@]}
 			printf "\nGetting scales for the DEG matrix of ${analysisname}\n"
 			printf "\nPlotting ${mark} profiles for DEG for each sample pairs from ${analysisname}\n"
-			plotProfile -m combined/matrix/${analysisname}_DEG_${mark}.gz -out combined/plots/${analysisname}_profile_DEG_${mark}.pdf --plotType 'lines' --averageType 'median' --samplesLabel ${selected_labels[@]} --regionsLabel ${regions_labels[@]} --perGroup --numPlotsPerRow 2
+			plotProfile -m combined/matrix/${analysisname}_DEG_${mark}.gz -out combined/matrix/${analysisname}_profile_DEG_${mark}.pdf --plotType 'lines' --averageType 'median' --samplesLabel ${selected_labels[@]} --regionsLabel ${regions_labels[@]} --perGroup --numPlotsPerRow 2
 		done
 		
 		#### To plot tissue-specific DEGs
@@ -784,7 +784,7 @@ if [ ${#rnaseq_name_list[@]} -ge 2 ]; then
 		fi
 	fi
 fi
-rm -f combined/matrix/temp_regions_${analysisname}*.bed
+rm -f combined/matrix/temp_regions_${analysisname}*
 rm -f combined/matrix/*${analysisname}*.gz
 rm -f combined/matrix/values*${analysisname}*
 
