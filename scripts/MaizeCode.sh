@@ -407,13 +407,3 @@ else
 	seconds=$(( (runtime % 3600) % 60 ))
 	printf "\nMaizeCode script finished successfully in ${hours}:${minutes}:${seconds} (hh:mm:ss)!\nCheck out the plots!\n"
 fi
-
-############################################################################################
-########################################## MISC ############################################
-############################################################################################
-
-# # ##### To make the samplefile (e.g. for B73 endosperm)
-
-# # printf "B73\tendosperm\tInput\tRep1\tS01\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tH3K4me1\tRep1\tS02\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tH3K4me3\tRep1\tS03\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tH3K27ac\tRep1\tS04\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tInput\tRep2\tS05\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tH3K4me1\tRep2\tS06\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tH3K4me3\tRep2\tS07\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tH3K27ac\tRep2\tS08\t/seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846\tPE\tB73_v4\nB73\tendosperm\tRNAseq\tRep1\tendo\t/mnt/grid/martienssen/nlsas_norepl/data/data/archive/data/maizecode/released/B73/Long_Rampage/endo_rep1/RNAseq\tPE\tB73_v4\nB73\tendosperm\tRAMPAGE\tRep1\tendo\t/mnt/grid/martienssen/nlsas_norepl/data/data/archive/data/maizecode/released/B73/Long_Rampage/endo_rep1/RAMPAGE\tPE\tB73_v4\nB73\tendosperm\tRNAseq\tRep2\tendo\t/mnt/grid/martienssen/nlsas_norepl/data/data/archive/data/maizecode/released/B73/Long_Rampage/endo_rep2/RNAseq\tPE\tB73_v4\nB73\tendosperm\tRAMPAGE\tRep2\tendo\t/mnt/grid/martienssen/nlsas_norepl/data/data/archive/data/maizecode/released/B73/Long_Rampage/endo_rep2/RAMPAGE\tPE\tB73_v4\n" > B73_endosperm_samplefile.txt
-
-############################################################################################
