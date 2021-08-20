@@ -31,6 +31,9 @@ IDR 2.0.4.2
 bedGraphToBigWig v 2.8
 bedSort
 parallel-fastq-dump (if downloading from SRA)
+meme v 5.3.0
+homer v 4.11
+multiqc v 1.11
 R 3.6.3
 R libraries: ggplot2 3.3.2; UpSetR 1.4.0; limma 3.42.2; edgeR 3.28.1; dplyr 1.0.2; tidyr 1.1.2; stringr 1.4.0; cowplot 1.1.0; gplots 3.1.0; RColorBrewer 1.1.2; ComplexUpset ; purrr ; AnnotationForge ; rrvgo ;
 ```
