@@ -30,7 +30,7 @@ plot.peak.stats<-function(stattable, name) {
   
   plot<-ggplot(table, aes(Mark,Number,fill=Peak_type)) +
     geom_bar(stat="identity", position="dodge", color="black", show.legend = T) +
-    labs(title=paste("Number of peaks in each ChIPseq sample of",analysisname), 
+    labs(title=paste("Number of peaks in each Histone ChIPseq sample of",analysisname), 
          x="",y="Number of peaks", fill="Peaks in:") +
     scale_fill_manual(values = brewer.pal(7,"Paired")) +
     facet_grid(~Line+Tissue) +
@@ -50,7 +50,7 @@ plot.peak.stats<-function(stattable, name) {
 }
 
 
-pdf(paste0("combined/plots/peak_stats_",analysisname,".pdf"), height=10, width=12)
+pdf(paste0("combined/plots/Histone_ChIP_peak_stats_",analysisname,".pdf"), height=10, width=12)
 plot.peak.stats(peak_stats, analysisname)
 dev.off()
 

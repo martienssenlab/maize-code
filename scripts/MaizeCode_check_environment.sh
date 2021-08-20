@@ -3,7 +3,7 @@
 #$ -cwd
 #$ -pe threads 20
 #$ -l m_mem_free=2G
-#$ -l tmp_free=50G
+#$ -l tmp_free=20G
 #$ -o env.log
 #$ -j y
 #$ -N env
@@ -14,7 +14,7 @@ usage="
 ##### sh MaizeCode_check_environment.sh -p path to genome reference -r ref -d datatype
 ##### 	-p: path to the folder containing all the different genome references (e.g. ~/data/Genomes/Zea_mays)
 ##### 	-r: genome reference to use (e.g. B73_v4) 
-#####	-d: type of data [ChIP | RNA]
+#####	-d: type of data [ ChIP | RNA | TF ] (shRNA in development)
 ##### 	-h: help, returns usage
 #####
 ##### The reference genome folder should contain a single fasta file (.fa or .fasta), a single GFF file (.gff [or .gff*]) and a single GTF file (can be gzipped)
@@ -54,7 +54,7 @@ while getopts "p:r:d:h" opt; do
 done
 shift $((OPTIND - 1))
 
-if [ ! $ref ] || [ ! $pathtoref ]; then
+if [ ! $ref ] || [ ! $pathtoref ] || [ ! $datatype ]; then
 	printf "Missing arguments!\n"
 	printf "$usage\n"
 	exit 1
@@ -132,8 +132,8 @@ fi
 
 if [ ! -s $datatype/tracks/${ref}_all_genes.bed ]; then
 	printf "\nMaking a bed file with gene coordinates from $ref\n"
-	awk -v OFS="\t" '$3=="gene" {print $1,$4-1,$5,$9,".",$7}' $gff | sort -k1,1 -k2,2n > $datatype/tracks/${ref}_protein_coding_genes.bed
-	awk -v OFS="\t" '$3~"gene" {print $1,$4-1,$5,$9,".",$7}' $gff | sort -k1,1 -k2,2n > $datatype/tracks/${ref}_all_genes.bed
+	awk -v OFS="\t" '$3=="gene" {print $1,$4-1,$5,$9,".",$7}' $gff | bedtools sort -g ${ref_dir}/chrom.sizes > $datatype/tracks/${ref}_protein_coding_genes.bed
+	awk -v OFS="\t" '$3~"gene" {print $1,$4-1,$5,$9,".",$7}' $gff | bedtools sort -g ${ref_dir}/chrom.sizes > $datatype/tracks/${ref}_all_genes.bed
 fi
 
 if [[ $datatype == "ChIP" ]]; then
@@ -156,6 +156,18 @@ elif [[ $datatype == "RNA" ]]; then
 		mkdir ${gen_dir}
 		STAR --runThreadN $threads --runMode genomeGenerate --genomeDir ${gen_dir} --genomeFastaFiles $fasta --sjdbGTFfile $gtf
 	fi
+elif [[ $datatype == "TF" ]]; then
+	if [ ! -s $datatype/reports/summary_mapping_stats.txt ]; then
+		printf "Line\tSample\tMark\tRep\tReference_genome\tTotal_reads\tPassing_filtering\tAll_mapped_reads\tUniquely_mapped_reads\n" > $datatype/reports/summary_mapping_stats.txt
+	fi
+	if ls ${ref_dir}/*.bt2* 1> /dev/null 2>&1; then
+		printf "\nBowtie2 index already exists for $ref in ${ref_dir}\n"
+	else
+		printf "\nBuilding Bowtie2 index for $ref\n"
+		bowtie2-build --threads $threads $fasta ${ref_dir}/$ref
+	fi
+elif [[ $datatype == "shRNA" ]]; then
+	printf "\nshRNA pipeline selected but not yet ready\n"
 else
 	printf "\nType of data unknown!\n"
 	exit 1

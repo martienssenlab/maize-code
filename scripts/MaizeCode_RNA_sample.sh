@@ -2,8 +2,8 @@
 #$ -V
 #$ -cwd
 #$ -pe threads 20
-#$ -l m_mem_free=4G
-#$ -l tmp_free=100G
+#$ -l m_mem_free=8G
+#$ -l tmp_free=16G
 #$ -o RNAsample.log
 #$ -j y
 #$ -N RNAsample
@@ -11,16 +11,17 @@
 usage="
 ##### Script for Maize code RNA data analysis, used by script MaizeCode.sh with RNA argument
 #####
-##### sh MaizeCode_RNA_sample.sh -d reference directory -l inbred line -t tissue -m RNA -r replicate ID -i sample ID -f path to sample -p paired -s step
+##### sh MaizeCode_RNA_sample.sh -x data -d reference directory -l inbred line -t tissue -m RNA -r replicate ID -i sample ID -f path to sample -p paired -s step
+##### 	-x: type of data [ RNAseq | RAMPAGE ]
 ##### 	-d: folder containing the reference directory (e.g. ~/data/Genomes/Zea_mays/B73_v4)
 ##### 	-l: sample line (e.g. B73)
 ##### 	-t: tissue (e.g. endosperm)
-##### 	-m: type of RNA sample [RNA | sRNA | RAMPAGE]
+##### 	-m: type of RNA sample [ RNAseq | RAMPAGE ]
 ##### 	-r: replicate ID (e.g. Rep1)
 #####	-i: sample ID (name in original folder or SRR number)
 #####	-f: path to original folder or SRA
 ##### 	-p: if data is paired-end (PE) or single-end (SE)
-#####	-s: [ download | trim | done ] 'download' if sample needs to be copied/downloaded, 'trim' if only trimming has to be performed ('done' if trimming has already been performed)
+#####	-s: status of the raw data [ download | trim | done ] 'download' if sample needs to be copied/downloaded, 'trim' if only trimming has to be performed, 'done' if trimming has already been performed
 ##### 	-h: help, returns usage
 #####
 ##### It downloads or copies the files, runs fastQC, trims adapters with cutadapt, aligns with STAR (different parameters based on type of RNA),
@@ -42,10 +43,11 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts "d:l:t:m:r:i:f:p:s:h" opt; do
+while getopts "x:d:l:t:m:r:i:f:p:s:h" opt; do
 	case $opt in
 		h) 	printf "$usage\n"
 			exit 0;;
+		x)	export data=${OPTARG};;
 		d) 	export ref_dir=${OPTARG};;
 		l)	export line=${OPTARG};;
 		t)	export tissue=${OPTARG};;
@@ -61,7 +63,7 @@ while getopts "d:l:t:m:r:i:f:p:s:h" opt; do
 done
 shift $((OPTIND - 1))
 
-if [ ! $ref_dir ] || [ ! $line ] || [ ! $tissue ] || [ ! $rnatype ] || [ ! $rep ] || [ ! $sampleID ] || [ ! $path ] || [ ! $paired ] || [ ! $step ]; then
+if [ ! $data ] || [ ! $ref_dir ] || [ ! $line ] || [ ! $tissue ] || [ ! $rnatype ] || [ ! $rep ] || [ ! $sampleID ] || [ ! $path ] || [ ! $paired ] || [ ! $step ]; then
 	printf "Missing arguments!\n"
 	printf "$usage\n"
 	exit 1
@@ -72,18 +74,12 @@ export ref=${ref_dir##*/}
 name=${line}_${tissue}_${rnatype}_${rep}
 
 case "$rnatype" in
-	RNAseq)	param_map="--outFilterMultimapNmax 20"
-			param_dedup="--bamRemoveDuplicatesMate2basesN 0"
-			param_bg="--outWigType bedGraph"
+	RNAseq)		param_bg="--outWigType bedGraph"
+			filesorder="fastq/trimmed_${name}_R1.fastq.gz fastq/trimmed_${name}_R2.fastq.gz"
 			strandedness="reverse";;
-	shRNA) 	param_map="--outFilterMultimapNmax 500"
-			param_dedup="--bamRemoveDuplicatesMate2basesN 0"
-			param_bg="--outWigType bedGraph"
-			strandedness="reverse";;
-	RAMPAGE) 	param_map="--outFilterMultimapNmax 500"
-				param_dedup="--bamRemoveDuplicatesMate2basesN 15"
-				param_bg="--outWigType bedGraph read1_5p"
-				strandedness="forward";;				
+	RAMPAGE) 	param_bg="--outWigType bedGraph read1_5p"
+			filesorder="fastq/trimmed_${name}_R2.fastq.gz fastq/trimmed_${name}_R1.fastq.gz"
+			strandedness="forward";;				
 esac
 	
 if [[ $paired == "PE" ]]; then
@@ -97,8 +93,8 @@ if [[ $paired == "PE" ]]; then
 			step="trim"
 		else
 			printf "\nCopying PE fastq for $name ($sampleID in $path)\n"
-			cp $path/${sampleID}*R1*q.gz ./fastq/${name}_R1.fastq.gz
-			cp $path/${sampleID}*R2*q.gz ./fastq/${name}_R2.fastq.gz
+			cp $path/*${sampleID}*R1*q.gz ./fastq/${name}_R1.fastq.gz
+			cp $path/*${sampleID}*R2*q.gz ./fastq/${name}_R2.fastq.gz
 			step="trim"
 		fi
 	fi
@@ -122,9 +118,9 @@ if [[ $paired == "PE" ]]; then
 	#### Aligning reads to reference genome with STAR
 	printf "\nMaping $name to $ref with STAR version:\n"
 	STAR --version
-	STAR --runMode alignReads --genomeDir ${ref_dir}/STAR_index --readFilesIn fastq/trimmed_${name}_R1.fastq.gz fastq/trimmed_${name}_R2.fastq.gz --readFilesCommand zcat --runThreadN $threads --genomeLoad NoSharedMemory --outMultimapperOrder Random --outFileNamePrefix mapped/map_${name}_ --outSAMtype BAM SortedByCoordinate --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNmax 999 --outFilterMismatchNoverReadLmax 0.04 --alignIntronMin 20 --alignIntronMax 1000000 --alignMatesGapMax 1000000 ${param_map} --quantMode GeneCounts	
+	STAR --runMode alignReads --genomeDir ${ref_dir}/STAR_index --readFilesIn ${filesorder} --readFilesCommand zcat --runThreadN $threads --genomeLoad NoSharedMemory --outMultimapperOrder Random --outFileNamePrefix mapped/map_${name}_ --outSAMtype BAM SortedByCoordinate --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNmax 999 --outFilterMismatchNoverReadLmax 0.04 --alignIntronMin 20 --alignIntronMax 1000000 --alignMatesGapMax 1000000 --outFilterMultimapNmax 20 --quantMode GeneCounts	
 	### Marking duplicates
-	STAR --runMode inputAlignmentsFromBAM --inputBAMfile mapped/map_${name}_Aligned.sortedByCoord.out.bam --bamRemoveDuplicatesType UniqueIdentical ${param_dedup} --outFileNamePrefix mapped/mrkdup_${name}_
+	STAR --runMode inputAlignmentsFromBAM --inputBAMfile mapped/map_${name}_Aligned.sortedByCoord.out.bam --bamRemoveDuplicatesType UniqueIdentical --outFileNamePrefix mapped/mrkdup_${name}_
 	#### Indexing bam file
 	printf "\nIndexing bam file\n"
 	samtools index -@ $threads mapped/mrkdup_${name}_Processed.out.bam
@@ -158,7 +154,6 @@ if [[ $paired == "PE" ]]; then
 	mv mapped/*${name}*Log* reports/
 	mv tracks/*${name}*Log* reports/
 	### Cleaning up
-	rm -f mapped/*${name}_Aligned*
 	rm -f tracks/*${name}_Signal*
 	### Summary stats
 	printf "\nMaking mapping statistics summary\n"
@@ -178,7 +173,7 @@ elif [[ $paired == "SE" ]]; then
 			step="trim"
 		else
 			printf "\nCopying SE fastq for $name ($sampleID in $path)\n"
-			cp $path/${sampleID}*q.gz ./fastq/${name}.fastq.gz
+			cp $path/*${sampleID}*q.gz ./fastq/${name}.fastq.gz
 			step="trim"
 		fi
 	fi

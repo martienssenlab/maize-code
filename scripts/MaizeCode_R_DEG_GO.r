@@ -85,7 +85,8 @@ getGO<-function(ont, genelist, sampletable, name) {
               annot = annFUN.gene2GO, 
               gene2GO = gene2GO)
   resultFisher<-runTest(GOdata, algorithm = "weight01", statistic = "fisher")
-  summary<-GenTable(GOdata, classicFisher = resultFisher, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 1000, numChar=1000)
+  nodenb<-min(1000, length(resultFisher@score))
+  summary<-GenTable(GOdata, classicFisher = resultFisher, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = nodenb, numChar=1000)
   tab<-summary %>%
 	mutate(classicFisher = as.numeric(classicFisher)) %>%
 	filter(classicFisher < 0.01) 

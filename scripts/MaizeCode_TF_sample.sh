@@ -9,19 +9,19 @@
 #$ -N ChIPsample
 
 usage="
-##### Script for Maize code Histone ChIP data analysis, used by script MaizeCode.sh for ChIP samples
+##### Script for Maize code TF ChIP data analysis, used by script MaizeCode.sh for TF samples
 #####
-##### sh MaizeCode_ChIP_sample.sh -x datatype -d reference directory -l inbred line -t tissue -m histone mark -r replicate ID -i sample ID -f path to sample -p paired -s step
-##### 	-x: type of data (not used here yet mandatory, should be 'ChIP')
+##### sh MaizeCode_TF_sample.sh -x TF_name -d reference directory -l inbred line -t tissue -m TF ChIP -r replicate ID -i sample ID -f path to sample -p paired -s step
+##### 	-x: TF name (e.g. TF_TB1 for TB1 ChIP seq)
 ##### 	-d: folder containing the reference directory (e.g. ~/data/Genomes/Zea_mays/B73_v4)
 ##### 	-l: inbred line (e.g. B73)
 ##### 	-t: tissue (e.g. endosperm)
-##### 	-m: ChIP-seq mark (e.g. H3K4me1)
+##### 	-m: TF ChIP [ IP | Input ]
 ##### 	-r: replicate ID (e.g. Rep1)
-#####	-i: sample ID (name in original folder or SRR number)
-#####	-f: path to original folder or SRA
+#####	  -i: sample ID (name in original folder or SRR number)
+#####	  -f: path to original folder or SRA
 ##### 	-p: if data is paired-end (PE) or single-end (SE) [ PE | SE ]
-#####	-s: status of the raw data [ download | trim | done ] 'download' if sample needs to be copied/downloaded, 'trim' if only trimming has to be performed, 'done' if trimming has already been performed
+#####	  -s: status of the raw data [ download | trim | done ] 'download' if sample needs to be copied/downloaded, 'trim' if only trimming has to be performed, 'done' if trimming has already been performed
 ##### 	-h: help, returns usage
 #####
 ##### It downloads or copies the files, runs fastQC, trims adapters with cutadapt, aligns with bowtie2,
@@ -39,43 +39,44 @@ printf "\n"
 export threads=$NSLOTS
 
 if [ $# -eq 0 ]; then
-	printf "$usage\n"
-	exit 1
+  printf "$usage\n"
+  exit 1
 fi
 
 while getopts "x:d:l:t:m:r:i:f:p:s:h" opt; do
-	case $opt in
-		h) 	printf "$usage\n"
-			exit 0;;
+  case $opt in
+	  h) 	printf "$usage\n"
+			  exit 0;;
 		x)	export data=${OPTARG};;
 		d) 	export ref_dir=${OPTARG};;		
 		l)	export line=${OPTARG};;
 		t)	export tissue=${OPTARG};;
-		m)	export mark=${OPTARG};;
+		m)	export chip=${OPTARG};;
 		r)	export rep=${OPTARG};;
 		i)	export sampleID=${OPTARG};;
 		f)	export path=${OPTARG};;
 		p)	export paired=${OPTARG};;
 		s)	export step=${OPTARG};;
 		*)	printf "$usage\n"
-			exit 1;;
-	esac
+			  exit 1;;
+  esac
 done
 shift $((OPTIND - 1))
 
-if [ ! $data ] || [ ! $ref_dir ] || [ ! $line ] || [ ! $tissue ] || [ ! $mark ] || [ ! $rep ] || [ ! $sampleID ] || [ ! $path ] || [ ! $paired ] || [ ! $step ]; then
-	printf "Missing arguments!\n"
+if [ ! $data ] || [ ! $ref_dir ] || [ ! $line ] || [ ! $tissue ] || [ ! $chip ] || [ ! $rep ] || [ ! $sampleID ] || [ ! $path ] || [ ! $paired ] || [ ! $step ]; then
+  printf "Missing arguments!\n"
 	printf "$usage\n"
 	exit 1
 fi
 
 export ref=${ref_dir##*/}
 
-name=${line}_${tissue}_${mark}_${rep}
+tmp=${data##TF_}
+name=${line}_${tmp}_${chip}_${rep}
 
 if [[ $paired == "PE" ]]; then
-	if [[ $step == "download" ]]; then
-		if [[ $path == "SRA" ]]; then
+  if [[ $step == "download" ]]; then
+	  if [[ $path == "SRA" ]]; then
 			printf "\nUsing parallel fastq-dump for $name ($sampleID)\n"
 			parallel-fastq-dump --threads $threads --split-files --gzip --sra-id ${sampleID} --outdir ./fastq 
 			printf "\n$name ($sampleID) downloaded\nRenaming files..."
@@ -174,7 +175,7 @@ else
 	single=$(grep "aligned exactly 1 time" reports/mapping_${name}.txt | awk '{print $1}')
 fi
 allmap=$((multi+single))
-awk -v OFS="\t" -v l=$line -v t=$tissue -v m=$mark -v r=$rep -v g=$ref -v a=$tot -v b=$filt -v c=$allmap -v d=$single 'BEGIN {print l,t,m,r,g,a,b" ("b/a*100"%)",c" ("c/a*100"%)",d" ("d/a*100"%)"}' >> reports/summary_mapping_stats.txt
+awk -v OFS="\t" -v l=$line -v t=$tmp -v m=$chip -v r=$rep -v g=$ref -v a=$tot -v b=$filt -v c=$allmap -v d=$single 'BEGIN {print l,t,m,r,g,a,b" ("b/a*100"%)",c" ("c/a*100"%)",d" ("d/a*100"%)"}' >> reports/summary_mapping_stats.txt
 
 printf "\nScript finished successfully!\n"
 touch chkpts/${name}_${ref}

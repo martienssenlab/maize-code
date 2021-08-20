@@ -3,7 +3,7 @@
 #$ -cwd
 #$ -pe threads 1
 #$ -l m_mem_free=2G
-#$ -l tmp_free=100G
+#$ -l tmp_free=10G
 #$ -o RNAanalysis.log
 #$ -j y
 #$ -N RNAanalysis
@@ -73,10 +73,8 @@ do
 	case "$rnatype" in
 		RNAseq)	export param_bg="--outWigType bedGraph"
 				export strandedness="reverse";;
-		shRNA) 	export param_bg="--outWigType bedGraph"
-				export strandedness="reverse";;
 		RAMPAGE)	export param_bg="--outWigType bedGraph read1_5p"
-					export strandedness="forward";;
+				export strandedness="forward";;
 	esac
 	printf "\nStarting single RNA sample analysis for $name\n"	
 	export ref_dir=${ref_dir}
@@ -142,32 +140,33 @@ do
 			#### To call TSS/peaks on each biological replicate
 			for rep in Rep1 Rep2
 			do
-				if [ ! -s TSS/${name}_${rep}_peaks.narrowPeak ]; then
+				if [ ! -s TSS/${name}_${rep}_peaks.narrowPeak ] && [ -s mapped/mrkdup_${line}_${tissue}_RNAseq_${rep}_Processed.out.bam ]; then
 					namefile=mapped/mrkdup_${name}_${rep}_Processed.out.bam
 					controlfile=mapped/mrkdup_${line}_${tissue}_RNAseq_${rep}_Processed.out.bam
 					printf "\nCalling peaks for TSS on ${namefile} vs ${controlfile} with macs2 version:\n"
 					macs2 --version
 					macs2 callpeak -t ${namefile} -c ${controlfile} -f BAM -g 2.2e9 -B -n ${name}_${rep} --keep-dup "all" --call-summits --outdir TSS/ --tempdir $TMPDIR --nomodel --extsize 100
 				else
-					printf "\nPeak already called for $name $rep\n"
+					printf "\nPeak already called for $name $rep or no corresponding RNAseq control file found\n"
 				fi
 			done
 			#### To get IDR analysis on biological replicates
-			if [ ! -s TSS/idr_${name}.narrowPeak ]; then
+			if [ ! -s TSS/idr_${name}.narrowPeak ] && [ -s TSS/${name}_Rep1_peaks.narrowPeak ] && [ -s TSS/${name}_Rep2_peaks.narrowPeak ]; then
 				printf "\nGoing IDR analysis on both replicates from ${name} with idr version:\n"
 				idr --version
 				idr --input-file-type narrowPeak --samples TSS/${name}_Rep1_peaks.narrowPeak TSS/${name}_Rep2_peaks.narrowPeak -o TSS/idr_${name}.narrowPeak -l reports/idr_${name}.log --plot || true
 				mv TSS/idr_${name}.narrowPeak.png plots/idr_${name}.png
+				
+				#### To get some tss stats for each RAMPAGE sample
+				printf "\nCalculating peak/TSS stats for ${name}\n"
+				rep1=$(awk '{print $1,$2,$3}' TSS/${name}_Rep1_peaks.narrowPeak | sort -k1,1 -k2,2n -u | wc -l)
+				rep2=$(awk '{print $1,$2,$3}' TSS/${name}_Rep2_peaks.narrowPeak | sort -k1,1 -k2,2n -u | wc -l)
+				common=$(awk '{print $1,$2,$3}' TSS/idr_${name}.narrowPeak | sort -k1,1 -k2,2n -u | wc -l)
+				idr=$(awk '$5>=540 {print $1,$2,$3}' TSS/idr_${name}.narrowPeak | sort -k1,1 -k2,2n -u | wc -l)
+				awk -v OFS="\t" -v a=$line -v b=$tissue -v c=$rnatype -v n=${annotated_gene_number} -v d=$rep1 -v e=$rep2 -v f=$common -v g=$idr 'BEGIN {print a,b,c,n,d,e,f" ("f/d*100"%rep1;"f/e*100"%rep2)",g" ("g/f*100"%common)"}' >> reports/summary_RAMPAGE_tss.txt
 			else
-				printf "\nIDR analysis already done for ${name}\n"
+				printf "\nIDR analysis already done for ${name} or no peak files found\n"
 			fi
-			#### To get some tss stats for each RAMPAGE sample
-			printf "\nCalculating peak/TSS stats for ${name}\n"
-			rep1=$(awk '{print $1,$2,$3}' TSS/${name}_Rep1_peaks.narrowPeak | sort -k1,1 -k2,2n -u | wc -l)
-			rep2=$(awk '{print $1,$2,$3}' TSS/${name}_Rep2_peaks.narrowPeak | sort -k1,1 -k2,2n -u | wc -l)
-			common=$(awk '{print $1,$2,$3}' TSS/idr_${name}.narrowPeak | sort -k1,1 -k2,2n -u | wc -l)
-			idr=$(awk '$5>=540 {print $1,$2,$3}' TSS/idr_${name}.narrowPeak | sort -k1,1 -k2,2n -u | wc -l)
-			awk -v OFS="\t" -v a=$line -v b=$tissue -v c=$rnatype -v n=${annotated_gene_number} -v d=$rep1 -v e=$rep2 -v f=$common -v g=$idr 'BEGIN {print a,b,c,n,d,e,f" ("f/d*100"%rep1;"f/e*100"%rep2)",g" ("g/f*100"%common)"}' >> reports/summary_RAMPAGE_tss.txt
 		#### To get some stats on gene expression levels for RNAseq samples
 		elif [[ $rnatype == "RNAseq" ]]; then
 			printf "\nCalculating gene expession stats for ${name}\n"
