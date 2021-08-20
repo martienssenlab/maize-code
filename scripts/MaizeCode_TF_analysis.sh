@@ -22,7 +22,7 @@ usage="
 ##### it then creates bigwig files (log2 FC vs Input) for each biological rep and the merged file, makes fingerprint plots for each,
 ##### makes idr analysis between biological replicates, and calculates peak stats
 #####
-##### Requirements: samtools, bedtools, deeptools, macs2, idr
+##### Requirements: samtools, bedtools, deeptools, macs2, idr, meme, homer
 "
 
 set -e -o pipefail
