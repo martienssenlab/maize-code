@@ -62,7 +62,7 @@ The samples that have already been processed will not be repeated but will still
 - It should work for both Single-end or Paired-end data
 - It works perfectly with 2 replicates for every type of data (including two different inputs for ChIP). Adapting the scripts to allow for more variation in the number of replicates is under development (having only one ChIP input replicate works, as well as multiple RNAseq replicates).
 - The whole pipeline creates a lot of report files and probably files that are not necessary to keep but for now I keep them like this for potential troubleshooting.
-- For now I’ve used the `MaizeCode.sh` script from scratch for all samples of one inbred line at a time (all ChIPs and RNAseq from 5 tissues). It runs in ~19h (but it depends on the size of the files and how busy the cluster is...). Once that the mapping and single-sample analysis have been done, reusing these samples in a different analysis is much quicker though (~2h), the limitations are for mapping ChIPseq samples and calling ChIPseq peaks (since it does it for each biological replicate, the merge file and both pseudo-replicates and cannot be multi-threaded). That is probably the first step that could be optimized for faster runs.
+- For now I’ve used the `MaizeCode.sh` script from scratch for all samples of one inbred line at a time (all ChIPs and RNAseq from 5 tissues). It runs in ~19h (but it depends on the size of the files and how busy the cluster is...). Once that the mapping and single-sample analysis have been done, reusing these samples in a different analysis is much quicker though (~2h), the limitations are for mapping ChIPseq samples and calling ChIPseq peaks (since it does it for each biological replicate, the merged file and both pseudo-replicates and cannot be multi-threaded). That is probably the first step that could be optimized for faster runs.
 - Always process the Input samples with their corresponding ChIP in the `MaizeCode.sh` script.
 - The analysis will have to be adapted to the desired output, but running the default complete pipeline should give a first look at the data and generate all the files required for further analysis.
 - These are still preliminary version of the scripts!
@@ -89,6 +89,15 @@ Create the template for the stat files\
 Makes the bowtie2 or STAR indexes (for ChIP and RNA, respectively) if not already there
 
 - __MaizeCode_ChIP_sample.sh__\
+Copies fastq files from their original folder or GEO to the fastq/ folder (if not already done)\
+Runs fastQC on the raw data\
+Trims adapters, low quality and small reads (<20bp) with cutadapt\
+Runs fastQC on trimmed data\
+Maps with bowtie2\
+Removes PCR duplicates with samtools\
+Gets some mapping stats
+
+- __MaizeCode_TF_sample.sh__\
 Copies fastq files from their original folder or GEO to the fastq/ folder (if not already done)\
 Runs fastQC on the raw data\
 Trims adapters, low quality and small reads (<20bp) with cutadapt\
@@ -126,6 +135,19 @@ Makes IDR analysis for biological replicates with idr\
 Makes a `selected_peaks` file with the peaks called in the merged sample and both pseudo-replicates with bedtools intersect\
 Makes some stats on the number of peaks
 
+- __MaizeCode_TF_analysis.sh__\
+Merges biological replicates and split into pseudo-replicates\
+For each type of file (replicate1, replicate2, pseudo-replicate1, pseudo-replicate2 and merged) in parallel:\
+Calls peaks with macs2 (calls broad peaks for H3K4me1, and narrow peaks for H3K4me3 and H3K27ac)\
+Makes bigwig files with deeptools (log2 FC vs Input, normalizing each file by CPM)\
+Plot Fingerprint\
+Waits for the previous steps to proceed\
+Makes IDR analysis for biological replicates with idr\
+Makes a `selected_peaks` file with the peaks called in the merged sample and both pseudo-replicates with bedtools intersect\
+Makes some stats on the number of peaks\
+Search for motifs on the selected peaks and on the replicated peaks (present in both biological replicates) with meme\
+Search for motifs on the selected peaks with homer (_might be limiter to the best combination of motifs/peak files in the future_)\
+
 - __MaizeCode_RNA_analysis.sh__\
 Processes each sample in parallel\
 For RAMPAGE data:\
@@ -138,29 +160,37 @@ Merges biological replicates and creates stranded tracks (bigwigs) with STAR and
 Makes some stats on the number of expressed genes\
 
 - __MaizeCode_line_analysis.sh__ ___Analyses marked by *** are still under development:___\
-Splits the samplefile into ChIPseq and RNA samples\
-For ChIPseq samples:\
-Makes a single file, merging all selected peaks from all samples with bedtools merge\
-Gets distance of each peak to the closest region from the regionfile with bedtools closest (default: all genes annotated in the reference)\
-Creates an Upset plot to show overlap among the different samples, highlighting the peaks in gene bodies, using `MaizeCode_R_Upset.r` script\
-_if several tissues are present in the samplefile:_\
-Calculates differential peaks between the different tissues\*\*\*\
-For RAMPAGE samples:\
-_if several tissues are present in the samplefile:_\
-Calls differential TSS between the different tissues\*\*\*\
+Splits the samplefile into ChIPseq, TF and RNAseq and RAMPAGE samples\
 For RNAseq samples:\
 _if several tissues are present in the samplefile:_\
 Makes sample and count tables\
 Calls differentially expressed genes between all pairs of tissues using `MaizeCode_R_DEG.r` script\
+For B73_v4 samples, performs gene ontonlogy analysis on each pairwise DEG using `MaizeCode_R_DEG_GO.r` script\
+Identifies genes unique to each tissue in the samplefile, and for B73_v4 samples, performs gene ontonlogy analysis on them using `MaizeCode_R_GO.r` script\
+For ChIPseq samples:\
+Makes a single file, merging all selected peaks from all samples with bedtools merge\
+Gets distance of each peak to the closest region from the regionfile with bedtools closest\
+Creates an Upset plot to show overlap among the different samples using `MaizeCode_R_Upset.r` script\
+_if several tissues are present in the samplefile:_\
+Calculates differential peaks between the different tissues\*\*\*\
+For TF samples:\
+Makes a single file, merging all selected peaks from all samples with bedtools merge\
+Intersect with H3K27ac samples (if present in the same samplefile, or if previously processed)\
+Gets distance of each peak to the closest region from the regionfile with bedtools closest\
+Creates an Upset plot to show overlap among the different samples using `MaizeCode_R_Upset_TF.r` script\
+Compare TF binding sites with DEGs, if both data types are present\*\*\*\
+For RAMPAGE samples:\
+_if several tissues are present in the samplefile:_\
+Calls differential TSS between the different tissues\*\*\*\
 On all the samples:
-Plots heatmaps of the ChIPseq and RNAseq samples over the regionfile (parameters might need to be adjusted)\
+Plots heatmaps of the ChIPseq, RNAseq and RAMPAGE samples over the regionfile\
 Plots heatmaps and profiles of the ChIPseq samples over the differentially expressed genes (if they were called previously)\
-Splits all genes into different clusters based on all avalaible data (silent, constitutive and tissue-specific genes)\*\*\*\
-Identifies enhancers and assign to a gene\*\*\*
+Plots heatmaps and profiles of the ChIPseq samples over genes split by expression quantiles (if RNA data is present)\
+Plots heatmaps and profiles on identified enhancers (only from H3K27ac distal peaks for now)\
 
 - __MaizeCode_combined_analysis.sh__ ___NOT DONE YET, but expectations are:___\
-Compares gene status between homolog genes\
-Compares enhancers?
+Compares gene status (silent, constitutive and tissue-specific) between homolog genes\
+Compares enhancers\
 
 - __MaizeCode_R_mapping_stats.r__\
 Creates a plot representing the mapping statistics (both read numbers and distribution), named `combined/plots/mapping_stats_<samplefile_name>.pdf`
