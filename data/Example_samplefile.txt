@@ -1,12 +1,20 @@
-B73	roots	Input	Rep1	S01	/seq/Illumina_runs/NextSeqData/NextSeqOutput/191008_NS500269_0885_AHJYH3BGXC/Data/Intensities/BaseCalls/304990	PE	B73_v4
-B73	roots	H3K4me1	Rep1	S02	/seq/Illumina_runs/NextSeqData/NextSeqOutput/191008_NS500269_0885_AHJYH3BGXC/Data/Intensities/BaseCalls/304990	PE	B73_v4
-B73	roots	H3K4me3	Rep1	S03	/seq/Illumina_runs/NextSeqData/NextSeqOutput/191008_NS500269_0885_AHJYH3BGXC/Data/Intensities/BaseCalls/304990	PE	B73_v4
-B73	roots	H3K27ac	Rep1	S04	/seq/Illumina_runs/NextSeqData/NextSeqOutput/191008_NS500269_0885_AHJYH3BGXC/Data/Intensities/BaseCalls/304990	PE	B73_v4
-B73	roots	Input	Rep2	S05	/seq/Illumina_runs/NextSeqData/NextSeqOutput/191008_NS500269_0885_AHJYH3BGXC/Data/Intensities/BaseCalls/304990	PE	B73_v4
-B73	roots	H3K4me1	Rep2	S06	/seq/Illumina_runs/NextSeqData/NextSeqOutput/191008_NS500269_0885_AHJYH3BGXC/Data/Intensities/BaseCalls/304990	PE	B73_v4
-B73	roots	H3K4me3	Rep2	S07	/seq/Illumina_runs/NextSeqData/NextSeqOutput/191008_NS500269_0885_AHJYH3BGXC/Data/Intensities/BaseCalls/304990	PE	B73_v4
-B73	roots	H3K27ac	Rep2	S08	/seq/Illumina_runs/NextSeqData/NextSeqOutput/191008_NS500269_0885_AHJYH3BGXC/Data/Intensities/BaseCalls/304990	PE	B73_v4
-B73	roots	RNAseq	Rep1	root	/mnt/grid/martienssen/nlsas_norepl/data/data/archive/data/maizecode/released/B73/Long_Rampage/root_rep1/RNAseq	PE	B73_v4
-B73	roots	RAMPAGE	Rep1	root	/mnt/grid/martienssen/nlsas_norepl/data/data/archive/data/maizecode/released/B73/Long_Rampage/root_rep1/RAMPAGE	PE	B73_v4
-B73	roots	RNAseq	Rep2	root	/mnt/grid/martienssen/nlsas_norepl/data/data/archive/data/maizecode/released/B73/Long_Rampage/root_rep2/RNAseq	PE	B73_v4
-B73	roots	RAMPAGE	Rep2	root	/mnt/grid/martienssen/nlsas_norepl/data/data/archive/data/maizecode/released/B73/Long_Rampage/root_rep2/RAMPAGE	PE	B73_v4
+ChIP  B73	roots	Input	Rep1	S01	/seq/Illumina_runs/NextSeqData/NextSeqOutput/191008_NS500269_0885_AHJYH3BGXC/Data/Intensities/BaseCalls/304990	PE	B73_v4
+ChIP  B73	roots	H3K4me1	Rep1	S02	/seq/Illumina_runs/NextSeqData/NextSeqOutput/191008_NS500269_0885_AHJYH3BGXC/Data/Intensities/BaseCalls/304990	PE	B73_v4
+ChIP  B73	roots	H3K4me3	Rep1	S03	/seq/Illumina_runs/NextSeqData/NextSeqOutput/191008_NS500269_0885_AHJYH3BGXC/Data/Intensities/BaseCalls/304990	PE	B73_v4
+ChIP  B73	roots	H3K27ac	Rep1	S04	/seq/Illumina_runs/NextSeqData/NextSeqOutput/191008_NS500269_0885_AHJYH3BGXC/Data/Intensities/BaseCalls/304990	PE	B73_v4
+ChIP  B73	roots	Input	Rep2	S05	/seq/Illumina_runs/NextSeqData/NextSeqOutput/191008_NS500269_0885_AHJYH3BGXC/Data/Intensities/BaseCalls/304990	PE	B73_v4
+ChIP  B73	roots	H3K4me1	Rep2	S06	/seq/Illumina_runs/NextSeqData/NextSeqOutput/191008_NS500269_0885_AHJYH3BGXC/Data/Intensities/BaseCalls/304990	PE	B73_v4
+ChIP  B73	roots	H3K4me3	Rep2	S07	/seq/Illumina_runs/NextSeqData/NextSeqOutput/191008_NS500269_0885_AHJYH3BGXC/Data/Intensities/BaseCalls/304990	PE	B73_v4
+ChIP  B73	roots	H3K27ac	Rep2	S08	/seq/Illumina_runs/NextSeqData/NextSeqOutput/191008_NS500269_0885_AHJYH3BGXC/Data/Intensities/BaseCalls/304990	PE	B73_v4
+RNAseq  B73	roots	RNAseq	Rep1	root	/mnt/grid/martienssen/nlsas_norepl/data/data/archive/data/maizecode/released/B73/Long_Rampage/root_rep1/RNAseq	PE	B73_v4
+RAMPAGE  B73	roots	RAMPAGE	Rep1	root	/mnt/grid/martienssen/nlsas_norepl/data/data/archive/data/maizecode/released/B73/Long_Rampage/root_rep1/RAMPAGE	PE	B73_v4
+RNAseq  B73	roots	RNAseq	Rep2	root	/mnt/grid/martienssen/nlsas_norepl/data/data/archive/data/maizecode/released/B73/Long_Rampage/root_rep2/RNAseq	PE	B73_v4
+RAMPAGE B73	roots	RAMPAGE	Rep2	root	/mnt/grid/martienssen/nlsas_norepl/data/data/archive/data/maizecode/released/B73/Long_Rampage/root_rep2/RAMPAGE	PE	B73_v4
+TF_TB1  B73     cn      IP      Rep1    SRR8502760      SRA     SE      B73_v4
+TF_TB1  B73     cn      IP      Rep2    SRR8502759      SRA     SE      B73_v4
+TF_TB1  B73     cn      Input   Rep1    SRR8502758      SRA     SE      B73_v4
+TF_TB1  B73     cn      Input   Rep2    SRR8502757      SRA     SE      B73_v4
+TF_RA1  B73     ears    IP      Rep1    SRR999069       SRA     SE      B73_v4
+TF_RA1  B73     ears    IP      Rep2    SRR999068       SRA     SE      B73_v4
+TF_RA1  B73     ears    Input   Rep1    SRR999071       SRA     SE      B73_v4
+TF_RA1  B73     ears    Input   Rep2    SRR999070       SRA     SE      B73_v4
