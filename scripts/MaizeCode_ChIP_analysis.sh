@@ -112,10 +112,9 @@ do
 			rm -f mapped/temp_${name}_pseudo2.bam
 		fi
 		#### To call either broad or narrow peaks if not already exisiting
-		case "$mark" in
-			H3K4me1) export peaktype="broad";;
-			H3K4me3) export peaktype="narrow";;
-			H3K27ac) export peaktype="narrow";;
+		case "${mark}" in
+			H3K4me1|H3K27me1) export peaktype="broad";;
+			H3K27ac|H3K4me3|H3K27me2) export peaktype="narrow";;
 		esac
 		pidsb=()
 		for filetype in merged Rep1 Rep2 pseudo1 pseudo2
