@@ -50,7 +50,7 @@ All files can be gzipped (.gz extension).
 | ChIP | B73 | roots | H3K27ac | Rep1 | SRRxxxxxx | SRA | SE | B73_NAM |
 | ChIP | B73 | roots | Input | Rep1 | SRRxxxxxx | SRA | SE | B73_NAM |
 | RNA | W22 | ears | RNAseq | Rep1 | S01 | /home/maize-code/fastqs | PE | W22_v2 |
-| RAMPAGE | W22 | ears | RAMPAGE | Rep1 | S01 | /home/maize-code/fastqs | PE | W22_v2 |
+| RAMPAGE | W22 | ears | RAMPAGE | Rep1 | rampage_exp1 | /home/maize-code/fastqs | PE | W22_v2 |
 | TF_TB1 | B73 | leaf | IP | Rep1 | SRRxxxxxx | SRA | PE | B73_v4 |
 6) Submit the `scripts/MaizeCode.sh` script, giving as argument `-f <samplefile.txt>` the samplefile of your choice and `-p <path>` the path to your folder that contains the different genome directories, i.e. the `genomes` folder mentioned above:\
 `qsub scripts/MaizeCode.sh -f example_samplefile.txt -r /path/to/genomes`
