@@ -44,6 +44,7 @@ The GTF file can be created from a GFF file with cufflinks `gffread -T <gff_file
 The GFF file should have 'gene' in the 3rd column.\
 All files can be gzipped (.gz extension).
 5) Make the samplefile you want, following the pattern below and examples below. A complete example of a samplefile is in the data folder (Example_samplefile.txt). For cleaner naming purposes, use "\_samplefile.txt" as a suffix. The columns are the following:\
+
 | Type of data | Line | Tissue | Type of sample | Replicate ID | Sequencing ID | Path to fastq | Paired-end or single-end data | Genome reference |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | ChIP | B73 | roots | H3K27ac | Rep1 | SRRxxxxxx | SRA | SE | B73_NAM |
