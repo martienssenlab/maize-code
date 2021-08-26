@@ -38,8 +38,8 @@ R 3.6.3
 R libraries: ggplot2 3.3.2; UpSetR 1.4.0; limma 3.42.2; edgeR 3.28.1; dplyr 1.0.2; tidyr 1.1.2; stringr 1.4.0; cowplot 1.1.0; gplots 3.1.0; RColorBrewer 1.1.2; ComplexUpset ; purrr ; AnnotationForge ; rrvgo ;
 ```
 4) Organize your reference genome directories so that they are all in the same main folder and that each contain ONE fasta file (.fa extension), ONE GFF file (.gff or .gff* extension) and ONE GTF (.gtf extension) file.\ 
-For example, having a `genomes/` folder that contains the `genomes/B73/` directory where you can find `genomes/B73/B73.fa`, `genomes/B73/B73.gff` and `genomes/B73/B73.gtf` files\
-Other references should be in the same `genomes/` folder, following the same pattern, i.e. `genomes/W22/W22.fa`, `genomes/W22/W22.gff` and `genomes/W22/W22.gtf`\
+For example, having a `genomes/` folder that contains the `genomes/B73_NAM/` directory where you can find `genomes/B73_NAM/B73_NAM.fa`, `genomes/B73_NAM/B73_NAM.gff` and `genomes/B73_NAM/B73_NAM.gtf` files\
+Other references should be in the same `genomes/` folder, following the same pattern, i.e. `genomes/W22_v2/W22.fa`, `genomes/W22_v2/W22.gff` and `genomes/W22_V2/W22.gtf`\
 The GTF file can be created from a GFF file with cufflinks `gffread -T <gff_file> -o <gtf_file>` and check that 'transcript_id' and 'gene_id' look good in the 9th column.\
 The GFF file should have 'gene' in the 3rd column.\
 All files can be gzipped (.gz extension).
@@ -52,11 +52,12 @@ All files can be gzipped (.gz extension).
 | RNA | W22 | ears | RNAseq | Rep1 | S01 | /home/maize-code/fastqs | PE | W22_v2 |
 | RAMPAGE | W22 | ears | RAMPAGE | Rep1 | rampage_exp1 | /home/maize-code/fastqs | PE | W22_v2 |
 | TF_TB1 | B73 | leaf | IP | Rep1 | SRRxxxxxx | SRA | PE | B73_v4 |
+| TF_TB1 | B73 | leaf | Input | Rep1 | SRRxxxxxx | SRA | PE | B73_v4 |
 6) Submit the `scripts/MaizeCode.sh` script, giving as argument `-f <samplefile.txt>` the samplefile of your choice and `-p <path>` the path to your folder that contains the different genome directories, i.e. the `genomes` folder mentioned above:\
 `qsub scripts/MaizeCode.sh -f example_samplefile.txt -r /path/to/genomes`
 7) By default, it will proceed with the analysis. `-s` can be set so that it does not proceed with the analysis at all or `-c` can be set if only single sample analysis should be performed but no combined analysis per line or between lines.
 8) If the analysis has not proceeded or if you want to analyze different samples together, make the new samplefile of your choice and submit the `scripts/MaizeCode.sh` script again.\
-`qsub scripts/MaizeCode.sh -f new_samplefile.txt -r /path/to/main/folder/containing/genome/directories`\
+`qsub scripts/MaizeCode.sh -f new_samplefile.txt -r /path/to/genomes`\
 The samples that have already been processed will not be repeated but will still be included in the analysis.
 9) Have a look at the results! (see Output below).
 
