@@ -43,7 +43,14 @@ Other references should be in the same `genomes/` folder, following the same pat
 The GTF file can be created from a GFF file with cufflinks `gffread -T <gff_file> -o <gtf_file>` and check that 'transcript_id' and 'gene_id' look good in the 9th column.\
 The GFF file should have 'gene' in the 3rd column.\
 All files can be gzipped (.gz extension).
-5) Make the samplefiles you want. An example of a samplefile is in the data folder (Example_samplefile.txt) and a quick way to make them is at the bottom of the `MaizeCode.sh` script. For cleaner naming purposes, use "\_samplefile.txt" as a suffix.
+5) Make the samplefile you want, following the pattern below and examples below. A complete example of a samplefile is in the data folder (Example_samplefile.txt). For cleaner naming purposes, use "\_samplefile.txt" as a suffix. The columns are the following:\
+| Type of data | Line | Tissue | Type of sample | Replicate ID | Sequencing ID | Path to fastq | Paired-end or single-end data | Genome reference |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| ChIP | B73 | roots | H3K27ac | Rep1 | SRRxxxxxx | SRA | SE | B73_NAM |
+| ChIP | B73 | roots | Input | Rep1 | SRRxxxxxx | SRA | SE | B73_NAM |
+| RNA | W22 | ears | RNAseq | Rep1 | S01 | /home/maize-code/fastqs | PE | W22_v2 |
+| RAMPAGE | W22 | ears | RAMPAGE | Rep1 | S01 | /home/maize-code/fastqs | PE | W22_v2 |
+| TF_TB1 | B73 | leaf | IP | Rep1 | SRRxxxxxx | SRA | PE | B73_v4 |
 6) Submit the `scripts/MaizeCode.sh` script, giving as argument `-f <samplefile.txt>` the samplefile of your choice and `-p <path>` the path to your folder that contains the different genome directories, i.e. the `genomes` folder mentioned above:\
 `qsub scripts/MaizeCode.sh -f example_samplefile.txt -r /path/to/genomes`
 7) By default, it will proceed with the analysis. `-s` can be set so that it does not proceed with the analysis at all or `-c` can be set if only single sample analysis should be performed but no combined analysis per line or between lines.
