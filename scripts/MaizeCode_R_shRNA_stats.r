@@ -9,7 +9,7 @@ args = commandArgs(trailingOnly=TRUE)
 summary_stats<-args[1]
 analysisname<-args[2]
 
-plot.sRNA.sizes<-function(stattable) {
+plot.shRNA.sizes<-function(stattable) {
 	count<-read.delim(stattable, header = TRUE) %>%
 		spread(key = Type, value=Count) %>%
 		mutate(trim=trimmed-filtered, filt=filtered-mapped) %>%
@@ -38,6 +38,6 @@ plot.sRNA.sizes<-function(stattable) {
 	plot
 }  
 
-pdf(paste0("shRNA/plots/sRNA_sizes_stats_",analysisname,".pdf"), height=10, width=12)
-plot.sRNA.sizes(summary_stats)
+pdf(paste0("shRNA/plots/shRNA_sizes_stats_",analysisname,".pdf"), height=10, width=12)
+plot.shRNA.sizes(summary_stats)
 dev.off()
