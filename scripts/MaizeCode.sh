@@ -270,7 +270,7 @@ do
 		cd ..
 	fi
 	if [[ ! "${sample_list[@]}" =~ "${shortname}" ]] && [[ "${sample}" != "Input" ]]; then
-		printf "${data}\t${line}\t${tissue}\t${sample}\t${paired}\t${ref_dir}\n" >> $analysisfile
+		printf "${data}\t${line}\t${tissue}\t${sample}\t${paired}\t${ref_dir}\n" >> ${analysisfile}
 		sample_list+=("${shortname}")
 	fi
 done < ${samplefile}
