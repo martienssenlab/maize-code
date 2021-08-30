@@ -74,12 +74,12 @@ export ref=${ref_dir##*/}
 name=${line}_${tissue}_${rnatype}_${rep}
 
 if [[ ${paired} == "PE" ]]; then
-
-  ###### THIS PART OF THE PE PIPELINE WILL NOT WORK AS IS !!! NOT THAT USEFUL ANYWAY, BUT NEED TO BE CHANGED JUST IN CASE ######
-  ###### Need to change adapter sequences based on kit used !! And how to process PE files after filtering out with bowtie2 ####
-
-  if [[ ${step} == "download" ]]; then
-	  if [[ ${path} == "SRA" ]]; then
+	
+	###### THIS PART OF THE PE PIPELINE WILL NOT WORK AS IS !!! NOT THAT USEFUL ANYWAY, BUT NEED TO BE CHANGED JUST IN CASE ######
+	###### Need to change adapter sequences based on kit used !! And how to process PE files after filtering out with bowtie2 ####
+	
+	if [[ ${step} == "download" ]]; then
+		if [[ ${path} == "SRA" ]]; then
 			printf "\nUsing parallel fastq-dump for ${name} (${sampleID})\n"
 			parallel-fastq-dump --threads ${threads} --split-files --gzip --sra-id ${sampleID} --outdir ./fastq 
 			printf "\n${name} (${sampleID}) downloaded\nRenaming files..."
@@ -110,21 +110,20 @@ if [[ ${paired} == "PE" ]]; then
 		fastqc -o reports/ fastq/trimmed_${name}_R1.fastq.gz
 		fastqc -o reports/ fastq/trimmed_${name}_R2.fastq.gz
 	fi
-  
-  ### Aligning reads to filter out structural RNAs (rRNAs, snoRNAs and tRNAs) with bowtie2
+  	#### Aligning reads to filter out structural RNAs (rRNAs, snoRNAs and tRNAs) with bowtie2
 	bowtie2 --very-sensitive -p ${threads} -x structural_RNA/zm_structural_RNAs -1 fastq/trimmed_${name}_R1.fastq.gz -2 fastq/trimmed_${name}_R2.fastq.gz | samtools view -@ ${threads} -f 0x4 | samtools fastq -@ ${threads} | gzip > fastq/filtered_${name}.fastq.gz
-	### Mapping and identifying sRNA loci with shortstack
+	#### Mapping and identifying sRNA loci with shortstack
 	ShortStack --readfile fastq/filtered_${name}.fastq.gz --genomefile ${ref_dir}/$ref.fa --bowtie_cores $threads --sort_mem 4G --mmap u --dicermin 20 --dicermax 24 --bowtie_m all --mismatches 1 --foldsize 1000 --pad 250 --outdir mapped/${name}
-	### Making bigiwig tracks
+	#### Making bigiwig tracks
 	samtools index -@ $threads mapped/${name}/filtered_${name}.bam
 	printf "\nMaking plus track for $name\n"
 	bamCoverage --filterRNAstrand forward -bs 1 -p $threads --normalizeUsing CPM -b mapped/${name}/filtered_${name}.bam -o tracks/${name}_plus.bw
 	bamCoverage --filterRNAstrand reverse -bs 1 -p $threads --normalizeUsing CPM -b mapped/${name}/filtered_${name}.bam -o tracks/${name}_minus.bw
-	### Filtering only small RNA sizes (15 to 32nt)
+	#### Filtering only small RNA sizes (15 to 32nt)
 	seqkit seq --max-len 32 --min-len 15 fastq/filtered_${name}.fastq.gz | gzip > fastq/sized_${name}.fastq.gz
 	touch chkpts/${name}
-
-  ###########
+	
+	###########
   
 elif [[ ${paired} == "SE" ]]; then
 	if [[ ${step} == "download" ]]; then
@@ -155,25 +154,29 @@ elif [[ ${paired} == "SE" ]]; then
 		printf "\nRunning fastQC on trimmed files for ${name}\n"
 		fastqc -o reports/ fastq/trimmed_${name}.fastq.gz
 	fi
-	### Aligning reads to filter out structural RNAs (rRNAs, snoRNAs and tRNAs) with bowtie2
-  printf "\nAligning reads to filter out structural RNAs with bowtie2 version:\n"
-  bowtie2 --version
+	#### Aligning reads to filter out structural RNAs (rRNAs, snoRNAs and tRNAs) with bowtie2
+  	printf "\nAligning reads to filter out structural RNAs with bowtie2 version:\n"
+  	bowtie2 --version
 	bowtie2 --very-sensitive -p ${threads} -x structural_RNA/zm_structural_RNAs -U fastq/trimmed_${name}.fastq.gz | samtools view -@ ${threads} -f 0x4 | samtools fastq -@ ${threads} | gzip > fastq/filtered_${name}.fastq.gz
-	### Mapping and identifying sRNA loci with shortstack
+	#### Mapping and identifying sRNA loci with shortstack
 	ShortStack --readfile fastq/filtered_${name}.fastq.gz --genomefile ${ref_dir}/$ref.fa --bowtie_cores ${threads} --sort_mem 4G --mmap u --dicermin 20 --dicermax 24 --bowtie_m all --mismatches 1 --foldsize 1000 --pad 250 --outdir mapped/${name}
-	### Making bigiwig tracks
+	#### Making bigiwig tracks
 	samtools index -@ ${threads} mapped/${name}/filtered_${name}.bam
 	printf "\nMaking plus track for ${name}\n"
 	bamCoverage --filterRNAstrand forward -bs 1 -p ${threads} --normalizeUsing CPM -b mapped/${name}/filtered_${name}.bam -o tracks/${name}_plus.bw
 	bamCoverage --filterRNAstrand reverse -bs 1 -p ${threads} --normalizeUsing CPM -b mapped/${name}/filtered_${name}.bam -o tracks/${name}_minus.bw
-	### Filtering only small RNA sizes (15 to 32nt)
+	#### Filtering only small RNA sizes (15 to 32nt)
 	seqkit seq --max-len 32 --min-len 15 fastq/filtered_${name}.fastq.gz | gzip > fastq/sized_${name}.fastq.gz
-	### Getting stats of size distribution
-  printf "\nGetting stats for ${name}\n"
-  zcat fastq/trimmed_${name}.fastq.gz | awk '{if(NR%4==2) print length($1)}' | sort -n | uniq -c | awk -v OFS="\t" -v n=$name '{print n,"trimmed",$2,$1}' > reports/sizes_trimmed_${name}.txt
-  zcat fastq/filtered_${name}.fastq.gz | awk '{if(NR%4==2) print length($1)}' | sort -n | uniq -c | awk -v OFS="\t" -v n=$name '{print n,"filtered",$2,$1}' > reports/sizes_filtered_${name}.txt
-  samtools view mapped/${name}/filtered_${name}.bam | awk '$2==0 || $2==16 {print length($10)}' | sort -n | uniq -c | awk -v OFS="\t" -v n=$name '{print n,"mapped",$2,$1}' > reports/sizes_mapped_${name}.txt
-  touch chkpts/${name}  
+	#### Getting stats of size distribution
+  	printf "\nGetting stats for ${name}\n"
+  	zcat fastq/trimmed_${name}.fastq.gz | awk '{if(NR%4==2) print length($1)}' | sort -n | uniq -c | awk -v OFS="\t" -v n=$name '{print n,"trimmed",$2,$1}' > reports/sizes_trimmed_${name}.txt
+  	zcat fastq/filtered_${name}.fastq.gz | awk '{if(NR%4==2) print length($1)}' | sort -n | uniq -c | awk -v OFS="\t" -v n=$name '{print n,"filtered",$2,$1}' > reports/sizes_filtered_${name}.txt
+  	samtools view mapped/${name}/filtered_${name}.bam | awk '$2==0 || $2==16 {print length($10)}' | sort -n | uniq -c | awk -v OFS="\t" -v n=$name '{print n,"mapped",$2,$1}' > reports/sizes_mapped_${name}.txt
+  	touch chkpts/${name}  
+else
+	printf "\nData format missing: paired-end (PE) or single-end (SE)?\n"
+	exit 1
 fi
 
-printf "\nshRNA mapping script finished successfully for ${name}\n"
+printf "\nScript finished successfully!\n"
+touch chkpts/${name}_${ref}
