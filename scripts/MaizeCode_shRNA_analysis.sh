@@ -1,12 +1,25 @@
 #!/bin/bash
 #$ -V
 #$ -cwd
-#$ -pe threads 20
-#$ -l m_mem_free=6G
-#$ -l tmp_free=8G
-#$ -o temp.log
+#$ -pe threads 1
+#$ -l m_mem_free=2G
+#$ -l tmp_free=10G
+#$ -o shRNAanalysis.log
 #$ -j y
-#$ -N temp
+#$ -N shRNAanalysis
+
+usage="
+##### Script for Maize code shRNA data analysis, used by script MaizeCode_analysis.sh for shRNA data
+#####
+##### sh MaiCode_shRNA_analysis.sh -f samplefile [-h]
+#####	-f: samplefile containing the samples to compare and in 5 tab-delimited columns:
+##### 		Line, Tissue, Mark, PE or SE, Reference genome directory
+##### 	-h: help, returns usage
+##### 
+##### It merges the two replicate files (filtered for sizes from 15 to 32 nt), maps it again with ShortStack and creates stranded bigwig files for each sample
+#####
+##### Requirements: samtools, deeptools, Shortstack
+"
 
 set -e -o pipefail
 
@@ -15,60 +28,80 @@ date
 printf "\n"
 
 export threads=$NSLOTS
-export mc_dir="${PWD}/scripts/"
-printf "\nRunning MaizeCode.sh script in working directory ${PWD}\n"
 
 if [ $# -eq 0 ]; then
-	printf "$usage\n"
+	printf "${usage}\n"
 	exit 1
 fi
 
-while getopts "d:l:t:m:p:h" opt; do
-	case $opt in
-		h) 	printf "$usage\n"
+while getopts ":f:sh" opt; do
+	case ${opt} in
+		h) 	printf "${usage}\n"
 			exit 0;;
-		d) 	export ref_dir=${OPTARG};;
-		l)	export line=${OPTARG};;
-		t)	export tissue=${OPTARG};;
-		m)	export rnatype=${OPTARG};;
-		p)	export paired=${OPTARG};;
-		*)	printf "$usage\n"
+		f) 	export samplefile=${OPTARG};;
+		*)	printf "${usage}\n"
 			exit 1;;
 	esac
 done
 shift $((OPTIND - 1))
 
-if [ ! $ref_dir ] || [ ! $line ] || [ ! $tissue ] || [ ! $rnatype ] || [ ! $paired ]; then
-	printf "Missing arguments!\n"
-	printf "$usage\n"
+if [ ! ${samplefile} ]; then
+	printf "Samplefile missing!\n"
+	printf "${usage}\n"
 	exit 1
 fi
 
-export genomes=${ref_dir%/*}
-export ref=${ref_dir##*/}
+tmp1=${samplefile##*temp_}
+export samplename=${tmp1%%_shRNA}
 
-name=${line}_${tissue}_${rnatype}
-### merging bam files
-if [ ! -s mapped/${name}_merged.bam ]; then
-	printf "\nMerging bam files\n"
-	samtools merge -@ $threads mapped/temp_${name}_merged.bam mapped/${name}_Rep1/filtered_${name}_Rep1.bam mapped/${name}_Rep2/filtered_${name}_Rep2.bam 
-	samtools sort -@ $threads -o mapped/${name}_merged.bam mapped/temp_${name}_merged.bam
-	rm -f mapped/temp_${name}_merged.bam
-	samtools index -@ $threads mapped/${name}_merged.bam
-fi
+pids=()
+while read line tissue rnatype paired ref_dir
+do
+	export line
+	export tissue
+	export rnatype
+	export name=${line}_${tissue}_${rnatype}
+	printf "\nStarting single RNA sample analysis for ${name}\n"	
+	export ref_dir=${ref_dir}
+	export ref=${ref_dir##*/}
+	qsub -N ${name} -V -cwd -sync y -pe threads 20 -l m_mem_free=5G -l tmp_free=50G -j y -o logs/analysis_${name}.log <<-'EOF' &
+		#!/bin/bash
+		set -e -o pipefail
+		
+		printf "\n\n"
+		date
+		printf "\n"
+		
+		export threads=$NSLOTS
+		
+		#### To merge bam files of replicates
+		if [ ! -s mapped/${name}_merged.bam ]; then
+			printf "\nMerging replicates of ${name}\n"
+			samtools merge -@ ${threads} mapped/temp_${name}_merged.bam mapped/filtered_${name}_Rep*.bam
+			samtools sort -@ ${threads} -o mapped/${name}_merged.bam mapped/temp_${name}_merged.bam
+			rm -f mapped/temp_${name}_merged.bam
+			samtools index -@ ${threads} mapped/${name}_merged.bam
+		fi
+		#### To map and identify sRNA loci with ShortStack
+		if [ ! -s mapped/${name}/ShortStack_All.gff3 ]; then
+			rm -fr mapped/${name}
+			ShortStack --bamfile mapped/${name}_merged.bam --genomefile ${ref_dir}/$ref.fa --sort_mem 5G --mmap u --dicermin 20 --dicermax 24 --bowtie_m all --mismatches 1 --foldsize 1000 --pad 250 --outdir mapped/${name}
+		fi
+		#### To make bw files of merged samples if not already existing		
+		if [ ! -s tracks/${name}_merged_minus.bw ]; then
+			printf "\nMaking tracks for ${name}\n"
+			bamCoverage --filterRNAstrand forward -bs 1 -p ${threads} --normalizeUsing CPM -b mapped/${name}_merged.bam -o tracks/${name}_merged_plus.bw
+			bamCoverage --filterRNAstrand reverse -bs 1 -p ${threads} --normalizeUsing CPM -b mapped/${name}_merged.bam -o tracks/${name}_merged_minus.bw
+		else
+			printf "\nBigwig files for ${name} already exists\n"
+		fi
+		printf "\nAnalysis finished for ${name}\n"
+		touch chkpts/analysis_${name}
+	EOF
+	pids+=("$!")
+done < ${samplefile}
 
-### Mapping and identifying sRNA loci with shortstack
-if [ ! -s mapped/${name}/ShortStack_All.gff3 ]; then
-	rm -fr mapped/${name}
-	ShortStack --bamfile mapped/${name}_merged.bam --genomefile ${ref_dir}/$ref.fa --sort_mem 8G --mmap u --dicermin 20 --dicermax 24 --bowtie_m all --mismatches 1 --foldsize 1000 --pad 250 --outdir mapped/${name}
-fi
+printf "\nWaiting for samples to be processed individually\n"
+wait ${pids[*]}
 
-### Making bigiwig tracks
-if [ ! -s tracks/${name}_merged_plus.bw ]; then
-	printf "\nMaking tracks for $name\n"
-	bamCoverage --filterRNAstrand forward -bs 1 -p $threads --normalizeUsing CPM -b mapped/${name}_merged.bam -o tracks/${name}_merged_plus.bw
-	bamCoverage --filterRNAstrand reverse -bs 1 -p $threads --normalizeUsing CPM -b mapped/${name}_merged.bam -o tracks/${name}_merged_minus.bw
-fi
-
-touch chkpts/${name}
-printf "\nsRNA mapping script finished successfully for $name\n"
+printf "\nScript finished successfully!\n"
