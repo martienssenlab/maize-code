@@ -299,30 +299,52 @@ printf "\nExtracting mapping stats table\n"
 if [ -e combined/reports/temp_mapping_stats_${samplename}.txt ]; then
 	rm -f combined/reports/temp_mapping_stats_${samplename}.txt
 fi
+if [ -e combined/reports/temp2_mapping_stats_${samplename}.txt ]; then
+	rm -f combined/reports/temp2_mapping_stats_${samplename}.txt
+fi
 
 while read data line tissue sample rep sampleID path paired ref
 do
 	case "${data}" in
 		ChIP) env="ChIP"
+			stat="plot1"
 			name="${tissue}";;
 		RNAseq) env="RNA"
+			stat="plot1"
 			name="${tissue}";;
 		RAMPAGE) env="RNA"
+			stat="plot1"
 			name="${tissue}";;
 		shRNA) env="shRNA"
-			name="${tissue}";;
+			stat="plot2"
+			name="${line}_${tissue}_${sample}_${rep}";;
 		TF_*) env="TF"
+			stat="plot1"
 			name=${data##TF_};;
 	esac
-	awk -v a=${line} -v b=${name} -v c=${sample} -v d=${rep} -v e=${ref} '$1==a && $2==b && $3==c && $4==d && $5==e' ${env}/reports/summary_mapping_stats.txt >> combined/reports/temp_mapping_stats_${samplename}.txt
+	if [[ ${stat} == "plot1" ]]; then
+		awk -v a=${line} -v b=${name} -v c=${sample} -v d=${rep} -v e=${ref} '$1==a && $2==b && $3==c && $4==d && $5==e' ${env}/reports/summary_mapping_stats.txt >> combined/reports/temp_mapping_stats_${samplename}.txt
+	elif [[ ${stat} == "plot2" ]]; then
+		awk -v a=${name} '$1==a' ${env}/reports/summary_mapping_stats.txt >> combined/reports/temp2_mapping_stats_${samplename}.txt
+	fi
 done < ${samplefile}
 
-printf "Line\tTissue\tSample\tRep\tReference_genome\tTotal_reads\tPassing_filtering\tAll_mapped_reads\tUniquely_mapped_reads\n" > combined/reports/summary_mapping_stats_${samplename}.txt
-sort combined/reports/temp_mapping_stats_${samplename}.txt -u >> combined/reports/summary_mapping_stats_${samplename}.txt
-rm -f combined/reports/temp_mapping_stats_${samplename}.txt
-printf "\nPlotting mapping stats for all samples in the samplefile with R:\n"
-R --version
-Rscript --vanilla ${mc_dir}/MaizeCode_R_mapping_stats.r combined/reports/summary_mapping_stats_${samplename}.txt ${samplename}
+if [ -s combined/reports/temp_mapping_stats_${samplename}.txt ]; then
+	printf "Line\tTissue\tSample\tRep\tReference_genome\tTotal_reads\tPassing_filtering\tAll_mapped_reads\tUniquely_mapped_reads\n" > combined/reports/summary_mapping_stats_${samplename}.txt
+	sort combined/reports/temp_mapping_stats_${samplename}.txt -u >> combined/reports/summary_mapping_stats_${samplename}_ChIP_RNA.txt
+	rm -f combined/reports/temp_mapping_stats_${samplename}.txt
+	printf "\nPlotting mapping stats for all ChIP and RNA samples in the samplefile with R:\n"
+	R --version
+	Rscript --vanilla ${mc_dir}/MaizeCode_R_mapping_stats.r combined/reports/summary_mapping_stats_${samplename}_ChIP_RNA.txt ${samplename}
+fi
+if [ -s combined/reports/temp2_mapping_stats_${samplename}.txt ]; then
+	printf "Sample\tType\tSize\tCount\n" > combined/reports/summary_mapping_stats_${samplename}_shRNAs.txt
+	sort combined/reports/temp2_mapping_stats_${samplename}.txt -u >> combined/reports/summary_mapping_stats_${samplename}_shRNA.txt
+	rm -f combined/reports/temp2_mapping_stats_${samplename}.txt
+	printf "\nPlotting mapping stats for all shRNA samples in the samplefile with R:\n"
+	R --version
+	Rscript --vanilla ${mc_dir}/MaizeCode_R_shRNA_stats.r combined/reports/summary_mapping_stats_${samplename}_shRNA.txt ${samplename}
+fi 
 
 if [[ "$keepgoing" == "STOP" ]]; then
 
