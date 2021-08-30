@@ -46,9 +46,12 @@ mysql -urfamro -hmysql-rfam-public.ebi.ac.uk -P4497 --skip-column-names --databa
 
 esl-sfetch -f path/to/Rfam.fa /path/to/accessions.txt > Rfam_ncRNAs.fa
 
-- STEP9: Build bowtie2 indexes on the newly created fasta file and map the trimmed library to it, then use the unmapped reads, where $threads is the number of threads to use, ${ref}/zm_structural_RNAs is the path and name of the fasta file and later of the bowtie 2 indexes, ${name}.fastq.gz is the name of your trimmed fastq file to filter and filtered_${name}.fastq.gz is the results file you get.
+- STEP9: Build bowtie2 indexes on the newly created fasta file
 
 bowtie2-build --threads $threads ${ref}/zm_structural_RNAs.fa ${ref}/zm_structural_RNAs
+
+- STEP10: Map the trimmed library to it, then use the unmapped reads, where $threads is the number of threads to use, ${ref}/zm_structural_RNAs is the path and name of the fasta file and of the bowtie 2 indexes, ${name}.fastq.gz is the name of your trimmed fastq file to filter and filtered_${name}.fastq.gz is the results file you get.
+
 bowtie2 --very-sensitive -p $threads -x ${ref}/zm_structural_RNAs -U ${name}.fastq.gz | samtools view -@ $threads -f 0x4 | samtools fastq -@ $threads | gzip > filtered_${name}.fastq.gz
 
 - My files for maize:
