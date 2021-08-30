@@ -27,7 +27,7 @@ usage="
 ##### It downloads or copies the files, runs fastQC, trims adapters with cutadapt, aligns with STAR (different parameters based on type of RNA),
 ##### make stranded track files (bigwigs) and get some mapping stats
 #####
-##### Requirements: samtools, fastQC, Cutadapt, STAR, parallel-fastq-dump (if downloading SRA data)
+##### Requirements: samtools, fastQC, Cutadapt, STAR, Deeptools, parallel-fastq-dump (if downloading SRA data)
 "
 
 set -e -o pipefail
