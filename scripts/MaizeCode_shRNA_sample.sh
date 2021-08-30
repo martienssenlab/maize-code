@@ -44,8 +44,8 @@ if [ $# -eq 0 ]; then
 fi
 
 while getopts "x:d:l:t:m:r:i:f:p:s:h" opt; do
-	case $opt in
-		h) 	printf "$usage\n"
+	case ${opt} in
+		h) 	printf "${usage}\n"
 			exit 0;;
 		x)	export data=${OPTARG};;
 		d) 	export ref_dir=${OPTARG};;
@@ -57,7 +57,7 @@ while getopts "x:d:l:t:m:r:i:f:p:s:h" opt; do
 		f)	export path=${OPTARG};;
 		p)	export paired=${OPTARG};;
 		s)	export step=${OPTARG};;
-		*)	printf "$usage\n"
+		*)	printf "${usage}\n"
 			exit 1;;
 	esac
 done
@@ -169,10 +169,9 @@ elif [[ ${paired} == "SE" ]]; then
 	seqkit seq --max-len 32 --min-len 15 fastq/filtered_${name}.fastq.gz | gzip > fastq/sized_${name}.fastq.gz
 	#### Getting stats of size distribution
   	printf "\nGetting stats for ${name}\n"
-  	zcat fastq/trimmed_${name}.fastq.gz | awk '{if(NR%4==2) print length($1)}' | sort -n | uniq -c | awk -v OFS="\t" -v n=$name '{print n,"trimmed",$2,$1}' > reports/sizes_trimmed_${name}.txt
-  	zcat fastq/filtered_${name}.fastq.gz | awk '{if(NR%4==2) print length($1)}' | sort -n | uniq -c | awk -v OFS="\t" -v n=$name '{print n,"filtered",$2,$1}' > reports/sizes_filtered_${name}.txt
-  	samtools view mapped/${name}/filtered_${name}.bam | awk '$2==0 || $2==16 {print length($10)}' | sort -n | uniq -c | awk -v OFS="\t" -v n=$name '{print n,"mapped",$2,$1}' > reports/sizes_mapped_${name}.txt
-  	touch chkpts/${name}  
+  	zcat fastq/trimmed_${name}.fastq.gz | awk '{if(NR%4==2) print length($1)}' | sort -n | uniq -c | awk -v OFS="\t" -v n=${name} '{print n,"trimmed",$2,$1}' > reports/sizes_trimmed_${name}.txt
+  	zcat fastq/filtered_${name}.fastq.gz | awk '{if(NR%4==2) print length($1)}' | sort -n | uniq -c | awk -v OFS="\t" -v n=${name} '{print n,"filtered",$2,$1}' > reports/sizes_filtered_${name}.txt
+  	samtools view mapped/${name}/filtered_${name}.bam | awk '$2==0 || $2==16 {print length($10)}' | sort -n | uniq -c | awk -v OFS="\t" -v n=${name} '{print n,"mapped",$2,$1}' > reports/sizes_mapped_${name}.txt
 else
 	printf "\nData format missing: paired-end (PE) or single-end (SE)?\n"
 	exit 1
