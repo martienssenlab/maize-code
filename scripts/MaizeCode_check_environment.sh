@@ -168,7 +168,7 @@ elif [[ ${datatype} == "TF" ]]; then
 	fi
 elif [[ ${datatype} == "shRNA" ]]; then
 	if [ ! -s ${datatype}/reports/summary_mapping_stats.txt ]; then
-		printf "Line\tSample\tMark\tRep\tReference_genome\tTotal_reads\tPassing_filtering\tAll_mapped_reads\tUniquely_mapped_reads\n" > ${datatype}/reports/summary_mapping_stats.txt
+		printf "Sample\tType\tSize\tCount\n" > ${datatype}/reports/summary_mapping_stats.txt
 	fi
 	if ls ${ref_dir}/*.bt2* 1> /dev/null 2>&1; then
 		printf "\nBowtie2 index already exists for ${ref} in ${ref_dir}\n"
