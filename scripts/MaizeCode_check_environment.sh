@@ -34,29 +34,29 @@ printf "\n\n"
 date
 printf "\n"
 
-export threads=$NSLOTS
+export threads=${NSLOTS}
 
 if [ $# -eq 0 ]; then
-	printf "$usage\n"
+	printf "${usage}\n"
 	exit 1
 fi
 
 while getopts "p:r:d:h" opt; do
-	case $opt in
-		h) 	printf "$usage\n"
+	case ${opt} in
+		h) 	printf "${usage}\n"
 			exit 0;;
 		p)	export pathtoref=${OPTARG};;
 		r)	export ref=${OPTARG};;
 		d)	export datatype=${OPTARG};;
-		*)	printf "$usage\n"
+		*)	printf "${usage}\n"
 			exit 1;;
 	esac
 done
 shift $((OPTIND - 1))
 
-if [ ! $ref ] || [ ! $pathtoref ] || [ ! $datatype ]; then
+if [ ! ${ref} ] || [ ! ${pathtoref} ] || [ ! ${datatype} ]; then
 	printf "Missing arguments!\n"
-	printf "$usage\n"
+	printf "${usage}\n"
 	exit 1
 fi
 
@@ -68,10 +68,10 @@ if [ -s ${ref_dir}/*.fa.gz ]; then
 	fa_file=$(ls ${ref_dir}/*.fa.gz)
 	fa_filename=${fa_file##*/}
 	printf "\nGzipped fasta file found in ${ref_dir}:\n ${fa_filename}\n"
-	pigz -p $threads -dc ${fa_file} > ${ref_dir}/temp_${ref}.fa
+	pigz -p ${threads} -dc ${fa_file} > ${ref_dir}/temp_${ref}.fa
 	fasta=${ref_dir}/temp_${ref}.fa
 elif [ -s ${ref_dir}/*.fa ]; then
-	fa_file=$(ls $ref_dir/*.fa)
+	fa_file=$(ls ${ref_dir}/*.fa)
 	fa_filename=${fa_file##*/}
 	printf "\nUnzipped fasta file found in ${ref_dir}:\n ${fa_filename}\n"
 	fasta=${fa_file}
@@ -79,10 +79,10 @@ elif [ -s ${ref_dir}/*.fasta.gz ]; then
 	fa_file=$(ls ${ref_dir}/*.fasta.gz)
 	fa_filename=${fa_file##*/}
 	printf "\nGzipped fasta file found in ${ref_dir}:\n ${fa_filename}\n"
-	pigz -p $threads -dc ${fa_file} > ${ref_dir}/temp_${ref}.fa
+	pigz -p ${threads} -dc ${fa_file} > ${ref_dir}/temp_${ref}.fa
 	fasta=${ref_dir}/temp_${ref}.fa
 elif [ -s ${ref_dir}/*.fasta ]; then
-	fa_file=$(ls $ref_dir/*.fasta)
+	fa_file=$(ls ${ref_dir}/*.fasta)
 	fa_filename=${fa_file##*/}
 	printf "\nUnzipped fasta file found in ${ref_dir}:\n ${fa_filename}\n"
 	fasta=${fa_file}
@@ -95,7 +95,7 @@ if [ -s ${ref_dir}/*.gff*.gz ]; then
 	gff_file=$(ls ${ref_dir}/*gff*.gz)
 	gff_filename=${gff_file##*/}
 	printf "\nGzipped GFF annotation file found in ${ref_dir}:\n ${gff_filename}\n"
-	pigz -p $threads -dc ${gff_file} > ${ref_dir}/temp_${ref}.gff	
+	pigz -p ${threads} -dc ${gff_file} > ${ref_dir}/temp_${ref}.gff	
 	gff=${ref_dir}/temp_${ref}.gff
 elif [ -s ${ref_dir}/*.gff* ]; then
 	gff_file=$(ls ${ref_dir}/*.gff*)
@@ -111,7 +111,7 @@ if [ -s ${ref_dir}/*.gtf.gz ]; then
 	gtf_file=$(ls ${ref_dir}/*gtf.gz)
 	gtf_filename=${gtf_file##*/}
 	printf "\nGzipped GTF annotation file found in ${ref_dir}:\n ${gtf_filename}\n"
-	pigz -p $threads -dc ${gtf_file} > ${ref_dir}/temp_${ref}.gtf	
+	pigz -p ${threads} -dc ${gtf_file} > ${ref_dir}/temp_${ref}.gtf	
 	gtf=${ref_dir}/temp_${ref}.gtf
 elif [ -s ${ref_dir}/*.gtf ]; then
 	gtf_file=$(ls ${ref_dir}/*.gtf)
@@ -125,54 +125,66 @@ fi
 
 #### To create - if needed - the genome index, a bed file of all genes (for future analysis) and a chrom.sizes file
 if [ ! -s ${ref_dir}/chrom.sizes ]; then
-	printf "\nMaking chrom.sizes file for $ref\n"
-	samtools faidx $fasta
+	printf "\nMaking chrom.sizes file for ${ref}\n"
+	samtools faidx ${fasta}
 	cut -f1,2 ${fasta}.fai > ${ref_dir}/chrom.sizes
 fi
 
-if [ ! -s $datatype/tracks/${ref}_all_genes.bed ]; then
-	printf "\nMaking a bed file with gene coordinates from $ref\n"
-	awk -v OFS="\t" '$3=="gene" {print $1,$4-1,$5,$9,".",$7}' $gff | bedtools sort -g ${ref_dir}/chrom.sizes > $datatype/tracks/${ref}_protein_coding_genes.bed
-	awk -v OFS="\t" '$3~"gene" {print $1,$4-1,$5,$9,".",$7}' $gff | bedtools sort -g ${ref_dir}/chrom.sizes > $datatype/tracks/${ref}_all_genes.bed
+if [ ! -s ${datatype}/tracks/${ref}_all_genes.bed ]; then
+	printf "\nMaking a bed file with gene coordinates from ${ref}\n"
+	awk -v OFS="\t" '$3=="gene" {print $1,$4-1,$5,$9,".",$7}' ${gff} | bedtools sort -g ${ref_dir}/chrom.sizes > ${datatype}/tracks/${ref}_protein_coding_genes.bed
+	awk -v OFS="\t" '$3~"gene" {print $1,$4-1,$5,$9,".",$7}' ${gff} | bedtools sort -g ${ref_dir}/chrom.sizes > ${datatype}/tracks/${ref}_all_genes.bed
 fi
 
-if [[ $datatype == "ChIP" ]]; then
-	if [ ! -s $datatype/reports/summary_mapping_stats.txt ]; then
-		printf "Line\tTissue\tSample\tRep\tReference_genome\tTotal_reads\tPassing_filtering\tAll_mapped_reads\tUniquely_mapped_reads\n" > $datatype/reports/summary_mapping_stats.txt
+if [[ ${datatype} == "ChIP" ]]; then
+	if [ ! -s ${datatype}/reports/summary_mapping_stats.txt ]; then
+		printf "Line\tTissue\tSample\tRep\tReference_genome\tTotal_reads\tPassing_filtering\tAll_mapped_reads\tUniquely_mapped_reads\n" > ${datatype}/reports/summary_mapping_stats.txt
 	fi
 	if ls ${ref_dir}/*.bt2* 1> /dev/null 2>&1; then
-		printf "\nBowtie2 index already exists for $ref in ${ref_dir}\n"
+		printf "\nBowtie2 index already exists for ${ref} in ${ref_dir}\n"
 	else
 		printf "\nBuilding Bowtie2 index for $ref\n"
-		bowtie2-build --threads $threads $fasta ${ref_dir}/$ref
+		bowtie2-build --threads ${threads} ${fasta} ${ref_dir}/${ref}
 	fi
-elif [[ $datatype == "RNA" ]]; then
-	if [ ! -s $datatype/reports/summary_mapping_stats.txt ]; then
-		printf "Line\tTissue\tSample\tRep\tReference_genome\tTotal_reads\tPassing_filtering\tAll_mapped_reads\tUniquely_mapped_reads\n" > $datatype/reports/summary_mapping_stats.txt
+elif [[ ${datatype} == "RNA" ]]; then
+	if [ ! -s ${datatype}/reports/summary_mapping_stats.txt ]; then
+		printf "Line\tTissue\tSample\tRep\tReference_genome\tTotal_reads\tPassing_filtering\tAll_mapped_reads\tUniquely_mapped_reads\n" > ${datatype}/reports/summary_mapping_stats.txt
 	fi
 	gen_dir=${ref_dir}/STAR_index
 	if [ ! -d ${gen_dir} ]; then
-		printf "\nBuilding STAR index directory for $ref\n"
+		printf "\nBuilding STAR index directory for ${ref}\n"
 		mkdir ${gen_dir}
-		STAR --runThreadN $threads --runMode genomeGenerate --genomeDir ${gen_dir} --genomeFastaFiles $fasta --sjdbGTFfile $gtf
+		STAR --runThreadN ${threads} --runMode genomeGenerate --genomeDir ${gen_dir} --genomeFastaFiles ${fasta} --sjdbGTFfile ${gtf}
 	fi
-elif [[ $datatype == "TF" ]]; then
-	if [ ! -s $datatype/reports/summary_mapping_stats.txt ]; then
-		printf "Line\tSample\tMark\tRep\tReference_genome\tTotal_reads\tPassing_filtering\tAll_mapped_reads\tUniquely_mapped_reads\n" > $datatype/reports/summary_mapping_stats.txt
+elif [[ ${datatype} == "TF" ]]; then
+	if [ ! -s ${datatype}/reports/summary_mapping_stats.txt ]; then
+		printf "Line\tSample\tMark\tRep\tReference_genome\tTotal_reads\tPassing_filtering\tAll_mapped_reads\tUniquely_mapped_reads\n" > ${datatype}/reports/summary_mapping_stats.txt
 	fi
 	if ls ${ref_dir}/*.bt2* 1> /dev/null 2>&1; then
-		printf "\nBowtie2 index already exists for $ref in ${ref_dir}\n"
+		printf "\nBowtie2 index already exists for ${ref} in ${ref_dir}\n"
 	else
 		printf "\nBuilding Bowtie2 index for $ref\n"
-		bowtie2-build --threads $threads $fasta ${ref_dir}/$ref
+		bowtie2-build --threads ${threads} ${fasta} ${ref_dir}/${ref}
 	fi
-elif [[ $datatype == "shRNA" ]]; then
-	printf "\nshRNA pipeline selected but not yet ready\n"
+elif [[ ${datatype} == "shRNA" ]]; then
+	if [ ! -s ${datatype}/reports/summary_mapping_stats.txt ]; then
+		printf "Sample\tType\tSize\tCount\n" > ${datatype}/reports/summary_mapping_stats.txt
+	fi
+	if ls ${ref_dir}/*.bt2* 1> /dev/null 2>&1; then
+		printf "\nBowtie2 index already exists for ${ref} in ${ref_dir}\n"
+	else
+		printf "\nBuilding Bowtie2 index for ${ref}\n"
+		bowtie2-build --threads $threads $fasta ${ref_dir}/${ref}
+	fi
+	#### This step will need to be automatized to potentially change which organism to map to and build it from scratch. 
+	#### Another option would be to have people create it independantly, potentially giving a script or just the help documentation (see Help_RFam.docx in the data folder).
+	printf "\nCopying structural RNA index files to filter reads\n"
+	cp -r /grid/martienssen/data_norepl/dropbox/maizecode/structural_RNA ${datatype}/
 else
 	printf "\nType of data unknown!\n"
 	exit 1
 fi
 
 printf "\nScript finished successfully!\n"
-touch $datatype/chkpts/env_${ref}
+touch ${datatype}/chkpts/env_${ref}
 

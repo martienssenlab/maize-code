@@ -18,12 +18,19 @@ usage="
 #####	-t: If set, partial analysis will be performed (no heatmap with deeptools)	
 ##### 	-h: help, returns usage
 ##### 
-##### It produces an Upset plot of the intersection between all ChIP samples, highlighting peaks in the input regions
-##### It creates different heatmaps of all ChIP and RNA samples in the samplefile on all input regions
+##### After preparing all the data in the samplefile (PART1) it will, depending on the types of data present:
+##### PART2: perform differential gene expression analysis among all RNAseq samples, potentially with gene ontology analysis (for B73_v4 for now)
+##### PART3: produce an Upset plot of the intersection between all ChIP samples, highlighting peaks in the input regions
+##### PART4: produce an Upset plot of the intersection between all TF samples, highlighting peaks in the H3K27ac peaks (if possible)
+##### PART8: plot different heatmaps and metaplots of all ChIP and RNA samples in the samplefile on all input regions
+##### PART9: plot heatmaps and metaplots on DEGs
+##### PART10: plot heatmaps and metaplots on genes split by expression levels
+##### PART11: plot heatmaps and metaplots on distal peaks split by H3K27ac ChIPseq quality
 ##### Under development:
-##### Differential peak calling between all pairs of ChIP samples for each mark
-##### Differential gene expression analysis between all pairs of RNA samples
-##### Differential peak/TSS calling between all pairs of RAMPAGE samples
+##### PART5: compare TF peaks with DEGs
+##### PART6: perform differential peak/TSS calling between all pairs of RAMPAGE samples
+##### PART7: perform differential peak calling between all pairs of ChIP samples for each mark
+##### PART11: perform differential sRNA expression analysis
 #####
 ##### Requirements: bedtools, deeptools, macs2, R (+R packages: ggplot2,UpSetR,limma,edgeR,dplyr,tidyr,stringr,gplots)
 "
@@ -105,6 +112,8 @@ rnaseq_bw_list_plus=()
 rnaseq_bw_list_minus=()
 rampage_bw_list_plus=()
 rampage_bw_list_minus=()
+shrna_bw_list_plus=()
+shrna_bw_list_minus=()
 while read data line tissue sample paired ref_dir
 do
 	case "${data}" in
@@ -153,6 +162,8 @@ do
 	elif [[ "${datatype}" == "shRNA" ]]; then
 		shrna_sample_list+=("${name}")
 		shrna_tissue_list+=("${tissue}")
+		shrna_bw_list_plus+=("${datatype}/tracks/${name}_merged_plus.bw")
+		shrna_bw_list_minus+=("${datatype}/tracks/${name}_merged_minus.bw")
 	elif [[ "${datatype}" == "TF" ]]; then
 		tf_sample_list+=("${name}")
 		tf_tissue_list+=("${tissue}")
@@ -530,13 +541,12 @@ fi
 
 #########################################################################################
 ####################################### PART8 ###########################################
-################################### Making heatmaps  ####################################
+########################## Making heatmaps on all genes  ################################
 #########################################################################################
 
 #### To make heatmaps and profiles with deeptools
 #### By default, it does both scale-regions and reference-point on start of bedfile provided
 #### By default, it does heatmap on all the data and corresponding profiles
-#### Probably need to edit parameters depending on the purpose of the analysis
 
 if [[ "${total}" == "No" ]]; then
 	printf "\nPartial combined analysis script finished successfully for ${analysisname}\n"
@@ -684,6 +694,11 @@ done
 
 rm -f combined/matrix/*${analysisname}*.gz
 
+#########################################################################################
+####################################### PART9 ###########################################
+############################## Making heatmaps on DEGs  #################################
+#########################################################################################
+
 #### To make heatmaps and profiles with deeptools on the DEG if they were called
 
 if [ ${#rnaseq_name_list[@]} -ge 2 ]; then
@@ -783,6 +798,11 @@ fi
 rm -f combined/matrix/temp_regions_${analysisname}*
 rm -f combined/matrix/*${analysisname}*.gz
 rm -f combined/matrix/values*${analysisname}*
+
+#########################################################################################
+####################################### PART10 ##########################################
+################# Making heatmaps on genes split by expression levels  ##################
+#########################################################################################
 
 #### To make heatmap and profile with deeptools for each tissue based on grouped expression levels (if both RNA and ChIP samples are present in a tissue)
 
@@ -962,6 +982,11 @@ done
 
 rm -f combined/DEG/sorted_${analysisname}*
 rm -f combined/DEG/temp_counts_${analysisname}*
+
+#########################################################################################
+####################################### PART11 ##########################################
+############ Making heatmaps on distal H3K27ac peaks split by ChIP enrichment  ##########
+#########################################################################################
 
 #### To make heatmap and profile with deeptools for each tissue based on grouped H3K27ac levels at distal elements (>2kb)
 
