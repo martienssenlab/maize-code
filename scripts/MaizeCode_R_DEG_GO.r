@@ -1,6 +1,35 @@
 #!/usr/bin/env Rscript
 
-install(./combined/GO/org.Zmays.eg.db)
+#### If database has to be built.
+# info<-read.delim("combined/GO/B73_v4_infoGO.tab", header=FALSE)
+# genes<-read.delim("B73_genes_info.tab", header=TRUE) %>%
+#  rowwise() %>%
+#  mutate(desc=ifelse(Description=="protein_coding",Type,Description),
+#         typ=ifelse(Description=="protein_coding",Description,Type)) %>%
+#  select(-Description, -Type) %>%
+#  rename(Description=desc, Type=typ)
+
+# fGOzm<-info[,c(2,5,7)]
+# colnames(fGOzm)<-c("GID","GO","EVIDENCE")
+
+# fSymzm<-select(genes, GID, Type, Description)
+# fSymzm$ENTREZID <- paste0("ent",fSymzm$GID)
+
+# fChrzm<-select(genes, GID, Chr)
+
+# makeOrgPackage(gene_info=fSymzm, chromosome=fChrzm, go=fGOzm,
+#               version="0.1",
+#               maintainer="user <user@maizecode>",
+#               author="user <user@maizecode>",
+#               outputDir = ".",
+#               tax_id = "381124",
+#               genus = "Zea",
+#               species = "mays",
+#               goTable="go")
+
+# install.packages("./combined/GO/org.Zmays.eg.db", repos=NULL, type="source")
+
+install.packages("./combined/GO/org.Zmays.eg.db", repos=NULL, type="source")
 
 library(AnnotationForge)
 library(rrvgo)
