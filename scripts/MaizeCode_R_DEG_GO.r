@@ -1,5 +1,18 @@
 #!/usr/bin/env Rscript
 
+library(AnnotationForge)
+library(rrvgo)
+library(topGO)
+library(purrr)
+library(limma)
+library(edgeR)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(gplots)
+
+args = commandArgs(trailingOnly=TRUE)
+
 #### If database has to be built.
 # info<-read.delim("combined/GO/B73_v4_infoGO.tab", header=FALSE)
 # genes<-read.delim("B73_genes_info.tab", header=TRUE) %>%
@@ -30,20 +43,7 @@
 # install.packages("./combined/GO/org.Zmays.eg.db", repos=NULL, type="source")
 
 install.packages("./combined/GO/org.Zmays.eg.db", repos=NULL, type="source")
-
-library(AnnotationForge)
-library(rrvgo)
-library(topGO)
-library(purrr)
-library(limma)
-library(edgeR)
-library(dplyr)
-library(tidyr)
-library(stringr)
-library(gplots)
 library(org.Zmays.eg.db)
-
-args = commandArgs(trailingOnly=TRUE)
 
 genecount<-read.delim(args[1], header = TRUE, row.names = "gene_ID")
 keep.exprs<-rowSums(cpm(genecount)>1)>=2
