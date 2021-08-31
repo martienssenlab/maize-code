@@ -10,7 +10,7 @@ library(purrr)
 args = commandArgs(trailingOnly=TRUE)
 
 #### If database as to be built. Will need to be prepared for other people to use.
-# info<-read.delim("/grid/martienssen/data_nlsas/jcahn/Genomes/GO/B73_v4_infoGO.tab", header=FALSE)
+# info<-read.delim("/grid/martienssen/data_norepl/dropbox/maize-code/GO/B73_v4_infoGO.tab", header=FALSE)
 # genes<-read.delim("B73_genes_info.tab", header=TRUE) %>%
 #  rowwise() %>%
 #  mutate(desc=ifelse(Description=="protein_coding",Type,Description),
@@ -49,7 +49,7 @@ keep.exprs<-rowSums(cpm(genecount)>1)>=2
 filtered<-genecount[keep.exprs,]
 filtered$GID<-row.names(filtered)
 
-info<-read.delim("/grid/martienssen/data_nlsas/jcahn/Genomes/GO/B73_v4_infoGO.tab", header=FALSE)
+info<-read.delim("combined/GO/B73_v4_infoGO.tab", header=FALSE)
 fGOzm<-info[,c(2,5,7)]
 colnames(fGOzm)<-c("GID","GO","EVIDENCE")
 geneid2GO<-fGOzm[,c(1,2)]
