@@ -163,8 +163,14 @@ elif [[ ${datatype} == "TF" ]]; then
 	if ls ${ref_dir}/*.bt2* 1> /dev/null 2>&1; then
 		printf "\nBowtie2 index already exists for ${ref} in ${ref_dir}\n"
 	else
-		printf "\nBuilding Bowtie2 index for $ref\n"
+		printf "\nBuilding Bowtie2 index for ${ref}\n"
 		bowtie2-build --threads ${threads} ${fasta} ${ref_dir}/${ref}
+	fi
+	#### This step will need to be automatized to potentially change which line/organism to have the annotations to mask.
+	#### Another option would be to have people create it independantly with Repeat Masker, potentially giving a script or just help with documentation.
+	if [[ ${ref} == "B73_v4" ]] && [ ! -s ${datatype}/tracks/B73_v4_masked_regions.bed ]; then
+		printf "\nCopying bed files of masked regions to filter peaks\n"
+		cp /grid/martienssen/data_norepl/dropbox/maizecode/B73_v4_repeat_masker/B73_v4_masked_regions.bed ${datatype}/tracks/
 	fi
 elif [[ ${datatype} == "shRNA" ]]; then
 	if [ ! -s ${datatype}/reports/summary_mapping_stats.txt ]; then
