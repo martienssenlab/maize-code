@@ -569,8 +569,8 @@ if [[ "${total}" == "No" ]]; then
 	exit 0
 fi
 
-if [ ${#chip_sample_list[@]} -lt 1 ] && [ ${#rampage_sample_list[@]} -lt 1 ]; then
-	printf "\nNot enough ChIP-seq samples for deeptools analysis for ${analysisname}\nAnalysis is thus finished!"
+if [ ${#chip_sample_list[@]} -lt 1 ] && [ ${#rampage_sample_list[@]} -lt 1 ] && [ ${#shrna_sample_list[@]} -lt 1 ]; then
+	printf "\nNot enough samples for deeptools analysis for ${analysisname}\nAnalysis is thus finished!"
 	touch combined/chkpts/analysis_${analysisname}
 	exit 0
 fi
@@ -605,8 +605,8 @@ done
 for strand in plus minus
 do
 	case "${strand}" in
-		plus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_plus[@]} ${rampage_bw_list_plus[@]}";;
-		minus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]}";;
+		plus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_plus[@]} ${rampage_bw_list_plus[@]} ${shrna_bw_list_plus[@]}";;
+		minus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]} ${shrna_bw_list_minus[@]}";;
 	esac
 	printf "\nComputing scale-regions ${strand} strand matrix for ${analysisname}\n"
 	computeMatrix scale-regions --missingDataAsZero --skipZeros -R combined/matrix/temp_regions_${regionname}_${strand}.bed -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/regions_${analysisname}_${strand}.gz
@@ -618,14 +618,27 @@ rm -f combined/matrix/temp_regions_${regionname}_*.bed
 #### Merging stranded matrix, extracting scales and plotting heatmaps
 for matrix in regions tss
 do
-	if [ ${#rnaseq_bw_list_plus[@]} -gt 0 ] && [ ${#rampage_bw_list_plus[@]} -gt 0 ]; then
+	### Probably a better way to do that, maybe with case esac not stopping after match ###
+	if [ ${#rnaseq_bw_list_plus[@]} -gt 0 ] && [ ${#rampage_bw_list_plus[@]} -gt 0 ] && [ ${#shrna_bw_list_plus[@]} -gt 0 ]; then
+		all_samples=("${uniq_chip_mark_list[*]}" "RNAseq" "RAMPAGE" "shRNA")
+		printf "\nIncluding RNAseq, RAMPAGE and shRNA samples\n"
+	elif [ ${#rnaseq_bw_list_plus[@]} -gt 0 ] && [ ${#rampage_bw_list_plus[@]} -gt 0 ]; then
 		all_samples=("${uniq_chip_mark_list[*]}" "RNAseq" "RAMPAGE")
 		printf "\nIncluding RNAseq and RAMPAGE samples\n"
+	elif [ ${#rnaseq_bw_list_plus[@]} -gt 0 ] && [ ${#shrna_bw_list_plus[@]} -gt 0 ]; then
+		all_samples=("${uniq_chip_mark_list[*]}" "RNAseq" "shRNA")
+		printf "\nIncluding RNAseq and shRNA samples\n"
+	elif [ ${#rampage_bw_list_plus[@]} -gt 0 ] && [ ${#shrna_bw_list_plus[@]} -gt 0 ]; then
+		all_samples=("${uniq_chip_mark_list[*]}" "RAMPAGE" "shRNA")
+		printf "\nIncluding RNAseq and shRNA samples\n"
 	elif [ ${#rnaseq_bw_list_plus[@]} -gt 0 ]; then
 		all_samples=("${uniq_chip_mark_list[*]}" "RNAseq")
 		printf "\nIncluding RNAseq samples\n"
 	elif [ ${#rampage_bw_list_plus[@]} -gt 0 ]; then
 		all_samples=("${uniq_chip_mark_list[*]}" "RAMPAGE")
+		printf "\nIncluding RAMPAGE samples\n"
+	elif [ ${#shrna_bw_list_plus[@]} -gt 0 ]; then
+		all_samples=("${uniq_chip_mark_list[*]}" "shRNA")
 		printf "\nIncluding RAMPAGE samples\n"
 	else
 		printf "\nOnly using ChIPseq samples\n"
@@ -673,7 +686,7 @@ do
 	
 	mins2=()
 	maxs2=()
-	for sample in ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]}
+	for sample in ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]} ${shrna_sample_list[@]}
 	do
 		mini=$(grep ${sample} combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $5}')
 		maxi=$(grep ${sample} combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $6}')
@@ -688,7 +701,7 @@ do
 	done
 	ymins2=()
 	ymaxs2=()
-	for sample in ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]}
+	for sample in ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]} ${shrna_sample_list[@]}
 	do
 		ymini=$(grep ${sample} combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
 		ymaxi=$(grep ${sample} combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.2}')
