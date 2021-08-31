@@ -188,6 +188,21 @@ fi
 ############################################################################################
 
 if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
+	#### This step will need to be automatized to potentially change which line/organism to have the GO terms for.
+	#### Another option would be to have people create it independantly with Annoatation forge, potentially giving a script or just help with documentation.
+	if [[ ${ref} == "B73_v4" ]]; then
+		if [ ! -d combined/GO ]; then
+			mkdir combined/GO
+		fi
+		if [ ! -s combined/GO/B73_v4_infoGO.tab ]; then
+			printf "\nCopying GO information file\n"
+			cp /grid/martienssen/data_norepl/dropbox/maizecode/GO/B73_v4_infoGO.tab combined/GO/	
+		fi
+		if [ ! -d combined/GO/org.Zmays.eg.db ]; then
+			printf "\nCopying GO database\n"
+			cp -r /grid/martienssen/data_norepl/dropbox/maizecode/GO/org.Zmays.eg.db combined/GO/	
+		fi	
+	fi	
 	#### To make a count table for all RNAseq samples in samplefile
 	printf "\nPreparing count table for RNAseq samples in ${analysisname}\n"
 	printf "Replicate\tSample\tColor\n" > combined/DEG/samples_${analysisname}.txt
