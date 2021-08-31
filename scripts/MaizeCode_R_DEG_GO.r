@@ -1,5 +1,7 @@
 #!/usr/bin/env Rscript
 
+install(./data/GO/org.Zmays.eg.db)
+
 library(AnnotationForge)
 library(rrvgo)
 library(topGO)
@@ -124,7 +126,7 @@ plotGOs<-function(TopGoResults, ont, name) {
 filtered$GID<-row.names(filtered)
 allGenes<-unique(unlist(filtered$GID))
 
-info<-read.delim("/grid/martienssen/data_nlsas/jcahn/Genomes/GO/B73_v4_infoGO.tab", header=FALSE)
+info<-read.delim("data/GO/B73_v4_infoGO.tab", header=FALSE)
 fGOzm<-info[,c(2,5,7)]
 colnames(fGOzm)<-c("GID","GO","EVIDENCE")
 geneid2GO<-fGOzm[,c(1,2)]
