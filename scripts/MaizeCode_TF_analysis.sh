@@ -34,24 +34,24 @@ printf "\n"
 export threads=$NSLOTS
 
 if [ $# -eq 0 ]; then
-	printf "$usage\n"
+	printf "${usage}\n"
 	exit 1
 fi
 
 while getopts ":f:h" opt; do
-	case $opt in
-		h) 	printf "$usage\n"
+	case ${opt} in
+		h) 	printf "${usage}\n"
 			exit 0;;
 		f) 	export samplefile=${OPTARG};;
-		*)	printf "$usage\n"
+		*)	printf "${usage}\n"
 			exit 1;;
 	esac
 done
 shift $((OPTIND - 1))
 
-if [ ! $samplefile ]; then
+if [ ! ${samplefile} ]; then
 	printf "Samplefile missing!\n"
-	printf "$usage\n"
+	printf "${usage}\n"
 	exit 1
 fi
 
@@ -76,41 +76,41 @@ do
 	export input=${line}_${tf}_Input
 	export paired
 	if [ -s mapped/${input}_merged.bam ]; then
-		printf "\nReplicates of $input already merged\n"
+		printf "\nReplicates of ${input} already merged\n"
 		export inputrep="two"
 	elif [ ! -s mapped/${input}_merged.bam ] && [ -e mapped/${input}_Rep2.bam ]; then
-		printf "\nMerging replicates of $input\n"
-		samtools merge -@ $threads mapped/temp_${input}.bam mapped/${input}_Rep1.bam mapped/${input}_Rep2.bam
-		samtools sort -@ $threads -o mapped/${input}_merged.bam mapped/temp_${input}.bam
+		printf "\nMerging replicates of ${input}\n"
+		samtools merge -@ ${threads} mapped/temp_${input}.bam mapped/${input}_Rep1.bam mapped/${input}_Rep2.bam
+		samtools sort -@ ${threads} -o mapped/${input}_merged.bam mapped/temp_${input}.bam
 		rm -f mapped/temp_${input}.bam
-		samtools index -@ $threads mapped/${input}_merged.bam
+		samtools index -@ ${threads} mapped/${input}_merged.bam
 		export inputrep="two"
 	elif [ -e mapped/${input}_Rep1.bam ] && [ ! -e mapped/${input}_Rep2.bam ]; then
-		printf "\nOnly one replicate of $input\nIt will be used for all replicates\n"
+		printf "\nOnly one replicate of ${input}\nIt will be used for all replicates\n"
 		export inputrep="one"
 	elif [ ! -e mapped/${input}_Rep1.bam ]; then
 		printf "\nNo Input file found, cannot proceed!\n"
 		exit 1
 	fi
-	printf "\nStarting single TF ChIP sample analysis for $name\n"
+	printf "\nStarting single TF ChIP sample analysis for ${name}\n"
 	qsub -N ${name} -V -cwd -sync y -pe threads 2 -l m_mem_free=2G -l tmp_free=50G -j y -o logs/analysis_${name}.log <<-'EOF1' &
 		#!/bin/bash
 		set -e -o pipefail		
 		export threads=$NSLOTS
 		
 		if [ ! -s mapped/${name}_merged.bam ]; then
-			printf "\nMerging replicates of $name\n"
-			samtools merge -f -@ $threads mapped/temp_${name}.bam mapped/${file}_Rep1.bam mapped/${file}_Rep2.bam
-			samtools sort -@ $threads -o mapped/${name}_merged.bam mapped/temp_${name}.bam
+			printf "\nMerging replicates of ${name}\n"
+			samtools merge -f -@ ${threads} mapped/temp_${name}.bam mapped/${file}_Rep1.bam mapped/${file}_Rep2.bam
+			samtools sort -@ ${threads} -o mapped/${name}_merged.bam mapped/temp_${name}.bam
 			rm -f mapped/temp_${name}.bam
-			samtools index -@ $threads mapped/${name}_merged.bam
+			samtools index -@ ${threads} mapped/${name}_merged.bam
 		fi
 		if [ ! -s mapped/${name}_pseudo1.bam ]; then
-			printf "\nSplitting $name in two pseudo-replicates\n"
-			samtools view -b -h -s 1.5 -@ $threads -U mapped/temp_${name}_pseudo2.bam -o mapped/temp_${name}_pseudo1.bam mapped/${name}_merged.bam
-			samtools sort -@ $threads -o mapped/${file}_pseudo1.bam mapped/temp_${name}_pseudo1.bam
+			printf "\nSplitting ${name} in two pseudo-replicates\n"
+			samtools view -b -h -s 1.5 -@ ${threads} -U mapped/temp_${name}_pseudo2.bam -o mapped/temp_${name}_pseudo1.bam mapped/${name}_merged.bam
+			samtools sort -@ ${threads} -o mapped/${file}_pseudo1.bam mapped/temp_${name}_pseudo1.bam
 			rm -f mapped/temp_${name}_pseudo1.bam
-			samtools sort -@ $threads -o mapped/${file}_pseudo2.bam mapped/temp_${name}_pseudo2.bam
+			samtools sort -@ ${threads} -o mapped/${file}_pseudo2.bam mapped/temp_${name}_pseudo2.bam
 			rm -f mapped/temp_${name}_pseudo2.bam
 		fi
 
@@ -118,8 +118,8 @@ do
 		for filetype in merged Rep1 Rep2 pseudo1 pseudo2
 		do
 			export filetype
-			if [[ "$inputrep" == "two" ]]; then
-				case "$filetype" in
+			if [[ "${inputrep}" == "two" ]]; then
+				case "${filetype}" in
 					Rep1|Rep2) 	export namefiletype=mapped/${file}_${filetype}.bam
 							export inputfiletype=mapped/${input}_${filetype}.bam
 							export param=""
@@ -133,8 +133,8 @@ do
 						export param="-B"
 						export clean="No";;
 				esac
-			elif [[ "$inputrep" == "one" ]]; then
-				case "$filetype" in
+			elif [[ "${inputrep}" == "one" ]]; then
+				case "${filetype}" in
 					Rep1) 	export namefiletype=mapped/${file}_${filetype}.bam
 						export inputfiletype=mapped/${input}_${filetype}.bam
 						export param=""
@@ -153,65 +153,65 @@ do
 						export clean="No";;
 				esac
 			fi
-			printf "\nStarting single ChIP sample analysis for $name $filetype\n"
+			printf "\nStarting single ChIP sample analysis for ${name} ${filetype}\n"
 			qsub -N ${name}_${filetype} -V -cwd -sync y -pe threads 10 -l m_mem_free=6G -l tmp_free=50G -j y -o logs/analysis_${name}_${filetype}.log <<-'EOF2' &
 				#!/bin/bash
 				set -e -o pipefail
 				export threads=$NSLOTS
 		
-				if [[ $paired == "PE" ]]; then
+				if [[ ${paired} == "PE" ]]; then
 					if [ ! -s peaks/${namefiletype}_peaks.narrowPeak ]; then
-						printf "\nCalling narrow peaks for PE $namefiletype (vs $inputfiletype) with macs2 version:\n"
+						printf "\nCalling narrow peaks for PE ${namefiletype} (vs ${inputfiletype}) with macs2 version:\n"
 						macs2 --version
 						macs2 callpeak -t ${namefiletype} -c ${inputfiletype} -f BAMPE -g 2.2e9 ${param} -n ${name}_${filetype} --keep-dup "all" --call-summits --outdir peaks/ --tempdir $TMPDIR
 					elif [ -s peaks/${name}_${filetype}_peaks.narrowPeak ]; then
-						printf "\nPeaks already called for $namefiletype\n"
+						printf "\nPeaks already called for ${namefiletype}\n"
 					else
 						printf "\nSomething is wrong with the information about peak type to call! Check usage:\n"
-						printf "$usage\n"
+						printf "${usage}\n"
 						exit 1
 					fi
-				elif [[ $paired == "SE" ]]; then
+				elif [[ ${paired} == "SE" ]]; then
 					if [ ! -s peaks/${name}_${filetype}_peaks.narrowPeak ]; then
-						printf "\nCalling narrow peaks for SE $namefiletype (vs $inputfiletype) with macs2 version:\n"
+						printf "\nCalling narrow peaks for SE ${namefiletype} (vs ${inputfiletype}) with macs2 version:\n"
 						macs2 --version
 						macs2 callpeak -t ${namefiletype} -c ${inputfiletype} -f BAM -g 2.2e9 ${param} -n ${name}_${filetype} --keep-dup "all" --call-summits --outdir peaks/ --tempdir $TMPDIR --nomodel --extsize 150
 					elif [ -s peaks/${name}_${filetype}_peaks.narrowPeak ]; then
-						printf "\nPeaks already called for $namefiletype\n"
+						printf "\nPeaks already called for ${namefiletype}\n"
 					else
 						printf "\nSomething is wrong! Check usage:\n"
-						printf "$usage\n"
+						printf "${usage}\n"
 						exit 1
 					fi
 				else
 					printf "\nData format missing: paired-end (PE) or single-end (SE)?\n"
 					exit 1
 				fi
-				if [[ $clean == "Yes" ]]; then
+				if [[ ${clean} == "Yes" ]]; then
 					#### To delete unnecessary bam files for pseudo-replicates
 					rm -f ${namefiletype}*
 				else
 					#### To create bw files if not already exisiting (not for pseudo-replicates)
 					if [ ! -s tracks/${name}_${filetype}.bw ]; then
-						printf "\nMaking bigwig files for $namefiletype with deeptools version:\n"
+						printf "\nMaking bigwig files for ${namefiletype} with deeptools version:\n"
 						deeptools --version
 						bamCompare -b1 ${namefiletype} -b2 ${inputfiletype} -o tracks/${name}_${filetype}.bw -p $threads --binSize 1 --scaleFactorsMethod "None" --normalizeUsing CPM
 					else
-						printf "\nBigwig file for $namefiletype already exists\n"
+						printf "\nBigwig file for ${namefiletype} already exists\n"
 					fi
 					#### To create fingerprint plots if not already exisiting (not for pseudo-replicates)
 					if [ ! -s plots/Fingerprint_${name}_${filetype}.png ]; then
-						printf "\nPlotting fingerprint for $namefiletype with deeptools version:\n"
+						printf "\nPlotting fingerprint for ${namefiletype} with deeptools version:\n"
 						deeptools --version
-						plotFingerprint -b ${namefiletype} ${inputfiletype} -o plots/Fingerprint_${name}_${filetype}.png -p $threads -l ${name} ${input}
+						plotFingerprint -b ${namefiletype} ${inputfiletype} -o plots/Fingerprint_${name}_${filetype}.png -p ${threads} -l ${name} ${input}
 					else
-						printf "\nFingerprint plot for $namefiletype already exists\n"
+						printf "\nFingerprint plot for ${namefiletype} already exists\n"
 					fi
 				fi
 			EOF2
 			pidsb+=("$!")
 		done
-		printf "\nWaiting for $name single sample files to be processed\n"
+		printf "\nWaiting for ${name} single sample files to be processed\n"
 		wait ${pidsb[*]}
 	
 		#### To get IDR analysis on biological replicates
@@ -232,7 +232,7 @@ do
 		bedtools intersect -a peaks/temp_${name}_pseudo1.bed -b peaks/temp_${name}_pseudo2.bed > peaks/temp_${name}_pseudos.bed
 		bedtools intersect -a peaks/temp_${name}_merged.bed -b peaks/temp_${name}_pseudos.bed -u > peaks/temp_${name}_selected.bed
 		bedtools intersect -a peaks/${name}_merged_peaks.narrowPeak -b peaks/temp_${name}_selected.bed -u > peaks/selected_peaks_${name}.narrowPeak
-		printf "Getting best peak for $name\n"
+		printf "Getting best peak for ${name}\n"
 		sort -k1,1 -k2,2n -k5nr peaks/selected_peaks_${name}.narrowPeak | awk -v OFS="\t" '{print $1";"$2";"$3,$4,$5,$6,$7,$8,$9,$10}' | awk 'BEGIN {a=0} {b=$1; if (b!=a) print $0; a=$1}' | awk -F"[;\t]" -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10}' > peaks/best_peaks_${name}.bed
 
 		#### To get some peaks stats for each TF
@@ -244,51 +244,57 @@ do
 		merged=$(awk '{print $1,$2,$3}' peaks/${name}_merged_peaks.narrowPeak | sort -k1,1 -k2,2n -u | wc -l)
 		pseudos=$(awk '{print $1,$2,$3}' peaks/temp_${name}_pseudos.bed | sort -k1,1 -k2,2n -u | wc -l)
 		selected=$(cat peaks/temp_${name}_selected.bed | sort -k1,1 -k2,2n -u | wc -l)
-		awk -v OFS="\t" -v a=$line -v b=$tf -v d=$rep1 -v e=$rep2 -v f=$common -v g=$idr -v h=$merged -v i=$pseudos -v j=$selected 'BEGIN {print a,b,d,e,f" ("f/d*100"%rep1;"f/e*100"%rep2)",g" ("g/f*100"%common)",h,i,j" ("j/h*100"%merged)"}' >> reports/summary_TF_peaks.txt
+		awk -v OFS="\t" -v a=${line} -v b=${tf} -v d=${rep1} -v e=${rep2} -v f=${common} -v g=${idr} -v h=${merged} -v i=${pseudos} -v j=${selected} 'BEGIN {print a,b,d,e,f" ("f/d*100"%rep1;"f/e*100"%rep2)",g" ("g/f*100"%common)",h,i,j" ("j/h*100"%merged)"}' >> reports/summary_TF_peaks.txt
 		rm -f peaks/temp_${name}*
 		
 		#### To find motifs in different peak sets:
 		
 		#### v1="selected" peaks (best peaks from selected, i.e. in merged and both pseudo reps) with MEME		
-		printf "\nGetting peak fasta sequences for $name meme v1\n"
+		printf "\nGetting peak fasta sequences for ${name} meme v1\n"
 		awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {a=$2+$10; print $1,a-50,a+50,$4}' peaks/best_peaks_${name}.bed > peaks/selected_motifs_${name}.bed
 		bedtools getfasta -name -fi ${ref_dir}/${ref}.fa -bed peaks/selected_motifs_${name}.bed > peaks/selected_sequences_${name}.fa
-		printf "\nGetting motifs for $name with meme\n"
-		meme-chip -oc motifs/${name}/meme -meme-p $threads -meme-nmotifs 10 -streme-nmotifs 10 peaks/selected_sequences_${name}.fa
+		printf "\nGetting motifs for ${name} with meme\n"
+		meme-chip -oc motifs/${name}/meme -meme-p ${threads} -meme-nmotifs 10 -streme-nmotifs 10 peaks/selected_sequences_${name}.fa
 		printf "\nLooking for similar motifs in JASPAR database with tomtom\n"
 		tomtom -oc motifs/${name}/tomtom motifs/${name}/meme/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
 
 		#### v2="replicated" peaks (peaks in both biological reps, i.e all peaks in idr) with MEME
-		printf "\nGetting peak fasta sequences for $name meme v2\n"
+		printf "\nGetting peak fasta sequences for ${name} meme v2\n"
 		awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {a=$2+$10; print $1,a-50,a+50}' peaks/idr_${name}.narrowPeak > peaks/selected_motifs_${name}.bed
 		bedtools getfasta -name -fi ${ref_dir}/${ref}.fa -bed peaks/selected_motifs_${name}.bed > peaks/selected_sequences_${name}.fa
-		printf "\nGetting motifs for $name with meme\n"
-		meme-chip -oc motifs/${name}/meme2 -meme-p $threads -meme-nmotifs 10 -streme-nmotifs 10 peaks/selected_sequences_${name}.fa
+		printf "\nGetting motifs for ${name} with meme\n"
+		meme-chip -oc motifs/${name}/meme2 -meme-p ${threads} -meme-nmotifs 10 -streme-nmotifs 10 peaks/selected_sequences_${name}.fa
 		printf "\nLooking for similar motifs in JASPAR database with tomtom\n"
 		tomtom -oc motifs/${name}/tomtom2 motifs/${name}/meme2/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
 		
-		#### v3="selected" peaks (best peaks from selected, i.e. in merged and both pseudo reps) without masked sequences with MEME
-		printf "\nGetting peak fasta sequences for $name meme v3\n"
-		awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {a=$2+$10; print $1,a-50,a+50,$4}' peaks/best_peaks_${name}.bed > peaks/selected_motifs_${name}.bed
-		bedtools intersect -v -wa -a peaks/selected_motifs_${name}.bed -b tracks/${ref}_masked_regions.bed > peaks/masked_selected_motifs_${name}.bed
-		bedtools getfasta -name -fi ${ref_dir}/${ref}.fa -bed peaks/masked_selected_motifs_${name}.bed > peaks/selected_sequences_${name}.fa
-		printf "\nGetting motifs for $name with meme\n"
-		meme-chip -oc motifs/${name}/meme3 -meme-p $threads -meme-nmotifs 10 -streme-nmotifs 10 peaks/selected_sequences_${name}.fa
-		printf "\nLooking for similar motifs in JASPAR database with tomtom\n"
-		tomtom -oc motifs/${name}/tomtom3 motifs/${name}/meme3/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
-
-		#### v4="replicated" peaks (peaks in both biological reps, i.e all peaks in idr) without masked sequences with MEME
-		printf "\nGetting peak fasta sequences for $name meme v4\n"
-		awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {a=$2+$10; print $1,a-50,a+50}' peaks/idr_${name}.narrowPeak > peaks/selected_motifs_${name}.bed
-		bedtools intersect -v -wa -a peaks/selected_motifs_${name}.bed -b tracks/${ref}_masked_regions.bed > peaks/masked_selected_motifs_${name}.bed
-		bedtools getfasta -name -fi ${ref_dir}/${ref}.fa -bed peaks/masked_selected_motifs_${name}.bed > peaks/selected_sequences_${name}.fa
-		printf "\nGetting motifs for $name with meme\n"
-		meme-chip -oc motifs/${name}/meme4 -meme-p $threads -meme-nmotifs 10 -streme-nmotifs 10 peaks/selected_sequences_${name}.fa
-		printf "\nLooking for similar motifs in JASPAR database with tomtom\n"
-		tomtom -oc motifs/${name}/tomtom4 motifs/${name}/meme4/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
+		#### Needs a file of masked regions. Can be found online, or created with Repeat masker. 
+		#### We could consider having a helper script, or documentation on how to create it.
+		#### For now just copying the file generated from repeat masker
+		
+		if [[ ${ref} == "B73_v4" ]]; then
+			#### v3="selected" peaks (best peaks from selected, i.e. in merged and both pseudo reps) without masked sequences with MEME
+			printf "\nGetting peak fasta sequences for ${name} meme v3\n"
+			awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {a=$2+$10; print $1,a-50,a+50,$4}' peaks/best_peaks_${name}.bed > peaks/selected_motifs_${name}.bed
+			bedtools intersect -v -wa -a peaks/selected_motifs_${name}.bed -b tracks/${ref}_masked_regions.bed > peaks/masked_selected_motifs_${name}.bed
+			bedtools getfasta -name -fi ${ref_dir}/${ref}.fa -bed peaks/masked_selected_motifs_${name}.bed > peaks/selected_sequences_${name}.fa
+			printf "\nGetting motifs for ${name} with meme\n"
+			meme-chip -oc motifs/${name}/meme3 -meme-p ${threads} -meme-nmotifs 10 -streme-nmotifs 10 peaks/selected_sequences_${name}.fa
+			printf "\nLooking for similar motifs in JASPAR database with tomtom\n"
+			tomtom -oc motifs/${name}/tomtom3 motifs/${name}/meme3/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
+		
+			#### v4="replicated" peaks (peaks in both biological reps, i.e all peaks in idr) without masked sequences with MEME
+			printf "\nGetting peak fasta sequences for ${name} meme v4\n"
+			awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {a=$2+$10; print $1,a-50,a+50}' peaks/idr_${name}.narrowPeak > peaks/selected_motifs_${name}.bed
+			bedtools intersect -v -wa -a peaks/selected_motifs_${name}.bed -b tracks/${ref}_masked_regions.bed > peaks/masked_selected_motifs_${name}.bed
+			bedtools getfasta -name -fi ${ref_dir}/${ref}.fa -bed peaks/masked_selected_motifs_${name}.bed > peaks/selected_sequences_${name}.fa
+			printf "\nGetting motifs for ${name} with meme\n"
+			meme-chip -oc motifs/${name}/meme4 -meme-p ${threads} -meme-nmotifs 10 -streme-nmotifs 10 peaks/selected_sequences_${name}.fa
+			printf "\nLooking for similar motifs in JASPAR database with tomtom\n"
+			tomtom -oc motifs/${name}/tomtom4 motifs/${name}/meme4/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
+		fi
 
 		#### v5="selected" peaks (best peaks from selected, i.e. in merged and both pseudo reps) with HOMER		
-		printf "\nGetting motifs for $name with HOMER\n"
+		printf "\nGetting motifs for ${name} with HOMER\n"
 		findMotifsGenome.pl peaks/best_peaks_${name}.bed motifs/${name}/homer/ -len 6,8,10 -size given
 		
 #		if [ -e motifs/peaks_with_motifs_${name}_meme2.txt ]; then
