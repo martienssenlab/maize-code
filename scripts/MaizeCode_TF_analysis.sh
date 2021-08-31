@@ -267,7 +267,11 @@ do
 		printf "\nLooking for similar motifs in JASPAR database with tomtom\n"
 		tomtom -oc motifs/${name}/tomtom2 motifs/${name}/meme2/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
 		
-		if [ -s tracks/${ref}_masked_regions.bed ]; then
+		#### Needs a file of masked regions. Can be found online, or created with Repeat masker. 
+		#### We could consider having a helper script, or documentation on how to create it.
+		#### For now just copying the file generated from repeat masker
+		
+		if [[ ${ref} == "B73_v4" ]]; then
 			#### v3="selected" peaks (best peaks from selected, i.e. in merged and both pseudo reps) without masked sequences with MEME
 			printf "\nGetting peak fasta sequences for ${name} meme v3\n"
 			awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {a=$2+$10; print $1,a-50,a+50,$4}' peaks/best_peaks_${name}.bed > peaks/selected_motifs_${name}.bed
