@@ -9,8 +9,8 @@ library(purrr)
 
 args = commandArgs(trailingOnly=TRUE)
 
-#### If database as to be built. Will need to be prepared for other people to use.
-# info<-read.delim("/grid/martienssen/data_norepl/dropbox/maize-code/GO/B73_v4_infoGO.tab", header=FALSE)
+#### If database has to be built.
+# info<-read.delim("combined/GO/B73_v4_infoGO.tab", header=FALSE)
 # genes<-read.delim("B73_genes_info.tab", header=TRUE) %>%
 #  rowwise() %>%
 #  mutate(desc=ifelse(Description=="protein_coding",Type,Description),
@@ -36,7 +36,7 @@ args = commandArgs(trailingOnly=TRUE)
 #               species = "mays",
 #               goTable="go")
 
-# install.packages("./org.Zmays.eg.db", repos=NULL, type="source")
+# install.packages("./combined/GO/org.Zmays.eg.db", repos=NULL, type="source")
 
 library(org.Zmays.eg.db)
 
