@@ -15,28 +15,102 @@ You will be prompted to input your GitHub username and password.\
 If you only want to update the scripts, use `git pull`. If you want to update from a specific branch 'devel' `git pull origin devel`.
 2) cd into the maize-code folder that has been created, so following the same example\
 `cd ./projects/maize-code/`
-3) Check that the following required packages are installed and in your $PATH (the versions noted here are working for sure, no guarantees for different versions). Recommended installation using conda (except grit that should be installed with pip, but finding an alternative to using it is being looked at)
+3) Check that the following required packages are installed and in your $PATH (the versions noted here are working for sure, no guarantees for different versions). Recommended installation using conda, except kentUtils that need to be installed form source
 ```
-!!! NOT UP TO DATE !!!
+For all types of data:
+bedtools 2.29.2
+bowtie2 64-bit 2.4.1; Compiler: gcc version 7.5.0 (crosstool-NG 1.24.0.131_87df0e6_dirty)
+cutadapt 2.10
+deeptools 3.5.0
+dplyr 1.0.6
+fastqc 0.11.9
+homer 4.11
+IDR 2.0.4.2
+kentUtils (bedSort, bedGraphToBigWig)
+macs2 2.2.7.1
+meme 5.3.0
+multiqc 1.11
+parallel-fastq-dump 0.6.6; fastq-dump 2.8.0 (if downloading data from SRA)
 pigz 2.3.4
 samtools 1.10 (Using htslib 1.10.2)
-bowtie2 64-bit 2.4.1; Compiler: gcc version 7.5.0 (crosstool-NG 1.24.0.131_87df0e6_dirty)
+seqkit 0.13.2
+shortstack 3.8.5
 STAR 2.7.5c
-fastqc v0.11.9
+wget 1.20.1
+R 4.0.3 + R packages: dplyr 1.0.6, tidyr 1.1.3, ggplot2 3.3.3, cowplot 1.1.1, RColorBrewer 1.1-2, AnnotationForge 1.32.0, rrvgo 1.2.0, topGO 2.42.0, purrr 0.3.4, limma 3.46.0, edgeR 3.32.1, stringr 1.4.0, ComplexUpset 1.2.1
+
+Histone ChIPseq:
+R 4.0.3 + R libraries: dplyr 1.0.6, tidyr 1.1.3, ggplot2 3.3.3, cowplot 1.1.1, RColorBrewer 1.1-2, purrr 0.3.4, ComplexUpset 1.2.1
+multiqc 1.11
+pigz 2.3.4
+samtools 1.10 (Using htslib 1.10.2)
+bedtools 2.29.2
+bowtie2 64-bit 2.4.1; Compiler: gcc version 7.5.0 (crosstool-NG 1.24.0.131_87df0e6_dirty)
+parallel-fastq-dump : 0.6.6; fastq-dump : 2.8.0 (if downloading data from SRA)
+fastqc 0.11.9
 cutadapt 2.10
-bedtools v2.29.2
-deeptools 3.5.0
 macs2 2.2.7.1
 IDR 2.0.4.2
-(grit 2.0.5)
-bedGraphToBigWig v 2.8
-bedSort
-parallel-fastq-dump (if downloading from SRA)
-meme v 5.3.0
-homer v 4.11
-multiqc v 1.11
-R 3.6.3
-R libraries: ggplot2 3.3.2; UpSetR 1.4.0; limma 3.42.2; edgeR 3.28.1; dplyr 1.0.2; tidyr 1.1.2; stringr 1.4.0; cowplot 1.1.0; gplots 3.1.0; RColorBrewer 1.1.2; ComplexUpset ; purrr ; AnnotationForge ; rrvgo ;
+deeptools 3.5.0
+
+RNAseq samples:
+R 4.0.3 + R libraries: dplyr 1.0.6, tidyr 1.1.3, ggplot2 3.3.3, cowplot 1.1.1, RColorBrewer 1.1-2, AnnotationForge 1.32.0, rrvgo 1.2.0, topGO 2.42.0, purrr 0.3.4, limma 3.46.0, edgeR 3.32.1, stringr 1.4.0
+multiqc 1.11
+pigz 2.3.4
+samtools 1.10 (Using htslib 1.10.2)
+bedtools 2.29.2
+STAR 2.7.5c
+parallel-fastq-dump : 0.6.6; fastq-dump : 2.8.0 (if downloading data from SRA)
+fastqc 0.11.9
+cutadapt 2.10
+kentUtils (bedSort, bedGraphToBigWig)
+deeptools 3.5.0
+
+RAMPAGE samples:
+R 4.0.3 + R libraries: dplyr 1.0.6, tidyr 1.1.3, ggplot2 3.3.3, cowplot 1.1.1, RColorBrewer 1.1-2
+multiqc 1.11
+pigz 2.3.4
+samtools 1.10 (Using htslib 1.10.2)
+bedtools 2.29.2
+STAR 2.7.5c
+parallel-fastq-dump : 0.6.6; fastq-dump : 2.8.0 (if downloading data from SRA)
+fastqc 0.11.9
+cutadapt 2.10
+kentUtils (bedSort, bedGraphToBigWig)
+macs2 2.2.7.1
+IDR 2.0.4.2
+deeptools 3.5.0
+
+TF ChIPseq samples:
+R 4.0.3 + R libraries: dplyr 1.0.6, tidyr 1.1.3, ggplot2 3.3.3, cowplot 1.1.1, RColorBrewer 1.1-2, purrr 0.3.4, ComplexUpset 1.2.1, stringr 1.4.0
+multiqc 1.11
+pigz 2.3.4
+samtools 1.10 (Using htslib 1.10.2)
+bedtools 2.29.2
+bowtie2 64-bit 2.4.1; Compiler: gcc version 7.5.0 (crosstool-NG 1.24.0.131_87df0e6_dirty)
+parallel-fastq-dump : 0.6.6; fastq-dump : 2.8.0 (if downloading data from SRA)
+fastqc 0.11.9
+cutadapt 2.10
+macs2 2.2.7.1
+IDR 2.0.4.2
+deeptools 3.5.0
+meme 5.3.0
+homer 4.11
+wget 1.20.1
+
+shRNA samples:
+R 4.0.3 + R libraries: dplyr 1.0.6, tidyr 1.1.3, ggplot2 3.3.3
+multiqc 1.11
+pigz 2.3.4
+samtools 1.10 (Using htslib 1.10.2)
+bedtools 2.29.2
+bowtie2 64-bit 2.4.1; Compiler: gcc version 7.5.0 (crosstool-NG 1.24.0.131_87df0e6_dirty)
+parallel-fastq-dump : 0.6.6; fastq-dump : 2.8.0 (if downloading data from SRA)
+fastqc 0.11.9
+cutadapt 2.10
+shortstack 3.8.5
+deeptools 3.5.0
+seqkit 0.13.2
 ```
 4) Organize your reference genome directories so that they are all in the same main folder and that each contain ONE fasta file (.fa extension), ONE GFF file (.gff or .gff* extension) and ONE GTF (.gtf extension) file.\ 
 For example, having a `genomes/` folder that contains the `genomes/B73_NAM/` directory where you can find `genomes/B73_NAM/B73_NAM.fa`, `genomes/B73_NAM/B73_NAM.gff` and `genomes/B73_NAM/B73_NAM.gtf` files\
@@ -80,7 +154,7 @@ The samples that have already been processed will not be repeated but will still
 
 ---
 
-### Scripts description
+### Scripts description _NOT FULLY UPDATED FROM THIS POINT ONWARD_
 
 - __MaizeCode.sh__ - _wrapper script for the whole pipeline_\
 Creates the different folders\
