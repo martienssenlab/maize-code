@@ -104,7 +104,6 @@ newdatatype_list=()
 newref_list=()
 datat_ref_list=()
 new_env=0
-new_sample=0
 while read data line tissue sample rep sampleID path paired ref
 do
 	name=${line}_${tissue}_${sample}_${rep}
@@ -119,9 +118,6 @@ do
 	if [[ "${env}" == "unknown" ]]; then
 		printf "Type of data unknown!\n${usage}\n"
 		exit 1
-	fi
-	if [ ! -e ${env}/chkpts/${name}_${ref} ]; then
-		new_sample=1
 	fi
 	if [ ! -e ${env}/chkpts/env_${ref} ]; then
 		new_env=1
@@ -218,6 +214,7 @@ if [ -s ${analysisfile} ]; then
 	rm -f ${analysisfile}
 fi
 
+new_sample=0
 check_list=()
 checkname_list=()
 checkdatatype_list=()
@@ -250,6 +247,7 @@ do
 	if [ -e ${check} ]; then
 		printf "Sample ${name} has already been mapped to ${ref} genome\n"
 	else
+		new_sample=1
 		checkname_list+=("${name}")
 		checkdatatype_list+=("${env}")
 		check_list+=("${check}")
@@ -315,12 +313,12 @@ do
 		RAMPAGE) env="RNA"
 			stat="plot1"
 			name="${tissue}";;
-		shRNA) env="shRNA"
-			stat="plot2"
-			name="${line}_${tissue}_${sample}_${rep}";;
 		TF_*) env="TF"
 			stat="plot1"
 			name=${data##TF_};;
+		shRNA) env="shRNA"
+			stat="plot2"
+			name="${line}_${tissue}_${sample}_${rep}";;
 	esac
 	if [[ ${stat} == "plot1" ]]; then
 		awk -v a=${line} -v b=${name} -v c=${sample} -v d=${rep} -v e=${ref} '$1==a && $2==b && $3==c && $4==d && $5==e' ${env}/reports/summary_mapping_stats.txt >> combined/reports/temp_mapping_stats_${samplename}.txt
@@ -330,7 +328,7 @@ do
 done < ${samplefile}
 
 if [ -s combined/reports/temp_mapping_stats_${samplename}.txt ]; then
-	printf "Line\tTissue\tSample\tRep\tReference_genome\tTotal_reads\tPassing_filtering\tAll_mapped_reads\tUniquely_mapped_reads\n" > combined/reports/summary_mapping_stats_${samplename}.txt
+	printf "Line\tTissue\tSample\tRep\tReference_genome\tTotal_reads\tPassing_filtering\tAll_mapped_reads\tUniquely_mapped_reads\n" > combined/reports/summary_mapping_stats_${samplename}_ChIP_RNA.txt
 	sort combined/reports/temp_mapping_stats_${samplename}.txt -u >> combined/reports/summary_mapping_stats_${samplename}_ChIP_RNA.txt
 	rm -f combined/reports/temp_mapping_stats_${samplename}.txt
 	printf "\nPlotting mapping stats for all ChIP and RNA samples in the samplefile with R:\n"
