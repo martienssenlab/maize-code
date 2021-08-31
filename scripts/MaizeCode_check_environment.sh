@@ -180,7 +180,7 @@ elif [[ ${datatype} == "shRNA" ]]; then
 		printf "\nBowtie2 index already exists for ${ref} in ${ref_dir}\n"
 	else
 		printf "\nBuilding Bowtie2 index for ${ref}\n"
-		bowtie2-build --threads $threads $fasta ${ref_dir}/${ref}
+		bowtie2-build --threads ${threads} ${fasta} ${ref_dir}/${ref}
 	fi
 	#### This step will need to be automatized to potentially change which organism to map to and build it from scratch. 
 	#### Another option would be to have people create it independantly, potentially giving a script or just the help documentation (see Help_RFam.docx in the data folder).
