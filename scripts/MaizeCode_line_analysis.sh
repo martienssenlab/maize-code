@@ -198,9 +198,9 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 			printf "\nCopying GO information file\n"
 			cp /grid/martienssen/data_norepl/dropbox/maizecode/GO/B73_v4_infoGO.tab combined/GO/	
 		fi
-		if [ ! -d combined/GO/org.Zmays.eg.db ]; then
+		if [ ! -d combined/GO/B73_v4_genes_info.tab ]; then
 			printf "\nCopying GO database\n"
-			cp -r /grid/martienssen/data_norepl/dropbox/maizecode/GO/org.Zmays.eg.db combined/GO/	
+			cp -r /grid/martienssen/data_norepl/dropbox/maizecode/GO/B73_v4_genes_info.tab combined/GO/	
 		fi	
 	fi	
 	#### To make a count table for all RNAseq samples in samplefile
