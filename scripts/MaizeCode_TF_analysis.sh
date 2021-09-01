@@ -269,7 +269,12 @@ do
 		
 		#### Needs a file of masked regions. Can be found online, or created with Repeat masker. 
 		#### We could consider having a helper script, or documentation on how to create it.
-		#### For now just copying the file generated from repeat masker
+		#### For now just copying the file generated from repeat masker with the following commands:
+		# RepeatMasker -pa $((threads/4)) -lib MTEC/maizeTE02052020 -gccalc -xsmall -q -no_is -norna -div 40 -nolow -html -gff -poly -dir B73_v4 originals/B73_v4.fa >> logs/B73_v4_repeatmasker_01.log 2>&1
+		# awk -v OFS="\t" '$1 !~ /^#/ {print $1,$4,$5,$9,".","."}' ~/nlsas/Genomes/RepeatMasker/B73_v4/B73_v4.fa.out.gff > tracks/B73_v4_masked_regions.bed
+		
+		#### For homer, it requires to load the masked genome first with the following command:
+		# loadGenome.pl -name B73_v4 -org null -fasta ~/nlsas/Genomes/RepeatMasker/B73_v4/B73_v4.fa.masked -gtf ~/nlsas/Genomes/Zea_mays/B73_v4/temp_B73_v4.gtf -promoters "B73_v4-p"
 		
 		if [[ ${ref} == "B73_v4" ]]; then
 			#### v3="selected" peaks (best peaks from selected, i.e. in merged and both pseudo reps) without masked sequences with MEME
@@ -291,11 +296,13 @@ do
 			meme-chip -oc motifs/${name}/meme4 -meme-p ${threads} -meme-nmotifs 10 -streme-nmotifs 10 peaks/selected_sequences_${name}.fa
 			printf "\nLooking for similar motifs in JASPAR database with tomtom\n"
 			tomtom -oc motifs/${name}/tomtom4 motifs/${name}/meme4/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
+		
+			#### v5="selected" peaks (best peaks from selected, i.e. in merged and both pseudo reps) with HOMER		
+			printf "\nGetting motifs for ${name} with HOMER\n"
+			findMotifsGenome.pl peaks/best_peaks_${name}.bed B73_v4 motifs/${name}/homer -len 6,8,10 -size given -p ${thread}
 		fi
 
-		#### v5="selected" peaks (best peaks from selected, i.e. in merged and both pseudo reps) with HOMER		
-		printf "\nGetting motifs for ${name} with HOMER\n"
-		findMotifsGenome.pl peaks/best_peaks_${name}.bed motifs/${name}/homer/ -len 6,8,10 -size given
+		
 		
 #		if [ -e motifs/peaks_with_motifs_${name}_meme2.txt ]; then
 #			rm -f motifs/peaks_with_motifs_${name}_meme2.txt
