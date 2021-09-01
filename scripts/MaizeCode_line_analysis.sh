@@ -204,7 +204,7 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 				cp -r /grid/martienssen/data_norepl/dropbox/maizecode/GO/B73_v4_genes_info.tab combined/GO/	
 			fi
 			printf "\nCreating GO database\n"
-			RScript --vanilla ${mc_dir}/MaizeCode_R_build_GOdatabase.r combined/GO/B73_v4_infoGO.tab combined/GO/B73_v4_genes_info.tab 
+			Rscript --vanilla ${mc_dir}/MaizeCode_R_build_GOdatabase.r combined/GO/B73_v4_infoGO.tab combined/GO/B73_v4_genes_info.tab 
 		fi
 	fi	
 	#### To make a count table for all RNAseq samples in samplefile
