@@ -139,14 +139,16 @@ plotGOs<-function(TopGoResults, ont, name) {
                                 ont=ont,
 				keytype="GID",
                                 method="Rel")
-  scores<-setNames(-log10(as.numeric(TopGoResults$classicFisher)), TopGoResults$GO.ID)
-  reducedTerms<-reduceSimMatrix(simMatrix,
-                                scores,
-                                threshold = 0.7,
-                                orgdb="org.Zmays.eg.db")
-  pdf(paste0("combined/plots/topGO_",name,"_",ont,"_treemap.pdf"), width=8, height=8)
-  treemapPlot(reducedTerms, size = "score")
-  dev.off()
+  if ( nrow(simMatrix)>0 ) {
+  	scores<-setNames(-log10(as.numeric(TopGoResults$classicFisher)), TopGoResults$GO.ID)
+  	reducedTerms<-reduceSimMatrix(simMatrix,
+        	                        scores,
+        	                        threshold = 0.7,
+        	                        orgdb="org.Zmays.eg.db")
+  	pdf(paste0("combined/plots/topGO_",name,"_",ont,"_treemap.pdf"), width=8, height=8)
+  	treemapPlot(reducedTerms, size = "score")
+  	dev.off()
+  }
 }
 
 filtered$GID<-row.names(filtered)
