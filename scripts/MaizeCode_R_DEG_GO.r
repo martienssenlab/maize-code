@@ -15,7 +15,7 @@ args = commandArgs(trailingOnly=TRUE)
 
 #### To build the GO database 
 info<-read.delim("combined/GO/B73_v4_infoGO.tab", header=FALSE)
-genes<-read.delim("combined/GO/B73_genes_info.tab", header=TRUE) %>%
+genes<-read.delim("combined/GO/B73_v4_genes_info.tab", header=TRUE) %>%
  rowwise() %>%
  mutate(desc=ifelse(Description=="protein_coding",Type,Description),
         typ=ifelse(Description=="protein_coding",Description,Type)) %>%
