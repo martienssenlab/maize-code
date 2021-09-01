@@ -13,7 +13,7 @@ library(gplots)
 
 args = commandArgs(trailingOnly=TRUE)
 
-#### If database has to be built.
+#### To build the GO database 
 info<-read.delim("combined/GO/B73_v4_infoGO.tab", header=FALSE)
 genes<-read.delim("combined/GO/B73_genes_info.tab", header=TRUE) %>%
  rowwise() %>%
@@ -139,16 +139,14 @@ plotGOs<-function(TopGoResults, ont, name) {
                                 ont=ont,
 				keytype="GID",
                                 method="Rel")
-  if ( !is.null(dim(simMatrix)) ) {
-    scores<-setNames(-log10(as.numeric(TopGoResults$classicFisher)), TopGoResults$GO.ID)
-    reducedTerms<-reduceSimMatrix(simMatrix,
-                                  scores,
-                                  threshold = 0.7,
-                                  orgdb="org.Zmays.eg.db")
-    pdf(paste0("combined/plots/topGO_",name,"_",ont,"_treemap.pdf"), width=8, height=8)
-    treemapPlot(reducedTerms, size = "score")
-    dev.off()
-  }
+  scores<-setNames(-log10(as.numeric(TopGoResults$classicFisher)), TopGoResults$GO.ID)
+  reducedTerms<-reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold = 0.7,
+                                orgdb="org.Zmays.eg.db")
+  pdf(paste0("combined/plots/topGO_",name,"_",ont,"_treemap.pdf"), width=8, height=8)
+  treemapPlot(reducedTerms, size = "score")
+  dev.off()
 }
 
 filtered$GID<-row.names(filtered)
