@@ -570,7 +570,7 @@ if [[ "${total}" == "No" ]]; then
 fi
 
 if [ ${#chip_sample_list[@]} -lt 1 ]; then
-	printf "\nNot enough ChIPseq samples for deeptools analysis for ${analysisname}\nAnalysis is thus finished!"
+	printf "\nNot enough ChIPseq samples for deeptools analysis for ${analysisname}\nAnalysis is thus finished!\n"
 	touch combined/chkpts/analysis_${analysisname}
 	exit 0
 fi
