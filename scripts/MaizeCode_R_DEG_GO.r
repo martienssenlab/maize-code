@@ -139,7 +139,7 @@ plotGOs<-function(TopGoResults, ont, name) {
                                 ont=ont,
 				keytype="GID",
                                 method="Rel")
-  if ( nrow(simMatrix)>0 ) {
+  if ( nrow(simMatrix) > 1 ) {
   	scores<-setNames(-log10(as.numeric(TopGoResults$classicFisher)), TopGoResults$GO.ID)
   	reducedTerms<-reduceSimMatrix(simMatrix,
         	                        scores,
@@ -197,7 +197,7 @@ for (i in 1:(length(tissues)-1)) {
 	samplename<-paste0("DOWN_in_",sample1,"_vs_",sample2)
 	for ( ont in c("BP","MF") ) {
 		TopGOresults<-getGO(ont, geneList, downdeg, samplename)
-		if ( nrow(TopGOresults) > 0 ) {
+		if ( nrow(TopGOresults) > 1 ) {
 			plotGOs(TopGOresults, ont, samplename)
 		}
 	}
