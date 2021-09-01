@@ -62,22 +62,24 @@ plotGOs<-function(TopGoResults, ont, name) {
                                 orgdb="org.Zmays.eg.db",
                                 ont=ont,
                                 method="Rel")
-  scores<-setNames(-log10(as.numeric(TopGoResults$classicFisher)), TopGoResults$GO.ID)
-  reducedTerms<-reduceSimMatrix(simMatrix,
-                                scores,
-                                threshold = 0.7,
-                                orgdb="org.Zmays.eg.db")
-  # pdf(paste0("combined/plots/topGO_",ont,"_",name,"_scatter.pdf"), width=8, height=8)
-  # scatterPlot(simMatrix, reducedTerms, size = "score")
-  # dev.off()
-  pdf(paste0("combined/plots/topGO_",name,"_",ont,"_treemap.pdf"), width=8, height=8)
-  treemapPlot(reducedTerms, size = "score")
-  dev.off()
+  if ( nrow(TopGOresults) > 1 ) {
+  	scores<-setNames(-log10(as.numeric(TopGoResults$classicFisher)), TopGoResults$GO.ID)
+  	reducedTerms<-reduceSimMatrix(simMatrix,
+  	                              scores,
+  	                              threshold = 0.7,
+  	                              orgdb="org.Zmays.eg.db")
+  	# pdf(paste0("combined/plots/topGO_",ont,"_",name,"_scatter.pdf"), width=8, height=8)
+  	# scatterPlot(simMatrix, reducedTerms, size = "score")
+  	# dev.off()
+  	pdf(paste0("combined/plots/topGO_",name,"_",ont,"_treemap.pdf"), width=8, height=8)
+  	treemapPlot(reducedTerms, size = "score")
+  	dev.off()
+  }
 }
 
 for ( ont in c("BP","MF") ) {
   TopGOresults<-getGO(ont, samplename)
-  if ( dim(TopGOresults)[1] > 0 ) {
+  if ( nrow(TopGOresults) > 1 ) {
   plotGOs(TopGOresults, ont, samplename)
     }
 }
