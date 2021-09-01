@@ -77,7 +77,7 @@ do
 		#### To merge bam files of replicates
 		if [ ! -s mapped/${name}_merged.bam ]; then
 			printf "\nMerging replicates of ${name}\n"
-			samtools merge -@ ${threads} mapped/temp_${name}_merged.bam mapped/filtered_${name}_Rep*.bam
+			samtools merge -@ ${threads} mapped/temp_${name}_merged.bam mapped/${name}_Rep*/filtered_${name}_Rep*.bam
 			samtools sort -@ ${threads} -o mapped/${name}_merged.bam mapped/temp_${name}_merged.bam
 			rm -f mapped/temp_${name}_merged.bam
 			samtools index -@ ${threads} mapped/${name}_merged.bam
