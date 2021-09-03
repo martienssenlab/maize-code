@@ -251,7 +251,7 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 	if [[ ${ref} == "B73_v4" ]] || [[ ${ref} == "W22_v2" ]]; then
 		printf "\nLaunching DEG analysis (and GO) with R version:\n"
 		R --version
-		Rscript --vanilla ${mc_dir}/MaizeCode_R_DEG_GO.r combined/DEG/counts_${analysisname}.txt combined/DEG/samples_${analysisname}.txt ${analysisname} ${regionfile} ${ref}
+		Rscript --vanilla ${mc_dir}/MaizeCode_R_DEG_GO.r ${ref} combined/DEG/counts_${analysisname}.txt combined/DEG/samples_${analysisname}.txt ${analysisname} ${regionfile}
 	else
 		printf "\nLaunching DEG analysis with R version:\n"
 		R --version
@@ -296,8 +296,8 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 			if [[ ${ref} == "B73_v4" ]] || [[ ${ref} == "W22_v2" ]]; then
 				printf "\nMaking GO enrichment plot for ${namei} tissue with R version:\n"
 				R --version
-				Rscript --vanilla ${mc_dir}/MaizeCode_R_GO.r combined/DEG/counts_${analysisname}.txt combined/DEG/only_${namei}_DEG_DOWN_${analysisname}.bed ${namei}_DOWN_in_${analysisname} ${ref}
-				Rscript --vanilla ${mc_dir}/MaizeCode_R_GO.r combined/DEG/counts_${analysisname}.txt combined/DEG/only_${namei}_DEG_UP_${analysisname}.bed ${namei}_UP_in_${analysisname} ${ref}
+				Rscript --vanilla ${mc_dir}/MaizeCode_R_GO.r ${ref} combined/DEG/counts_${analysisname}.txt combined/DEG/only_${namei}_DEG_DOWN_${analysisname}.bed ${namei}_DOWN_in_${analysisname}
+				Rscript --vanilla ${mc_dir}/MaizeCode_R_GO.r ${ref} combined/DEG/counts_${analysisname}.txt combined/DEG/only_${namei}_DEG_UP_${analysisname}.bed ${namei}_UP_in_${analysisname}
 			fi
 		done
 	fi
