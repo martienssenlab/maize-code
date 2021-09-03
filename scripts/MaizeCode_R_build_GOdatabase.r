@@ -16,6 +16,7 @@ genes<-read.delim(args[2], header=TRUE) %>%
  select(-Description, -Type) %>%
  rename(Description=desc, Type=typ)
 
+line<-args[3]
 fGOzm<-info[,c(2,5,7)]
 colnames(fGOzm)<-c("GID","GO","EVIDENCE")
 
@@ -34,4 +35,4 @@ makeOrgPackage(gene_info=fSymzm, chromosome=fChrzm, go=fGOzm,
               species = "mays",
               goTable="go")
 
-install.packages("./combined/GO/org.Zmays.eg.db", repos=NULL, type="source")
+install.packages(paste0("./combined/GO/org.Zmays.",line,"eg.db"), repos=NULL, type="source")
