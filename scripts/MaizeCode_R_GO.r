@@ -6,14 +6,17 @@ library(rrvgo)
 library(dplyr)
 library(topGO)
 library(purrr)
-library(org.Zmays.eg.db)
 
 args = commandArgs(trailingOnly=TRUE)
 
-genecount<-read.delim(args[1], header = TRUE, row.names = "gene_ID")
-sampletable<-read.delim(args[2], header = FALSE)
+line<-args[1]
+db<-paste0("./combined/GO/org.Zmays.",line,"eg.db")
+library(db, character.only = TRUE)
+
+genecount<-read.delim(args[2], header = TRUE, row.names = "gene_ID")
+sampletable<-read.delim(args[3], header = FALSE)
 colnames(sampletable)<-c("Chr","Start","Stop","GID","score","strand")
-samplename<-args[3]
+samplename<-args[4]
 
 keep.exprs<-rowSums(cpm(genecount)>1)>=2
 filtered<-genecount[keep.exprs,]
