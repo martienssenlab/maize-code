@@ -190,21 +190,21 @@ fi
 if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 	#### This step will need to be automatized to potentially change which line/organism to have the GO terms for 
 	#### It would require people to have the required files or dowload them
-	if [[ ${ref} == "B73_v4" ]]; then
+	if [[ ${ref} == "B73_v4" ]] || [[ ${ref} == "W22_v2" ]]; then
 		if [ ! -d combined/GO ]; then
 			mkdir combined/GO
 		fi
-		if [ ! -d combined/GO/org.Zmays.eg.db ]; then
-			if [ ! -s combined/GO/B73_v4_infoGO.tab ]; then
+		if [ ! -d combined/GO/org.Zmays.${ref}.eg.db ]; then
+			if [ ! -s combined/GO/${ref}_infoGO.tab ]; then
 				printf "\nCopying GO information file\n"
-				cp /grid/martienssen/data_norepl/dropbox/maizecode/GO/B73_v4_infoGO.tab combined/GO/	
+				cp /grid/martienssen/data_norepl/dropbox/maizecode/GO/${ref}_infoGO.tab combined/GO/	
 			fi
-			if [ ! -d combined/GO/B73_v4_genes_info.tab ]; then
+			if [ ! -d combined/GO/${ref}_genes_info.tab ]; then
 				printf "\nCopying gene information file\n"
-				cp -r /grid/martienssen/data_norepl/dropbox/maizecode/GO/B73_v4_genes_info.tab combined/GO/	
+				cp -r /grid/martienssen/data_norepl/dropbox/maizecode/GO/${ref}_genes_info.tab combined/GO/	
 			fi
 			printf "\nCreating GO database\n"
-			Rscript --vanilla ${mc_dir}/MaizeCode_R_build_GOdatabase.r combined/GO/B73_v4_infoGO.tab combined/GO/B73_v4_genes_info.tab 
+			Rscript --vanilla ${mc_dir}/MaizeCode_R_build_GOdatabase.r combined/GO/${ref}_infoGO.tab combined/GO/${ref}_genes_info.tab ${ref}
 		fi
 	fi	
 	#### To make a count table for all RNAseq samples in samplefile
@@ -248,10 +248,10 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 	paste combined/DEG/col_A*_${analysisname}* > combined/DEG/counts_${analysisname}.txt
 	rm -f combined/DEG/col_A*_${analysisname}*
 	#### To run the DEG analysis on R
-	if [[ ${ref} == "B73_v4" ]]; then
+	if [[ ${ref} == "B73_v4" ]] || [[ ${ref} == "W22_v2" ]]; then
 		printf "\nLaunching DEG analysis (and GO) with R version:\n"
 		R --version
-		Rscript --vanilla ${mc_dir}/MaizeCode_R_DEG_GO.r combined/DEG/counts_${analysisname}.txt combined/DEG/samples_${analysisname}.txt ${analysisname} ${regionfile}
+		Rscript --vanilla ${mc_dir}/MaizeCode_R_DEG_GO.r combined/DEG/counts_${analysisname}.txt combined/DEG/samples_${analysisname}.txt ${analysisname} ${regionfile} ${ref}
 	else
 		printf "\nLaunching DEG analysis with R version:\n"
 		R --version
@@ -293,11 +293,11 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 			cat combined/DEG/temp_tissue_spec_DEG_${analysisname}_UP_${max}.txt | sort -u > combined/DEG/only_${namei}_DEG_UP_${analysisname}.bed
 			rm -f combined/DEG/DEG_${analysisname}_*.temp.bed
 			rm -f combined/DEG/temp_tissue_spec_DEG_${analysisname}*
-			if [[ ${ref} == "B73_v4" ]]; then
+			if [[ ${ref} == "B73_v4" ]] || [[ ${ref} == "W22_v2" ]]; then
 				printf "\nMaking GO enrichment plot for ${namei} tissue with R version:\n"
 				R --version
-				Rscript --vanilla ${mc_dir}/MaizeCode_R_GO.r combined/DEG/counts_${analysisname}.txt combined/DEG/only_${namei}_DEG_DOWN_${analysisname}.bed ${namei}_DOWN_in_${analysisname}
-				Rscript --vanilla ${mc_dir}/MaizeCode_R_GO.r combined/DEG/counts_${analysisname}.txt combined/DEG/only_${namei}_DEG_UP_${analysisname}.bed ${namei}_UP_in_${analysisname}
+				Rscript --vanilla ${mc_dir}/MaizeCode_R_GO.r combined/DEG/counts_${analysisname}.txt combined/DEG/only_${namei}_DEG_DOWN_${analysisname}.bed ${namei}_DOWN_in_${analysisname} ${ref}
+				Rscript --vanilla ${mc_dir}/MaizeCode_R_GO.r combined/DEG/counts_${analysisname}.txt combined/DEG/only_${namei}_DEG_UP_${analysisname}.bed ${namei}_UP_in_${analysisname} ${ref}
 			fi
 		done
 	fi
