@@ -17,6 +17,10 @@ genes<-read.delim(args[2], header=TRUE) %>%
  rename(Description=desc, Type=typ)
 
 line<-args[3]
+
+if ( grepl("TIL", line, fixed=TRUE) ) { ncbiID=76912
+ } else { ncbiID=381124 }
+
 fGOzm<-info[,c(2,5,7)]
 colnames(fGOzm)<-c("GID","GO","EVIDENCE")
 
@@ -30,7 +34,7 @@ makeOrgPackage(gene_info=fSymzm, chromosome=fChrzm, go=fGOzm,
               maintainer="user <user@maizecode>",
               author="user <user@maizecode>",
               outputDir = "./combined/GO",
-              tax_id = "381124",
+              tax_id = ncbiID,
               genus = "Zea",
               species = "mays",
               goTable="go")
