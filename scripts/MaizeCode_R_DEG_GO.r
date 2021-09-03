@@ -10,15 +10,18 @@ library(dplyr)
 library(tidyr)
 library(stringr)
 library(gplots)
-library(org.Zmays.eg.db)
 
 args = commandArgs(trailingOnly=TRUE)
 
-genecount<-read.delim(args[1], header = TRUE, row.names = "gene_ID")
+line<-args[1]
+db<-paste0("./combined/GO/org.Zmays.",line,"eg.db")
+library(db, character.only = TRUE)
+
+genecount<-read.delim(args[2], header = TRUE, row.names = "gene_ID")
 keep.exprs<-rowSums(cpm(genecount)>1)>=2
 filtered<-genecount[keep.exprs,]
 
-targets<-read.delim(args[2], header = TRUE)
+targets<-read.delim(args[3], header = TRUE)
 samples<-as.factor(targets$Sample)
 reps<-as.factor(targets$Replicate)
 tissues<-unique(samples)
@@ -28,9 +31,9 @@ targets$Color<-as.numeric(targets$Color)
 colors<-c("black","blue","red","purple","green","lightblue","grey")
 color_samples<-colors[targets$Color]
 
-analysisname<-args[3]
+analysisname<-args[4]
 
-ref_genes<-read.delim(args[4], header = FALSE, 
+ref_genes<-read.delim(args[5], header = FALSE, 
                       col.names = c("Chr","Start","Stop","Name","Value","Strand"))
 ref_genes<-mutate(ref_genes, GeneID=str_replace(ref_genes$Name, pattern = ".*ID=(gene:)?([^;]+).*", replacement = "\\2")) %>%
   select(-Name, -Value)
