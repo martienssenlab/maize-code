@@ -12,4 +12,4 @@ for W22_v2:
 awk '$1 !~ /^!/' maize.W22.AGPv2.aggregate.gaf.gz > B73_v4_infoGO.tab
 
 printf "Chr\tStart\tEnd\tGID\tType\tDescription\n" > W22_v2_genes_info.tab
-cat cat ChIP/tracks/W22_v2_all_genes.bed | awk -F"[:;=]" -v OFS="\t" '{print $1,$2,$4,$6}' | awk -v OFS="\t" '{print $1,$2,$3,$5,$6,$7}' >> W22_v2_genes_info.tab
+cat cat ChIP/tracks/W22_v2_all_genes.bed | awk -F"[:;=]" -v OFS="\t" '{print $1,$2,$4,$6}' | awk -v OFS="\t" '{print $1,$2,$3,$5,$7,$6}' >> W22_v2_genes_info.tab
