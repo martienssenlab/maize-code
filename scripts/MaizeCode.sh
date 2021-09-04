@@ -319,7 +319,7 @@ do
 	if [[ ${stat} == "plot1" ]]; then
 		awk -v a=${line} -v b=${name} -v c=${sample} -v d=${rep} -v e=${ref} '$1==a && $2==b && $3==c && $4==d && $5==e' ${env}/reports/summary_mapping_stats.txt >> combined/reports/temp_mapping_stats_${samplename}.txt
 	elif [[ ${stat} == "plot2" ]]; then
-		awk -v a=${name} '$1==a' ${env}/reports/summary_mapping_stats.txt >> combined/reports/temp2_mapping_stats_${samplename}.txt
+		cat shRNA/reports/sizes_*${sample}* >> combined/reports/temp2_mapping_stats_${samplename}.txt
 	fi
 done < ${samplefile}
 
