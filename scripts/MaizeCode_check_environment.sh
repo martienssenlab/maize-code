@@ -173,9 +173,6 @@ elif [[ ${datatype} == "TF" ]]; then
 		cp /grid/martienssen/data_norepl/dropbox/maizecode/Repeat_Masker/B73_v4_masked_regions.bed ${datatype}/tracks/
 	fi
 elif [[ ${datatype} == "shRNA" ]]; then
-	if [ ! -s ${datatype}/reports/summary_mapping_stats.txt ]; then
-		printf "Sample\tType\tSize\tCount\n" > ${datatype}/reports/summary_mapping_stats.txt
-	fi
 	if ls ${ref_dir}/*.bt2* 1> /dev/null 2>&1; then
 		printf "\nBowtie2 index already exists for ${ref} in ${ref_dir}\n"
 	else
