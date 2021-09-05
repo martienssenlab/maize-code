@@ -14,8 +14,10 @@ library(gplots)
 args = commandArgs(trailingOnly=TRUE)
 
 line<-args[1]
-db<-paste0("./combined/GO/",line,"/org.Zmays.eg.db")
-library(db, character.only = TRUE)
+db<-paste0("./combined/GO/",line)
+setwd("db")
+library(org.Zmays.eg.db)
+setwd("../../..")
 
 genecount<-read.delim(args[2], header = TRUE, row.names = "gene_ID")
 keep.exprs<-rowSums(cpm(genecount)>1)>=2
