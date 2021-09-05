@@ -33,10 +33,10 @@ makeOrgPackage(gene_info=fSymzm, chromosome=fChrzm, go=fGOzm,
               version="0.1",
               maintainer="user <user@maizecode>",
               author="user <user@maizecode>",
-              outputDir = "./combined/GO",
+              outputDir = paste0("./combined/GO/",line,"/"),
               tax_id = ncbiID,
               genus = "Zea",
               species = "mays",
               goTable="go")
 
-install.packages(paste0("./combined/GO/org.Zmays.",line,"eg.db"), repos=NULL, type="source")
+install.packages(paste0("./combined/GO/",line,"/org.Zmays.eg.db"), repos=NULL, type="source")
