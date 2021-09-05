@@ -573,7 +573,7 @@ if [[ "${total}" == "No" ]]; then
 	exit 0
 fi
 
-total_sample_number=$((${#chip_sample_list[@]} + ${#rnaseq_sample_list[@]} + ${#rampage_sample_list[@]} + ${#shrna_sample_list[@]}))
+total_sample_number=$((${#chip_sample_list[@]} + ${#rnaseq_sample_list[@]} + ${#rampage_sample_list[@]}))
 if [ ${total_sample_number} -lt 2 ]; then
 	printf "\nNot enough samples for deeptools analysis for ${analysisname}\nAnalysis is thus finished!\n"
 	touch combined/chkpts/analysis_${analysisname}
@@ -610,8 +610,8 @@ done
 for strand in plus minus
 do
 	case "${strand}" in
-		plus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_plus[@]} ${rampage_bw_list_plus[@]} ${shrna_bw_list_plus[@]}";;
-		minus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]} ${shrna_bw_list_minus[@]}";;
+		plus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_plus[@]} ${rampage_bw_list_plus[@]}";;
+		minus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]}";;
 	esac
 	printf "\nComputing scale-regions ${strand} strand matrix for ${analysisname}\n"
 	computeMatrix scale-regions --missingDataAsZero --skipZeros -R combined/matrix/temp_regions_${regionname}_${strand}.bed -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/regions_${analysisname}_${strand}.gz --quiet
@@ -639,11 +639,6 @@ do
 		printf "\nIncluding RAMPAGE samples\n"
 		all_samples+=("RAMPAGE")
 		all_labels+=("${rampage_sample_list[*]}")
-	fi
-	if [ ${#shrna_bw_list_plus[@]} -gt 0 ]; then
-		printf "\nIncluding shRNA samples\n"
-		all_samples+=("shRNA")
-		all_labels+=("${shrna_sample_list[*]}")
 	fi
 	printf "\nMerging stranded matrices aligned by ${matrix} of ${analysisname}\n"
 	computeMatrixOperations rbind -m combined/matrix/${matrix}_${analysisname}_plus.gz combined/matrix/${matrix}_${analysisname}_minus.gz -o combined/matrix/${matrix}_${analysisname}.gz
