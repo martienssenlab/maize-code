@@ -614,46 +614,42 @@ do
 		minus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]} ${shrna_bw_list_minus[@]}";;
 	esac
 	printf "\nComputing scale-regions ${strand} strand matrix for ${analysisname}\n"
-	computeMatrix scale-regions --missingDataAsZero --skipZeros -R combined/matrix/temp_regions_${regionname}_${strand}.bed -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/regions_${analysisname}_${strand}.gz
+	computeMatrix scale-regions --missingDataAsZero --skipZeros -R combined/matrix/temp_regions_${regionname}_${strand}.bed -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/regions_${analysisname}_${strand}.gz --quiet
 	printf "\nComputing reference-point on TSS ${strand} strand matrix for ${analysisname}\n"
-	computeMatrix reference-point --referencePoint "TSS" --missingDataAsZero --skipZeros -R combined/matrix/temp_regions_${regionname}_${strand}.bed -S ${bw_list} -bs 50 -b 2000 -a 8000 -p ${threads} -o combined/matrix/tss_${analysisname}_${strand}.gz
+	computeMatrix reference-point --referencePoint "TSS" --missingDataAsZero --skipZeros -R combined/matrix/temp_regions_${regionname}_${strand}.bed -S ${bw_list} -bs 50 -b 2000 -a 8000 -p ${threads} -o combined/matrix/tss_${analysisname}_${strand}.gz --quiet
 done
 rm -f combined/matrix/temp_regions_${regionname}_*.bed
 
 #### Merging stranded matrix, extracting scales and plotting heatmaps
+all_samples=()
+all_lables=()
 for matrix in regions tss
 do
-	### Probably a better way to do that, maybe with case esac not stopping after match ###
-	if [ ${#rnaseq_bw_list_plus[@]} -gt 0 ] && [ ${#rampage_bw_list_plus[@]} -gt 0 ] && [ ${#shrna_bw_list_plus[@]} -gt 0 ]; then
-		all_samples=("${uniq_chip_mark_list[*]}" "RNAseq" "RAMPAGE" "shRNA")
-		printf "\nIncluding RNAseq, RAMPAGE and shRNA samples\n"
-	elif [ ${#rnaseq_bw_list_plus[@]} -gt 0 ] && [ ${#rampage_bw_list_plus[@]} -gt 0 ]; then
-		all_samples=("${uniq_chip_mark_list[*]}" "RNAseq" "RAMPAGE")
-		printf "\nIncluding RNAseq and RAMPAGE samples\n"
-	elif [ ${#rnaseq_bw_list_plus[@]} -gt 0 ] && [ ${#shrna_bw_list_plus[@]} -gt 0 ]; then
-		all_samples=("${uniq_chip_mark_list[*]}" "RNAseq" "shRNA")
-		printf "\nIncluding RNAseq and shRNA samples\n"
-	elif [ ${#rampage_bw_list_plus[@]} -gt 0 ] && [ ${#shrna_bw_list_plus[@]} -gt 0 ]; then
-		all_samples=("${uniq_chip_mark_list[*]}" "RAMPAGE" "shRNA")
-		printf "\nIncluding RNAseq and shRNA samples\n"
-	elif [ ${#rnaseq_bw_list_plus[@]} -gt 0 ]; then
-		all_samples=("${uniq_chip_mark_list[*]}" "RNAseq")
+	if [ ${#sorted_marks[@]} -gt 0 ]; then
+		printf "\nIncluding ChIPseq samples\n"
+		all_samples+=("${uniq_chip_mark_list[*]}")
+		all_labels+=("${sorted_labels[@]}")
+	fi
+	if [ ${#rnaseq_bw_list_plus[@]} -gt 0 ]; then
 		printf "\nIncluding RNAseq samples\n"
-	elif [ ${#rampage_bw_list_plus[@]} -gt 0 ]; then
-		all_samples=("${uniq_chip_mark_list[*]}" "RAMPAGE")
+		all_samples+=("RNAseq")
+		all_labels+=("${rnaseq_sample_list[*]}")
+	fi
+	if [ ${#rampage_bw_list_plus[@]} -gt 0 ]; then
 		printf "\nIncluding RAMPAGE samples\n"
-	elif [ ${#shrna_bw_list_plus[@]} -gt 0 ]; then
-		all_samples=("${uniq_chip_mark_list[*]}" "shRNA")
-		printf "\nIncluding RAMPAGE samples\n"
-	else
-		printf "\nOnly using ChIPseq samples\n"
-		all_samples=("${uniq_chip_mark_list[*]}")
-	fi	
+		all_samples+=("RAMPAGE")
+		all_labels+=("${rampage_sample_list[*]}")
+	fi
+	if [ ${#shrna_bw_list_plus[@]} -gt 0 ]; then
+		printf "\nIncluding shRNA samples\n"
+		all_samples+=("shRNA")
+		all_labels+=("${shrna_sample_list[*]}")
+	fi
 	printf "\nMerging stranded matrices aligned by ${matrix} of ${analysisname}\n"
 	computeMatrixOperations rbind -m combined/matrix/${matrix}_${analysisname}_plus.gz combined/matrix/${matrix}_${analysisname}_minus.gz -o combined/matrix/${matrix}_${analysisname}.gz
 	printf "\nGetting scales for ${matrix} matrix of ${analysisname}\n"
 	computeMatrixOperations dataRange -m combined/matrix/${matrix}_${analysisname}.gz > combined/matrix/values_${matrix}_${analysisname}.txt
-	plotProfile -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/temp_${matrix}_${analysisname}_profile.pdf --samplesLabel ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]} --averageType mean --outFileNameData combined/matrix/values_profile_${matrix}_${analysisname}.txt
+	plotProfile -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/temp_${matrix}_${analysisname}_profile.pdf --samplesLabel ${all_labels[@]} --averageType mean --outFileNameData combined/matrix/values_profile_${matrix}_${analysisname}.txt
 	rm -f combined/plots/temp_${matrix}_${analysisname}_profile.pdf
 	mins=()
 	maxs=()
@@ -691,7 +687,7 @@ do
 	
 	mins2=()
 	maxs2=()
-	for sample in ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]} ${shrna_sample_list[@]}
+	for sample in ${all_labels[@]}
 	do
 		mini=$(grep ${sample} combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $5}')
 		maxi=$(grep ${sample} combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $6}')
@@ -706,7 +702,7 @@ do
 	done
 	ymins2=()
 	ymaxs2=()
-	for sample in ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]} ${shrna_sample_list[@]}
+	for sample in ${all_labels[@]}
 	do
 		ymini=$(grep ${sample} combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
 		ymaxi=$(grep ${sample} combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.2}')
@@ -720,9 +716,9 @@ do
 		fi
 	done
 	printf "\nPlotting heatmap for ${matrix} matrix of ${analysisname} scaling by mark\n"
-	plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]} --regionsLabel ${regionname} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
+	plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --regionsLabel ${regionname} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
 	printf "\nPlotting heatmap for ${matrix} matrix of ${analysisname} scaling by sample\n"
-	plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}_v2.pdf --sortRegions descend --sortUsing mean --samplesLabel ${sorted_labels[@]} ${rnaseq_sample_list[@]} ${rampage_sample_list[@]} --regionsLabel ${regionname} --colorMap 'seismic' --zMin ${mins2[@]} --zMax ${maxs2[@]} --yMin ${ymins2[@]} --yMax ${ymaxs2[@]} --interpolationMethod 'bilinear'
+	plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}_v2.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --regionsLabel ${regionname} --colorMap 'seismic' --zMin ${mins2[@]} --zMax ${maxs2[@]} --yMin ${ymins2[@]} --yMax ${ymaxs2[@]} --interpolationMethod 'bilinear'
 done
 
 rm -f combined/matrix/*${analysisname}*.gz
@@ -774,9 +770,9 @@ if [ ${#rnaseq_name_list[@]} -ge 2 ]; then
 		done
 		sort -k1,1n -k2,2n combined/matrix/temp_regions_${analysisname}_all_DEGs.bed -u > combined/matrix/temp_regions_${analysisname}_all_DEGs_unique.bed
 		printf "\nComputing matrix for DEG for each sample pairs from ${analysisname}\n"
-		computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${regions_files[@]} -S ${sorted_marks[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/${analysisname}_DEG.gz
+		computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${regions_files[@]} -S ${sorted_marks[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/${analysisname}_DEG.gz --quiet
 		printf "\nComputing matrix for all DEGs from ${analysisname}\n"
-		computeMatrix scale-regions --missingDataAsZero --skipZeros -R combined/matrix/temp_regions_${analysisname}_all_DEGs_unique.bed -S ${sorted_marks[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/${analysisname}_all_DEGs.gz
+		computeMatrix scale-regions --missingDataAsZero --skipZeros -R combined/matrix/temp_regions_${analysisname}_all_DEGs_unique.bed -S ${sorted_marks[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/${analysisname}_all_DEGs.gz --quiet
 		for mark in ${uniq_chip_mark_list[@]}
 		do
 			selected_samples=()
@@ -800,7 +796,7 @@ if [ ${#rnaseq_name_list[@]} -ge 2 ]; then
 			do
 				filenames="combined/DEG/only_${namei}_DEG_UP_${analysisname}.bed combined/DEG/only_${namei}_DEG_DOWN_${analysisname}.bed"
 				printf "\nComputing matrix for ${namei} specific DEG from ${analysisname}\n"
-				computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${filenames} -S ${sorted_marks[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o combined/matrix/${analysisname}_only_${namei}_DEG.gz
+				computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${filenames} -S ${sorted_marks[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o combined/matrix/${analysisname}_only_${namei}_DEG.gz --quiet
 				printf "\nGetting scales for the ${tissue} specific DEG matrix of ${analysisname}\n"
 				computeMatrixOperations dataRange -m combined/matrix/${analysisname}_only_${namei}_DEG.gz > combined/matrix/values_${analysisname}_only_${namei}_DEG.gz
 				mins=()
@@ -971,9 +967,9 @@ do
 				awk -v OFS="\t" -v s=$sign '$6==s' combined/DEG/temp_sorted_${analysisname}_${tissue}_exp${i}.txt > combined/DEG/temp_sorted_${analysisname}_${tissue}_exp${i}.bed
 			done
 			printf "\nComputing scale-regions $strand strand matrix for ${tissue} in ${analysisname}\n"
-			computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${sorted_regions[@]} -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/regions_${analysisname}_${strand}.gz
+			computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${sorted_regions[@]} -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/regions_${analysisname}_${strand}.gz --quiet
 			printf "\nComputing reference-point on TSS $strand strand matrix for ${tissue} in $analysisname\n"
-			computeMatrix reference-point --referencePoint "TSS" --missingDataAsZero --skipZeros -R ${sorted_regions[@]} -S ${bw_list} -bs 50 -b 2000 -a 8000 -p ${threads} -o combined/matrix/tss_${analysisname}_${strand}.gz
+			computeMatrix reference-point --referencePoint "TSS" --missingDataAsZero --skipZeros -R ${sorted_regions[@]} -S ${bw_list} -bs 50 -b 2000 -a 8000 -p ${threads} -o combined/matrix/tss_${analysisname}_${strand}.gz --quiet
 		done
 
 		### Merging stranded matrix, extracting scales and plotting heatmaps
@@ -1159,7 +1155,7 @@ do
 				awk -v OFS="\t" -v s=${sign} '$6==s' combined/peaks/temp_distal_${analysisname}_${line}_${tissue}_group${i}.txt > combined/peaks/temp_distal_${analysisname}_${line}_${tissue}_group${i}.bed
 			done
 			printf "\nComputing scale-regions ${strand} strand matrix for tissue ${tissue}\n"
-			computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${sorted_regions[@]} -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/regions_${analysisname}_distal_${strand}.gz
+			computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${sorted_regions[@]} -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/regions_${analysisname}_distal_${strand}.gz --quiet
 		done
 		printf "\nMerging stranded matrices for tissue ${tissue}\n"
 		computeMatrixOperations rbind -m combined/matrix/regions_${analysisname}_distal_plus.gz combined/matrix/regions_${analysisname}_distal_minus.gz -o combined/matrix/regions_${analysisname}_distal.gz
