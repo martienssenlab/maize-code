@@ -40,6 +40,6 @@ makeOrgPackage(gene_info=fSymzm, chromosome=fChrzm, go=fGOzm,
               goTable="go")
 
 db<-paste0("./combined/GO/",line)
-setwd("db")
+setwd(db)
 install.packages("org.Zmays.eg.db", repos=NULL, type="source")
 setwd("../../..")
