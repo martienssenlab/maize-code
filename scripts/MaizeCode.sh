@@ -319,7 +319,7 @@ do
 	if [[ ${stat} == "plot1" ]]; then
 		awk -v a=${line} -v b=${name} -v c=${sample} -v d=${rep} -v e=${ref} '$1==a && $2==b && $3==c && $4==d && $5==e' ${env}/reports/summary_mapping_stats.txt >> combined/reports/temp_mapping_stats_${samplename}.txt
 	elif [[ ${stat} == "plot2" ]]; then
-		cat shRNA/reports/sizes_*${sample}* >> combined/reports/temp2_mapping_stats_${samplename}.txt
+		cat shRNA/reports/sizes_*${name}* >> combined/reports/temp2_mapping_stats_${samplename}.txt
 	fi
 done < ${samplefile}
 
@@ -332,7 +332,7 @@ if [ -s combined/reports/temp_mapping_stats_${samplename}.txt ]; then
 	Rscript --vanilla ${mc_dir}/MaizeCode_R_mapping_stats.r combined/reports/summary_mapping_stats_${samplename}_ChIP_RNA.txt ${samplename}
 fi
 if [ -s combined/reports/temp2_mapping_stats_${samplename}.txt ]; then
-	printf "Sample\tType\tSize\tCount\n" > combined/reports/summary_mapping_stats_${samplename}_shRNAs.txt
+	printf "Sample\tType\tSize\tCount\n" > combined/reports/summary_mapping_stats_${samplename}_shRNA.txt
 	sort combined/reports/temp2_mapping_stats_${samplename}.txt -u >> combined/reports/summary_mapping_stats_${samplename}_shRNA.txt
 	rm -f combined/reports/temp2_mapping_stats_${samplename}.txt
 	printf "\nPlotting mapping stats for all shRNA samples in the samplefile with R:\n"
