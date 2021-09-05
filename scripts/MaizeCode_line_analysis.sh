@@ -628,7 +628,7 @@ do
 	if [ ${#sorted_marks[@]} -gt 0 ]; then
 		printf "\nIncluding ChIPseq samples\n"
 		all_samples+=("${uniq_chip_mark_list[*]}")
-		all_labels+=("${sorted_labels[@]}")
+		all_labels+=("${sorted_labels[*]}")
 	fi
 	if [ ${#rnaseq_bw_list_plus[@]} -gt 0 ]; then
 		printf "\nIncluding RNAseq samples\n"
