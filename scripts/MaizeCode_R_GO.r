@@ -11,7 +11,7 @@ args = commandArgs(trailingOnly=TRUE)
 
 line<-args[1]
 db<-paste0("./combined/GO/",line)
-setwd("db")
+setwd(db)
 library(org.Zmays.eg.db)
 setwd("../../..")
 
