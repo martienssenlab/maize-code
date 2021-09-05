@@ -574,7 +574,7 @@ if [[ "${total}" == "No" ]]; then
 fi
 
 total_sample_number=$((${#chip_sample_list[@]} + ${#rnaseq_sample_list[@]} + ${#rampage_sample_list[@]} + ${#shrna_sample_list[@]}))
-if [ ${total_sample_number} -lt 1 ]; then
+if [ ${total_sample_number} -lt 2 ]; then
 	printf "\nNot enough samples for deeptools analysis for ${analysisname}\nAnalysis is thus finished!\n"
 	touch combined/chkpts/analysis_${analysisname}
 	exit 0
