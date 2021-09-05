@@ -38,6 +38,6 @@ plot.shRNA.sizes<-function(stattable) {
 	plot
 }  
 
-pdf(paste0("shRNA/plots/shRNA_sizes_stats_",analysisname,".pdf"), height=10, width=12)
+pdf(paste0("combined/plots/shRNA_sizes_stats_",analysisname,".pdf"), height=10, width=12)
 plot.shRNA.sizes(summary_stats)
 dev.off()
