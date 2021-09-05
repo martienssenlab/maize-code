@@ -10,7 +10,7 @@ library(purrr)
 args = commandArgs(trailingOnly=TRUE)
 
 line<-args[1]
-db<-paste0("./combined/GO/",line,"org.Zmays.eg.db")
+db<-paste0("./combined/GO/",line,"/org.Zmays.eg.db")
 library(db, character.only = TRUE)
 
 genecount<-read.delim(args[2], header = TRUE, row.names = "gene_ID")
