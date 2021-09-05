@@ -194,17 +194,20 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 		if [ ! -d combined/GO ]; then
 			mkdir combined/GO
 		fi
-		if [ ! -d combined/GO/org.Zmays.${ref}.eg.db ]; then
-			if [ ! -s combined/GO/${ref}_infoGO.tab ]; then
+		if [ ! -d combined/GO/${ref} ]; then
+			mkdir combined/GO/${ref}
+		fi
+		if [ ! -d combined/GO/${ref}/org.Zmays.eg.db ]; then
+			if [ ! -s combined/GO/${ref}/${ref}_infoGO.tab ]; then
 				printf "\nCopying GO information file\n"
-				cp /grid/martienssen/data_norepl/dropbox/maizecode/GO/${ref}_infoGO.tab combined/GO/	
+				cp /grid/martienssen/data_norepl/dropbox/maizecode/GO/${ref}_infoGO.tab combined/GO/${ref}/
 			fi
-			if [ ! -d combined/GO/${ref}_genes_info.tab ]; then
+			if [ ! -d combined/GO/${ref}/${ref}_genes_info.tab ]; then
 				printf "\nCopying gene information file\n"
-				cp -r /grid/martienssen/data_norepl/dropbox/maizecode/GO/${ref}_genes_info.tab combined/GO/	
+				cp -r /grid/martienssen/data_norepl/dropbox/maizecode/GO/${ref}_genes_info.tab combined/GO/${ref}/
 			fi
 			printf "\nCreating GO database\n"
-			Rscript --vanilla ${mc_dir}/MaizeCode_R_build_GOdatabase.r combined/GO/${ref}_infoGO.tab combined/GO/${ref}_genes_info.tab ${ref}
+			Rscript --vanilla ${mc_dir}/MaizeCode_R_build_GOdatabase.r combined/GO/${ref}/${ref}_infoGO.tab combined/GO/${ref}/${ref}_genes_info.tab ${ref}
 		fi
 	fi	
 	#### To make a count table for all RNAseq samples in samplefile
