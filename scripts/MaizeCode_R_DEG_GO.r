@@ -130,7 +130,7 @@ plotGOs<-function(TopGoResults, ont, name) {
 filtered$GID<-row.names(filtered)
 allGenes<-unique(unlist(filtered$GID))
 
-info<-read.delim("combined/GO/B73_v4_infoGO.tab", header=FALSE)
+info<-read.delim(paste0(db,"/",line,"_infoGO.tab", header=FALSE)
 fGOzm<-info[,c(2,5,7)]
 colnames(fGOzm)<-c("GID","GO","EVIDENCE")
 geneid2GO<-fGOzm[,c(1,2)]
