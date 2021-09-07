@@ -926,9 +926,9 @@ do
 			grep "${ID}" ${regionfile} | awk -v OFS="\t" -v c=${exp} '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {l=$3-$2; v=1000*c/l; print $1,$2,$3,".",v,$6,$4}' >> combined/DEG/temp_expression_${analysisname}_${tissue}.bed
 		done < combined/DEG/temp_counts_${analysisname}_${tissue}.txt
 		if [[ ${ref} == "B73_v4" ]]; then
-			sort -k5,5gr combined/DEG/temp_expression_${analysisname}_${tissue}.bed | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$8,$5,$6}' > combined/peaks/peaks_${analysisname}.bed
+			sort -k5,5gr combined/DEG/temp_expression_${analysisname}_${tissue}.bed | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$8,$5,$6}' > combined/DEG/sorted_expression_${analysisname}_${tissue}.bed
 		else
-			sort -k5,5gr combined/DEG/temp_expression_${analysisname}_${tissue}.bed | awk -F"[=;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$8,$5,$6}' > combined/peaks/peaks_${analysisname}.bed
+			sort -k5,5gr combined/DEG/temp_expression_${analysisname}_${tissue}.bed | awk -F"[=;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$8,$5,$6}' > combined/DEG/sorted_expression_${analysisname}_${tissue}.bed
 		fi
 				
 		awk -v OFS="\t" -v a=${analysisname} -v b=${tissue} '{if ($5==0) printf $0"\n" > "combined/DEG/temp_sorted_"a"_"b"_exp0.bed"; else printf $0"\n" > "combined/DEG/temp_sorted_"a"_"b"_expA.bed"}' combined/DEG/sorted_expression_${analysisname}_${tissue}.bed
