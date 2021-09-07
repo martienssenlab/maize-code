@@ -57,7 +57,7 @@ getGO<-function(ont, name) {
 	  arrange(GO) %>%
 	  unique()
   if (nrow(tab2) > 0) {
-	  write.table(tab2,paste0("combined/DEG/topGO_",name,"_",ont,"_GIDs.txt"),sep="\t",row.names=FALSE,col.names=TRUE,quote=FALSE)
+	  write.table(tab2,paste0(db,"/topGO_",name,"_",ont,"_GIDs.txt"),sep="\t",row.names=FALSE,col.names=TRUE,quote=FALSE)
   }  
   return(tab)
 }
