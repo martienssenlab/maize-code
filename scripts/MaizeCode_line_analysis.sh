@@ -921,6 +921,9 @@ do
 		cols=($(awk -v ORS=" " -v t=${tissue} 'NR==1 {for(i=1;i<=NF;i++) if ($i~t) print i}' combined/DEG/counts_${analysisname}.txt))
 		reps=${#cols[@]}
 		awk -v d="${cols}" -v t=${reps} 'BEGIN {split(d, a, " ")} NR > 1 {b=0; for (i in a) b+=$(a[i]); c=b/t; print $1,c}' combined/DEG/counts_${analysisname}.txt > combined/DEG/temp_counts_${analysisname}_${tissue}.txt
+		if [ -s combined/DEG/temp_expression_${analysisname}_${tissue}.bed ]; then
+			rm -f combined/DEG/temp_expression_${analysisname}_${tissue}.bed
+		fi
 		while read ID exp
 		do
 			grep "${ID}" ${regionfile} | awk -v OFS="\t" -v c=${exp} '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {l=$3-$2; v=1000*c/l; print $1,$2,$3,".",v,$6,$4}' >> combined/DEG/temp_expression_${analysisname}_${tissue}.bed
@@ -1119,15 +1122,15 @@ do
 	if [[ ${test_k27ac} == "yes" ]] && [[ ${#tissue_bw_plus[@]} -ge 2 ]]; then
 		printf "\nMaking heatmaps of distal enhancers (H3K27ac peak >2kb from TSS) in tissue ${tissue}\n"
 		printf "\nGetting bed file of distal enhancers for tissue ${tissue}\n"
-		bedtools sort -g ${ref_dir}/chrom.sizes -i ChIP/peaks/best_peaks_${line}_${tissue}_H3K27ac.bed > combined/peaks/temp_${analysisname}_${line}_${tissue}.bed
-		bedtools closest -a combined/peaks/temp_${analysisname}_${line}_${tissue}.bed -b ${regionfile} -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ ) {if ($17>= 2000 && $16=="+") print $1,$2+$10,$12,".",$5,$16; else if ($17<= -2000 && $16=="-") print $1,$13,$2+$10,".",$5,$16}' | sort -k5,5nr > combined/peaks/distal_${analysisname}_${line}_${tissue}.bed
-		tot=$(wc -l combined/peaks/distal_${analysisname}_${line}_${tissue}.bed | awk '{print $1}')
+		bedtools sort -g ${ref_dir}/chrom.sizes -i ChIP/peaks/best_peaks_${line}_${tissue}_H3K27ac.bed > combined/peaks/temp_${analysisname}_${tissue}.bed
+		bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/DEG/sorted_expression_${analysisname}_${tissue}.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ ) {if ($17>= 2000 && $16=="+") print $1,$2+$10,$12,$4,$5,$16,$14,$15; else if ($17<= -2000 && $16=="-") print $1,$13,$2+$10,$4,$5,$16,$14,$15}' | sort -k5,5nr > combined/peaks/distal_${analysisname}_${tissue}.bed
+		tot=$(wc -l combined/peaks/distal_${analysisname}_${tissue}.bed | awk '{print $1}')
 		bin=$((tot/5))
 		min=0
 		max=${bin}
 		for (( i = 1; i <= 5; i++ ))
 		do
-			awk -v n=${min} -v m=${max} 'NR>=n && NR <=m' combined/peaks/distal_${analysisname}_${line}_${tissue}.bed > combined/peaks/temp_distal_${analysisname}_${line}_${tissue}_group${i}.bed
+			awk -v n=${min} -v m=${max} 'NR>=n && NR <=m' combined/peaks/distal_${analysisname}_${tissue}.bed > combined/peaks/temp_distal_${analysisname}_${tissue}_group${i}.bed
 			min=$((min+bin))
 			max=$((max+bin))
 		done
@@ -1143,10 +1146,10 @@ do
 				4) name="60-80%";;
 				5) name="Bottom20%";;
 			esac
-			n=$(wc -l combined/peaks/temp_distal_${analysisname}_${line}_${tissue}_group${i}.bed | awk '{print $1}')
+			n=$(wc -l combined/peaks/temp_distal_${analysisname}_${tissue}_group${i}.bed | awk '{print $1}')
 			regions_labels+=("${name}($n)")	
-			sorted_regions+=("combined/peaks/temp_distal_${analysisname}_${line}_${tissue}_group${i}.bed")
-			\cp -Tf combined/peaks/temp_distal_${analysisname}_${line}_${tissue}_group${i}.bed combined/peaks/temp_distal_${analysisname}_${line}_${tissue}_group${i}.txt
+			sorted_regions+=("combined/peaks/temp_distal_${analysisname}_${tissue}_group${i}.bed")
+			\cp -Tf combined/peaks/temp_distal_${analysisname}_${tissue}_group${i}.bed combined/peaks/temp_distal_${analysisname}_${tissue}_group${i}.txt
 		done	
 		for strand in plus minus
 		do
@@ -1159,7 +1162,7 @@ do
 			regions=()
 			for i in 1 2 3 4 5
 			do
-				awk -v OFS="\t" -v s=${sign} '$6==s' combined/peaks/temp_distal_${analysisname}_${line}_${tissue}_group${i}.txt > combined/peaks/temp_distal_${analysisname}_${line}_${tissue}_group${i}.bed
+				awk -v OFS="\t" -v s=${sign} '$6==s' combined/peaks/temp_distal_${analysisname}_${tissue}_group${i}.txt > combined/peaks/temp_distal_${analysisname}_${tissue}_group${i}.bed
 			done
 			printf "\nComputing scale-regions ${strand} strand matrix for tissue ${tissue}\n"
 			computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${sorted_regions[@]} -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/regions_${analysisname}_distal_${strand}.gz --quiet
