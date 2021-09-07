@@ -369,7 +369,7 @@ if [ ${#chip_sample_list[@]} -ge 1 ]; then
 	if [[ ${ref} == "B73_v4" ]]; then
 		bedtools closest -a combined/peaks/tmp3_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/peaks/peaks_${analysisname}.bed
 	else
-		bedtools closest -a combined/peaks/tmp3_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:=;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/peaks/peaks_${analysisname}.bed
+		bedtools closest -a combined/peaks/tmp3_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[=;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/peaks/peaks_${analysisname}.bed
 	fi
 	rm -f combined/peaks/tmp*_peaks_${analysisname}.bed
 	#### To create a matrix of peak presence in each sample
@@ -923,10 +923,14 @@ do
 		awk -v d="${cols}" -v t=${reps} 'BEGIN {split(d, a, " ")} NR > 1 {b=0; for (i in a) b+=$(a[i]); c=b/t; print $1,c}' combined/DEG/counts_${analysisname}.txt > combined/DEG/temp_counts_${analysisname}_${tissue}.txt
 		while read ID exp
 		do
-			grep "${ID}" ${regionfile} | awk -v OFS="\t" -v c=${exp} '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {l=$3-$2; $5=1000*c/l; print $0}' >> combined/DEG/temp_expression_${analysisname}_${tissue}.bed
+			grep "${ID}" ${regionfile} | awk -v OFS="\t" -v c=${exp} '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {l=$3-$2; v=1000*c/l; print $1,$2,$3,".",v,$6,$4}' >> combined/DEG/temp_expression_${analysisname}_${tissue}.bed
 		done < combined/DEG/temp_counts_${analysisname}_${tissue}.txt
-		sort -k5,5gr combined/DEG/temp_expression_${analysisname}_${tissue}.bed > combined/DEG/sorted_expression_${analysisname}_${tissue}.bed
-		
+		if [[ ${ref} == "B73_v4" ]]; then
+			sort -k5,5gr combined/DEG/temp_expression_${analysisname}_${tissue}.bed | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$8,$5,$6}' > combined/peaks/peaks_${analysisname}.bed
+		else
+			sort -k5,5gr combined/DEG/temp_expression_${analysisname}_${tissue}.bed | awk -F"[=;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$8,$5,$6}' > combined/peaks/peaks_${analysisname}.bed
+		fi
+				
 		awk -v OFS="\t" -v a=${analysisname} -v b=${tissue} '{if ($5==0) printf $0"\n" > "combined/DEG/temp_sorted_"a"_"b"_exp0.bed"; else printf $0"\n" > "combined/DEG/temp_sorted_"a"_"b"_expA.bed"}' combined/DEG/sorted_expression_${analysisname}_${tissue}.bed
 		tot=$(wc -l combined/DEG/temp_sorted_${analysisname}_${tissue}_expA.bed | awk '{print $1}')
 		bin=$((tot/5))
