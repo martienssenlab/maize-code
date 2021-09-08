@@ -245,7 +245,7 @@ if [ ${#rnaseq_name_list[@]} -ge 2 ]; then
 			done
 			regions_files+=("combined/matrix/temp_regions_${analysisname}_DEG_${filename}_UP.bed" "combined/matrix/temp_regions_${analysisname}_DEG_${filename}_DOWN.bed")
 			nbup=$(wc -l combined/matrix/temp_regions_${analysisname}_DEG_${filename}_UP.bed | awk '{print $1}')
-			ndbown=$(wc -l combined/matrix/temp_regions_${analysisname}_DEG_${filename}_DOWN.bed | awk '{print $1}')
+			nbdown=$(wc -l combined/matrix/temp_regions_${analysisname}_DEG_${filename}_DOWN.bed | awk '{print $1}')
 			regions_labels+=("${filename}_UP(${nbup})" "${filename}_DOWN(${nbdown})")
 			printf "%s\t:\t%s\n" "${file}" "${regions_labels[*]}"
 			awk -v OFS="\t" 'NR>1 {print $1,$2,$3}' ${file} >> combined/matrix/temp_regions_${analysisname}_all_DEGs.bed		
