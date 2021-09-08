@@ -244,8 +244,8 @@ if [ ${#rnaseq_name_list[@]} -ge 2 ]; then
 				awk -v OFS="\t" -v d=${DEG} '$11==d' ${file} > combined/matrix/temp_regions_${analysisname}_DEG_${filename}_${DEG}.bed
 			done
 			regions_files+=("combined/matrix/temp_regions_${analysisname}_DEG_${filename}_UP.bed" "combined/matrix/temp_regions_${analysisname}_DEG_${filename}_DOWN.bed")
-			nbup=$(wc -l combined/matrix/temp_regions_${analysisname}_DEG_${filename}_UP.bed)
-			ndbown=$(wc -l combined/matrix/temp_regions_${analysisname}_DEG_${filename}_DOWN.bed)
+			nbup=$(wc -l combined/matrix/temp_regions_${analysisname}_DEG_${filename}_UP.bed | awk '{print $1}')
+			ndbown=$(wc -l combined/matrix/temp_regions_${analysisname}_DEG_${filename}_DOWN.bed | awk '{print $1}')
 			regions_labels+=("${filename}_UP(${nbup})" "${filename}_DOWN(${nbdown})")
 			printf "%s\t:\t%s\n" "${file}" "${regions_labels[*]}"
 			awk -v OFS="\t" 'NR>1 {print $1,$2,$3}' ${file} >> combined/matrix/temp_regions_${analysisname}_all_DEGs.bed		
@@ -278,8 +278,8 @@ if [ ${#rnaseq_name_list[@]} -ge 2 ]; then
 			for namei in ${rnaseq_name_list[@]}
 			do
 				filenames="combined/DEG/only_${namei}_DEG_UP_${analysisname}.bed combined/DEG/only_${namei}_DEG_DOWN_${analysisname}.bed"
-				nbup=$(wc -l combined/DEG/only_${namei}_DEG_UP_${analysisname}.bed)
-				nbdown=$(wc -l combined/DEG/only_${namei}_DEG_DOWN_${analysisname}.bed)
+				nbup=$(wc -l combined/DEG/only_${namei}_DEG_UP_${analysisname}.bed | awk '{print $1}')
+				nbdown=$(wc -l combined/DEG/only_${namei}_DEG_DOWN_${analysisname}.bed | awk '{print $1}')
 				printf "\nComputing matrix for ${namei} specific DEG from ${analysisname}\n"
 				computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${filenames} -S ${sorted_marks[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p $threads -o combined/matrix/${analysisname}_only_${namei}_DEG.gz --quiet
 				printf "\nGetting scales for the ${tissue} specific DEG matrix of ${analysisname}\n"
