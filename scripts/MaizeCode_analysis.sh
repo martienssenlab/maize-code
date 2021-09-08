@@ -387,9 +387,9 @@ do
 	region_list+=("${regioniname}")
 	printf "\nLaunching line analysis script for samplefile ${samplename} on regionfile ${regioniname}\n"
 	if [[ "${total}" == "No" ]]; then
-		qsub -sync y -N ${ref}_analysis -o combined/logs/analysis_${samplename}_on_${regioniname}_${ref}.log ${mc_dir}/MaizeCode_line_analysis_test.sh -f combined/${samplename}_analysis_samplefile.temp_${ref}.txt -r ${regioni} -t &
+		qsub -sync y -N ${ref}_analysis -o combined/logs/analysis_${samplename}_on_${regioniname}_${ref}.log ${mc_dir}/MaizeCode_line_analysis.sh -f combined/${samplename}_analysis_samplefile.temp_${ref}.txt -r ${regioni} -t &
 	else
-		qsub -sync y -N ${ref}_analysis -o combined/logs/analysis_${samplename}_on_${regioniname}_${ref}.log ${mc_dir}/MaizeCode_line_analysis_test.sh -f combined/${samplename}_analysis_samplefile.temp_${ref}.txt -r ${regioni} &
+		qsub -sync y -N ${ref}_analysis -o combined/logs/analysis_${samplename}_on_${regioniname}_${ref}.log ${mc_dir}/MaizeCode_line_analysis.sh -f combined/${samplename}_analysis_samplefile.temp_${ref}.txt -r ${regioni} &
 	fi
 	pids+=("$!")
 done
