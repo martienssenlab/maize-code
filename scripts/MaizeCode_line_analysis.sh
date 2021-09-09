@@ -1154,7 +1154,8 @@ do
 				3) name="40-60%";;
 				4) name="60-80%";;
 				5) name="Bottom20%";;
-			esac
+			esac			
+			awk -v OFS="\t" -v g=${name} -v t=${tissue} '{print t,$4,$5,$7,$8,g }' combined/peaks/temp_distal_${analysisname}_${tissue}_group${i}.bed >> combined/peaks/temp2_distal_${analysisname}_${tissue}.txt
 			n=$(wc -l combined/peaks/temp_distal_${analysisname}_${tissue}_group${i}.bed | awk '{print $1}')
 			regions_labels+=("${name}($n)")	
 			sorted_regions+=("combined/peaks/temp_distal_${analysisname}_${tissue}_group${i}.bed")
@@ -1234,11 +1235,15 @@ do
 			fi
 		done
 		printf "\nPlotting median profile for tissue ${tissue} in ${analysisname} scaling by sample\n"
-		plotProfile -m combined/matrix/final_regions_${analysisname}_distal.gz -out combined/plots/distal_${tissue}_${analysisname}_profile_median.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType median --yMin ${ymins[@]} --yMax ${ymaxs[@]} --startLabel "enhancer" --endLabel "TSS"
+		plotProfile -m combined/matrix/final_regions_${analysisname}_distal.gz -out combined/plots/distal_${tissue}_${analysisname}_profile_median.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType median --yMin ${ymins[@]} --yMax ${ymaxs[@]} --startLabel "enhancer" --endLabel "TSS"		
 	else
 		printf "\nTissue ${tissue} will not be processed (H3K27ac is present? ${test_k27ac}\tNumber of datasets ${#tissue_labels[*]}\n"
 	fi
 done
+if [[ ${test_k27ac} == "yes" ]] && [[ ${#tissue_bw_plus[@]} -ge 2 ]]; then
+	printf "Tissue\tPeak_ID\tPeakQuality\tGID\tRPKM\tGroup\n" > combined/peaks/all_grouped_distal_peaks_${analysisname}_*.txt
+	cat combined/peaks/temp2_distal_${analysisname}_*.txt > combined/peaks/all_grouped_distal_peaks_${analysisname}_*.txt
+fi
 
 rm -f combined/matrix/*${analysisname}*
 rm -f combined/peaks/temp*${analysisname}*
