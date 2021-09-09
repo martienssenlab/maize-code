@@ -980,9 +980,9 @@ do
 			do
 				awk -v OFS="\t" -v s=$sign '$6==s' combined/DEG/temp_sorted_${analysisname}_${tissue}_exp${i}.txt > combined/DEG/temp_sorted_${analysisname}_${tissue}_exp${i}.bed
 			done
-			printf "\nComputing scale-regions $strand strand matrix for ${tissue} in ${analysisname}\n"
+			printf "\nComputing scale-regions $strand strand matrix for split expression in ${tissue} in ${analysisname}\n"
 			computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${sorted_regions[@]} -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/regions_${analysisname}_${strand}.gz --quiet
-			printf "\nComputing reference-point on TSS $strand strand matrix for ${tissue} in $analysisname\n"
+			printf "\nComputing reference-point on TSS $strand strand matrix for split expression in ${tissue} in $analysisname\n"
 			computeMatrix reference-point --referencePoint "TSS" --missingDataAsZero --skipZeros -R ${sorted_regions[@]} -S ${bw_list} -bs 50 -b 2000 -a 8000 -p ${threads} -o combined/matrix/tss_${analysisname}_${strand}.gz --quiet
 		done
 
@@ -990,9 +990,9 @@ do
 		for matrix in regions tss
 		do
 			tissue_labels="${tissue_labels_chip[*]} ${tissue_labels_rna[*]} ${tissue_labels_rampage[*]} ${tissue_labels_shrna[*]}"
-			printf "\nMerging stranded matrices aligned by ${matrix} for ${tissue} in ${analysisname}\n"
+			printf "\nMerging stranded matrices aligned by ${matrix} for split expression in ${tissue} in ${analysisname}\n"
 			computeMatrixOperations rbind -m combined/matrix/${matrix}_${analysisname}_plus.gz combined/matrix/${matrix}_${analysisname}_minus.gz -o combined/matrix/${matrix}_${analysisname}.gz
-			printf "\nGetting scales for ${matrix} matrix for ${tissue} in ${analysisname}\n"
+			printf "\nGetting scales for ${matrix} matrix for split expression in ${tissue} in ${analysisname}\n"
 			computeMatrixOperations dataRange -m combined/matrix/${matrix}_${analysisname}.gz > combined/matrix/values_${matrix}_${analysisname}.txt
 			mins=()
 			maxs=()
@@ -1026,13 +1026,13 @@ do
 					ymaxs+=("${ymaxi}")
 				fi
 			done
-			printf "\nPlotting heatmap for ${matrix} matrix for ${tissue} in ${analysisname} scaling by sample\n"
+			printf "\nPlotting heatmap for ${matrix} matrix for split expression in ${tissue} in ${analysisname} scaling by sample\n"
 			plotHeatmap -m combined/matrix/final_${matrix}_${analysisname}.gz -out combined/plots/split_expression_${tissue}_${analysisname}_heatmap_${matrix}.pdf --sortRegions keep --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
 			if [[ ${matrix} == "tss" ]]; then
-				printf "\nPlotting heatmap for ${matrix} matrix for ${tissue} in ${analysisname} scaling by sample by sorting by length\n"
+				printf "\nPlotting heatmap for ${matrix} matrix for split expression in ${tissue} in ${analysisname} scaling by sample by sorting by length\n"
 				plotHeatmap -m combined/matrix/final_${matrix}_${analysisname}.gz -out combined/plots/split_expression_${tissue}_${analysisname}_heatmap_${matrix}_v2.pdf --sortRegions descend --sortUsing region_length --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
 			fi
-			printf "\nPlotting profile for ${matrix} matrix for ${tissue} in ${analysisname} scaling by sample\n"
+			printf "\nPlotting profile for ${matrix} matrix for split expression in ${tissue} in ${analysisname} scaling by sample\n"
 			plotProfile -m combined/matrix/final_${matrix}_${analysisname}.gz -out combined/plots/split_expression_${tissue}_${analysisname}_profile_${matrix}.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType mean --yMin ${ymins[@]} --yMax ${ymaxs[@]}
 		done
 	fi
@@ -1177,9 +1177,9 @@ do
 			printf "\nComputing scale-regions ${strand} strand matrix for tissue ${tissue}\n"
 			computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${sorted_regions[@]} -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/regions_${analysisname}_distal_${strand}.gz --quiet
 		done
-		printf "\nMerging stranded matrices for tissue ${tissue}\n"
+		printf "\nMerging stranded matrices for distal peaks in tissue ${tissue}\n"
 		computeMatrixOperations rbind -m combined/matrix/regions_${analysisname}_distal_plus.gz combined/matrix/regions_${analysisname}_distal_minus.gz -o combined/matrix/regions_${analysisname}_distal.gz
-		printf "\nGetting scales for tissue ${tissue}\n"
+		printf "\nGetting scales for distal peaks in tissue ${tissue}\n"
 		computeMatrixOperations dataRange -m combined/matrix/regions_${analysisname}_distal.gz > combined/matrix/values_regions_distal_${analysisname}.txt
 		mins=()
 		maxs=()
@@ -1213,9 +1213,9 @@ do
 				ymaxs+=("${ymaxi}")
 			fi
 		done
-		printf "\nPlotting heatmap for tissue ${tissue} in ${analysisname} scaling by sample\n"
+		printf "\nPlotting heatmap for distal peaks in tissue ${tissue} in ${analysisname} scaling by sample\n"
 		plotHeatmap -m combined/matrix/final_regions_${analysisname}_distal.gz -out combined/plots/distal_${tissue}_${analysisname}_heatmap_mean.pdf --sortRegions keep --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear' --startLabel "enhancer" --endLabel "TSS"
-		printf "\nPlotting mean profile for tissue ${tissue} in ${analysisname} scaling by sample\n"
+		printf "\nPlotting mean profile for distal peaks in tissue ${tissue} in ${analysisname} scaling by sample\n"
 		plotProfile -m combined/matrix/final_regions_${analysisname}_distal.gz -out combined/plots/distal_${tissue}_${analysisname}_profile_mean.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType mean --yMin ${ymins[@]} --yMax ${ymaxs[@]} --startLabel "enhancer" --endLabel "TSS"
 		
 		plotProfile -m combined/matrix/final_regions_${analysisname}_distal.gz -out combined/plots/distal_${tissue}_${analysisname}_profile_median.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType median --outFileNameData combined/matrix/values_regions_distal_${analysisname}.txt
@@ -1234,10 +1234,10 @@ do
 				ymaxs+=("${ymaxi}")
 			fi
 		done
-		printf "\nPlotting median profile for tissue ${tissue} in ${analysisname} scaling by sample\n"
+		printf "\nPlotting median profile for distal peaks in tissue ${tissue} in ${analysisname} scaling by sample\n"
 		plotProfile -m combined/matrix/final_regions_${analysisname}_distal.gz -out combined/plots/distal_${tissue}_${analysisname}_profile_median.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType median --yMin ${ymins[@]} --yMax ${ymaxs[@]} --startLabel "enhancer" --endLabel "TSS"		
 	else
-		printf "\nTissue ${tissue} will not be processed (H3K27ac is present? ${test_k27ac}\tNumber of datasets ${#tissue_labels[*]}\n"
+		printf "\nTissue ${tissue} will not be processed (H3K27ac is present? ${test_k27ac}\tNumber of datasets in ${tissue}: ${#tissue_labels[*]})\n"
 	fi
 done
 if [[ ${test_k27ac} == "yes" ]] && [[ ${#tissue_bw_plus[@]} -ge 2 ]]; then
