@@ -14,7 +14,7 @@ usage="
 ##### sh MaizeCode_check_environment.sh -p path to genome reference -r ref -d datatype
 ##### 	-p: path to the folder containing all the different genome references (e.g. ~/data/Genomes/Zea_mays)
 ##### 	-r: genome reference to use (e.g. B73_v4) 
-#####	-d: type of data [ ChIP | RNA | TF ] (shRNA in development)
+#####	-d: type of data [ ChIP | RNA | TF | shRNA ]
 ##### 	-h: help, returns usage
 #####
 ##### The reference genome folder should contain a single fasta file (.fa or .fasta), a single GFF file (.gff [or .gff*]) and a single GTF file (can be gzipped)
