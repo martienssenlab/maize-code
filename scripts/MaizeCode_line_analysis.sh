@@ -26,11 +26,12 @@ usage="
 ##### PART9: plot heatmaps and metaplots on DEGs
 ##### PART10: plot heatmaps and metaplots on genes split by expression levels
 ##### PART11: plot heatmaps and metaplots on distal peaks split by H3K27ac ChIPseq quality
+##### PART12: gather RNAseq, shRNA and RAMPAGE expression at H3K27ac distal peaks and make various scatter plots
 ##### Under development:
 ##### PART5: compare TF peaks with DEGs
 ##### PART6: perform differential peak/TSS calling between all pairs of RAMPAGE samples
 ##### PART7: perform differential peak calling between all pairs of ChIP samples for each mark
-##### PART11: perform differential sRNA expression analysis
+
 #####
 ##### Requirements: bedtools, deeptools, macs2, R (+R packages: ggplot2,UpSetR,limma,edgeR,dplyr,tidyr,stringr,gplots)
 "
@@ -1050,6 +1051,7 @@ rm -f combined/DEG/temp*${analysisname}*
 
 uniq_chip_tissue_list=($(printf "%s\n" "${chip_tissue_list[@]}" | sort -u))
 
+h3k27actissues=()
 for tissue in ${uniq_chip_tissue_list[@]}
 do
 	tissue_labels=()
@@ -1059,6 +1061,7 @@ do
 	for sample in ${chip_sample_list[@]}
 	do
 		if [[ "${sample}" =~ "${tissue}_H3K27ac" ]]; then
+			h3k27actissues+=("${tissue}")
 			test_k27ac="yes"
 		fi
 		if [[ ${sample} =~ ${tissue} ]]; then
@@ -1247,6 +1250,108 @@ fi
 
 rm -f combined/matrix/*${analysisname}*
 rm -f combined/peaks/temp*${analysisname}*
+
+#########################################################################################
+####################################### PART12 ##########################################
+############ Making scatter plots of RNA expression on distal H3K27ac peaks #############
+#########################################################################################
+
+#### To make scatter plots with R for each tissue based on RNAseq/RAMPAGE/shRNA and quality of H3K27ac distal peaks
+
+for tissue in ${h3k27actissues[@]}
+do
+	header="Chr\tStart\tStop\tPeakID"
+	awk -v OFS="\t" '{print $1,$2,$3,$4}' ChIP/peaks/best_peaks_${line}_${tissue}_H3K27ac.bed > combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt
+	rnaseq=0
+	rampage=0
+	shrna=0
+	for bw in ${rnaseq_bw_list_plus[*]}
+	do					
+		if [[ ${bw} =~ ${tissue} ]]; then
+			printf "\nGetting RNAseq plus strand coverage on H3K27ac peaks for ${tissue}\n"
+			bigWigToBedGraph ${bw} combined/peaks/temp_RNAseq_plus_${analysisname}_${line}.bedGraph
+			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_RNAseq_plus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=$5/($3-$2); print l}' > combined/peaks/col_B_${analysisname}_${line}_${tissue}.txt
+			rm -f combined/peaks/temp_RNAseq_plus_${analysisname}_${line}.bedGraph
+			header="${header}\tRNAseq_plus"
+			rnaseq=1
+		fi
+	done
+	for bw in ${rnaseq_bw_list_minus[*]}
+	do					
+		if [[ ${bw} =~ ${tissue} ]]; then
+			printf "\nGetting RNAseq minus strand coverage on H3K27ac peaks for ${tissue}\n"
+			bigWigToBedGraph ${bw} combined/peaks/temp_RNAseq_minus_${analysisname}_${line}.bedGraph
+			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_RNAseq_minus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=$5/($3-$2); print l}' > combined/peaks/col_C_${analysisname}_${line}_${tissue}.txt
+			rm -f combined/peaks/temp_RNAseq_minus_${analysisname}_${line}.bedGraph
+			header="${header}\tRNAseq_minus"
+		fi
+	done
+	for bw in ${rampage_bw_list_plus[*]}
+	do					
+		if [[ ${bw} =~ ${tissue} ]]; then
+			printf "\nGetting RAMPAGE plus strand coverage on H3K27ac peaks for ${tissue}\n"
+			bigWigToBedGraph ${bw} combined/peaks/temp_RAMPAGE_plus_${analysisname}_${line}.bedGraph
+			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_RAMPAGE_plus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=$5/($3-$2); print l}' > combined/peaks/col_D_${analysisname}_${line}_${tissue}.txt
+			rm -f combined/peaks/temp_RAMPAGE_plus_${analysisname}_${line}.bedGraph
+			header="${header}\tRAMPAGE_plus"
+			rampage=1
+		fi
+	done
+	for bw in ${rampage_bw_list_minus[*]}
+	do					
+		if [[ ${bw} =~ ${tissue} ]]; then
+			printf "\nGetting RAMPAGE minus strand coverage on H3K27ac peaks for ${tissue}\n"
+			bigWigToBedGraph ${bw} combined/peaks/temp_RAMPAGE_minus_${analysisname}_${line}.bedGraph
+			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_RAMPAGE_minus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=$5/($3-$2); print l}' > combined/peaks/col_E_${analysisname}_${line}_${tissue}.txt
+			rm -f combined/peaks/temp_RAMPAGE_minus_${analysisname}_${line}.bedGraph
+			header="${header}\tRAMPAGE_minus"
+		fi
+	done
+	for bw in ${shrna_bw_list_plus[*]}
+	do					
+		if [[ ${bw} =~ ${tissue} ]]; then
+			printf "\nGetting shRNA plus strand coverage on H3K27ac peaks for ${tissue}\n"
+			bigWigToBedGraph ${bw} combined/peaks/temp_shRNA_plus_${analysisname}_${line}.bedGraph
+			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_shRNA_plus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=$5/($3-$2); print l}' > combined/peaks/col_F_${analysisname}_${line}_${tissue}.txt
+			rm -f combined/peaks/temp_shrna_plus_${analysisname}_${line}.bedGraph
+			header="${header}\tshRNA_plus"
+			shrna=1
+		fi
+	done
+	for bw in ${shrna_bw_list_minus[*]}
+	do					
+		if [[ ${bw} =~ ${tissue} ]]; then
+			printf "\nGetting shRNA minus strand coverage on H3K27ac peaks for ${tissue}\n"
+			bigWigToBedGraph ${bw} combined/peaks/temp_shRNA_minus_${analysisname}_${line}.bedGraph
+			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_shRNA_minus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=$5/($3-$2); print l}' > combined/peaks/col_G_${analysisname}_${line}_${tissue}.txt
+			rm -f combined/peaks/temp_shRNA_minus_${analysisname}_${line}.bedGraph
+			header="${header}\tshRNA_minus"
+		fi
+	done	
+	printf "${header}\n" > combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt
+	paste combined/peaks/col_*_${analysisname}_${line}_${tissue}.txt >> combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt
+	
+	if [[ ${rnaseq} == 1 ]] && [[ ${rampage} == 1 ]] && [[ ${shrna} == 1 ]]; then
+		included_samples="RNAseq_and_RAMPAGE_and_shRNA"
+	elif [[ ${rnaseq} == 1 ]] && [[ ${rampage} == 1 ]]; then
+		included_samples="RNAseq_and_RAMPAGE"
+	elif [[ ${rnaseq} == 1 ]] && [[ ${shrna} == 1 ]]; then
+		included_samples="RNAseq_and_shRNA"
+	elif [[ ${rampage} == 1 ]] && [[ ${shrna} == 1 ]]; then
+		included_samples="RAMPAGE_and_shRNA"
+	elif [[ ${rnaseq} == 1 ]]; then
+		included_samples="RNAseq"
+	elif [[ ${rampage} == 1 ]]; then
+		included_samples="RAMPAGE"
+	elif [[ ${shRNA} == 1 ]]; then
+		included_samples="shRNA"
+	fi
+
+	#### To plot correlation between RNA expression datasets at distal peaks
+	printf "\nCreating scatter plot for ${analysisname} ${tissue} with R version:\n"
+	R --version
+	Rscript --vanilla ${mc_dir}/MaizeCode_R_scatter_distal_peaks.r ${analysisname} ${tissue} ${line} ${included_samples} combined/peaks/all_grouped_distal_peaks_${analysisname}.txt combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt
+done
 
 printf "\nCombined analysis script finished successfully for ${analysisname}\n"
 touch combined/chkpts/analysis_${analysisname}
