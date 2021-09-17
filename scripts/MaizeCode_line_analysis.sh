@@ -1270,7 +1270,7 @@ do
 		if [[ ${bw} =~ ${tissue} ]]; then
 			printf "\nGetting RNAseq plus strand coverage on H3K27ac peaks for ${tissue}\n"
 			bigWigToBedGraph ${bw} combined/peaks/temp_RNAseq_plus_${analysisname}_${line}.bedGraph
-			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_RNAseq_plus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=$5/($3-$2); print l}' > combined/peaks/col_B_${analysisname}_${line}_${tissue}.txt
+			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_RNAseq_plus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=$5/($3-$2); print a}' > combined/peaks/col_B_${analysisname}_${line}_${tissue}.txt
 			rm -f combined/peaks/temp_RNAseq_plus_${analysisname}_${line}.bedGraph
 			header="${header}\tRNAseq_plus"
 			rnaseq=1
@@ -1281,7 +1281,7 @@ do
 		if [[ ${bw} =~ ${tissue} ]]; then
 			printf "\nGetting RNAseq minus strand coverage on H3K27ac peaks for ${tissue}\n"
 			bigWigToBedGraph ${bw} combined/peaks/temp_RNAseq_minus_${analysisname}_${line}.bedGraph
-			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_RNAseq_minus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=$5/($3-$2); print l}' > combined/peaks/col_C_${analysisname}_${line}_${tissue}.txt
+			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_RNAseq_minus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=$5/($3-$2); print a}' > combined/peaks/col_C_${analysisname}_${line}_${tissue}.txt
 			rm -f combined/peaks/temp_RNAseq_minus_${analysisname}_${line}.bedGraph
 			header="${header}\tRNAseq_minus"
 		fi
@@ -1291,7 +1291,7 @@ do
 		if [[ ${bw} =~ ${tissue} ]]; then
 			printf "\nGetting RAMPAGE plus strand coverage on H3K27ac peaks for ${tissue}\n"
 			bigWigToBedGraph ${bw} combined/peaks/temp_RAMPAGE_plus_${analysisname}_${line}.bedGraph
-			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_RAMPAGE_plus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=$5/($3-$2); print l}' > combined/peaks/col_D_${analysisname}_${line}_${tissue}.txt
+			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_RAMPAGE_plus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=$5/($3-$2); print a}' > combined/peaks/col_D_${analysisname}_${line}_${tissue}.txt
 			rm -f combined/peaks/temp_RAMPAGE_plus_${analysisname}_${line}.bedGraph
 			header="${header}\tRAMPAGE_plus"
 			rampage=1
@@ -1302,7 +1302,7 @@ do
 		if [[ ${bw} =~ ${tissue} ]]; then
 			printf "\nGetting RAMPAGE minus strand coverage on H3K27ac peaks for ${tissue}\n"
 			bigWigToBedGraph ${bw} combined/peaks/temp_RAMPAGE_minus_${analysisname}_${line}.bedGraph
-			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_RAMPAGE_minus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=$5/($3-$2); print l}' > combined/peaks/col_E_${analysisname}_${line}_${tissue}.txt
+			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_RAMPAGE_minus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=$5/($3-$2); print a}' > combined/peaks/col_E_${analysisname}_${line}_${tissue}.txt
 			rm -f combined/peaks/temp_RAMPAGE_minus_${analysisname}_${line}.bedGraph
 			header="${header}\tRAMPAGE_minus"
 		fi
@@ -1312,7 +1312,7 @@ do
 		if [[ ${bw} =~ ${tissue} ]]; then
 			printf "\nGetting shRNA plus strand coverage on H3K27ac peaks for ${tissue}\n"
 			bigWigToBedGraph ${bw} combined/peaks/temp_shRNA_plus_${analysisname}_${line}.bedGraph
-			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_shRNA_plus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=$5/($3-$2); print l}' > combined/peaks/col_F_${analysisname}_${line}_${tissue}.txt
+			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_shRNA_plus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=$5/($3-$2); print a}' > combined/peaks/col_F_${analysisname}_${line}_${tissue}.txt
 			rm -f combined/peaks/temp_shrna_plus_${analysisname}_${line}.bedGraph
 			header="${header}\tshRNA_plus"
 			shrna=1
@@ -1323,7 +1323,7 @@ do
 		if [[ ${bw} =~ ${tissue} ]]; then
 			printf "\nGetting shRNA minus strand coverage on H3K27ac peaks for ${tissue}\n"
 			bigWigToBedGraph ${bw} combined/peaks/temp_shRNA_minus_${analysisname}_${line}.bedGraph
-			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_shRNA_minus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=$5/($3-$2); print l}' > combined/peaks/col_G_${analysisname}_${line}_${tissue}.txt
+			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_shRNA_minus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=$5/($3-$2); print a}' > combined/peaks/col_G_${analysisname}_${line}_${tissue}.txt
 			rm -f combined/peaks/temp_shRNA_minus_${analysisname}_${line}.bedGraph
 			header="${header}\tshRNA_minus"
 		fi
