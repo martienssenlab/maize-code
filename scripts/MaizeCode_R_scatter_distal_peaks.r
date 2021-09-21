@@ -69,7 +69,7 @@ if ( grepl( "RAMPAGE", included_samples, fixed = TRUE) ) {
     geom_point() +
     scale_color_manual(values=c("grey20","#cc00cc")) +
     scale_y_continuous(trans="log10",
-      labels=scales::label_number_si(accuracy = 1)) +
+      labels=scales::label_number_si(accuracy = 0.1)) +
     scale_x_continuous(trans="log10",
       labels=scales::label_number_si(accuracy = 1)) +
     labs(title=paste("RAMPAGE signal at H3K27ac peaks in",line,tissue),
@@ -105,7 +105,7 @@ if ( grepl( "shRNA", included_samples, fixed = TRUE) ) {
     geom_point() +
     scale_color_manual(values=c("grey20","#cc6600")) +
     scale_y_continuous(trans="log10",
-      labels=scales::label_number_si(accuracy = 1)) +
+      labels=scales::label_number_si(accuracy = 0.1)) +
     scale_x_continuous(trans="log10",
       labels=scales::label_number_si(accuracy = 1)) +
     labs(title=paste("shRNA signal at H3K27ac peaks in",line,tissue),
@@ -132,7 +132,7 @@ if ( grepl( "RNAseq", included_samples, fixed = TRUE) && grepl( "RAMPAGE", inclu
   scale_alpha_continuous(guide="legend", trans="log10") +
   scale_size_continuous(guide="legend", trans="log10") +
   scale_y_continuous(trans="log10",
-                     labels=scales::label_number_si(accuracy = 1)) +
+                     labels=scales::label_number_si(accuracy = 0.1)) +
   scale_x_continuous(trans="log10",
                      labels=scales::label_number_si(accuracy = 1)) +
   labs(title=paste("RAMPAGE vs RNAseq signal at H3K27ac peaks in",line,tissue),
@@ -161,9 +161,9 @@ if ( grepl( "RNAseq", included_samples, fixed = TRUE) && grepl( "shRNA", include
   scale_alpha_continuous(guide="legend", trans="log10") +
   scale_size_continuous(guide="legend", trans="log10") +
   scale_y_continuous(trans = "log10",
-                     labels=scales::label_number_si(accuracy = 1)) +
+                     labels=scales::label_number_si(accuracy = 0.1)) +
   scale_x_continuous(trans = "log10",
-                     labels=scales::label_number_si(accuracy = 1)) +
+                     labels=scales::label_number_si(accuracy = 0.1)) +
   labs(title=paste("shRNA vs RNAseq signal at H3K27ac peaks in",line,tissue),
        xaxis="RNAseq signal (log)",
        yaxis="shRNA signal (log)",
@@ -188,11 +188,11 @@ if ( grepl( "RAMPAGE", included_samples, fixed = TRUE) && grepl( "shRNA", includ
   geom_point() +
   scale_color_gradient(low="grey20", high="#0394fc", guide="legend", trans="log10") +
   scale_alpha_continuous(guide="legend", trans="log10") +
-  scale_size_continuous(guide="legend", trans="log10") +
+  scale_size_continuous(guide="legend", trans="log10", range=c(0.1,5)) +
   scale_y_continuous(trans="log10",
-                     labels=scales::label_number_si(accuracy = 1)) +
+                     labels=scales::label_number_si(accuracy = 0.1)) +
   scale_x_continuous(trans="log10",
-                     labels=scales::label_number_si(accuracy = 1)) +
+                     labels=scales::label_number_si(accuracy = 0.1)) +
   labs(title=paste("shRNA vs RAMPAGE signal at H3K27ac peaks in",line,tissue),
        xaxis="RAMPAGE signal (log)",
        yaxis="shRNA signal (log)",
