@@ -27,6 +27,7 @@ usage="
 ##### PART10: plot heatmaps and metaplots on genes split by expression levels
 ##### PART11: plot heatmaps and metaplots on distal peaks split by H3K27ac ChIPseq quality
 ##### PART12: gather RNAseq, shRNA and RAMPAGE expression at H3K27ac distal peaks and make various scatter plots
+##### PART13: Plot the distribution of TSS peaks from RAMPAGE in TEs and heatmaps over TEs (need a TE gff file)
 ##### Under development:
 ##### PART5: compare TF peaks with DEGs
 ##### PART6: perform differential peak/TSS calling between all pairs of RAMPAGE samples
@@ -1352,6 +1353,37 @@ do
 	R --version
 	Rscript --vanilla ${mc_dir}/MaizeCode_R_scatter_distal_peaks.r ${analysisname} ${tissue} ${line} ${included_samples} combined/peaks/all_grouped_distal_peaks_${analysisname}.txt combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt
 done
+
+############################################################################################
+########################################## PART13 ##########################################
+################################### RAMPAGE TSS AT TEs #####################################
+############################################################################################
+
+uniq_rampage_tissue_list=($(printf "%s\n" "${rampage_tissue_list[@]}" | sort -u))
+
+if [[ ${#uniq_rampage_tissue_list[*]} -ge 1 ]] && [[ ${ref} == "B73_v4" ]]; then
+	zcat /grid/martienssen/data_norepl/dropbox/maizecode/TEs/B73_v4_TEs.gff3.gz | awk -v OFS="\t" '$1 !~ /^#/ {print $1,$4-1,$5,$3,".",$7}' | bedtools sort -g ${ref_dir}/chrom.sizes > combined/TSS/${ref}_all_tes.bed
+
+	for tissue in ${uniq_rampage_tissue_list[@]}
+	do
+		printf "\nMaking TSS peak file for ${tissue}\n"
+		peakfile=""
+		awk -v OFS="\t" '{print $1,$2,$3,"Peak_"NR,"."}' RNA/TSS/idr_${line}_${tissue}_RAMPAGE.narrowPeak | bedtools sort -g ${ref_dir}/chrom.sizes > combined/TSS/${line}_${tissue}_RAMPAGE_peaks.bed
+		printf "\nGetting closest gene for ${tissue}\n"	
+		bedtools closest -a combined/TSS/${line}_${tissue}_RAMPAGE_peaks.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/TSS/temp_TSS_${analysisname}.bed
+		printf "\nGrouping based on distance for ${tissue}\n"
+		awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/TSS/temp_TSS_${analysisname}.bed > combined/TSS/temp2_TSS_${analysisname}.bed
+		printf "\nIntersecting TE for ${tissue}\n"
+		bedtools intersect -a combined/TSS/temp2_TSS_${analysisname}.bed -b combined/TSS/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v t=${tissue} -v l=${line} '{if ($13==".") print l,t,l"_"t"_"$4,$9,"No",$9,$9; else if ($9 == "Intergenic") print l,t,l"_"t"_"$4,$9,$13,$13,$13; else print l,t,l"_"t"_"$4,$9,$13,$13,$13"_in_"$9}' > combined/TSS/TSS_in_genes_and_tes_${tissue}_${analysisname}.bed
+		rm -f combined/TSS/temp*_TSS_${analysisname}.bed
+	done
+	printf "Line\tTissue\tPeak_ID\tGene\tTE\tLabel\tLabelcombined\n" > combined/TSS/Table_TSS_${analysisname}.txt
+	cat combined/TSS/TSS_in_genes_and_tes_*_${analysisname}.bed >> combined/TSS/Table_TSS_${analysisname}.txt
+
+	printf "Running R plotting script\n"		
+	Rscript --vanilla MaizeCode_R_TSS_distribution.r ${analysisname} combined/TSS/Table_TSS_${analysisname}.txt
+fi
+
 
 printf "\nCombined analysis script finished successfully for ${analysisname}\n"
 touch combined/chkpts/analysis_${analysisname}
