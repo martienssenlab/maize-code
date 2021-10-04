@@ -22,19 +22,18 @@ usage="
 ##### PART2: perform differential gene expression analysis among all RNAseq samples, potentially with gene ontology analysis (for B73_v4 and W22 for now)
 ##### PART3: produce an Upset plot of the intersection between all ChIP samples, highlighting peaks in the input regions
 ##### PART4: produce an Upset plot of the intersection between all TF samples, highlighting peaks in the H3K27ac peaks (if possible)
-##### PART8: plot different heatmaps and metaplots of all ChIP and RNA samples in the samplefile on all input regions (and on TEs for B73_v4)
+##### PART8: plot different heatmaps and metaplots of all ChIP and RNA samples in the samplefile on all input regions (and on TEs for B73_v4, need a TE gff file)
 ##### PART9: plot heatmaps and metaplots on DEGs
 ##### PART10: plot heatmaps and metaplots on genes split by expression levels
 ##### PART11: plot heatmaps and metaplots on distal peaks split by H3K27ac ChIPseq quality
 ##### PART12: gather RNAseq, shRNA and RAMPAGE expression at H3K27ac distal peaks and make various scatter plots
-##### PART13: Plot the distribution of TSS peaks from RAMPAGE in TEs and heatmaps over TEs (need a TE gff file)
+##### PART13: Plot the distribution of RAMPAGE "TSS" peaks in genes and TEs for each tissue and an upset plot among all tissues (need a TE gff file)
 ##### Under development:
 ##### PART5: compare TF peaks with DEGs
-##### PART6: perform differential peak/TSS calling between all pairs of RAMPAGE samples
 ##### PART7: perform differential peak calling between all pairs of ChIP samples for each mark
 
 #####
-##### Requirements: bedtools, deeptools, macs2, R (+R packages: ggplot2,UpSetR,limma,edgeR,dplyr,tidyr,stringr,gplots)
+##### Requirements: bedtools, deeptools, macs2, R (+R packages: ggplot2,limma,edgeR,dplyr,tidyr,stringr,gplots,cowplot,ComplexUpset,purrr)
 "
 
 set -e -o pipefail
