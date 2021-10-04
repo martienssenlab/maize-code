@@ -19,10 +19,10 @@ usage="
 ##### 	-h: help, returns usage
 ##### 
 ##### After preparing all the data in the samplefile (PART1) it will, depending on the types of data present:
-##### PART2: perform differential gene expression analysis among all RNAseq samples, potentially with gene ontology analysis (for B73_v4 for now)
+##### PART2: perform differential gene expression analysis among all RNAseq samples, potentially with gene ontology analysis (for B73_v4 and W22 for now)
 ##### PART3: produce an Upset plot of the intersection between all ChIP samples, highlighting peaks in the input regions
 ##### PART4: produce an Upset plot of the intersection between all TF samples, highlighting peaks in the H3K27ac peaks (if possible)
-##### PART8: plot different heatmaps and metaplots of all ChIP and RNA samples in the samplefile on all input regions
+##### PART8: plot different heatmaps and metaplots of all ChIP and RNA samples in the samplefile on all input regions (and on TEs for B73_v4)
 ##### PART9: plot heatmaps and metaplots on DEGs
 ##### PART10: plot heatmaps and metaplots on genes split by expression levels
 ##### PART11: plot heatmaps and metaplots on distal peaks split by H3K27ac ChIPseq quality
@@ -503,13 +503,6 @@ fi
 #### To check relationship between TF peaks and DEG genes
 
 ############################################################################################
-########################################## PART6 ###########################################
-############################# Overlapping TSS - Upset plot  ################################
-############################################################################################
-
-#### To make a single file containing all overlapping TSS
-
-############################################################################################
 ########################################## PART7 ###########################################
 ##################### Differential peaks analysis between tissues ##########################
 ############################################################################################
@@ -589,21 +582,21 @@ printf "\nDoing analysis for ${analysisname} with deeptools version:\n"
 deeptools --version
 
 if [[ "${ref}" == "B73_v4" ]]; then
-	zcat /grid/martienssen/data_norepl/dropbox/maizecode/TEs/B73_v4_TEs.gff3.gz | awk -v OFS="\t" '$1 !~ /^#/ {print $1,$4-1,$5,$3,".",$7}' | bedtools sort -g ${ref_dir}/chrom.sizes > combined/tracks/${ref}_all_tes.bed
-	awk '{print $4}' combined/tracks/${ref}_all_tes.bed | sort -u > combined/tracks/${ref}_TE_types.txt
+	zcat /grid/martienssen/data_norepl/dropbox/maizecode/TEs/B73_v4_TEs.gff3.gz | awk -v OFS="\t" '$1 !~ /^#/ {print $1,$4-1,$5,$3,".",$7}' | bedtools sort -g ${ref_dir}/chrom.sizes > combined/TSS/${ref}_all_tes.bed
+	awk '{print $4}' combined/TSS/${ref}_all_tes.bed | sort -u > combined/TSS/${ref}_TE_types.txt
 	TE_labels=()
 	TE_regions_plus=()
 	TE_regions_minus=()
 	while read TEtype
 	do
-		awk -v t=${TEtype} '$4 == t && $6 == "+"' combined/tracks/${ref}_TE_types.txt > combined/tracks/${ref}_${TEtype}_${analysisname}_plus.bed
-		awk -v t=${TEtype} '$4 == t && $6 == "-"' combined/tracks/${ref}_TE_types.txt > combined/tracks/${ref}_${TEtype}_${analysisname}_minus.bed
-		teplus=$(wc -l combined/tracks/${ref}_${TEtype}_${analysisname}_plus.bed | awk '{print $1}')
-		telab=$(wc -l combined/tracks/${ref}_${TEtype}_${analysisname}_minus.bed | awk -v p=${teplus} -v t=${TEtype} '{n=$1+p; print t"("n")"}')
+		awk -v t=${TEtype} '$4 == t && $6 == "+"' combined/TSS/${ref}_TE_types.txt > combined/TSS/${ref}_${TEtype}_${analysisname}_plus.bed
+		awk -v t=${TEtype} '$4 == t && $6 == "-"' combined/TSS/${ref}_TE_types.txt > combined/TSS/${ref}_${TEtype}_${analysisname}_minus.bed
+		teplus=$(wc -l combined/TSS/${ref}_${TEtype}_${analysisname}_plus.bed | awk '{print $1}')
+		telab=$(wc -l combined/TSS/${ref}_${TEtype}_${analysisname}_minus.bed | awk -v p=${teplus} -v t=${TEtype} '{n=$1+p; print t"("n")"}')
 		TE_labels+=("${telab}")
-		TE_regions_plus+=(combined/tracks/${ref}_${TEtype}_${analysisname}_plus.bed)
-		TE_regions_minus+=(combined/tracks/${ref}_${TEtype}_${analysisname}_minus.bed)
-	done < combined/tracks/${ref}_TE_types.txt
+		TE_regions_plus+=(combined/TSS/${ref}_${TEtype}_${analysisname}_plus.bed)
+		TE_regions_minus+=(combined/TSS/${ref}_${TEtype}_${analysisname}_minus.bed)
+	done < combined/TSS/${ref}_TE_types.txt
 fi
 
 uniq_chip_mark_list=($(printf "%s\n" "${chip_mark_list[@]}" | sort -u))
@@ -1392,11 +1385,14 @@ done
 uniq_rampage_tissue_list=($(printf "%s\n" "${rampage_tissue_list[@]}" | sort -u))
 
 if [[ ${#uniq_rampage_tissue_list[*]} -ge 1 ]] && [[ ${ref} == "B73_v4" ]]; then
+	if [[ -e combined/peaks/tmp_TSS_peaks_${analysisname}.bed ]]; then
+		rm -f combined/peaks/tmp_TSS_peaks_${analysisname}.bed
+	fi
 	for tissue in ${uniq_rampage_tissue_list[@]}
 	do
 		printf "\nMaking TSS peak file for ${tissue}\n"
-		peakfile=""
 		awk -v OFS="\t" '{print $1,$2,$3,"Peak_"NR,"."}' RNA/TSS/idr_${line}_${tissue}_RAMPAGE.narrowPeak | bedtools sort -g ${ref_dir}/chrom.sizes > combined/TSS/${line}_${tissue}_RAMPAGE_peaks.bed
+		awk -v OFS="\t" -v t=${tissue} '{print $1,$2,$3,t}' combined/TSS/${line}_${tissue}_RAMPAGE_peaks.bed | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_TSS_peaks_${analysisname}.bed
 		printf "\nGetting closest gene for ${tissue}\n"	
 		bedtools closest -a combined/TSS/${line}_${tissue}_RAMPAGE_peaks.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/TSS/temp_TSS_${analysisname}.bed
 		printf "\nGrouping based on distance for ${tissue}\n"
@@ -1405,13 +1401,33 @@ if [[ ${#uniq_rampage_tissue_list[*]} -ge 1 ]] && [[ ${ref} == "B73_v4" ]]; then
 		bedtools intersect -a combined/TSS/temp2_TSS_${analysisname}.bed -b combined/TSS/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v t=${tissue} -v l=${line} '{if ($13==".") print l,t,l"_"t"_"$4,$9,"No",$9,$9; else if ($9 == "Intergenic") print l,t,l"_"t"_"$4,$9,$13,$13,$13; else print l,t,l"_"t"_"$4,$9,$13,$13,$13"_in_"$9}' > combined/TSS/TSS_in_genes_and_tes_${tissue}_${analysisname}.bed
 		rm -f combined/TSS/temp*_TSS_${analysisname}.bed
 	done
-	printf "Line\tTissue\tPeak_ID\tGene\tTE\tLabel\tLabelcombined\n" > combined/TSS/Table_TSS_${analysisname}.txt
-	cat combined/TSS/TSS_in_genes_and_tes_*_${analysisname}.bed >> combined/TSS/Table_TSS_${analysisname}.txt
-
-	printf "Running R plotting script\n"		
-	Rscript --vanilla ${mc_dir}/MaizeCode_R_TSS_distribution.r ${analysisname} combined/TSS/Table_TSS_${analysisname}.txt
+	printf "Line\tTissue\tPeak_ID\tGene\tTE\tLabel\tLabelcombined\n" > combined/TSS/Table_TSS_tissues_${analysisname}.txt
+	cat combined/TSS/TSS_in_genes_and_tes_*_${analysisname}.bed >> combined/TSS/Table_TSS_tissues_${analysisname}.txt
+	
+	printf "\nPreparing merged TSS file for ${analysisname}\n"
+	sort -k1,1 -k2,2n combined/peaks/tmp_TSS_peaks_${analysisname}.bed > combined/peaks/tmp2_TSS_peaks_${analysisname}.bed
+	printf "\nGetting closest gene for TSS in ${analysisname}\n"
+	bedtools closest -a combined/peaks/tmp3_TSS_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/TSS/tmp4_TSS_peaks_${analysisname}.bed
+	printf "\nGrouping based on distance\n"
+	awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/TSS/tmp4_TSS_peaks_${analysisname}.bed > combined/TSS/tmp5_TSS_${analysisname}.bed
+	printf "\nIntersecting with TEs\n"
+	bedtools intersect -a combined/TSS/tmp5_TSS_${analysisname}.bed -b combined/TSS/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v l=${line} '{if ($13==".") print l,$4,$9,"No",$9,$9,$7; else if ($9 == "Intergenic") print l,$4,$9,$13,$13,$13,$7; else print l,$4,$9,$13,$13,$13"_in_"$9,$7}' > combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed
+	rm -f combined/TSS/tmp*_TSS_${analysisname}.bed
+	#### To create a matrix of peak presence in each sample
+	printf "\nCreating matrix file for ${analysisname}\n"
+	for tissue in ${uniq_rampage_tissue_list[@]}
+	do
+		printf "${tissue}\n" > combined/TSS/temp_col_TSS_${analysisname}_${tissue}.txt
+		awk -v OFS="\t" -v t=${tissue} '{if ($7 ~ t) print "1"; else print "0"}' combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed >> combined/TSS/temp_col_TSS_${analysisname}_${tissue}.txt
+	done
+	awk -v OFS="\t" 'BEGIN {printf "Line\tPeak_ID\tGene\tTE\tLabel\tLabelcombined\n"} {print $1,$2,$3,$4,$5,$6}' combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed > combined/TSS/temp_col_TSS_${analysisname}_AAA.txt
+	paste combined/TSS/temp_col_TSS_${analysisname}_*.txt | uniq > combined/TSS/matrix_upset_TSS_${analysisname}.txt
+	rm -f combined/TSS/temp_col_TSS_${analysisname}_*.txt
+	#### To make an Upset plot highlighting peaks in gene bodies
+	printf "\nCreating Distirbution and Upset plot for TSS in ${analysisname} with R version:\n"
+	R --version
+	Rscript --vanilla ${mc_dir}/MaizeCode_R_TSS_distribution_upset.r ${analysisname} combined/TSS/Table_TSS_tissues_${analysisname}.txt combined/TSS/matrix_upset_TSS_${analysisname}.txt
 fi
-
 
 printf "\nCombined analysis script finished successfully for ${analysisname}\n"
 touch combined/chkpts/analysis_${analysisname}
