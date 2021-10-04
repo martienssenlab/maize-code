@@ -588,8 +588,8 @@ if [[ "${ref}" == "B73_v4" ]]; then
 	TE_regions_minus=()
 	while read TEtype
 	do
-		awk -v t=${TEtype} '$4 == t && $6 == "+"' combined/TSS/${ref}_TE_types.txt > combined/TSS/${ref}_${TEtype}_${analysisname}_plus.bed
-		awk -v t=${TEtype} '$4 == t && $6 == "-"' combined/TSS/${ref}_TE_types.txt > combined/TSS/${ref}_${TEtype}_${analysisname}_minus.bed
+		awk -v t=${TEtype} '$4==t && $6=="+"' combined/TSS/${ref}_all_tes.bed > combined/TSS/${ref}_${TEtype}_${analysisname}_plus.bed
+		awk -v t=${TEtype} '$4==t && $6=="-"' combined/TSS/${ref}_all_tes.bed > combined/TSS/${ref}_${TEtype}_${analysisname}_minus.bed
 		teplus=$(wc -l combined/TSS/${ref}_${TEtype}_${analysisname}_plus.bed | awk '{print $1}')
 		telab=$(wc -l combined/TSS/${ref}_${TEtype}_${analysisname}_minus.bed | awk -v p=${teplus} -v t=${TEtype} '{n=$1+p; print t"("n")"}')
 		TE_labels+=("${telab}")
