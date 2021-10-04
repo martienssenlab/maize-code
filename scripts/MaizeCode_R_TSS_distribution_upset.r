@@ -26,8 +26,8 @@ plot1<-ggplot(table, aes(Tissue, fill=Label)) +
   geom_bar(stat="count", position="stack", colour="black", show.legend = F) +
   labs(title="", x="",y="Number of RAMPAGE peaks") +
   scale_fill_manual(values=c("Intergenic"="#B8B5B3","Terminator"="#B233FF",
-                                     "Gene_body"="#3358FF","Promoter"="#FF33E0","helitron"="#0B6D10","LINE_element"="#39953D","LTR_retrotransposon"="#08AF0F",
-                                "SINE_element"="#39E540","solo_LTR"="#92EB96","terminal_inverted_repeat_element"="#05F910"),
+                                     "Gene_body"="#3358FF","Promoter"="#FF33E0","helitron"="#0B6D10","LINE_element"="#B9DCBA","LTR_retrotransposon"="#08AF0F",
+                                "SINE_element"="#39E540","solo_LTR"="#92EB96","terminal_inverted_repeat_element"="#184F19"),
                             name="Genomic feature")) +
   theme(panel.grid=element_blank(),
         panel.grid.major.y = element_line(colour="grey"),
@@ -40,8 +40,8 @@ plot2<-ggplot(table, aes(Tissue, fill=Label)) +
   geom_bar(stat="count", position="fill", colour="black", show.legend = T) +
   labs(title="", x="",y="Percentage of RAMPAGE peaks", fill="Genomic feature") +
   scale_fill_manual(values=c("Intergenic"="#B8B5B3","Terminator"="#B233FF",
-                                     "Gene_body"="#3358FF","Promoter"="#FF33E0","helitron"="#0B6D10","LINE_element"="#39953D","LTR_retrotransposon"="#08AF0F",
-                                "SINE_element"="#39E540","solo_LTR"="#92EB96","terminal_inverted_repeat_element"="#05F910"),
+                                     "Gene_body"="#3358FF","Promoter"="#FF33E0","helitron"="#0B6D10","LINE_element"="#B9DCBA","LTR_retrotransposon"="#08AF0F",
+                                "SINE_element"="#39E540","solo_LTR"="#92EB96","terminal_inverted_repeat_element"="#184F19"),
                             name="Genomic feature")) +
   theme(panel.grid=element_blank(),
         panel.grid.major.y = element_line(colour="grey"),
@@ -76,8 +76,8 @@ plot<-upset(inputable, sampleCols, name="RAMPAGE Peaks",
         'Shared TSS'=intersection_size(
           counts=FALSE, mapping=aes(fill=Label)) +
           scale_fill_manual(values=c("Intergenic"="#B8B5B3","Terminator"="#B233FF",
-                                     "Gene_body"="#3358FF","Promoter"="#FF33E0","helitron"="#0B6D10","LINE_element"="#39953D","LTR_retrotransposon"="#08AF0F",
-                                "SINE_element"="#39E540","solo_LTR"="#92EB96","terminal_inverted_repeat_element"="#05F910"),
+                                     "Gene_body"="#3358FF","Promoter"="#FF33E0","helitron"="#0B6D10","LINE_element"="#B9DCBA","LTR_retrotransposon"="#08AF0F",
+                                "SINE_element"="#39E540","solo_LTR"="#92EB96","terminal_inverted_repeat_element"="#184F19"),
                             name="Genomic feature")
       ),
       set_sizes = (upset_set_size() + ylab("Total RAMPAGE Peaks") +
