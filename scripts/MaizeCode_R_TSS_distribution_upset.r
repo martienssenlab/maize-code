@@ -24,7 +24,7 @@ table$Labelcombined<-as.factor(table$Labelcombined)
 
 plot1<-ggplot(table, aes(Tissue, fill=Label)) +
   geom_bar(stat="count", position="stack", colour="black", show.legend = F) +
-  labs(title="", x="",y="Number of peaks") +
+  labs(title="", x="",y="Number of RAMPAGE peaks") +
   scale_fill_manual(values=c("Intergenic"="#B8B5B3","Terminator"="#B233FF",
                                      "Gene_body"="#3358FF","Promoter"="#FF33E0","helitron"="#0B6D10","LINE_element"="#39953D","LTR_retrotransposon"="#08AF0F",
                                 "SINE_element"="#39E540","solo_LTR"="#92EB96","terminal_inverted_repeat_element"="#05F910"),
@@ -38,7 +38,7 @@ plot1
 
 plot2<-ggplot(table, aes(Tissue, fill=Label)) +
   geom_bar(stat="count", position="fill", colour="black", show.legend = T) +
-  labs(title="", x="",y="Percentage", fill="Genomic feature") +
+  labs(title="", x="",y="Percentage of RAMPAGE peaks", fill="Genomic feature") +
   scale_fill_manual(values=c("Intergenic"="#B8B5B3","Terminator"="#B233FF",
                                      "Gene_body"="#3358FF","Promoter"="#FF33E0","helitron"="#0B6D10","LINE_element"="#39953D","LTR_retrotransposon"="#08AF0F",
                                 "SINE_element"="#39E540","solo_LTR"="#92EB96","terminal_inverted_repeat_element"="#05F910"),
@@ -67,7 +67,7 @@ inputable$Label<-factor(inputable$Label, levels = c("helitron","LINE_element","L
 set1<-colnames(inputable)
 sampleCols<-set1[! set1 %in% c("Line","Peak_ID","Gene","TE","Label","Labelcombined")]
 
-plot<-upset(inputable, sampleCols, name="TSS", 
+plot<-upset(inputable, sampleCols, name="RAMPAGE Peaks", 
       mode='exclusive_intersection',
       n_intersections=10, 
       sort_sets=FALSE,
@@ -80,7 +80,7 @@ plot<-upset(inputable, sampleCols, name="TSS",
                                 "SINE_element"="#39E540","solo_LTR"="#92EB96","terminal_inverted_repeat_element"="#05F910"),
                             name="Genomic feature")
       ),
-      set_sizes = (upset_set_size() + ylab("Total TSS") +
+      set_sizes = (upset_set_size() + ylab("Total RAMPAGE Peaks") +
         theme(axis.text.x = element_text(angle = 45))),
       matrix = (intersection_matrix(geom = geom_point(shape = "circle",size = 3),
           segment = geom_segment(size = 1.5),
