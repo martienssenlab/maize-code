@@ -1381,7 +1381,7 @@ if [[ ${#uniq_rampage_tissue_list[*]} -ge 1 ]] && [[ ${ref} == "B73_v4" ]]; then
 	cat combined/TSS/TSS_in_genes_and_tes_*_${analysisname}.bed >> combined/TSS/Table_TSS_${analysisname}.txt
 
 	printf "Running R plotting script\n"		
-	Rscript --vanilla MaizeCode_R_TSS_distribution.r ${analysisname} combined/TSS/Table_TSS_${analysisname}.txt
+	Rscript --vanilla ${mc_dir}/MaizeCode_R_TSS_distribution.r ${analysisname} combined/TSS/Table_TSS_${analysisname}.txt
 fi
 
 
