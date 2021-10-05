@@ -591,10 +591,15 @@ if [[ "${ref}" == "B73_v4" ]]; then
 		awk -v t=${TEtype} '$4==t && $6=="+"' combined/TSS/${ref}_all_tes.bed > combined/TSS/${ref}_${TEtype}_${analysisname}_plus.bed
 		awk -v t=${TEtype} '$4==t && $6=="-"' combined/TSS/${ref}_all_tes.bed > combined/TSS/${ref}_${TEtype}_${analysisname}_minus.bed
 		teplus=$(wc -l combined/TSS/${ref}_${TEtype}_${analysisname}_plus.bed | awk '{print $1}')
-		telab=$(wc -l combined/TSS/${ref}_${TEtype}_${analysisname}_minus.bed | awk -v p=${teplus} -v t=${TEtype} '{n=$1+p; print t"("n")"}')
-		TE_labels+=("${telab}")
-		TE_regions_plus+=(combined/TSS/${ref}_${TEtype}_${analysisname}_plus.bed)
-		TE_regions_minus+=(combined/TSS/${ref}_${TEtype}_${analysisname}_minus.bed)
+		teminus=$(wc -l combined/TSS/${ref}_${TEtype}_${analysisname}_minus.bed | awk '{print $1}')
+		tenb=$((teplus+teminus))
+		TE_labels+=("${TEtype}(${tenb})")
+		if [[ ${teplus} -gt 0 ]]; then
+			TE_regions_plus+=(combined/TSS/${ref}_${TEtype}_${analysisname}_plus.bed)
+		fi
+		if [[ ${teminus} -gt 0 ]]; then
+			TE_regions_minus+=(combined/TSS/${ref}_${TEtype}_${analysisname}_minus.bed)
+		fi
 	done < combined/TSS/${ref}_TE_types.txt
 fi
 
