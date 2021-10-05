@@ -627,24 +627,24 @@ do
 done
 
 #### Computing the stranded matrix
-for strand in plus minus
-do
-	case "${strand}" in
-		plus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_plus[@]} ${rampage_bw_list_plus[@]} ${shrna_bw_list_plus[@]}";;
-		minus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]} ${shrna_bw_list_minus[@]}";;
-	esac
-	printf "\nComputing scale-regions ${strand} strand matrix for ${analysisname}\n"
-	computeMatrix scale-regions -q --missingDataAsZero --skipZeros -R combined/matrix/temp_regions_${regionname}_${strand}.bed -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/regions_${analysisname}_${strand}.gz
-	printf "\nComputing reference-point on TSS ${strand} strand matrix for ${analysisname}\n"
-	computeMatrix reference-point --referencePoint "TSS" -q --missingDataAsZero --skipZeros -R combined/matrix/temp_regions_${regionname}_${strand}.bed -S ${bw_list} -bs 50 -b 2000 -a 8000 -p ${threads} -o combined/matrix/tss_${analysisname}_${strand}.gz
-	if [[ ${#TE_labels} -ge 1 ]]; then
-		printf "\nComputing scale-regions ${strand} strand matrix for TEs from ${analysisname}\n"
-		computeMatrix scale-regions -q --missingDataAsZero --skipZeros -R ${TE_regions_plus[*]} -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/TE_regions_${analysisname}_${strand}.gz
-		printf "\nComputing reference-point on TSS ${strand} strand matrix for TEs from ${analysisname}\n"
-		computeMatrix reference-point --referencePoint "TSS" -q --missingDataAsZero --skipZeros -R ${TE_regions_minus[*]} -S ${bw_list} -bs 50 -b 2000 -a 8000 -p ${threads} -o combined/matrix/TE_tss_${analysisname}_${strand}.gz
-	fi
-done
-rm -f combined/matrix/temp_regions_${regionname}_*.bed
+#for strand in plus minus
+#do
+#	case "${strand}" in
+#		plus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_plus[@]} ${rampage_bw_list_plus[@]} ${shrna_bw_list_plus[@]}";;
+#		minus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]} ${shrna_bw_list_minus[@]}";;
+#	esac
+#	printf "\nComputing scale-regions ${strand} strand matrix for ${analysisname}\n"
+#	computeMatrix scale-regions -q --missingDataAsZero --skipZeros -R combined/matrix/temp_regions_${regionname}_${strand}.bed -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/regions_${analysisname}_${strand}.gz
+#	printf "\nComputing reference-point on TSS ${strand} strand matrix for ${analysisname}\n"
+#	computeMatrix reference-point --referencePoint "TSS" -q --missingDataAsZero --skipZeros -R combined/matrix/temp_regions_${regionname}_${strand}.bed -S ${bw_list} -bs 50 -b 2000 -a 8000 -p ${threads} -o combined/matrix/tss_${analysisname}_${strand}.gz
+#	if [[ ${#TE_labels} -ge 1 ]]; then
+#		printf "\nComputing scale-regions ${strand} strand matrix for TEs from ${analysisname}\n"
+#		computeMatrix scale-regions -q --missingDataAsZero --skipZeros -R ${TE_regions_plus[*]} -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/TE_regions_${analysisname}_${strand}.gz
+#		printf "\nComputing reference-point on TSS ${strand} strand matrix for TEs from ${analysisname}\n"
+#		computeMatrix reference-point --referencePoint "TSS" -q --missingDataAsZero --skipZeros -R ${TE_regions_minus[*]} -S ${bw_list} -bs 50 -b 2000 -a 8000 -p ${threads} -o combined/matrix/TE_tss_${analysisname}_${strand}.gz
+#	fi
+#done
+#rm -f combined/matrix/temp_regions_${regionname}_*.bed
 
 #### Merging stranded matrix, extracting scales and plotting heatmaps
 all_samples=()
@@ -673,8 +673,8 @@ for matrix in regions tss TE_regions TE_tss
 do
 	if [[ -s combined/matrix/${matrix}_${analysisname}_plus.gz ]]; then
 		case "${matrix}" in
-			TE*)	regionlabel="$(wc -l ${regionfile} | awk -v r=${regionname} '{print r"("$1")"}' )";;
-			*)	regionlabel="${TE_labels[*]}";;
+			TE*)	regionlabel="${TE_labels[*]}";;
+			*)	regionlabel="$(wc -l ${regionfile} | awk -v r=${regionname} '{print r"("$1")"}' )";;
 		esac
 		printf "\nMerging stranded matrices aligned by ${matrix} of ${analysisname}\n"
 		computeMatrixOperations rbind -m combined/matrix/${matrix}_${analysisname}_plus.gz combined/matrix/${matrix}_${analysisname}_minus.gz -o combined/matrix/${matrix}_${analysisname}.gz
