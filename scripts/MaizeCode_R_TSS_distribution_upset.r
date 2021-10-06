@@ -23,11 +23,11 @@ table$Label<-factor(table$Label,
 table$Labelcombined<-as.factor(table$Labelcombined)
 
 plot1<-ggplot(table, aes(Tissue, fill=Label)) +
-  geom_bar(stat="count", position="stack", colour="black", show.legend = F) +
+  geom_bar(stat="count", position="stack", show.legend = F) +
   labs(title="", x="",y="Number of RAMPAGE peaks") +
   scale_fill_manual(values=c("Intergenic"="#B8B5B3","Terminator"="#B233FF",
                                      "Gene_body"="#3358FF","Promoter"="#FF33E0","helitron"="#0B6D10","LINE_element"="#B9DCBA","LTR_retrotransposon"="#08AF0F",
-                                "SINE_element"="#39E540","solo_LTR"="#92EB96","terminal_inverted_repeat_element"="#184F19"),
+                                "SINE_element"="#92EB96","solo_LTR"="#11E119","terminal_inverted_repeat_element"="#184F19"),
                             name="Genomic feature") +
   theme(panel.grid=element_blank(),
         panel.grid.major.y = element_line(colour="grey"),
@@ -36,11 +36,11 @@ plot1<-ggplot(table, aes(Tissue, fill=Label)) +
 		axis.text.x=element_blank())
 
 plot2<-ggplot(table, aes(Tissue, fill=Label)) +
-  geom_bar(stat="count", position="fill", colour="black", show.legend = T) +
+  geom_bar(stat="count", position="fill", show.legend = T) +
   labs(title="", x="",y="Percentage of RAMPAGE peaks", fill="Genomic feature") +
   scale_fill_manual(values=c("Intergenic"="#B8B5B3","Terminator"="#B233FF",
                                      "Gene_body"="#3358FF","Promoter"="#FF33E0","helitron"="#0B6D10","LINE_element"="#B9DCBA","LTR_retrotransposon"="#08AF0F",
-                                "SINE_element"="#39E540","solo_LTR"="#92EB96","terminal_inverted_repeat_element"="#184F19"),
+                                "SINE_element"="#92EB96","solo_LTR"="#11E119","terminal_inverted_repeat_element"="#184F19"),
                             name="Genomic feature") +
   theme(panel.grid=element_blank(),
         panel.grid.major.y = element_line(colour="grey"),
@@ -75,7 +75,7 @@ plot<-upset(inputable, sampleCols, name="RAMPAGE Peaks",
           counts=FALSE, mapping=aes(fill=Label)) +
           scale_fill_manual(values=c("Intergenic"="#B8B5B3","Terminator"="#B233FF",
                                      "Gene_body"="#3358FF","Promoter"="#FF33E0","helitron"="#0B6D10","LINE_element"="#B9DCBA","LTR_retrotransposon"="#08AF0F",
-                                "SINE_element"="#39E540","solo_LTR"="#92EB96","terminal_inverted_repeat_element"="#184F19"),
+                                "SINE_element"="#92EB96","solo_LTR"="#11E119","terminal_inverted_repeat_element"="#184F19"),
                             name="Genomic feature")
       ),
       set_sizes = (upset_set_size() + ylab("Total RAMPAGE Peaks") +
@@ -86,7 +86,7 @@ plot<-upset(inputable, sampleCols, name="RAMPAGE Peaks",
           scale_color_manual(values = c("TRUE" = "black", "FALSE" = alpha("white", 0)),
             labels = c("TRUE" = "yes", "FALSE" = "no"),
             breaks = c("TRUE", "FALSE"),
-            guide = FALSE) +
+            guide = "none") +
           theme(axis.ticks = element_blank(),
             panel.grid = element_blank())
       ),
@@ -115,4 +115,3 @@ plot<-upset(inputable, sampleCols, name="RAMPAGE Peaks",
 pdf(paste0("combined/plots/Upset_TSS_",analysisname,".pdf"),10,8)
 print(plot)
 dev.off()
-
