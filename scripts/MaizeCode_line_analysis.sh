@@ -1359,14 +1359,14 @@ if [[ ${#uniq_rampage_tissue_list[*]} -ge 1 ]] && [[ ${ref} == "B73_v4" ]]; then
 		zcat /grid/martienssen/data_norepl/dropbox/maizecode/TEs/B73_v4_TEs.gff3.gz | awk -v OFS="\t" '$1 !~ /^#/ {print $1,$4-1,$5,$3,".",$7}' | bedtools sort -g ${ref_dir}/chrom.sizes > combined/TSS/${ref}_all_tes.bed
 	fi
 
-	if [[ -e combined/peaks/tmp_TSS_peaks_${analysisname}.bed ]]; then
-		rm -f combined/peaks/tmp_TSS_peaks_${analysisname}.bed
+	if [[ -e combined/TSS/tmp_TSS_peaks_${analysisname}.bed ]]; then
+		rm -f combined/TSS/tmp_TSS_peaks_${analysisname}.bed
 	fi
 	for tissue in ${uniq_rampage_tissue_list[@]}
 	do
 		printf "\nMaking TSS peak file for ${tissue}\n"
 		awk -v OFS="\t" '{print $1,$2,$3,"Peak_"NR,"."}' RNA/TSS/idr_${line}_${tissue}_RAMPAGE.narrowPeak | bedtools sort -g ${ref_dir}/chrom.sizes > combined/TSS/${line}_${tissue}_RAMPAGE_peaks.bed
-		awk -v OFS="\t" -v t=${tissue} '{print $1,$2,$3,t}' combined/TSS/${line}_${tissue}_RAMPAGE_peaks.bed | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_TSS_peaks_${analysisname}.bed
+		awk -v OFS="\t" -v t=${tissue} '{print $1,$2,$3,t}' combined/TSS/${line}_${tissue}_RAMPAGE_peaks.bed | sort -k1,1 -k2,2n -u >> combined/TSS/tmp_TSS_peaks_${analysisname}.bed
 		printf "\nGetting closest gene for ${tissue}\n"	
 		bedtools closest -a combined/TSS/${line}_${tissue}_RAMPAGE_peaks.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/TSS/temp_TSS_${analysisname}.bed
 		printf "\nGrouping based on distance for ${tissue}\n"
@@ -1379,14 +1379,14 @@ if [[ ${#uniq_rampage_tissue_list[*]} -ge 1 ]] && [[ ${ref} == "B73_v4" ]]; then
 	cat combined/TSS/TSS_in_genes_and_tes_*_${analysisname}.bed >> combined/TSS/Table_TSS_tissues_${analysisname}.txt
 	
 	printf "\nPreparing merged TSS file for ${analysisname}\n"
-	sort -k1,1 -k2,2n combined/peaks/tmp_TSS_peaks_${analysisname}.bed > combined/peaks/tmp2_TSS_peaks_${analysisname}.bed
+	bedtools sort -g ${ref_dir}/chrom.sizes -i combined/TSS/tmp_TSS_peaks_${analysisname}.bed > combined/TSS/tmp2_TSS_peaks_${analysisname}.bed
 	printf "\nGetting closest gene for TSS in ${analysisname}\n"
-	bedtools closest -a combined/peaks/tmp2_TSS_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/TSS/tmp3_TSS_peaks_${analysisname}.bed
+	bedtools closest -a combined/TSS/tmp2_TSS_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/TSS/tmp3_TSS_peaks_${analysisname}.bed
 	printf "\nGrouping based on distance\n"
-	awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/TSS/tmp3_TSS_peaks_${analysisname}.bed > combined/TSS/tmp4_TSS_${analysisname}.bed
+	awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/TSS/tmp3_TSS_peaks_${analysisname}.bed > combined/TSS/tmp4_TSS_peaks_${analysisname}.bed
 	printf "\nIntersecting with TEs\n"
-	bedtools intersect -a combined/TSS/tmp4_TSS_${analysisname}.bed -b combined/TSS/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v l=${line} '{if ($13==".") print l,$4,$9,"No",$9,$9,$7; else if ($9 == "Intergenic") print l,$4,$9,$13,$13,$13,$7; else print l,$4,$9,$13,$13,$13"_in_"$9,$7}' > combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed
-	rm -f combined/TSS/tmp*_TSS_${analysisname}.bed
+	bedtools intersect -a combined/TSS/tmp4_TSS_peaks_${analysisname}.bed -b combined/TSS/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v l=${line} '{if ($13==".") print l,$4,$9,"No",$9,$9,$7; else if ($9 == "Intergenic") print l,$4,$9,$13,$13,$13,$7; else print l,$4,$9,$13,$13,$13"_in_"$9,$7}' > combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed
+	rm -f combined/TSS/tmp*_TSS_peaks_${analysisname}.bed
 	#### To create a matrix of peak presence in each sample
 	printf "\nCreating matrix file for ${analysisname}\n"
 	for tissue in ${uniq_rampage_tissue_list[@]}
