@@ -1438,7 +1438,7 @@ if [[ ${#uniq_shrna_tissue_list[*]} -ge 1 ]] && [[ ${ref} == "B73_v4" ]]; then
 		bedtools intersect -a combined/shRNA/temp2_clusters_${analysisname}.bed -b combined/shRNA/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v t=${tissue} -v l=${line} '{if ($13==".") print l,t,l"_"t"_"$4,$9,"No",$9,$9; else if ($9 == "Intergenic") print l,t,l"_"t"_"$4,$9,$13,$13,$13; else print l,t,l"_"t"_"$4,$9,$13,$13,$13"_in_"$9}' > combined/shRNA/Clusters_in_genes_and_tes_${tissue}_${analysisname}.bed
 		rm -f combined/shRNA/temp*_clusters_${analysisname}.bed
 	done
-	printf "Line\tTissue\tPeak_ID\tGene\tTE\tLabel\tLabelcombined\n" > combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}.txt
+	printf "Line\tTissue\tCluster_ID\tGene\tTE\tLabel\tLabelcombined\n" > combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}.txt
 	cat combined/shRNA/Clusters_in_genes_and_tes_*_${analysisname}.bed >> combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}.txt
 	
 	printf "\nPreparing merged cluster file for ${analysisname}\n"
