@@ -347,8 +347,8 @@ fi
 
 uniq_rnaseq_tissue_list=($(printf "%s\n" "${rnaseq_tissue_list[@]}" | sort -u))
 
-if [ ! -s combined/DEG/genes_rpkm_${analysisname}.txt ]; then
-	for tissue in ${uniq_rampage_tissue_list[@]}
+if [ ! -s combined/DEG/genes_rpkm_${analysisname}.txt ] && [[ ${#uniq_rnaseq_tissue_list[@]} -ge 1 ]]; then
+	for tissue in ${uniq_rnaseq_tissue_list[@]}
 	do
 		printf "Gathering gene expression levels for ${tissue}\n"
 		cols=($(awk -v ORS=" " -v t=${tissue} 'NR==1 {for(i=1;i<=NF;i++) if ($i~t) print i}' combined/DEG/counts_${analysisname}.txt))
@@ -1430,7 +1430,7 @@ if [[ ${#uniq_rampage_tissue_list[*]} -ge 1 ]] && [[ ${ref} == "B73_v4" ]]; then
 	#### To make an Upset plot highlighting peaks in gene bodies
 	printf "\nCreating Distirbution and Upset plot for TSS in ${analysisname} with R version:\n"
 	R --version
-	Rscript --vanilla ${mc_dir}/MaizeCode_R_TSS_distribution_upset.r ${analysisname} combined/TSS/Table_TSS_tissues_${analysisname}.txt combined/TSS/matrix_upset_TSS_${analysisname}.txt
+	Rscript --vanilla ${mc_dir}/MaizeCode_R_TSS_distribution_upset.r ${analysisname} combined/TSS/Table_TSS_tissues_${analysisname}.txt combined/TSS/matrix_upset_TSS_${analysisname}.txt combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed combined/DEG/genes_rpkm_${analysisname}.txt
 fi
 
 ############################################################################################
@@ -1491,7 +1491,7 @@ if [[ ${#uniq_shrna_tissue_list[*]} -ge 1 ]] && [[ ${ref} == "B73_v4" ]]; then
 	#### To make an Upset plot highlighting peaks in gene bodies
 	printf "\nCreating Distirbution and Upset plot for shRNA clusters in ${analysisname} with R version:\n"
 	R --version
-	Rscript --vanilla ${mc_dir}/MaizeCode_R_shRNA_distribution_upset.r ${analysisname} combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}.txt combined/shRNA/matrix_upset_shRNA_clusters_${analysisname}.txt
+	Rscript --vanilla ${mc_dir}/MaizeCode_R_shRNA_distribution_upset.r ${analysisname} combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}.txt combined/shRNA/matrix_upset_shRNA_clusters_${analysisname}.txt combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed combined/DEG/genes_rpkm_${analysisname}.txt
 fi
 
 #########################################################################################
