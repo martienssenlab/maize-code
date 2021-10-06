@@ -1458,7 +1458,7 @@ if [[ ${#uniq_shrna_tissue_list[*]} -ge 1 ]] && [[ ${ref} == "B73_v4" ]]; then
 		printf "${tissue}\n" > combined/shRNA/temp_col_clusters_${analysisname}_${tissue}.txt
 		awk -v OFS="\t" -v t=${tissue} '{if ($7 ~ t) print "1"; else print "0"}' combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed >> combined/shRNA/temp_col_clusters_${analysisname}_${tissue}.txt
 	done
-	awk -v OFS="\t" 'BEGIN {printf "Line\tPeak_ID\tGene\tTE\tLabel\tLabelcombined\n"} {print $1,$2,$3,$4,$5,$6}' combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed > combined/shRNA/temp_col_clusters_${analysisname}_AAA.txt
+	awk -v OFS="\t" 'BEGIN {printf "Line\tCluster_ID\tGene\tTE\tLabel\tLabelcombined\n"} {print $1,$2,$3,$4,$5,$6}' combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed > combined/shRNA/temp_col_clusters_${analysisname}_AAA.txt
 	paste combined/shRNA/temp_col_clusters_${analysisname}_*.txt | uniq > combined/shRNA/matrix_upset_shRNA_clusters_${analysisname}.txt
 	rm -f combined/shRNA/temp_col_clusters_${analysisname}_*.txt
 	#### To make an Upset plot highlighting peaks in gene bodies
