@@ -345,6 +345,33 @@ else
 	printf "\nNo differential gene expression analysis performed (not enough RNAseq samples)\n"
 fi
 
+uniq_rnaseq_tissue_list=($(printf "%s\n" "${rnaseq_tissue_list[@]}" | sort -u))
+
+if [ ${#uniq_rnaseq_tissue_list[@]} -ge 1 ]; then
+	for tissue in ${uniq_rnaseq_tissue_list[@]}
+	do
+		printf "Gathering gene expression levels for ${tissue}\n"
+		cols=($(awk -v ORS=" " -v t=${tissue} 'NR==1 {for(i=1;i<=NF;i++) if ($i~t) print i}' combined/DEG/counts_${analysisname}.txt))
+		reps=${#cols[@]}
+		awk -v d="${cols}" -v t=${reps} 'BEGIN {split(d, a, " ")} NR > 1 {b=0; for (i in a) b+=$(a[i]); c=b/t; print $1,c}' combined/DEG/counts_${analysisname}.txt > combined/DEG/temp_counts_${analysisname}_${tissue}.txt
+		if [ -s combined/DEG/temp_expression_${analysisname}_${tissue}.bed ]; then
+			rm -f combined/DEG/temp_expression_${analysisname}_${tissue}.bed
+		fi
+		while read ID exp
+		do
+			grep "${ID}" ${regionfile} | awk -v OFS="\t" -v c=${exp} '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {l=$3-$2; v=1000*c/l; print $1,$2,$3,".",v,$6,$4}' >> combined/DEG/temp_expression_${analysisname}_${tissue}.bed
+		done < combined/DEG/temp_counts_${analysisname}_${tissue}.txt
+		if [[ ${ref} == "B73_v4" ]]; then
+			awk -F"[:;]" -v OFS="\t" '{print $1,$2}' combined/DEG/temp_expression_${analysisname}_${tissue}.bed | awk -v OFS="\t" -v t=${tissue} '{print $8,t,$5}' > combined/DEG/genes_rpkm_${analysisname}_${tissue}.txt
+		else
+			awk -F"[=;]" -v OFS="\t" '{print $1,$2}' combined/DEG/temp_expression_${analysisname}_${tissue}.bed | awk -v OFS="\t" -v t=${tissue} '{print $8,t,$5}' > combined/DEG/genes_rpkm_${analysisname}_${tissue}.txt
+		fi
+		rm -f combined/DEG/temp_*_${analysisname}_${tissue}.txt
+	done
+	printf "GID\tTissue\tRPKM\n" > combined/DEG/genes_rpkm_${analysisname}.txt
+	cat combined/DEG/genes_rpkm_${analysisname}_*.txt >> combined/DEG/genes_rpkm_${analysisname}.txt
+fi
+
 #############################################################################################
 ########################################### PART3 ###########################################
 ########################## Overlapping ChIPseq peaks - Upset plot  ##########################
