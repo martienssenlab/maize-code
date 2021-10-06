@@ -34,7 +34,6 @@ plot1<-ggplot(table, aes(Tissue, fill=Label)) +
         axis.ticks=element_blank(),
         panel.background=element_blank(),
 		axis.text.x=element_blank())
-plot1
 
 plot2<-ggplot(table, aes(Tissue, fill=Label)) +
   geom_bar(stat="count", position="fill", colour="black", show.legend = T) +
@@ -48,7 +47,6 @@ plot2<-ggplot(table, aes(Tissue, fill=Label)) +
         axis.ticks=element_blank(),
         panel.background=element_blank(),
         axis.text.x=element_text(size=15))
-plot2
 
 title<-ggdraw() +
   draw_label(paste0("Distribution of RAMPAGE peaks in ",analysisname), 
@@ -114,7 +112,7 @@ plot<-upset(inputable, sampleCols, name="RAMPAGE Peaks",
       stripes = alpha("white", 0)
 )
 
-pdf(paste0("combined/plots/Upset_TSS_",samplename,".pdf"),10,8)
+pdf(paste0("combined/plots/Upset_TSS_",analysisname,".pdf"),10,8)
 print(plot)
 dev.off()
 
