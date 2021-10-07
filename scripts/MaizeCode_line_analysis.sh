@@ -1408,23 +1408,23 @@ if [[ ${#uniq_rampage_tissue_list[*]} -ge 1 ]] && [[ ${ref} == "B73_v4" ]]; then
 	cat combined/TSS/TSS_in_genes_and_tes_*_${analysisname}.bed >> combined/TSS/Table_TSS_tissues_${analysisname}.txt
 	
 	printf "\nPreparing merged TSS file for ${analysisname}\n"
-	bedtools sort -g ${ref_dir}/chrom.sizes -i combined/TSS/tmp_TSS_peaks_${analysisname}.bed > combined/TSS/tmp2_TSS_peaks_${analysisname}.bed
-	bedtools merge -i combined/TSS/tmp2_TSS_peaks_${analysisname}.bed -c 4 -o distinct | awk -v OFS="\t" '{print $1,$2,$3,"Peak_"NR,$4}'> combined/TSS/tmp3_TSS_peaks_${analysisname}.bed
+	sort -k1,1 -k2,2n combined/TSS/tmp_TSS_peaks_${analysisname}.bed > combined/TSS/tmp2_TSS_peaks_${analysisname}.bed
+	bedtools merge -i combined/TSS/tmp2_TSS_peaks_${analysisname}.bed -c 4 -o distinct | bedtools sort -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{print $1,$2,$3,"Peak_"NR,$4}'> combined/TSS/tmp3_TSS_peaks_${analysisname}.bed
 	printf "\nGetting closest gene for TSS in ${analysisname}\n"
 	bedtools closest -a combined/TSS/tmp3_TSS_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/TSS/tmp4_TSS_peaks_${analysisname}.bed
 	printf "\nGrouping based on distance\n"
 	awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/TSS/tmp4_TSS_peaks_${analysisname}.bed > combined/TSS/tmp5_TSS_peaks_${analysisname}.bed
 	printf "\nIntersecting with TEs\n"
-	bedtools intersect -a combined/TSS/tmp5_TSS_peaks_${analysisname}.bed -b combined/TSS/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v l=${line} '{if ($13==".") print l,$4,$9,"No",$9,$9,$7; else if ($9 == "Intergenic") print l,$4,$9,$13,$13,$13,$7; else print l,$4,$9,$13,$13,$13"_in_"$9,$7}' > combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed
+	bedtools intersect -a combined/TSS/tmp5_TSS_peaks_${analysisname}.bed -b combined/TSS/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v l=${line} 'BEGIN {printf "Line\tPeak_ID\tGene\tTE\tLabel\tLabelcombined\tGID\tTissues\n"} {if ($13==".") print l,$4,$9,"No",$9,$9,$8,$7; else if ($9 == "Intergenic") print l,$4,$9,$13,$13,$13,$8,$7; else print l,$4,$9,$13,$13,$13"_in_"$9,$8,$7}' > combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed
 	rm -f combined/TSS/tmp*_TSS_peaks_${analysisname}.bed
 	#### To create a matrix of peak presence in each sample
 	printf "\nCreating matrix file for ${analysisname}\n"
 	for tissue in ${uniq_rampage_tissue_list[@]}
 	do
 		printf "${tissue}\n" > combined/TSS/temp_col_TSS_${analysisname}_${tissue}.txt
-		awk -v OFS="\t" -v t=${tissue} '{if ($7 ~ t) print "1"; else print "0"}' combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed >> combined/TSS/temp_col_TSS_${analysisname}_${tissue}.txt
+		awk -v OFS="\t" -v t=${tissue} 'NR>1 {if ($8 ~ t) print "1"; else print "0"}' combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed >> combined/TSS/temp_col_TSS_${analysisname}_${tissue}.txt
 	done
-	awk -v OFS="\t" 'BEGIN {printf "Line\tPeak_ID\tGene\tTE\tLabel\tLabelcombined\n"} {print $1,$2,$3,$4,$5,$6}' combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed > combined/TSS/temp_col_TSS_${analysisname}_AAA.txt
+	awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7}' combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed > combined/TSS/temp_col_TSS_${analysisname}_AAA.txt
 	paste combined/TSS/temp_col_TSS_${analysisname}_*.txt | uniq > combined/TSS/matrix_upset_TSS_${analysisname}.txt
 	rm -f combined/TSS/temp_col_TSS_${analysisname}_*.txt
 	#### To make an Upset plot highlighting peaks in gene bodies
@@ -1469,23 +1469,23 @@ if [[ ${#uniq_shrna_tissue_list[*]} -ge 1 ]] && [[ ${ref} == "B73_v4" ]]; then
 	cat combined/shRNA/Clusters_in_genes_and_tes_*_${analysisname}.bed >> combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}.txt
 	
 	printf "\nPreparing merged cluster file for ${analysisname}\n"
-	bedtools sort -g ${ref_dir}/chrom.sizes -i combined/shRNA/tmp_shRNA_clusters_${analysisname}.bed > combined/shRNA/tmp2_shRNA_clusters_${analysisname}.bed
-	bedtools merge -i combined/shRNA/tmp2_shRNA_clusters_${analysisname}.bed -c 4 -o distinct | awk -v OFS="\t" '{print $1,$2,$3,"Cluster_"NR,$4}'> combined/shRNA/tmp3_shRNA_clusters_${analysisname}.bed
+	sort -k1,1 -k2,2n combined/shRNA/tmp_shRNA_clusters_${analysisname}.bed > combined/shRNA/tmp2_shRNA_clusters_${analysisname}.bed
+	bedtools merge -i combined/shRNA/tmp2_shRNA_clusters_${analysisname}.bed -c 4 -o distinct | bedtools sort -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{print $1,$2,$3,"Cluster_"NR,$4}'> combined/shRNA/tmp3_shRNA_clusters_${analysisname}.bed
 	printf "\nGetting closest gene for clusters in ${analysisname}\n"
 	bedtools closest -a combined/shRNA/tmp3_shRNA_clusters_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/shRNA/tmp4_shRNA_clusters_${analysisname}.bed
 	printf "\nGrouping based on distance\n"
 	awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/shRNA/tmp4_shRNA_clusters_${analysisname}.bed > combined/shRNA/tmp5_shRNA_clusters_${analysisname}.bed
 	printf "\nIntersecting with TEs\n"
-	bedtools intersect -a combined/shRNA/tmp5_shRNA_clusters_${analysisname}.bed -b combined/shRNA/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v l=${line} '{if ($13==".") print l,$4,$9,"No",$9,$9,$7; else if ($9 == "Intergenic") print l,$4,$9,$13,$13,$13,$7; else print l,$4,$9,$13,$13,$13"_in_"$9,$7}' > combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed
+	bedtools intersect -a combined/shRNA/tmp5_shRNA_clusters_${analysisname}.bed -b combined/shRNA/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v l=${line} 'BEGIN {printf "Line\tCluster_ID\tGene\tTE\tLabel\tLabelcombined\tGID\tTissues\n"} {if ($13==".") print l,$4,$9,"No",$9,$9,$8,$7; else if ($9 == "Intergenic") print l,$4,$9,$13,$13,$13,$8,$7; else print l,$4,$9,$13,$13,$13"_in_"$9,$8,$7}' > combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed
 	rm -f combined/shRNA/tmp*_shRNA_clusters_${analysisname}.bed
 	#### To create a matrix of peak presence in each sample
 	printf "\nCreating matrix file for ${analysisname}\n"
 	for tissue in ${uniq_shrna_tissue_list[@]}
 	do
 		printf "${tissue}\n" > combined/shRNA/temp_col_clusters_${analysisname}_${tissue}.txt
-		awk -v OFS="\t" -v t=${tissue} '{if ($7 ~ t) print "1"; else print "0"}' combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed >> combined/shRNA/temp_col_clusters_${analysisname}_${tissue}.txt
+		awk -v OFS="\t" -v t=${tissue} 'NR>1 {if ($8 ~ t) print "1"; else print "0"}' combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed >> combined/shRNA/temp_col_clusters_${analysisname}_${tissue}.txt
 	done
-	awk -v OFS="\t" 'BEGIN {printf "Line\tCluster_ID\tGene\tTE\tLabel\tLabelcombined\n"} {print $1,$2,$3,$4,$5,$6}' combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed > combined/shRNA/temp_col_clusters_${analysisname}_AAA.txt
+	awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7}' combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed > combined/shRNA/temp_col_clusters_${analysisname}_AAA.txt
 	paste combined/shRNA/temp_col_clusters_${analysisname}_*.txt | uniq > combined/shRNA/matrix_upset_shRNA_clusters_${analysisname}.txt
 	rm -f combined/shRNA/temp_col_clusters_${analysisname}_*.txt
 	#### To make an Upset plot highlighting peaks in gene bodies
