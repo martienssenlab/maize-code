@@ -585,6 +585,369 @@ fi
 # done
 
 #########################################################################################
+####################################### PART12 ##########################################
+############ Making scatter plots of RNA expression on distal H3K27ac peaks #############
+#########################################################################################
+
+#### To make scatter plots with R for each tissue based on RNAseq/RAMPAGE/shRNA and quality of H3K27ac distal peaks
+
+for tissue in ${h3k27actissues[@]}
+do
+	header="Chr\tStart\tStop\tPeakID"
+	awk -v OFS="\t" '{print $1,$2,$3,$4}' ChIP/peaks/best_peaks_${line}_${tissue}_H3K27ac.bed > combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt
+	rnaseq=0
+	rampage=0
+	shrna=0
+	for bw in ${rnaseq_bw_list_plus[*]}
+	do					
+		if [[ ${bw} =~ ${tissue} ]]; then
+			printf "\nGetting RNAseq plus strand coverage on H3K27ac peaks for ${tissue}\n"
+			bigWigToBedGraph ${bw} combined/peaks/temp_RNAseq_plus_${analysisname}_${line}.bedGraph
+			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_RNAseq_plus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=1000*($5/($3-$2)); print a}' > combined/peaks/col_B_${analysisname}_${line}_${tissue}.txt
+			rm -f combined/peaks/temp_RNAseq_plus_${analysisname}_${line}.bedGraph
+			header="${header}\tRNAseq_plus"
+			rnaseq=1
+		fi
+	done
+	for bw in ${rnaseq_bw_list_minus[*]}
+	do					
+		if [[ ${bw} =~ ${tissue} ]]; then
+			printf "\nGetting RNAseq minus strand coverage on H3K27ac peaks for ${tissue}\n"
+			bigWigToBedGraph ${bw} combined/peaks/temp_RNAseq_minus_${analysisname}_${line}.bedGraph
+			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_RNAseq_minus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=1000*($5/($3-$2)); print a}' > combined/peaks/col_C_${analysisname}_${line}_${tissue}.txt
+			rm -f combined/peaks/temp_RNAseq_minus_${analysisname}_${line}.bedGraph
+			header="${header}\tRNAseq_minus"
+		fi
+	done
+	for bw in ${rampage_bw_list_plus[*]}
+	do					
+		if [[ ${bw} =~ ${tissue} ]]; then
+			printf "\nGetting RAMPAGE plus strand coverage on H3K27ac peaks for ${tissue}\n"
+			bigWigToBedGraph ${bw} combined/peaks/temp_RAMPAGE_plus_${analysisname}_${line}.bedGraph
+			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_RAMPAGE_plus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=1000*($5/($3-$2)); print a}' > combined/peaks/col_D_${analysisname}_${line}_${tissue}.txt
+			rm -f combined/peaks/temp_RAMPAGE_plus_${analysisname}_${line}.bedGraph
+			header="${header}\tRAMPAGE_plus"
+			rampage=1
+		fi
+	done
+	for bw in ${rampage_bw_list_minus[*]}
+	do					
+		if [[ ${bw} =~ ${tissue} ]]; then
+			printf "\nGetting RAMPAGE minus strand coverage on H3K27ac peaks for ${tissue}\n"
+			bigWigToBedGraph ${bw} combined/peaks/temp_RAMPAGE_minus_${analysisname}_${line}.bedGraph
+			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_RAMPAGE_minus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=1000*($5/($3-$2)); print a}' > combined/peaks/col_E_${analysisname}_${line}_${tissue}.txt
+			rm -f combined/peaks/temp_RAMPAGE_minus_${analysisname}_${line}.bedGraph
+			header="${header}\tRAMPAGE_minus"
+		fi
+	done
+	for bw in ${shrna_bw_list_plus[*]}
+	do					
+		if [[ ${bw} =~ ${tissue} ]]; then
+			printf "\nGetting shRNA plus strand coverage on H3K27ac peaks for ${tissue}\n"
+			bigWigToBedGraph ${bw} combined/peaks/temp_shRNA_plus_${analysisname}_${line}.bedGraph
+			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_shRNA_plus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=1000*($5/($3-$2)); print a}' > combined/peaks/col_F_${analysisname}_${line}_${tissue}.txt
+			rm -f combined/peaks/temp_shrna_plus_${analysisname}_${line}.bedGraph
+			header="${header}\tshRNA_plus"
+			shrna=1
+		fi
+	done
+	for bw in ${shrna_bw_list_minus[*]}
+	do					
+		if [[ ${bw} =~ ${tissue} ]]; then
+			printf "\nGetting shRNA minus strand coverage on H3K27ac peaks for ${tissue}\n"
+			bigWigToBedGraph ${bw} combined/peaks/temp_shRNA_minus_${analysisname}_${line}.bedGraph
+			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_shRNA_minus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=1000*($5/($3-$2)); print a}' > combined/peaks/col_G_${analysisname}_${line}_${tissue}.txt
+			rm -f combined/peaks/temp_shRNA_minus_${analysisname}_${line}.bedGraph
+			header="${header}\tshRNA_minus"
+		fi
+	done	
+	printf "${header}\n" > combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt
+	paste combined/peaks/col_*_${analysisname}_${line}_${tissue}.txt >> combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt
+	
+	if [[ ${rnaseq} == 1 ]] && [[ ${rampage} == 1 ]] && [[ ${shrna} == 1 ]]; then
+		included_samples="RNAseq_and_RAMPAGE_and_shRNA"
+	elif [[ ${rnaseq} == 1 ]] && [[ ${rampage} == 1 ]]; then
+		included_samples="RNAseq_and_RAMPAGE"
+	elif [[ ${rnaseq} == 1 ]] && [[ ${shrna} == 1 ]]; then
+		included_samples="RNAseq_and_shRNA"
+	elif [[ ${rampage} == 1 ]] && [[ ${shrna} == 1 ]]; then
+		included_samples="RAMPAGE_and_shRNA"
+	elif [[ ${rnaseq} == 1 ]]; then
+		included_samples="RNAseq"
+	elif [[ ${rampage} == 1 ]]; then
+		included_samples="RAMPAGE"
+	elif [[ ${shRNA} == 1 ]]; then
+		included_samples="shRNA"
+	fi
+
+	#### To plot correlation between RNA expression datasets at distal peaks
+	printf "\nCreating scatter plot for ${analysisname} ${tissue} with R version:\n"
+	R --version
+	Rscript --vanilla ${mc_dir}/MaizeCode_R_scatter_distal_peaks.r ${analysisname} ${tissue} ${line} ${included_samples} combined/peaks/all_grouped_distal_peaks_${analysisname}.txt combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt
+done
+
+############################################################################################
+########################################## PART13 ##########################################
+############################## RAMPAGE TSS at genes and TEs ################################
+############################################################################################
+
+uniq_rampage_tissue_list=($(printf "%s\n" "${rampage_tissue_list[@]}" | sort -u))
+
+if [[ ${#uniq_rampage_tissue_list[*]} -ge 1 ]] && [[ ${ref} == "B73_v4" ]]; then
+	if [ ! -s combined/TSS/${ref}_all_tes.bed ]; then
+		zcat /grid/martienssen/data_norepl/dropbox/maizecode/TEs/B73_v4_TEs.gff3.gz | awk -v OFS="\t" '$1 !~ /^#/ {print $1,$4-1,$5,$3,".",$7}' | bedtools sort -g ${ref_dir}/chrom.sizes > combined/TSS/${ref}_all_tes.bed
+	fi
+
+	if [[ -e combined/TSS/tmp_TSS_peaks_${analysisname}.bed ]]; then
+		rm -f combined/TSS/tmp_TSS_peaks_${analysisname}.bed
+	fi
+	for tissue in ${uniq_rampage_tissue_list[@]}
+	do
+		printf "\nMaking TSS peak file for ${tissue}\n"
+		awk -v OFS="\t" '{print $1,$2,$3,"Peak_"NR,"."}' RNA/TSS/idr_${line}_${tissue}_RAMPAGE.narrowPeak | bedtools sort -g ${ref_dir}/chrom.sizes > combined/TSS/${line}_${tissue}_RAMPAGE_peaks.bed
+		awk -v OFS="\t" -v t=${tissue} '{print $1,$2,$3,t}' combined/TSS/${line}_${tissue}_RAMPAGE_peaks.bed | sort -k1,1 -k2,2n -u >> combined/TSS/tmp_TSS_peaks_${analysisname}.bed
+		printf "\nGetting closest gene for ${tissue}\n"	
+		bedtools closest -a combined/TSS/${line}_${tissue}_RAMPAGE_peaks.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/TSS/temp_TSS_${analysisname}.bed
+		printf "\nGrouping based on distance for ${tissue}\n"
+		awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/TSS/temp_TSS_${analysisname}.bed > combined/TSS/temp2_TSS_${analysisname}.bed
+		printf "\nIntersecting TE for ${tissue}\n"
+		bedtools intersect -a combined/TSS/temp2_TSS_${analysisname}.bed -b combined/TSS/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v t=${tissue} -v l=${line} '{if ($13==".") print l,t,l"_"t"_"$4,$9,"No",$9,$9; else if ($9 == "Intergenic") print l,t,l"_"t"_"$4,$9,$13,$13,$13; else print l,t,l"_"t"_"$4,$9,$13,$13,$13"_in_"$9}' > combined/TSS/TSS_in_genes_and_tes_${tissue}_${analysisname}.bed
+		rm -f combined/TSS/temp*_TSS_${analysisname}.bed
+	done
+	printf "Line\tTissue\tPeak_ID\tGene\tTE\tLabel\tLabelcombined\n" > combined/TSS/Table_TSS_tissues_${analysisname}.txt
+	cat combined/TSS/TSS_in_genes_and_tes_*_${analysisname}.bed >> combined/TSS/Table_TSS_tissues_${analysisname}.txt
+	
+	printf "\nPreparing merged TSS file for ${analysisname}\n"
+	sort -k1,1 -k2,2n combined/TSS/tmp_TSS_peaks_${analysisname}.bed > combined/TSS/tmp2_TSS_peaks_${analysisname}.bed
+	bedtools merge -i combined/TSS/tmp2_TSS_peaks_${analysisname}.bed -c 4 -o distinct | bedtools sort -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{print $1,$2,$3,"Peak_"NR,$4}'> combined/TSS/tmp3_TSS_peaks_${analysisname}.bed
+	printf "\nGetting closest gene for TSS in ${analysisname}\n"
+	bedtools closest -a combined/TSS/tmp3_TSS_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/TSS/tmp4_TSS_peaks_${analysisname}.bed
+	printf "\nGrouping based on distance\n"
+	awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/TSS/tmp4_TSS_peaks_${analysisname}.bed > combined/TSS/tmp5_TSS_peaks_${analysisname}.bed
+	printf "\nIntersecting with TEs\n"
+	bedtools intersect -a combined/TSS/tmp5_TSS_peaks_${analysisname}.bed -b combined/TSS/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v l=${line} 'BEGIN {printf "Line\tPeak_ID\tGene\tTE\tLabel\tLabelcombined\tGID\tTissues\n"} {if ($13==".") print l,$4,$9,"No",$9,$9,$8,$7; else if ($9 == "Intergenic") print l,$4,$9,$13,$13,$13,$8,$7; else print l,$4,$9,$13,$13,$13"_in_"$9,$8,$7}' > combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed
+	rm -f combined/TSS/tmp*_TSS_peaks_${analysisname}.bed
+	#### To create a matrix of peak presence in each sample
+	printf "\nCreating matrix file for ${analysisname}\n"
+	for tissue in ${uniq_rampage_tissue_list[@]}
+	do
+		printf "${tissue}\n" > combined/TSS/temp_col_TSS_${analysisname}_${tissue}.txt
+		awk -v OFS="\t" -v t=${tissue} 'NR>1 {if ($8 ~ t) print "1"; else print "0"}' combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed >> combined/TSS/temp_col_TSS_${analysisname}_${tissue}.txt
+	done
+	awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7}' combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed > combined/TSS/temp_col_TSS_${analysisname}_AAA.txt
+	paste combined/TSS/temp_col_TSS_${analysisname}_*.txt | uniq > combined/TSS/matrix_upset_TSS_${analysisname}.txt
+	rm -f combined/TSS/temp_col_TSS_${analysisname}_*.txt
+	#### To make an Upset plot highlighting peaks in gene bodies
+	printf "\nCreating Distirbution and Upset plot for TSS in ${analysisname} with R version:\n"
+	R --version
+	Rscript --vanilla ${mc_dir}/MaizeCode_R_TSS_distribution_upset.r ${analysisname} combined/TSS/Table_TSS_tissues_${analysisname}.txt combined/TSS/matrix_upset_TSS_${analysisname}.txt combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed combined/DEG/genes_rpkm_${analysisname}.txt
+fi
+
+############################################################################################
+########################################## PART14 ##########################################
+############################ shRNA clusters at genes and TEs ###############################
+############################################################################################
+
+uniq_shrna_tissue_list=($(printf "%s\n" "${shrna_tissue_list[@]}" | sort -u))
+
+if [ ! -d combined/shRNA ]; then
+	mkdir combined/shRNA
+fi
+
+if [[ ${#uniq_shrna_tissue_list[*]} -ge 1 ]] && [[ ${ref} == "B73_v4" ]]; then
+	if [ ! -s combined/shRNA/${ref}_all_tes.bed ]; then
+		zcat /grid/martienssen/data_norepl/dropbox/maizecode/TEs/B73_v4_TEs.gff3.gz | awk -v OFS="\t" '$1 !~ /^#/ {print $1,$4-1,$5,$3,".",$7}' | bedtools sort -g ${ref_dir}/chrom.sizes > combined/shRNA/${ref}_all_tes.bed
+	fi
+
+	if [[ -e combined/shRNA/tmp_shRNA_clusters_${analysisname}.bed ]]; then
+		rm -f combined/shRNA/tmp_shRNA_clusters_${analysisname}.bed
+	fi
+	for tissue in ${uniq_shrna_tissue_list[@]}
+	do
+		printf "\nMaking shRNA cluster file for ${tissue}\n"
+		awk -v OFS="\t" ' $0 !~ /^#/ {print $1,$4,$5,$3"_"NR,"."}' shRNA/mapped/${line}_${tissue}_shRNA/ShortStack_All.gff3 | bedtools sort -g ${ref_dir}/chrom.sizes > combined/shRNA/${line}_${tissue}_shRNA_clusters.bed
+		awk -v OFS="\t" -v t=${tissue} '{print $1,$2,$3,t}' combined/shRNA/${line}_${tissue}_shRNA_clusters.bed | sort -k1,1 -k2,2n -u >> combined/shRNA/tmp_shRNA_clusters_${analysisname}.bed
+		printf "\nGetting closest gene for ${tissue}\n"	
+		bedtools closest -a combined/shRNA/${line}_${tissue}_shRNA_clusters.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/shRNA/temp_clusters_${analysisname}.bed
+		printf "\nGrouping based on distance for ${tissue}\n"
+		awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/shRNA/temp_clusters_${analysisname}.bed > combined/shRNA/temp2_clusters_${analysisname}.bed
+		printf "\nIntersecting TE for ${tissue}\n"
+		bedtools intersect -a combined/shRNA/temp2_clusters_${analysisname}.bed -b combined/shRNA/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v t=${tissue} -v l=${line} '{if ($13==".") print l,t,l"_"t"_"$4,$9,"No",$9,$9; else if ($9 == "Intergenic") print l,t,l"_"t"_"$4,$9,$13,$13,$13; else print l,t,l"_"t"_"$4,$9,$13,$13,$13"_in_"$9}' > combined/shRNA/Clusters_in_genes_and_tes_${tissue}_${analysisname}.bed
+		rm -f combined/shRNA/temp*_clusters_${analysisname}.bed
+	done
+	printf "Line\tTissue\tCluster_ID\tGene\tTE\tLabel\tLabelcombined\n" > combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}.txt
+	cat combined/shRNA/Clusters_in_genes_and_tes_*_${analysisname}.bed >> combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}.txt
+	
+	printf "\nPreparing merged cluster file for ${analysisname}\n"
+	sort -k1,1 -k2,2n combined/shRNA/tmp_shRNA_clusters_${analysisname}.bed > combined/shRNA/tmp2_shRNA_clusters_${analysisname}.bed
+	bedtools merge -i combined/shRNA/tmp2_shRNA_clusters_${analysisname}.bed -c 4 -o distinct | bedtools sort -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{print $1,$2,$3,"Cluster_"NR,$4}'> combined/shRNA/tmp3_shRNA_clusters_${analysisname}.bed
+	printf "\nGetting closest gene for clusters in ${analysisname}\n"
+	bedtools closest -a combined/shRNA/tmp3_shRNA_clusters_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/shRNA/tmp4_shRNA_clusters_${analysisname}.bed
+	printf "\nGrouping based on distance\n"
+	awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/shRNA/tmp4_shRNA_clusters_${analysisname}.bed > combined/shRNA/tmp5_shRNA_clusters_${analysisname}.bed
+	printf "\nIntersecting with TEs\n"
+	bedtools intersect -a combined/shRNA/tmp5_shRNA_clusters_${analysisname}.bed -b combined/shRNA/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v l=${line} 'BEGIN {printf "Line\tCluster_ID\tGene\tTE\tLabel\tLabelcombined\tGID\tTissues\n"} {if ($13==".") print l,$4,$9,"No",$9,$9,$8,$7; else if ($9 == "Intergenic") print l,$4,$9,$13,$13,$13,$8,$7; else print l,$4,$9,$13,$13,$13"_in_"$9,$8,$7}' > combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed
+	rm -f combined/shRNA/tmp*_shRNA_clusters_${analysisname}.bed
+	#### To create a matrix of peak presence in each sample
+	printf "\nCreating matrix file for ${analysisname}\n"
+	for tissue in ${uniq_shrna_tissue_list[@]}
+	do
+		printf "${tissue}\n" > combined/shRNA/temp_col_clusters_${analysisname}_${tissue}.txt
+		awk -v OFS="\t" -v t=${tissue} 'NR>1 {if ($8 ~ t) print "1"; else print "0"}' combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed >> combined/shRNA/temp_col_clusters_${analysisname}_${tissue}.txt
+	done
+	awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7}' combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed > combined/shRNA/temp_col_clusters_${analysisname}_AAA.txt
+	paste combined/shRNA/temp_col_clusters_${analysisname}_*.txt | uniq > combined/shRNA/matrix_upset_shRNA_clusters_${analysisname}.txt
+	rm -f combined/shRNA/temp_col_clusters_${analysisname}_*.txt
+	#### To make an Upset plot highlighting peaks in gene bodies
+	printf "\nCreating Distirbution and Upset plot for shRNA clusters in ${analysisname} with R version:\n"
+	R --version
+	Rscript --vanilla ${mc_dir}/MaizeCode_R_shRNA_distribution_upset.r ${analysisname} combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}.txt combined/shRNA/matrix_upset_shRNA_clusters_${analysisname}.txt combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed combined/DEG/genes_rpkm_${analysisname}.txt
+fi
+
+#########################################################################################
+####################################### PART15 ##########################################
+########################## Making heatmaps on all TEs ###################################
+#########################################################################################
+
+if [[ "${ref}" == "B73_v4" ]]; then
+	if [ ! -s combined/TSS/${ref}_all_tes.bed ]; then
+		zcat /grid/martienssen/data_norepl/dropbox/maizecode/TEs/B73_v4_TEs.gff3.gz | awk -v OFS="\t" '$1 !~ /^#/ {print $1,$4-1,$5,$3,".",$7}' | bedtools sort -g ${ref_dir}/chrom.sizes > combined/TSS/${ref}_all_tes.bed
+	fi
+	awk '{print $4}' combined/TSS/${ref}_all_tes.bed | sort -u > combined/TSS/${ref}_TE_types.txt
+	TE_regions_plus=()
+	TE_regions_minus=()
+	while read TEtype
+	do
+		awk -v t=${TEtype} '$4==t && $6=="+"' combined/TSS/${ref}_all_tes.bed > combined/TSS/${ref}_${TEtype}_${analysisname}_plus.bed
+		awk -v t=${TEtype} '$4==t && $6=="-"' combined/TSS/${ref}_all_tes.bed > combined/TSS/${ref}_${TEtype}_${analysisname}_minus.bed
+		teplus=$(wc -l combined/TSS/${ref}_${TEtype}_${analysisname}_plus.bed | awk '{print $1}')
+		teminus=$(wc -l combined/TSS/${ref}_${TEtype}_${analysisname}_minus.bed | awk '{print $1}')
+		if [[ ${teplus} -gt 0 ]]; then
+			TE_regions_plus+=(combined/TSS/${ref}_${TEtype}_${analysisname}_plus.bed)
+		fi
+		if [[ ${teminus} -gt 0 ]]; then
+			TE_regions_minus+=(combined/TSS/${ref}_${TEtype}_${analysisname}_minus.bed)
+		fi
+	done < combined/TSS/${ref}_TE_types.txt
+fi
+
+#### Computing the stranded matrix
+for strand in plus minus
+do
+	case "${strand}" in
+		plus) 	bw_list="${rnaseq_bw_list_plus[@]} ${rampage_bw_list_plus[@]} ${shrna_bw_list_plus[@]}";;
+		minus) 	bw_list="${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]} ${shrna_bw_list_minus[@]}";;
+	esac
+	if [[ ${#TE_labels} -ge 1 ]]; then
+		printf "\nComputing scale-regions ${strand} strand matrix for TEs from ${analysisname}\n"
+		computeMatrix scale-regions -q --missingDataAsZero --skipZeros -R ${TE_regions_plus[*]} -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/TE_regions_${analysisname}_${strand}.gz
+		printf "\nComputing reference-point on TSS ${strand} strand matrix for TEs from ${analysisname}\n"
+		computeMatrix reference-point --referencePoint "TSS" -q --missingDataAsZero --skipZeros -R ${TE_regions_minus[*]} -S ${bw_list} -bs 50 -b 2000 -a 8000 -p ${threads} -o combined/matrix/TE_tss_${analysisname}_${strand}.gz
+	fi
+done
+rm -f combined/matrix/temp_regions_${regionname}_*.bed
+
+#### Merging stranded matrix, extracting scales and plotting heatmaps
+all_samples=()
+all_lables=()
+if [ ${#rnaseq_bw_list_plus[@]} -gt 0 ]; then
+	printf "\nIncluding RNAseq samples\n"
+	all_samples+=("RNAseq")
+	all_labels+=("${rnaseq_sample_list[*]}")
+fi
+if [ ${#rampage_bw_list_plus[@]} -gt 0 ]; then
+	printf "\nIncluding RAMPAGE samples\n"
+	all_samples+=("RAMPAGE")
+	all_labels+=("${rampage_sample_list[*]}")
+fi
+if [ ${#shrna_bw_list_plus[@]} -gt 0 ]; then
+	printf "\nIncluding shRNA samples\n"
+	all_samples+=("shRNA")
+	all_labels+=("${shrna_sample_list[*]}")
+fi
+for matrix in TE_regions TE_tss
+do
+	if [[ -s combined/matrix/${matrix}_${analysisname}_plus.gz ]]; then
+		printf "\nMerging stranded matrices aligned by ${matrix} of ${analysisname}\n"
+		computeMatrixOperations rbind -m combined/matrix/${matrix}_${analysisname}_plus.gz combined/matrix/${matrix}_${analysisname}_minus.gz -o combined/matrix/${matrix}_${analysisname}.gz
+		printf "\nGetting scales for ${matrix} matrix of ${analysisname}\n"
+		computeMatrixOperations dataRange -m combined/matrix/${matrix}_${analysisname}.gz > combined/matrix/values_${matrix}_${analysisname}.txt
+		plotProfile -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/temp_${matrix}_${analysisname}_profile.pdf --samplesLabel ${all_labels[@]} --averageType mean --outFileNameData combined/matrix/values_profile_${matrix}_${analysisname}.txt
+		rm -f combined/plots/temp_${matrix}_${analysisname}_profile.pdf
+		mins=()
+		maxs=()
+		ymins=()
+		ymaxs=()
+		for mark in ${all_samples[@]}
+		do
+			mini=$(grep "${mark}" combined/matrix/values_${matrix}_${analysisname}.txt | awk 'BEGIN {m=999999} {a=$5; if (a<m) m=a;} END {print m}')
+			maxi=$(grep "${mark}" combined/matrix/values_${matrix}_${analysisname}.txt | awk 'BEGIN {m=-999999} {a=$6; if (a>m) m=a;} END {print m}')
+			num=$(grep "${mark}" combined/matrix/values_${matrix}_${analysisname}.txt | wc -l)
+			test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+			if [[ ${test} == "yes" ]]; then
+				mini=("0")
+				maxi=("0.01")
+			fi
+			for i in $(seq 1 ${num})
+			do
+				mins+=("${mini}")
+				maxs+=("${maxi}")
+			done		
+			ymini=$(grep "${mark}" combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
+			ymaxi=$(grep "${mark}" combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.2}')
+			num=$(grep "${mark}" combined/matrix/values_profile_${matrix}_${analysisname}.txt | wc -l)
+			test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+			if [[ ${test} == "yes" ]]; then
+				ymini=("0")
+				ymaxi=("0.01")
+			fi
+			for i in $(seq 1 ${num})
+			do
+				ymins+=("${ymini}")
+				ymaxs+=("${ymaxi}")
+			done
+		done
+
+		mins2=()
+		maxs2=()
+		for sample in ${all_labels[@]}
+		do
+			mini=$(grep ${sample} combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $5}')
+			maxi=$(grep ${sample} combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $6}')
+			test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+			if [[ ${test} == "yes" ]]; then
+				mins2+=("0")
+				maxs2+=("0.01")
+			else
+				mins2+=("${mini}")
+				maxs2+=("${maxi}")
+			fi
+		done
+		ymins2=()
+		ymaxs2=()
+		for sample in ${all_labels[@]}
+		do
+			ymini=$(grep ${sample} combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
+			ymaxi=$(grep ${sample} combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.2}')
+			test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+			if [[ ${test} == "yes" ]]; then
+				ymins2+=("0")
+				ymaxs2+=("0.01")
+			else
+				ymins2+=("${ymini}")
+				ymaxs2+=("${ymaxi}")
+			fi
+		done
+		printf "\nPlotting heatmap for ${matrix} matrix of ${analysisname} scaling by mark\n"
+		plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
+		printf "\nPlotting heatmap for ${matrix} matrix of ${analysisname} scaling by sample\n"
+		plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}_v2.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --colorMap 'seismic' --zMin ${mins2[@]} --zMax ${maxs2[@]} --yMin ${ymins2[@]} --yMax ${ymaxs2[@]} --interpolationMethod 'bilinear'
+	fi
+done
+
+rm -f combined/matrix/*${analysisname}*.gz
+
+#########################################################################################
 ####################################### PART8 ###########################################
 ########################## Making heatmaps on all genes  ################################
 #########################################################################################
@@ -1273,370 +1636,6 @@ fi
 
 rm -f combined/matrix/*${analysisname}*
 rm -f combined/peaks/temp*${analysisname}*
-
-#########################################################################################
-####################################### PART12 ##########################################
-############ Making scatter plots of RNA expression on distal H3K27ac peaks #############
-#########################################################################################
-
-#### To make scatter plots with R for each tissue based on RNAseq/RAMPAGE/shRNA and quality of H3K27ac distal peaks
-
-for tissue in ${h3k27actissues[@]}
-do
-	header="Chr\tStart\tStop\tPeakID"
-	awk -v OFS="\t" '{print $1,$2,$3,$4}' ChIP/peaks/best_peaks_${line}_${tissue}_H3K27ac.bed > combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt
-	rnaseq=0
-	rampage=0
-	shrna=0
-	for bw in ${rnaseq_bw_list_plus[*]}
-	do					
-		if [[ ${bw} =~ ${tissue} ]]; then
-			printf "\nGetting RNAseq plus strand coverage on H3K27ac peaks for ${tissue}\n"
-			bigWigToBedGraph ${bw} combined/peaks/temp_RNAseq_plus_${analysisname}_${line}.bedGraph
-			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_RNAseq_plus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=1000*($5/($3-$2)); print a}' > combined/peaks/col_B_${analysisname}_${line}_${tissue}.txt
-			rm -f combined/peaks/temp_RNAseq_plus_${analysisname}_${line}.bedGraph
-			header="${header}\tRNAseq_plus"
-			rnaseq=1
-		fi
-	done
-	for bw in ${rnaseq_bw_list_minus[*]}
-	do					
-		if [[ ${bw} =~ ${tissue} ]]; then
-			printf "\nGetting RNAseq minus strand coverage on H3K27ac peaks for ${tissue}\n"
-			bigWigToBedGraph ${bw} combined/peaks/temp_RNAseq_minus_${analysisname}_${line}.bedGraph
-			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_RNAseq_minus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=1000*($5/($3-$2)); print a}' > combined/peaks/col_C_${analysisname}_${line}_${tissue}.txt
-			rm -f combined/peaks/temp_RNAseq_minus_${analysisname}_${line}.bedGraph
-			header="${header}\tRNAseq_minus"
-		fi
-	done
-	for bw in ${rampage_bw_list_plus[*]}
-	do					
-		if [[ ${bw} =~ ${tissue} ]]; then
-			printf "\nGetting RAMPAGE plus strand coverage on H3K27ac peaks for ${tissue}\n"
-			bigWigToBedGraph ${bw} combined/peaks/temp_RAMPAGE_plus_${analysisname}_${line}.bedGraph
-			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_RAMPAGE_plus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=1000*($5/($3-$2)); print a}' > combined/peaks/col_D_${analysisname}_${line}_${tissue}.txt
-			rm -f combined/peaks/temp_RAMPAGE_plus_${analysisname}_${line}.bedGraph
-			header="${header}\tRAMPAGE_plus"
-			rampage=1
-		fi
-	done
-	for bw in ${rampage_bw_list_minus[*]}
-	do					
-		if [[ ${bw} =~ ${tissue} ]]; then
-			printf "\nGetting RAMPAGE minus strand coverage on H3K27ac peaks for ${tissue}\n"
-			bigWigToBedGraph ${bw} combined/peaks/temp_RAMPAGE_minus_${analysisname}_${line}.bedGraph
-			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_RAMPAGE_minus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=1000*($5/($3-$2)); print a}' > combined/peaks/col_E_${analysisname}_${line}_${tissue}.txt
-			rm -f combined/peaks/temp_RAMPAGE_minus_${analysisname}_${line}.bedGraph
-			header="${header}\tRAMPAGE_minus"
-		fi
-	done
-	for bw in ${shrna_bw_list_plus[*]}
-	do					
-		if [[ ${bw} =~ ${tissue} ]]; then
-			printf "\nGetting shRNA plus strand coverage on H3K27ac peaks for ${tissue}\n"
-			bigWigToBedGraph ${bw} combined/peaks/temp_shRNA_plus_${analysisname}_${line}.bedGraph
-			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_shRNA_plus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=1000*($5/($3-$2)); print a}' > combined/peaks/col_F_${analysisname}_${line}_${tissue}.txt
-			rm -f combined/peaks/temp_shrna_plus_${analysisname}_${line}.bedGraph
-			header="${header}\tshRNA_plus"
-			shrna=1
-		fi
-	done
-	for bw in ${shrna_bw_list_minus[*]}
-	do					
-		if [[ ${bw} =~ ${tissue} ]]; then
-			printf "\nGetting shRNA minus strand coverage on H3K27ac peaks for ${tissue}\n"
-			bigWigToBedGraph ${bw} combined/peaks/temp_shRNA_minus_${analysisname}_${line}.bedGraph
-			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_shRNA_minus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=1000*($5/($3-$2)); print a}' > combined/peaks/col_G_${analysisname}_${line}_${tissue}.txt
-			rm -f combined/peaks/temp_shRNA_minus_${analysisname}_${line}.bedGraph
-			header="${header}\tshRNA_minus"
-		fi
-	done	
-	printf "${header}\n" > combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt
-	paste combined/peaks/col_*_${analysisname}_${line}_${tissue}.txt >> combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt
-	
-	if [[ ${rnaseq} == 1 ]] && [[ ${rampage} == 1 ]] && [[ ${shrna} == 1 ]]; then
-		included_samples="RNAseq_and_RAMPAGE_and_shRNA"
-	elif [[ ${rnaseq} == 1 ]] && [[ ${rampage} == 1 ]]; then
-		included_samples="RNAseq_and_RAMPAGE"
-	elif [[ ${rnaseq} == 1 ]] && [[ ${shrna} == 1 ]]; then
-		included_samples="RNAseq_and_shRNA"
-	elif [[ ${rampage} == 1 ]] && [[ ${shrna} == 1 ]]; then
-		included_samples="RAMPAGE_and_shRNA"
-	elif [[ ${rnaseq} == 1 ]]; then
-		included_samples="RNAseq"
-	elif [[ ${rampage} == 1 ]]; then
-		included_samples="RAMPAGE"
-	elif [[ ${shRNA} == 1 ]]; then
-		included_samples="shRNA"
-	fi
-
-	#### To plot correlation between RNA expression datasets at distal peaks
-	printf "\nCreating scatter plot for ${analysisname} ${tissue} with R version:\n"
-	R --version
-	Rscript --vanilla ${mc_dir}/MaizeCode_R_scatter_distal_peaks.r ${analysisname} ${tissue} ${line} ${included_samples} combined/peaks/all_grouped_distal_peaks_${analysisname}.txt combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt
-done
-
-############################################################################################
-########################################## PART13 ##########################################
-############################## RAMPAGE TSS at genes and TEs ################################
-############################################################################################
-
-uniq_rampage_tissue_list=($(printf "%s\n" "${rampage_tissue_list[@]}" | sort -u))
-
-if [[ ${#uniq_rampage_tissue_list[*]} -ge 1 ]] && [[ ${ref} == "B73_v4" ]]; then
-	if [ ! -s combined/TSS/${ref}_all_tes.bed ]; then
-		zcat /grid/martienssen/data_norepl/dropbox/maizecode/TEs/B73_v4_TEs.gff3.gz | awk -v OFS="\t" '$1 !~ /^#/ {print $1,$4-1,$5,$3,".",$7}' | bedtools sort -g ${ref_dir}/chrom.sizes > combined/TSS/${ref}_all_tes.bed
-	fi
-
-	if [[ -e combined/TSS/tmp_TSS_peaks_${analysisname}.bed ]]; then
-		rm -f combined/TSS/tmp_TSS_peaks_${analysisname}.bed
-	fi
-	for tissue in ${uniq_rampage_tissue_list[@]}
-	do
-		printf "\nMaking TSS peak file for ${tissue}\n"
-		awk -v OFS="\t" '{print $1,$2,$3,"Peak_"NR,"."}' RNA/TSS/idr_${line}_${tissue}_RAMPAGE.narrowPeak | bedtools sort -g ${ref_dir}/chrom.sizes > combined/TSS/${line}_${tissue}_RAMPAGE_peaks.bed
-		awk -v OFS="\t" -v t=${tissue} '{print $1,$2,$3,t}' combined/TSS/${line}_${tissue}_RAMPAGE_peaks.bed | sort -k1,1 -k2,2n -u >> combined/TSS/tmp_TSS_peaks_${analysisname}.bed
-		printf "\nGetting closest gene for ${tissue}\n"	
-		bedtools closest -a combined/TSS/${line}_${tissue}_RAMPAGE_peaks.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/TSS/temp_TSS_${analysisname}.bed
-		printf "\nGrouping based on distance for ${tissue}\n"
-		awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/TSS/temp_TSS_${analysisname}.bed > combined/TSS/temp2_TSS_${analysisname}.bed
-		printf "\nIntersecting TE for ${tissue}\n"
-		bedtools intersect -a combined/TSS/temp2_TSS_${analysisname}.bed -b combined/TSS/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v t=${tissue} -v l=${line} '{if ($13==".") print l,t,l"_"t"_"$4,$9,"No",$9,$9; else if ($9 == "Intergenic") print l,t,l"_"t"_"$4,$9,$13,$13,$13; else print l,t,l"_"t"_"$4,$9,$13,$13,$13"_in_"$9}' > combined/TSS/TSS_in_genes_and_tes_${tissue}_${analysisname}.bed
-		rm -f combined/TSS/temp*_TSS_${analysisname}.bed
-	done
-	printf "Line\tTissue\tPeak_ID\tGene\tTE\tLabel\tLabelcombined\n" > combined/TSS/Table_TSS_tissues_${analysisname}.txt
-	cat combined/TSS/TSS_in_genes_and_tes_*_${analysisname}.bed >> combined/TSS/Table_TSS_tissues_${analysisname}.txt
-	
-	printf "\nPreparing merged TSS file for ${analysisname}\n"
-	sort -k1,1 -k2,2n combined/TSS/tmp_TSS_peaks_${analysisname}.bed > combined/TSS/tmp2_TSS_peaks_${analysisname}.bed
-	bedtools merge -i combined/TSS/tmp2_TSS_peaks_${analysisname}.bed -c 4 -o distinct | bedtools sort -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{print $1,$2,$3,"Peak_"NR,$4}'> combined/TSS/tmp3_TSS_peaks_${analysisname}.bed
-	printf "\nGetting closest gene for TSS in ${analysisname}\n"
-	bedtools closest -a combined/TSS/tmp3_TSS_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/TSS/tmp4_TSS_peaks_${analysisname}.bed
-	printf "\nGrouping based on distance\n"
-	awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/TSS/tmp4_TSS_peaks_${analysisname}.bed > combined/TSS/tmp5_TSS_peaks_${analysisname}.bed
-	printf "\nIntersecting with TEs\n"
-	bedtools intersect -a combined/TSS/tmp5_TSS_peaks_${analysisname}.bed -b combined/TSS/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v l=${line} 'BEGIN {printf "Line\tPeak_ID\tGene\tTE\tLabel\tLabelcombined\tGID\tTissues\n"} {if ($13==".") print l,$4,$9,"No",$9,$9,$8,$7; else if ($9 == "Intergenic") print l,$4,$9,$13,$13,$13,$8,$7; else print l,$4,$9,$13,$13,$13"_in_"$9,$8,$7}' > combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed
-	rm -f combined/TSS/tmp*_TSS_peaks_${analysisname}.bed
-	#### To create a matrix of peak presence in each sample
-	printf "\nCreating matrix file for ${analysisname}\n"
-	for tissue in ${uniq_rampage_tissue_list[@]}
-	do
-		printf "${tissue}\n" > combined/TSS/temp_col_TSS_${analysisname}_${tissue}.txt
-		awk -v OFS="\t" -v t=${tissue} 'NR>1 {if ($8 ~ t) print "1"; else print "0"}' combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed >> combined/TSS/temp_col_TSS_${analysisname}_${tissue}.txt
-	done
-	awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7}' combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed > combined/TSS/temp_col_TSS_${analysisname}_AAA.txt
-	paste combined/TSS/temp_col_TSS_${analysisname}_*.txt | uniq > combined/TSS/matrix_upset_TSS_${analysisname}.txt
-	rm -f combined/TSS/temp_col_TSS_${analysisname}_*.txt
-	#### To make an Upset plot highlighting peaks in gene bodies
-	printf "\nCreating Distirbution and Upset plot for TSS in ${analysisname} with R version:\n"
-	R --version
-	Rscript --vanilla ${mc_dir}/MaizeCode_R_TSS_distribution_upset.r ${analysisname} combined/TSS/Table_TSS_tissues_${analysisname}.txt combined/TSS/matrix_upset_TSS_${analysisname}.txt combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed combined/DEG/genes_rpkm_${analysisname}.txt
-fi
-
-############################################################################################
-########################################## PART14 ##########################################
-############################ shRNA clusters at genes and TEs ###############################
-############################################################################################
-
-uniq_shrna_tissue_list=($(printf "%s\n" "${shrna_tissue_list[@]}" | sort -u))
-
-if [ ! -d combined/shRNA ]; then
-	mkdir combined/shRNA
-fi
-
-if [[ ${#uniq_shrna_tissue_list[*]} -ge 1 ]] && [[ ${ref} == "B73_v4" ]]; then
-	if [ ! -s combined/shRNA/${ref}_all_tes.bed ]; then
-		zcat /grid/martienssen/data_norepl/dropbox/maizecode/TEs/B73_v4_TEs.gff3.gz | awk -v OFS="\t" '$1 !~ /^#/ {print $1,$4-1,$5,$3,".",$7}' | bedtools sort -g ${ref_dir}/chrom.sizes > combined/shRNA/${ref}_all_tes.bed
-	fi
-
-	if [[ -e combined/shRNA/tmp_shRNA_clusters_${analysisname}.bed ]]; then
-		rm -f combined/shRNA/tmp_shRNA_clusters_${analysisname}.bed
-	fi
-	for tissue in ${uniq_shrna_tissue_list[@]}
-	do
-		printf "\nMaking shRNA cluster file for ${tissue}\n"
-		awk -v OFS="\t" ' $0 !~ /^#/ {print $1,$4,$5,$3"_"NR,"."}' shRNA/mapped/${line}_${tissue}_shRNA/ShortStack_All.gff3 | bedtools sort -g ${ref_dir}/chrom.sizes > combined/shRNA/${line}_${tissue}_shRNA_clusters.bed
-		awk -v OFS="\t" -v t=${tissue} '{print $1,$2,$3,t}' combined/shRNA/${line}_${tissue}_shRNA_clusters.bed | sort -k1,1 -k2,2n -u >> combined/shRNA/tmp_shRNA_clusters_${analysisname}.bed
-		printf "\nGetting closest gene for ${tissue}\n"	
-		bedtools closest -a combined/shRNA/${line}_${tissue}_shRNA_clusters.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/shRNA/temp_clusters_${analysisname}.bed
-		printf "\nGrouping based on distance for ${tissue}\n"
-		awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/shRNA/temp_clusters_${analysisname}.bed > combined/shRNA/temp2_clusters_${analysisname}.bed
-		printf "\nIntersecting TE for ${tissue}\n"
-		bedtools intersect -a combined/shRNA/temp2_clusters_${analysisname}.bed -b combined/shRNA/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v t=${tissue} -v l=${line} '{if ($13==".") print l,t,l"_"t"_"$4,$9,"No",$9,$9; else if ($9 == "Intergenic") print l,t,l"_"t"_"$4,$9,$13,$13,$13; else print l,t,l"_"t"_"$4,$9,$13,$13,$13"_in_"$9}' > combined/shRNA/Clusters_in_genes_and_tes_${tissue}_${analysisname}.bed
-		rm -f combined/shRNA/temp*_clusters_${analysisname}.bed
-	done
-	printf "Line\tTissue\tCluster_ID\tGene\tTE\tLabel\tLabelcombined\n" > combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}.txt
-	cat combined/shRNA/Clusters_in_genes_and_tes_*_${analysisname}.bed >> combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}.txt
-	
-	printf "\nPreparing merged cluster file for ${analysisname}\n"
-	sort -k1,1 -k2,2n combined/shRNA/tmp_shRNA_clusters_${analysisname}.bed > combined/shRNA/tmp2_shRNA_clusters_${analysisname}.bed
-	bedtools merge -i combined/shRNA/tmp2_shRNA_clusters_${analysisname}.bed -c 4 -o distinct | bedtools sort -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{print $1,$2,$3,"Cluster_"NR,$4}'> combined/shRNA/tmp3_shRNA_clusters_${analysisname}.bed
-	printf "\nGetting closest gene for clusters in ${analysisname}\n"
-	bedtools closest -a combined/shRNA/tmp3_shRNA_clusters_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/shRNA/tmp4_shRNA_clusters_${analysisname}.bed
-	printf "\nGrouping based on distance\n"
-	awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/shRNA/tmp4_shRNA_clusters_${analysisname}.bed > combined/shRNA/tmp5_shRNA_clusters_${analysisname}.bed
-	printf "\nIntersecting with TEs\n"
-	bedtools intersect -a combined/shRNA/tmp5_shRNA_clusters_${analysisname}.bed -b combined/shRNA/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v l=${line} 'BEGIN {printf "Line\tCluster_ID\tGene\tTE\tLabel\tLabelcombined\tGID\tTissues\n"} {if ($13==".") print l,$4,$9,"No",$9,$9,$8,$7; else if ($9 == "Intergenic") print l,$4,$9,$13,$13,$13,$8,$7; else print l,$4,$9,$13,$13,$13"_in_"$9,$8,$7}' > combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed
-	rm -f combined/shRNA/tmp*_shRNA_clusters_${analysisname}.bed
-	#### To create a matrix of peak presence in each sample
-	printf "\nCreating matrix file for ${analysisname}\n"
-	for tissue in ${uniq_shrna_tissue_list[@]}
-	do
-		printf "${tissue}\n" > combined/shRNA/temp_col_clusters_${analysisname}_${tissue}.txt
-		awk -v OFS="\t" -v t=${tissue} 'NR>1 {if ($8 ~ t) print "1"; else print "0"}' combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed >> combined/shRNA/temp_col_clusters_${analysisname}_${tissue}.txt
-	done
-	awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7}' combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed > combined/shRNA/temp_col_clusters_${analysisname}_AAA.txt
-	paste combined/shRNA/temp_col_clusters_${analysisname}_*.txt | uniq > combined/shRNA/matrix_upset_shRNA_clusters_${analysisname}.txt
-	rm -f combined/shRNA/temp_col_clusters_${analysisname}_*.txt
-	#### To make an Upset plot highlighting peaks in gene bodies
-	printf "\nCreating Distirbution and Upset plot for shRNA clusters in ${analysisname} with R version:\n"
-	R --version
-	Rscript --vanilla ${mc_dir}/MaizeCode_R_shRNA_distribution_upset.r ${analysisname} combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}.txt combined/shRNA/matrix_upset_shRNA_clusters_${analysisname}.txt combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed combined/DEG/genes_rpkm_${analysisname}.txt
-fi
-
-#########################################################################################
-####################################### PART15 ##########################################
-########################## Making heatmaps on all TEs ###################################
-#########################################################################################
-
-if [[ "${ref}" == "B73_v4" ]]; then
-	if [ ! -s combined/TSS/${ref}_all_tes.bed ]; then
-		zcat /grid/martienssen/data_norepl/dropbox/maizecode/TEs/B73_v4_TEs.gff3.gz | awk -v OFS="\t" '$1 !~ /^#/ {print $1,$4-1,$5,$3,".",$7}' | bedtools sort -g ${ref_dir}/chrom.sizes > combined/TSS/${ref}_all_tes.bed
-	fi
-	awk '{print $4}' combined/TSS/${ref}_all_tes.bed | sort -u > combined/TSS/${ref}_TE_types.txt
-	TE_regions_plus=()
-	TE_regions_minus=()
-	while read TEtype
-	do
-		awk -v t=${TEtype} '$4==t && $6=="+"' combined/TSS/${ref}_all_tes.bed > combined/TSS/${ref}_${TEtype}_${analysisname}_plus.bed
-		awk -v t=${TEtype} '$4==t && $6=="-"' combined/TSS/${ref}_all_tes.bed > combined/TSS/${ref}_${TEtype}_${analysisname}_minus.bed
-		teplus=$(wc -l combined/TSS/${ref}_${TEtype}_${analysisname}_plus.bed | awk '{print $1}')
-		teminus=$(wc -l combined/TSS/${ref}_${TEtype}_${analysisname}_minus.bed | awk '{print $1}')
-		if [[ ${teplus} -gt 0 ]]; then
-			TE_regions_plus+=(combined/TSS/${ref}_${TEtype}_${analysisname}_plus.bed)
-		fi
-		if [[ ${teminus} -gt 0 ]]; then
-			TE_regions_minus+=(combined/TSS/${ref}_${TEtype}_${analysisname}_minus.bed)
-		fi
-	done < combined/TSS/${ref}_TE_types.txt
-fi
-
-#### Computing the stranded matrix
-for strand in plus minus
-do
-	case "${strand}" in
-		plus) 	bw_list="${rnaseq_bw_list_plus[@]} ${rampage_bw_list_plus[@]} ${shrna_bw_list_plus[@]}";;
-		minus) 	bw_list="${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]} ${shrna_bw_list_minus[@]}";;
-	esac
-	if [[ ${#TE_labels} -ge 1 ]]; then
-		printf "\nComputing scale-regions ${strand} strand matrix for TEs from ${analysisname}\n"
-		computeMatrix scale-regions -q --missingDataAsZero --skipZeros -R ${TE_regions_plus[*]} -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/TE_regions_${analysisname}_${strand}.gz
-		printf "\nComputing reference-point on TSS ${strand} strand matrix for TEs from ${analysisname}\n"
-		computeMatrix reference-point --referencePoint "TSS" -q --missingDataAsZero --skipZeros -R ${TE_regions_minus[*]} -S ${bw_list} -bs 50 -b 2000 -a 8000 -p ${threads} -o combined/matrix/TE_tss_${analysisname}_${strand}.gz
-	fi
-done
-rm -f combined/matrix/temp_regions_${regionname}_*.bed
-
-#### Merging stranded matrix, extracting scales and plotting heatmaps
-all_samples=()
-all_lables=()
-if [ ${#rnaseq_bw_list_plus[@]} -gt 0 ]; then
-	printf "\nIncluding RNAseq samples\n"
-	all_samples+=("RNAseq")
-	all_labels+=("${rnaseq_sample_list[*]}")
-fi
-if [ ${#rampage_bw_list_plus[@]} -gt 0 ]; then
-	printf "\nIncluding RAMPAGE samples\n"
-	all_samples+=("RAMPAGE")
-	all_labels+=("${rampage_sample_list[*]}")
-fi
-if [ ${#shrna_bw_list_plus[@]} -gt 0 ]; then
-	printf "\nIncluding shRNA samples\n"
-	all_samples+=("shRNA")
-	all_labels+=("${shrna_sample_list[*]}")
-fi
-for matrix in TE_regions TE_tss
-do
-	if [[ -s combined/matrix/${matrix}_${analysisname}_plus.gz ]]; then
-		printf "\nMerging stranded matrices aligned by ${matrix} of ${analysisname}\n"
-		computeMatrixOperations rbind -m combined/matrix/${matrix}_${analysisname}_plus.gz combined/matrix/${matrix}_${analysisname}_minus.gz -o combined/matrix/${matrix}_${analysisname}.gz
-		printf "\nGetting scales for ${matrix} matrix of ${analysisname}\n"
-		computeMatrixOperations dataRange -m combined/matrix/${matrix}_${analysisname}.gz > combined/matrix/values_${matrix}_${analysisname}.txt
-		plotProfile -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/temp_${matrix}_${analysisname}_profile.pdf --samplesLabel ${all_labels[@]} --averageType mean --outFileNameData combined/matrix/values_profile_${matrix}_${analysisname}.txt
-		rm -f combined/plots/temp_${matrix}_${analysisname}_profile.pdf
-		mins=()
-		maxs=()
-		ymins=()
-		ymaxs=()
-		for mark in ${all_samples[@]}
-		do
-			mini=$(grep "${mark}" combined/matrix/values_${matrix}_${analysisname}.txt | awk 'BEGIN {m=999999} {a=$5; if (a<m) m=a;} END {print m}')
-			maxi=$(grep "${mark}" combined/matrix/values_${matrix}_${analysisname}.txt | awk 'BEGIN {m=-999999} {a=$6; if (a>m) m=a;} END {print m}')
-			num=$(grep "${mark}" combined/matrix/values_${matrix}_${analysisname}.txt | wc -l)
-			test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
-			if [[ ${test} == "yes" ]]; then
-				mini=("0")
-				maxi=("0.01")
-			fi
-			for i in $(seq 1 ${num})
-			do
-				mins+=("${mini}")
-				maxs+=("${maxi}")
-			done		
-			ymini=$(grep "${mark}" combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
-			ymaxi=$(grep "${mark}" combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.2}')
-			num=$(grep "${mark}" combined/matrix/values_profile_${matrix}_${analysisname}.txt | wc -l)
-			test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
-			if [[ ${test} == "yes" ]]; then
-				ymini=("0")
-				ymaxi=("0.01")
-			fi
-			for i in $(seq 1 ${num})
-			do
-				ymins+=("${ymini}")
-				ymaxs+=("${ymaxi}")
-			done
-		done
-
-		mins2=()
-		maxs2=()
-		for sample in ${all_labels[@]}
-		do
-			mini=$(grep ${sample} combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $5}')
-			maxi=$(grep ${sample} combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $6}')
-			test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
-			if [[ ${test} == "yes" ]]; then
-				mins2+=("0")
-				maxs2+=("0.01")
-			else
-				mins2+=("${mini}")
-				maxs2+=("${maxi}")
-			fi
-		done
-		ymins2=()
-		ymaxs2=()
-		for sample in ${all_labels[@]}
-		do
-			ymini=$(grep ${sample} combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
-			ymaxi=$(grep ${sample} combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.2}')
-			test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
-			if [[ ${test} == "yes" ]]; then
-				ymins2+=("0")
-				ymaxs2+=("0.01")
-			else
-				ymins2+=("${ymini}")
-				ymaxs2+=("${ymaxi}")
-			fi
-		done
-		printf "\nPlotting heatmap for ${matrix} matrix of ${analysisname} scaling by mark\n"
-		plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
-		printf "\nPlotting heatmap for ${matrix} matrix of ${analysisname} scaling by sample\n"
-		plotHeatmap -m combined/matrix/${matrix}_${analysisname}.gz -out combined/plots/${analysisname}_heatmap_${matrix}_v2.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --colorMap 'seismic' --zMin ${mins2[@]} --zMax ${maxs2[@]} --yMin ${ymins2[@]} --yMax ${ymaxs2[@]} --interpolationMethod 'bilinear'
-	fi
-done
-
-rm -f combined/matrix/*${analysisname}*.gz
-
 
 printf "\nCombined analysis script finished successfully for ${analysisname}\n"
 touch combined/chkpts/analysis_${analysisname}
