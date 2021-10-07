@@ -838,11 +838,11 @@ do
 		plus) 	bw_list="${rnaseq_bw_list_plus[@]} ${rampage_bw_list_plus[@]} ${shrna_bw_list_plus[@]}";;
 		minus) 	bw_list="${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]} ${shrna_bw_list_minus[@]}";;
 	esac
-	if [[ ${#TE_labels} -ge 1 ]]; then
+	if [[ ${#TE_regions_${strand}[*]} -ge 1 ]]; then
 		printf "\nComputing scale-regions ${strand} strand matrix for TEs from ${analysisname}\n"
-		computeMatrix scale-regions -q --missingDataAsZero --skipZeros -R ${TE_regions_plus[*]} -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/TE_regions_${analysisname}_${strand}.gz
+		computeMatrix scale-regions -q --missingDataAsZero --skipZeros -R ${TE_regions_${strand}[*]} -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/TE_regions_${analysisname}_${strand}.gz
 		printf "\nComputing reference-point on TSS ${strand} strand matrix for TEs from ${analysisname}\n"
-		computeMatrix reference-point --referencePoint "TSS" -q --missingDataAsZero --skipZeros -R ${TE_regions_minus[*]} -S ${bw_list} -bs 50 -b 2000 -a 8000 -p ${threads} -o combined/matrix/TE_tss_${analysisname}_${strand}.gz
+		computeMatrix reference-point --referencePoint "TSS" -q --missingDataAsZero --skipZeros -R ${TE_regions_${strand}[*]} -S ${bw_list} -bs 50 -b 2000 -a 8000 -p ${threads} -o combined/matrix/TE_tss_${analysisname}_${strand}.gz
 	fi
 done
 rm -f combined/matrix/temp_regions_${regionname}_*.bed
