@@ -1037,12 +1037,10 @@ do
 			plus) 	bw_list="${rnaseq_bw_list_plus[@]} ${rampage_bw_list_plus[@]} ${shrna_bw_list_plus[@]}";;
 			minus) 	bw_list="${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]} ${shrna_bw_list_minus[@]}";;
 		esac
-		if [[ ${#TE_regions_${strand}[*]} -ge 1 ]]; then
-			printf "\nComputing scale-regions ${strand} strand matrix for TEs from ${analysisname}\n"
-			computeMatrix scale-regions -q --missingDataAsZero --skipZeros -R combined/TSS/${ref}_${TEtype}_${analysisname}_${strand}.bed -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/TE_regions_${TEtype}_${analysisname}_${strand}.gz
-			printf "\nComputing reference-point on TSS ${strand} strand matrix for TEs from ${analysisname}\n"
-			computeMatrix reference-point --referencePoint "TSS" -q --missingDataAsZero --skipZeros -R combined/TSS/${ref}_${TEtype}_${analysisname}_${strand}.bed -S ${bw_list} -bs 50 -b 2000 -a 8000 -p ${threads} -o combined/matrix/TE_tss_${TEtype}_${analysisname}_${strand}.gz
-		fi
+		printf "\nComputing scale-regions ${strand} strand matrix for TEs from ${analysisname}\n"
+		computeMatrix scale-regions -q --missingDataAsZero --skipZeros -R combined/TSS/${ref}_${TEtype}_${analysisname}_${strand}.bed -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/TE_regions_${TEtype}_${analysisname}_${strand}.gz
+		printf "\nComputing reference-point on TSS ${strand} strand matrix for TEs from ${analysisname}\n"
+		computeMatrix reference-point --referencePoint "TSS" -q --missingDataAsZero --skipZeros -R combined/TSS/${ref}_${TEtype}_${analysisname}_${strand}.bed -S ${bw_list} -bs 50 -b 2000 -a 8000 -p ${threads} -o combined/matrix/TE_tss_${TEtype}_${analysisname}_${strand}.gz
 	done
 	#### Merging stranded matrix, extracting scales and plotting heatmaps
 	all_samples=()
