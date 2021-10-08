@@ -63,7 +63,7 @@ inputable$Label<-factor(inputable$Label, levels = c("helitron","LINE_element","L
                                 "SINE_element","solo_LTR","terminal_inverted_repeat_element","Intergenic","Terminator","Gene_body",
                                 "Promoter"))
 set1<-colnames(inputable)
-sampleCols<-set1[! set1 %in% c("Line","Peak_ID","Gene","TE","Label","Labelcombined")]
+sampleCols<-set1[! set1 %in% c("Line","Peak_ID","Gene","TE","Label","Labelcombined","GID")]
 
 plot<-upset(inputable, sampleCols, name="RAMPAGE Peaks", 
       mode='exclusive_intersection',
