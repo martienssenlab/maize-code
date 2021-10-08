@@ -1037,14 +1037,14 @@ do
 			plus) 	bw_list="${rnaseq_bw_list_plus[@]} ${rampage_bw_list_plus[@]} ${shrna_bw_list_plus[@]}";;
 			minus) 	bw_list="${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]} ${shrna_bw_list_minus[@]}";;
 		esac
-		printf "\nComputing scale-regions ${strand} strand matrix for TEs from ${analysisname}\n"
+		printf "\nComputing scale-regions ${strand} strand matrix for ${TEtype} from ${analysisname}\n"
 		computeMatrix scale-regions -q --missingDataAsZero --skipZeros -R combined/TSS/${ref}_${TEtype}_${analysisname}_${strand}.bed -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/TE_regions_${TEtype}_${analysisname}_${strand}.gz
-		printf "\nComputing reference-point on TSS ${strand} strand matrix for TEs from ${analysisname}\n"
+		printf "\nComputing reference-point on TSS ${strand} strand matrix for ${TEtype} from ${analysisname}\n"
 		computeMatrix reference-point --referencePoint "TSS" -q --missingDataAsZero --skipZeros -R combined/TSS/${ref}_${TEtype}_${analysisname}_${strand}.bed -S ${bw_list} -bs 50 -b 2000 -a 8000 -p ${threads} -o combined/matrix/TE_tss_${TEtype}_${analysisname}_${strand}.gz
 	done
 	#### Merging stranded matrix, extracting scales and plotting heatmaps
 	all_samples=()
-	all_lables=()
+	all_labels=()
 	if [ ${#rnaseq_bw_list_plus[@]} -gt 0 ]; then
 		printf "\nIncluding RNAseq samples\n"
 		all_samples+=("RNAseq")
@@ -1063,7 +1063,7 @@ do
 	for matrix in TE_regions TE_tss
 	do
 		if [[ -s combined/matrix/${matrix}_${TEtype}_${analysisname}_plus.gz ]]; then
-			printf "\nMerging stranded matrices aligned by ${matrix} of ${analysisname}\n"
+			printf "\nMerging stranded matrices aligned by ${matrix} ${TEtype} of ${analysisname}\n"
 			computeMatrixOperations rbind -m combined/matrix/${matrix}_${TEtype}_${analysisname}_plus.gz combined/matrix/${matrix}_${TEtype}_${analysisname}_minus.gz -o combined/matrix/${matrix}_${TEtype}_${analysisname}.gz
 			printf "\nGetting scales for ${matrix} ${TEtype} matrix of ${analysisname}\n"
 			computeMatrixOperations dataRange -m combined/matrix/${matrix}_${TEtype}_${analysisname}.gz > combined/matrix/values_${matrix}_${TEtype}_${analysisname}.txt
