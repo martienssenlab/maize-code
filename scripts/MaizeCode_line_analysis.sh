@@ -825,10 +825,8 @@ do
 	for strand in plus minus
 	do
 		case "${strand}" in
-			plus) 	bw_list="${rnaseq_bw_list_plus[@]} ${rampage_bw_list_plus[@]} ${shrna_bw_list_plus[@]}"
-				region="";;
-			minus) 	bw_list="${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]} ${shrna_bw_list_minus[@]}"
-				region=${TE_regions_minus[*]};;;;
+			plus) 	bw_list="${rnaseq_bw_list_plus[@]} ${rampage_bw_list_plus[@]} ${shrna_bw_list_plus[@]}";;
+			minus) 	bw_list="${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]} ${shrna_bw_list_minus[@]}";;
 		esac
 		if [[ ${#TE_regions_${strand}[*]} -ge 1 ]]; then
 			printf "\nComputing scale-regions ${strand} strand matrix for TEs from ${analysisname}\n"
