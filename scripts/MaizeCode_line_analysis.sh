@@ -359,7 +359,8 @@ if [ ! -s combined/DEG/genes_rpkm_${analysisname}.txt ] && [[ ${#uniq_rnaseq_tis
 		fi
 		while read ID exp
 		do
-			grep "${ID}" ${regionfile} | awk -v OFS="\t" -v c=${exp} '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {l=$3-$2; v=1000*c/l; print $1,$2,$3,".",v,$6,$4}' >> combined/DEG/temp_expression_${analysisname}_${tissue}.bed
+			# grep "${ID}" ${regionfile} | awk -v OFS="\t" -v c=${exp} '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {l=$3-$2; v=1000*c/l; print $1,$2,$3,".",v,$6,$4}' >> combined/DEG/temp_expression_${analysisname}_${tissue}.bed
+			grep "${ID}" ${regionfile} | awk -v OFS="\t" -v c=${exp} '{l=$3-$2; v=1000*c/l; print $1,$2,$3,".",v,$6,$4}' >> combined/DEG/temp_expression_${analysisname}_${tissue}.bed
 		done < combined/DEG/temp_counts_${analysisname}_${tissue}.txt
 		if [[ ${ref} == "B73_v4" ]]; then
 			awk -F"[:;]" -v OFS="\t" '{print $1,$2}' combined/DEG/temp_expression_${analysisname}_${tissue}.bed | awk -v OFS="\t" -v t=${tissue} '{print $8,t,$5}' > combined/DEG/genes_rpkm_${analysisname}_${tissue}.txt
