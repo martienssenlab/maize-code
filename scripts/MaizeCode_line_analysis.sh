@@ -353,7 +353,7 @@ fi
 #		printf "Gathering gene expression levels for ${tissue}\n"
 #		cols=($(awk -v ORS=" " -v t=${tissue} 'NR==1 {for(i=1;i<=NF;i++) if ($i~t) print i}' combined/DEG/counts_${analysisname}.txt))
 #		reps=${#cols[@]}
-#		awk -v d="${cols}" -v t=${reps} 'BEGIN {split(d, a, " ")} NR > 1 {b=0; for (i in a) b+=$(a[i]); c=b/t; print $1,c}' combined/DEG/counts_${analysisname}.txt > combined/DEG/temp_counts_${analysisname}_${tissue}.txt
+#		awk -v OFS="\t" -v d="${cols}" -v t=${reps} 'BEGIN {split(d, a, " ")} NR > 1 {b=0; for (i in a) b+=$(a[i]); c=b/t; print $1,c}' combined/DEG/counts_${analysisname}.txt > combined/DEG/temp_counts_${analysisname}_${tissue}.txt
 #		if [ -s combined/DEG/temp_expression_${analysisname}_${tissue}.bed ]; then
 #			rm -f combined/DEG/temp_expression_${analysisname}_${tissue}.bed
 #		fi
@@ -949,7 +949,7 @@ do
 		printf "Clustering genes by expression levels for ${tissue}\n"
 		cols=($(awk -v ORS=" " -v t=${tissue} 'NR==1 {for(i=1;i<=NF;i++) if ($i~t) print i}' combined/DEG/counts_${analysisname}.txt))
 		reps=${#cols[@]}
-		awk -v d="${cols}" -v t=${reps} 'BEGIN {split(d, a, " ")} NR > 1 {b=0; for (i in a) b+=$(a[i]); c=b/t; print $1,c}' combined/DEG/counts_${analysisname}.txt > combined/DEG/temp_counts_${analysisname}_${tissue}.txt
+		awk -v OFS="\t" -v d="${cols}" -v t=${reps} 'BEGIN {split(d, a, " ")} NR > 1 {b=0; for (i in a) b+=$(a[i]); c=b/t; print $1,c}' combined/DEG/counts_${analysisname}.txt > combined/DEG/temp_counts_${analysisname}_${tissue}.txt
 		if [ -s combined/DEG/temp_expression_${analysisname}_${tissue}.bed ]; then
 			rm -f combined/DEG/temp_expression_${analysisname}_${tissue}.bed
 		fi
