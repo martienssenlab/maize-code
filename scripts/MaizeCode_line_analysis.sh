@@ -345,33 +345,32 @@ else
 	printf "\nNo differential gene expression analysis performed (not enough RNAseq samples)\n"
 fi
 
-#uniq_rnaseq_tissue_list=($(printf "%s\n" "${rnaseq_tissue_list[@]}" | sort -u))
+uniq_rnaseq_tissue_list=($(printf "%s\n" "${rnaseq_tissue_list[@]}" | sort -u))
 
-#if [ ! -s combined/DEG/genes_rpkm_${analysisname}.txt ] && [[ ${#uniq_rnaseq_tissue_list[@]} -ge 1 ]]; then
-#	for tissue in ${uniq_rnaseq_tissue_list[@]}
-#	do
-#		printf "Gathering gene expression levels for ${tissue}\n"
-#		cols=($(awk -v ORS=" " -v t=${tissue} 'NR==1 {for(i=1;i<=NF;i++) if ($i~t) print i}' combined/DEG/counts_${analysisname}.txt))
-#		reps=${#cols[@]}
-#		awk -v OFS="\t" -v d="${cols}" -v t=${reps} 'BEGIN {split(d, a, " ")} NR > 1 {b=0; for (i in a) b+=$(a[i]); c=b/t; print $1,c}' combined/DEG/counts_${analysisname}.txt > combined/DEG/temp_counts_${analysisname}_${tissue}.txt
-#		if [ -s combined/DEG/temp_expression_${analysisname}_${tissue}.bed ]; then
-#			rm -f combined/DEG/temp_expression_${analysisname}_${tissue}.bed
-#		fi
-#		while read ID exp
-#		do
-#			# grep "${ID}" ${regionfile} | awk -v OFS="\t" -v c=${exp} '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {l=$3-$2; v=1000*c/l; print $1,$2,$3,".",v,$6,$4}' >> combined/DEG/temp_expression_${analysisname}_${tissue}.bed
-#			grep "${ID}" ${regionfile} | awk -v OFS="\t" -v c=${exp} '{l=$3-$2; v=1000*c/l; print $1,$2,$3,".",v,$6,$4}' >> combined/DEG/temp_expression_${analysisname}_${tissue}.bed
-#		done < combined/DEG/temp_counts_${analysisname}_${tissue}.txt
-#		if [[ ${ref} == "B73_v4" ]]; then
-#			awk -F"[:;]" -v OFS="\t" '{print $1,$2}' combined/DEG/temp_expression_${analysisname}_${tissue}.bed | awk -v OFS="\t" -v t=${tissue} '{print $8,t,$5}' > combined/DEG/genes_rpkm_${analysisname}_${tissue}.txt
-#		else
-#			awk -F"[=;]" -v OFS="\t" '{print $1,$2}' combined/DEG/temp_expression_${analysisname}_${tissue}.bed | awk -v OFS="\t" -v t=${tissue} '{print $8,t,$5}' > combined/DEG/genes_rpkm_${analysisname}_${tissue}.txt
-#		fi
-#		rm -f combined/DEG/temp_*_${analysisname}_${tissue}.txt
-#	done
-#	printf "GID\tTissue\tRPKM\n" > combined/DEG/genes_rpkm_${analysisname}.txt
-#	cat combined/DEG/genes_rpkm_${analysisname}_*.txt >> combined/DEG/genes_rpkm_${analysisname}.txt
-#fi
+if [ ! -s combined/DEG/genes_rpkm_${analysisname}.txt ] && [[ ${#uniq_rnaseq_tissue_list[@]} -ge 1 ]]; then
+	for tissue in ${uniq_rnaseq_tissue_list[@]}
+	do
+		printf "Gathering gene expression levels for ${tissue}\n"
+		cols=($(awk -v ORS=" " -v t=${tissue} 'NR==1 {for(i=1;i<=NF;i++) if ($i~t) print i}' combined/DEG/counts_${analysisname}.txt))
+		reps=${#cols[@]}
+		awk -v OFS="\t" -v d="${cols}" -v t=${reps} 'BEGIN {split(d, a, " ")} NR > 1 {b=0; for (i in a) b+=$(a[i]); c=b/t; print $1,c}' combined/DEG/counts_${analysisname}.txt > combined/DEG/temp_counts_${analysisname}_${tissue}.txt
+		if [ -s combined/DEG/temp_expression_${analysisname}_${tissue}.bed ]; then
+			rm -f combined/DEG/temp_expression_${analysisname}_${tissue}.bed
+		fi
+		while read ID exp
+		do
+			grep "${ID}" ${regionfile} | awk -v OFS="\t" -v c=${exp} '{l=$3-$2; v=1000*c/l; print $1,$2,$3,".",v,$6,$4}' >> combined/DEG/temp_expression_${analysisname}_${tissue}.bed
+		done < combined/DEG/temp_counts_${analysisname}_${tissue}.txt
+		if [[ ${ref} == "B73_v4" ]]; then
+			awk -F"[:;]" -v OFS="\t" '{print $1,$2}' combined/DEG/temp_expression_${analysisname}_${tissue}.bed | awk -v OFS="\t" -v t=${tissue} '{print $8,t,$5}' > combined/DEG/genes_rpkm_${analysisname}_${tissue}.txt
+		else
+			awk -F"[=;]" -v OFS="\t" '{print $1,$2}' combined/DEG/temp_expression_${analysisname}_${tissue}.bed | awk -v OFS="\t" -v t=${tissue} '{print $8,t,$5}' > combined/DEG/genes_rpkm_${analysisname}_${tissue}.txt
+		fi
+		rm -f combined/DEG/temp_*_${analysisname}_${tissue}.txt
+	done
+	printf "GID\tTissue\tRPKM\n" > combined/DEG/genes_rpkm_${analysisname}.txt
+	cat combined/DEG/genes_rpkm_${analysisname}_*.txt >> combined/DEG/genes_rpkm_${analysisname}.txt
+fi
 
 #############################################################################################
 ########################################### PART3 ###########################################
@@ -391,16 +390,16 @@ if [ ${#chip_sample_list[@]} -ge 1 ]; then
 			*H3K4me1*|*H3K27me1*|*H3K27me2*|*H3K27me3*|*H3K9me1*|*H3K9me2*|*H3K9me3*) export peaktype="broad";;
 			*H3K27ac*|*H3K4me3*) export peaktype="narrow";;
 		esac
-		awk -v OFS="\t" -v s=${sample} '{print $1,$2,$3,s}' ChIP/peaks/selected_peaks_${sample}.${peaktype}Peak | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_${analysisname}.bed
+		awk -v OFS="\t" -v s=${sample} '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {print $1,$2,$3,s}' ChIP/peaks/selected_peaks_${sample}.${peaktype}Peak | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_${analysisname}.bed
 	done
 	sort -k1,1 -k2,2n combined/peaks/tmp_peaks_${analysisname}.bed > combined/peaks/tmp2_peaks_${analysisname}.bed
 	bedtools merge -i combined/peaks/tmp2_peaks_${analysisname}.bed -c 4 -o distinct | bedtools sort -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{print $1,$2,$3,"Peak_"NR,$4}'> combined/peaks/tmp3_peaks_${analysisname}.bed
 	#### To get distance to closest gene (and the gene model name)
 	printf "\nGetting closest region of $analysisname\n"
 	if [[ ${ref} == "B73_v4" ]]; then
-		bedtools closest -a combined/peaks/tmp3_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/peaks/peaks_${analysisname}.bed
+		bedtools closest -a combined/peaks/tmp3_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/peaks/peaks_${analysisname}.bed
 	else
-		bedtools closest -a combined/peaks/tmp3_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[=;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/peaks/peaks_${analysisname}.bed
+		bedtools closest -a combined/peaks/tmp3_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[=;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/peaks/peaks_${analysisname}.bed
 	fi
 	rm -f combined/peaks/tmp*_peaks_${analysisname}.bed
 	#### To create a matrix of peak presence in each sample
@@ -449,7 +448,7 @@ if [ ${#chip_sample_list[@]} -ge 1 ]; then
 	for sample in ${chip_sample_list[@]}
 	do
 		if [[ "${sample}" == *H3K27ac* ]]; then
-			awk -v OFS="\t" -v s=${sample} '{print $1,$2,$3,s}' ChIP/peaks/selected_peaks_${sample}.narrowPeak | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed
+			awk -v OFS="\t" -v s=${sample} '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$2,$3,s}' ChIP/peaks/selected_peaks_${sample}.narrowPeak | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed
 		fi
 	done
 	sort -k1,1 -k2,2n combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed > combined/peaks/tmp2_peaks_H3K27ac_${analysisname}.bed
@@ -494,9 +493,9 @@ if [ ${#tf_sample_list[@]} -ge 1 ]; then
 	#### To get distance to closest gene (and the gene model name)
 	printf "\nGetting closest region of ${analysisname}\n"
 	if [[ ${ref} == "B73_v4" ]]; then
-		bedtools closest -a combined/peaks/tmp3_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/peaks/peaks_${analysisname}.bed
+		bedtools closest -a combined/peaks/tmp3_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/peaks/peaks_${analysisname}.bed
 	else
-		bedtools closest -a combined/peaks/tmp3_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:=;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/peaks/peaks_${analysisname}.bed
+		bedtools closest -a combined/peaks/tmp3_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[:=;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/peaks/peaks_${analysisname}.bed
 	fi
 	rm -f combined/peaks/tmp*_peaks_${analysisname}.bed
 	#### To create a matrix of peak presence in each sample
@@ -1159,7 +1158,7 @@ do
 		printf "\nGetting bed file of distal enhancers for tissue ${tissue}\n"
 		bedtools sort -g ${ref_dir}/chrom.sizes -i ChIP/peaks/best_peaks_${line}_${tissue}_H3K27ac.bed > combined/peaks/temp_${analysisname}_${tissue}.bed
 		bedtools sort -g ${ref_dir}/chrom.sizes -i combined/DEG/sorted_expression_${analysisname}_${tissue}.bed > combined/peaks/temp_${analysisname}_${tissue}_expression.bed
-		bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ ) {if ($17>= 2000 && $16=="+") print $1,$2+$10,$12,$4,$5,$16,$14,$15; else if ($17<= -2000 && $16=="-") print $1,$13,$2+$10,$4,$5,$16,$14,$15}' | sort -k5,5nr > combined/peaks/distal_${analysisname}_${tissue}.bed
+		bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {if ($17>= 2000 && $16=="+") print $1,$2+$10,$12,$4,$5,$16,$14,$15; else if ($17<= -2000 && $16=="-") print $1,$13,$2+$10,$4,$5,$16,$14,$15}' | sort -k5,5nr > combined/peaks/distal_${analysisname}_${tissue}.bed
 		tot=$(wc -l combined/peaks/distal_${analysisname}_${tissue}.bed | awk '{print $1}')
 		bin=$((tot/5))
 		min=0
@@ -1395,10 +1394,10 @@ if [[ ${#uniq_rampage_tissue_list[*]} -ge 1 ]] && [[ ${ref} == "B73_v4" ]]; then
 	for tissue in ${uniq_rampage_tissue_list[@]}
 	do
 		printf "\nMaking TSS peak file for ${tissue}\n"
-		awk -v OFS="\t" '{print $1,$2,$3,"Peak_"NR,"."}' RNA/TSS/idr_${line}_${tissue}_RAMPAGE.narrowPeak | bedtools sort -g ${ref_dir}/chrom.sizes > combined/TSS/${line}_${tissue}_RAMPAGE_peaks.bed
+		awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {print $1,$2,$3,"Peak_"NR,"."}' RNA/TSS/idr_${line}_${tissue}_RAMPAGE.narrowPeak | bedtools sort -g ${ref_dir}/chrom.sizes > combined/TSS/${line}_${tissue}_RAMPAGE_peaks.bed
 		awk -v OFS="\t" -v t=${tissue} '{print $1,$2,$3,t}' combined/TSS/${line}_${tissue}_RAMPAGE_peaks.bed | sort -k1,1 -k2,2n -u >> combined/TSS/tmp_TSS_peaks_${analysisname}.bed
 		printf "\nGetting closest gene for ${tissue}\n"	
-		bedtools closest -a combined/TSS/${line}_${tissue}_RAMPAGE_peaks.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/TSS/temp_TSS_${analysisname}.bed
+		bedtools closest -a combined/TSS/${line}_${tissue}_RAMPAGE_peaks.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/TSS/temp_TSS_${analysisname}.bed
 		printf "\nGrouping based on distance for ${tissue}\n"
 		awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/TSS/temp_TSS_${analysisname}.bed > combined/TSS/temp2_TSS_${analysisname}.bed
 		printf "\nIntersecting TE for ${tissue}\n"
@@ -1412,7 +1411,7 @@ if [[ ${#uniq_rampage_tissue_list[*]} -ge 1 ]] && [[ ${ref} == "B73_v4" ]]; then
 	sort -k1,1 -k2,2n combined/TSS/tmp_TSS_peaks_${analysisname}.bed > combined/TSS/tmp2_TSS_peaks_${analysisname}.bed
 	bedtools merge -i combined/TSS/tmp2_TSS_peaks_${analysisname}.bed -c 4 -o distinct | bedtools sort -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{print $1,$2,$3,"Peak_"NR,$4}'> combined/TSS/tmp3_TSS_peaks_${analysisname}.bed
 	printf "\nGetting closest gene for TSS in ${analysisname}\n"
-	bedtools closest -a combined/TSS/tmp3_TSS_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/TSS/tmp4_TSS_peaks_${analysisname}.bed
+	bedtools closest -a combined/TSS/tmp3_TSS_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/TSS/tmp4_TSS_peaks_${analysisname}.bed
 	printf "\nGrouping based on distance\n"
 	awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/TSS/tmp4_TSS_peaks_${analysisname}.bed > combined/TSS/tmp5_TSS_peaks_${analysisname}.bed
 	printf "\nIntersecting with TEs\n"
@@ -1456,10 +1455,10 @@ if [[ ${#uniq_shrna_tissue_list[*]} -ge 1 ]] && [[ ${ref} == "B73_v4" ]]; then
 	for tissue in ${uniq_shrna_tissue_list[@]}
 	do
 		printf "\nMaking shRNA cluster file for ${tissue}\n"
-		awk -v OFS="\t" ' $0 !~ /^#/ {print $1,$4,$5,$3"_"NR,"."}' shRNA/mapped/${line}_${tissue}_shRNA/ShortStack_All.gff3 | bedtools sort -g ${ref_dir}/chrom.sizes > combined/shRNA/${line}_${tissue}_shRNA_clusters.bed
+		awk -v OFS="\t" '($0 !~ /^#/) && ($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$4,$5,$3"_"NR,"."}' shRNA/mapped/${line}_${tissue}_shRNA/ShortStack_All.gff3 | bedtools sort -g ${ref_dir}/chrom.sizes > combined/shRNA/${line}_${tissue}_shRNA_clusters.bed
 		awk -v OFS="\t" -v t=${tissue} '{print $1,$2,$3,t}' combined/shRNA/${line}_${tissue}_shRNA_clusters.bed | sort -k1,1 -k2,2n -u >> combined/shRNA/tmp_shRNA_clusters_${analysisname}.bed
 		printf "\nGetting closest gene for ${tissue}\n"	
-		bedtools closest -a combined/shRNA/${line}_${tissue}_shRNA_clusters.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/shRNA/temp_clusters_${analysisname}.bed
+		bedtools closest -a combined/shRNA/${line}_${tissue}_shRNA_clusters.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/shRNA/temp_clusters_${analysisname}.bed
 		printf "\nGrouping based on distance for ${tissue}\n"
 		awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/shRNA/temp_clusters_${analysisname}.bed > combined/shRNA/temp2_clusters_${analysisname}.bed
 		printf "\nIntersecting TE for ${tissue}\n"
@@ -1473,7 +1472,7 @@ if [[ ${#uniq_shrna_tissue_list[*]} -ge 1 ]] && [[ ${ref} == "B73_v4" ]]; then
 	sort -k1,1 -k2,2n combined/shRNA/tmp_shRNA_clusters_${analysisname}.bed > combined/shRNA/tmp2_shRNA_clusters_${analysisname}.bed
 	bedtools merge -i combined/shRNA/tmp2_shRNA_clusters_${analysisname}.bed -c 4 -o distinct | bedtools sort -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{print $1,$2,$3,"Cluster_"NR,$4}'> combined/shRNA/tmp3_shRNA_clusters_${analysisname}.bed
 	printf "\nGetting closest gene for clusters in ${analysisname}\n"
-	bedtools closest -a combined/shRNA/tmp3_shRNA_clusters_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {print $1,$2,$3,$4,$12,".",$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/shRNA/tmp4_shRNA_clusters_${analysisname}.bed
+	bedtools closest -a combined/shRNA/tmp3_shRNA_clusters_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/shRNA/tmp4_shRNA_clusters_${analysisname}.bed
 	printf "\nGrouping based on distance\n"
 	awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/shRNA/tmp4_shRNA_clusters_${analysisname}.bed > combined/shRNA/tmp5_shRNA_clusters_${analysisname}.bed
 	printf "\nIntersecting with TEs\n"
