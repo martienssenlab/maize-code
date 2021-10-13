@@ -1416,7 +1416,7 @@ if [[ ${#uniq_rampage_tissue_list[*]} -ge 1 ]] && [[ ${ref} == "B73_v4" ]]; then
 	printf "\nGrouping based on distance\n"
 	awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/TSS/tmp4_TSS_peaks_${analysisname}.bed > combined/TSS/tmp5_TSS_peaks_${analysisname}.bed
 	printf "\nIntersecting with TEs\n"
-	bedtools intersect -a combined/TSS/tmp5_TSS_peaks_${analysisname}.bed -b combined/TSS/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v l=${line} 'BEGIN {printf "Line\tPeak_ID\tGene\tTE\tLabel\tLabelcombined\tGID\tTissues\n"} {if ($13==".") print l,$4,$9,"No",$9,$9,$8,$7; else if ($9 == "Intergenic") print l,$4,$9,$13,$13,$13,$8,$7; else print l,$4,$9,$13,$13,$13"_in_"$9,$8,$7}' > combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed
+	bedtools intersect -a combined/TSS/tmp5_TSS_peaks_${analysisname}.bed -b combined/TSS/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v l=${line} 'BEGIN {printf "Line\tPeak_ID\tGene\tTE\tLabel\tLabelcombined\tGID\tTissues\tPeak_coordinates\n"} {if ($13==".") print l,$4,$9,"No",$9,$9,$8,$7,$1":"$2"-"$3; else if ($9 == "Intergenic") print l,$4,$9,$13,$13,$13,$8,$7,$1":"$2"-"$3; else print l,$4,$9,$13,$13,$13"_in_"$9,$8,$7,$1":"$2"-"$3}' > combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed
 	rm -f combined/TSS/tmp*_TSS_peaks_${analysisname}.bed
 	#### To create a matrix of peak presence in each sample
 	printf "\nCreating matrix file for ${analysisname}\n"
@@ -1477,7 +1477,7 @@ if [[ ${#uniq_shrna_tissue_list[*]} -ge 1 ]] && [[ ${ref} == "B73_v4" ]]; then
 	printf "\nGrouping based on distance\n"
 	awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/shRNA/tmp4_shRNA_clusters_${analysisname}.bed > combined/shRNA/tmp5_shRNA_clusters_${analysisname}.bed
 	printf "\nIntersecting with TEs\n"
-	bedtools intersect -a combined/shRNA/tmp5_shRNA_clusters_${analysisname}.bed -b combined/shRNA/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v l=${line} 'BEGIN {printf "Line\tCluster_ID\tGene\tTE\tLabel\tLabelcombined\tGID\tTissues\n"} {if ($13==".") print l,$4,$9,"No",$9,$9,$8,$7; else if ($9 == "Intergenic") print l,$4,$9,$13,$13,$13,$8,$7; else print l,$4,$9,$13,$13,$13"_in_"$9,$8,$7}' > combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed
+	bedtools intersect -a combined/shRNA/tmp5_shRNA_clusters_${analysisname}.bed -b combined/shRNA/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v l=${line} 'BEGIN {printf "Line\tCluster_ID\tGene\tTE\tLabel\tLabelcombined\tGID\tTissues\tPeak_coordinates\n"} {if ($13==".") print l,$4,$9,"No",$9,$9,$8,$7,$1":"$2"-"$3; else if ($9 == "Intergenic") print l,$4,$9,$13,$13,$13,$8,$7,$1":"$2"-"$3; else print l,$4,$9,$13,$13,$13"_in_"$9,$8,$7,$1":"$2"-"$3}' > combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed
 	rm -f combined/shRNA/tmp*_shRNA_clusters_${analysisname}.bed
 	#### To create a matrix of peak presence in each sample
 	printf "\nCreating matrix file for ${analysisname}\n"
