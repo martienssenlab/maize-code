@@ -65,7 +65,7 @@ if ( grepl( "RAMPAGE", included_samples, fixed = TRUE) ) {
     mutate(labelRAMPAGE=paste0(bothstrandsRAMPAGE," (",countRAMPAGE,")"))
   tableTOT$labelRAMPAGE<-as.factor(tableTOT$labelRAMPAGE)
   
-  plot2<-ggplot(tableTOT, aes(PeakQuality, RAMPAGE+0.1, color=labelRAMPAGE)) +
+  plot2<-ggplot(tableTOT, aes(PeakQuality, RAMPAGE+0.01, color=labelRAMPAGE)) +
     geom_point() +
     scale_color_manual(values=c("grey20","#cc00cc")) +
     scale_y_continuous(trans="log10",
@@ -126,7 +126,7 @@ if ( grepl( "shRNA", included_samples, fixed = TRUE) ) {
 }
 
 if ( grepl( "RNAseq", included_samples, fixed = TRUE) && grepl( "RAMPAGE", included_samples, fixed = TRUE) ) {
-  plot4<-ggplot(tableTOT, aes(RNAseq+0.1, RAMPAGE+0.1, size=PeakQuality, alpha=PeakQuality, color=PeakQuality)) +
+  plot4<-ggplot(tableTOT, aes(RNAseq+0.1, RAMPAGE+0.01, size=PeakQuality, alpha=PeakQuality, color=PeakQuality)) +
   geom_point() +
   scale_color_gradient(low="grey20", high="#cc00cc", guide="legend", trans="log10") +
   scale_alpha_continuous(guide="legend", trans="log10") +
@@ -184,7 +184,7 @@ if ( grepl( "RNAseq", included_samples, fixed = TRUE) && grepl( "shRNA", include
 }
 
 if ( grepl( "RAMPAGE", included_samples, fixed = TRUE) && grepl( "shRNA", included_samples, fixed = TRUE) ) {
-  plot5<-ggplot(tableTOT, aes(RAMPAGE+0.1, shRNA+0.1, size=PeakQuality, alpha=PeakQuality, color=PeakQuality)) +
+  plot5<-ggplot(tableTOT, aes(RAMPAGE+0.01, shRNA+0.1, size=PeakQuality, alpha=PeakQuality, color=PeakQuality)) +
   geom_point() +
   scale_color_gradient(low="grey20", high="#0394fc", guide="legend", trans="log10") +
   scale_alpha_continuous(guide="legend", trans="log10") +
