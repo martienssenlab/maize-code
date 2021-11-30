@@ -350,9 +350,16 @@ elif [ ${#rnaseq_sample_list[@]} -eq 1 ]; then
 	for ((j=1;j<=numreps;j++))
 	do
 		printf "${namei}_Rep${j}\t${namei}\t1\n" >> combined/DEG/samples_${analysisname}.txt
-		awk -v OFS="\t" -v t=${namei} -v j=${j} 'BEGIN {print t"_Rep"j}  $1 !~ /^N_/ {print $2}' RNA/mapped/map_${sample}_Rep${j}_ReadsPerGene.out.tab > combined/DEG/col_AZ_${i}_${analysisname}_${sample}_Rep${j}.txt
-		if [ $j -eq 1 ]; then
-			awk -v OFS="\t" 'BEGIN {print "gene_ID"}  $1 !~ /^N_/ {print $1}' RNA/mapped/map_${sample}_Rep${j}_ReadsPerGene.out.tab > combined/DEG/col_AA_0_${analysisname}.txt
+		if [ $(grep "gene:" RNA/mapped/map_${sample}_Rep1_ReadsPerGene.out.tab | wc -l) -gt 0 ]; then
+			grep "gene:" RNA/mapped/map_${sample}_Rep${j}_ReadsPerGene.out.tab | sed 's/gene://' | awk -v OFS="\t" -v t=${namei} -v j=${j} 'BEGIN {print t"_Rep"j} {print $2}' > combined/DEG/col_AZ_${i}_${analysisname}_${sample}_Rep${j}.txt
+			if [ $j -eq 1 ]; then
+				grep "gene:" RNA/mapped/map_${sample}_Rep${j}_ReadsPerGene.out.tab | sed 's/gene://' | awk -v OFS="\t" 'BEGIN {print "gene_ID"} {print $1}' > combined/DEG/col_AA_0_${analysisname}.txt
+			fi
+		else
+			awk -v OFS="\t" -v t=${namei} -v j=${j} 'BEGIN {print t"_Rep"j}  $1 !~ /^N_/ {print $2}' RNA/mapped/map_${sample}_Rep${j}_ReadsPerGene.out.tab > combined/DEG/col_AZ_${i}_${analysisname}_${sample}_Rep${j}.txt
+			if [ $j -eq 1 ]; then
+				awk -v OFS="\t" 'BEGIN {print "gene_ID"}  $1 !~ /^N_/ {print $1}' RNA/mapped/map_${sample}_Rep${j}_ReadsPerGene.out.tab > combined/DEG/col_AA_0_${analysisname}.txt
+			fi
 		fi
 	done
 	paste combined/DEG/col_A*_${analysisname}* > combined/DEG/counts_${analysisname}.txt
