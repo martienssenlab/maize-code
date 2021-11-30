@@ -864,206 +864,208 @@ rm -f combined/matrix/*${analysisname}*
 #########################################################################################
 
 #### To make heatmap and profile with deeptools for each tissue based on grouped expression levels (if both RNA and ChIP samples are present in a tissue)
+#### (Only works if 2 or more tissues since it requires the RNA count table. Should be updated to work with only one tissue since no DEG call is required)
 
-for tissue in ${rnaseq_tissue_list[*]}
-do
-	if [[ " ${chip_tissue_list[@]} " =~ " ${tissue} " ]]; then
-		tissue_chip_bw_list=()
-		for bw in ${chip_bw_list[*]}
-		do
-			if [[ ${bw} =~ ${tissue} ]]; then
-				tissue_chip_bw_list+=("${bw}")
+if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
+	for tissue in ${rnaseq_tissue_list[*]}
+	do
+		if [[ " ${chip_tissue_list[@]} " =~ " ${tissue} " ]]; then
+			tissue_chip_bw_list=()
+			for bw in ${chip_bw_list[*]}
+			do
+				if [[ ${bw} =~ ${tissue} ]]; then
+					tissue_chip_bw_list+=("${bw}")
+				fi
+			done
+			tissue_labels_chip=()
+			for sample in ${chip_sample_list[*]}
+			do
+				if [[ ${sample} =~ ${tissue} ]]; then
+					tissue_labels_chip+=("${sample}")
+				fi
+			done
+			tissue_rnaseq_bw_list_plus=()
+			for bw in ${rnaseq_bw_list_plus[*]}
+			do					
+				if [[ ${bw} =~ ${tissue} ]]; then
+					tissue_rnaseq_bw_list_plus+=("${bw}")
+				fi
+			done
+			tissue_rnaseq_bw_list_minus=()
+			for bw in ${rnaseq_bw_list_minus[*]}
+			do					
+				if [[ ${bw} =~ ${tissue} ]]; then
+					tissue_rnaseq_bw_list_minus+=("${bw}")
+				fi
+			done
+			tissue_labels_rna=()
+			for sample in ${rnaseq_sample_list[*]}
+			do
+				if [[ ${sample} =~ ${tissue} ]]; then
+					tissue_labels_rna+=("${sample}")
+				fi
+			done
+			tissue_rampage_bw_list_plus=()
+			for bw in ${rampage_bw_list_plus[*]}
+			do					
+				if [[ ${bw} =~ ${tissue} ]]; then
+					tissue_rampage_bw_list_plus+=("${bw}")
+				fi
+			done
+			tissue_rampage_bw_list_minus=()
+			for bw in ${rampage_bw_list_minus[*]}
+			do					
+				if [[ ${bw} =~ ${tissue} ]]; then
+					tissue_rampage_bw_list_minus+=("${bw}")
+				fi
+			done
+			tissue_labels_rampage=()
+			for sample in ${rampage_sample_list[*]}
+			do
+				if [[ ${sample} =~ ${tissue} ]]; then
+					tissue_labels_rampage+=("${sample}")
+				fi
+			done
+			tissue_shrna_bw_list_plus=()
+			for bw in ${shrna_bw_list_plus[*]}
+			do					
+				if [[ ${bw} =~ ${tissue} ]]; then
+					tissue_shrna_bw_list_plus+=("${bw}")
+				fi
+			done
+			tissue_shrna_bw_list_minus=()
+			for bw in ${shrna_bw_list_minus[*]}
+			do					
+				if [[ ${bw} =~ ${tissue} ]]; then
+					tissue_shrna_bw_list_minus+=("${bw}")
+				fi
+			done
+			tissue_labels_shrna=()
+			for sample in ${shrna_sample_list[*]}
+			do
+				if [[ ${sample} =~ ${tissue} ]]; then
+					tissue_labels_shrna+=("${sample}")
+				fi
+			done
+			printf "Clustering genes by expression levels for ${tissue}\n"
+			cols=($(awk -v ORS=" " -v t=${tissue} 'NR==1 {for(i=1;i<=NF;i++) if ($i~t) print i}' combined/DEG/counts_${analysisname}.txt))
+			reps=${#cols[@]}
+			awk -v OFS="\t" -v d="${cols}" -v t=${reps} 'BEGIN {split(d, a, " ")} NR > 1 {b=0; for (i in a) b+=$(a[i]); c=b/t; print $1,c}' combined/DEG/counts_${analysisname}.txt > combined/DEG/temp_counts_${analysisname}_${tissue}.txt
+			if [ -s combined/DEG/temp_expression_${analysisname}_${tissue}.bed ]; then
+				rm -f combined/DEG/temp_expression_${analysisname}_${tissue}.bed
 			fi
-		done
-		tissue_labels_chip=()
-		for sample in ${chip_sample_list[*]}
-		do
-			if [[ ${sample} =~ ${tissue} ]]; then
-				tissue_labels_chip+=("${sample}")
+			while read ID exp
+			do
+				grep "${ID}" ${regionfile} | awk -v OFS="\t" -v c=${exp} '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {l=$3-$2; v=1000*c/l; print $1,$2,$3,".",v,$6,$4}' >> combined/DEG/temp_expression_${analysisname}_${tissue}.bed
+			done < combined/DEG/temp_counts_${analysisname}_${tissue}.txt
+			if [[ ${ref} == "B73_v4" ]]; then
+				sort -k5,5gr combined/DEG/temp_expression_${analysisname}_${tissue}.bed | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$8,$5,$6}' > combined/DEG/sorted_expression_${analysisname}_${tissue}.bed
+			else
+				sort -k5,5gr combined/DEG/temp_expression_${analysisname}_${tissue}.bed | awk -F"[=;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$8,$5,$6}' > combined/DEG/sorted_expression_${analysisname}_${tissue}.bed
 			fi
-		done
-		tissue_rnaseq_bw_list_plus=()
-		for bw in ${rnaseq_bw_list_plus[*]}
-		do					
-			if [[ ${bw} =~ ${tissue} ]]; then
-				tissue_rnaseq_bw_list_plus+=("${bw}")
-			fi
-		done
-		tissue_rnaseq_bw_list_minus=()
-		for bw in ${rnaseq_bw_list_minus[*]}
-		do					
-			if [[ ${bw} =~ ${tissue} ]]; then
-				tissue_rnaseq_bw_list_minus+=("${bw}")
-			fi
-		done
-		tissue_labels_rna=()
-		for sample in ${rnaseq_sample_list[*]}
-		do
-			if [[ ${sample} =~ ${tissue} ]]; then
-				tissue_labels_rna+=("${sample}")
-			fi
-		done
-		tissue_rampage_bw_list_plus=()
-		for bw in ${rampage_bw_list_plus[*]}
-		do					
-			if [[ ${bw} =~ ${tissue} ]]; then
-				tissue_rampage_bw_list_plus+=("${bw}")
-			fi
-		done
-		tissue_rampage_bw_list_minus=()
-		for bw in ${rampage_bw_list_minus[*]}
-		do					
-			if [[ ${bw} =~ ${tissue} ]]; then
-				tissue_rampage_bw_list_minus+=("${bw}")
-			fi
-		done
-		tissue_labels_rampage=()
-		for sample in ${rampage_sample_list[*]}
-		do
-			if [[ ${sample} =~ ${tissue} ]]; then
-				tissue_labels_rampage+=("${sample}")
-			fi
-		done
-		tissue_shrna_bw_list_plus=()
-		for bw in ${shrna_bw_list_plus[*]}
-		do					
-			if [[ ${bw} =~ ${tissue} ]]; then
-				tissue_shrna_bw_list_plus+=("${bw}")
-			fi
-		done
-		tissue_shrna_bw_list_minus=()
-		for bw in ${shrna_bw_list_minus[*]}
-		do					
-			if [[ ${bw} =~ ${tissue} ]]; then
-				tissue_shrna_bw_list_minus+=("${bw}")
-			fi
-		done
-		tissue_labels_shrna=()
-		for sample in ${shrna_sample_list[*]}
-		do
-			if [[ ${sample} =~ ${tissue} ]]; then
-				tissue_labels_shrna+=("${sample}")
-			fi
-		done
-		printf "Clustering genes by expression levels for ${tissue}\n"
-		cols=($(awk -v ORS=" " -v t=${tissue} 'NR==1 {for(i=1;i<=NF;i++) if ($i~t) print i}' combined/DEG/counts_${analysisname}.txt))
-		reps=${#cols[@]}
-		awk -v OFS="\t" -v d="${cols}" -v t=${reps} 'BEGIN {split(d, a, " ")} NR > 1 {b=0; for (i in a) b+=$(a[i]); c=b/t; print $1,c}' combined/DEG/counts_${analysisname}.txt > combined/DEG/temp_counts_${analysisname}_${tissue}.txt
-		if [ -s combined/DEG/temp_expression_${analysisname}_${tissue}.bed ]; then
-			rm -f combined/DEG/temp_expression_${analysisname}_${tissue}.bed
-		fi
-		while read ID exp
-		do
-			grep "${ID}" ${regionfile} | awk -v OFS="\t" -v c=${exp} '( $1 ~ /^[0-9]/ ) || ( $1 ~ /^chr[0-9]*$/ ) || ( $1 ~ /^Chr[0-9]*$/ ) {l=$3-$2; v=1000*c/l; print $1,$2,$3,".",v,$6,$4}' >> combined/DEG/temp_expression_${analysisname}_${tissue}.bed
-		done < combined/DEG/temp_counts_${analysisname}_${tissue}.txt
-		if [[ ${ref} == "B73_v4" ]]; then
-			sort -k5,5gr combined/DEG/temp_expression_${analysisname}_${tissue}.bed | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$8,$5,$6}' > combined/DEG/sorted_expression_${analysisname}_${tissue}.bed
-		else
-			sort -k5,5gr combined/DEG/temp_expression_${analysisname}_${tissue}.bed | awk -F"[=;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$8,$5,$6}' > combined/DEG/sorted_expression_${analysisname}_${tissue}.bed
-		fi
 				
-		awk -v OFS="\t" -v a=${analysisname} -v b=${tissue} '{if ($5==0) printf $0"\n" > "combined/DEG/temp_sorted_"a"_"b"_exp0.bed"; else printf $0"\n" > "combined/DEG/temp_sorted_"a"_"b"_expA.bed"}' combined/DEG/sorted_expression_${analysisname}_${tissue}.bed
-		tot=$(wc -l combined/DEG/temp_sorted_${analysisname}_${tissue}_expA.bed | awk '{print $1}')
-		bin=$((tot/5))
-		min=0
-		max=${bin}
-		for (( i = 1; i <= 5; i++ ))
-		do
-			awk -v n=${min} -v m=${max} 'NR>=n && NR <=m' combined/DEG/temp_sorted_${analysisname}_${tissue}_expA.bed > combined/DEG/temp_sorted_${analysisname}_${tissue}_exp${i}.bed
-			min=$((min+bin))
-			max=$((max+bin))
-		done
+			awk -v OFS="\t" -v a=${analysisname} -v b=${tissue} '{if ($5==0) printf $0"\n" > "combined/DEG/temp_sorted_"a"_"b"_exp0.bed"; else printf $0"\n" > "combined/DEG/temp_sorted_"a"_"b"_expA.bed"}' combined/DEG/sorted_expression_${analysisname}_${tissue}.bed
+			tot=$(wc -l combined/DEG/temp_sorted_${analysisname}_${tissue}_expA.bed | awk '{print $1}')
+			bin=$((tot/5))
+			min=0
+			max=${bin}
+			for (( i = 1; i <= 5; i++ ))
+			do
+				awk -v n=${min} -v m=${max} 'NR>=n && NR <=m' combined/DEG/temp_sorted_${analysisname}_${tissue}_expA.bed > combined/DEG/temp_sorted_${analysisname}_${tissue}_exp${i}.bed
+				min=$((min+bin))
+				max=$((max+bin))
+			done
 
-		sorted_regions=()
-		regions_labels=()
-		for i in 1 2 3 4 5 0
-		do
-			case "${i}" in
-				1) name="Top20%";;
-				2) name="20-40%";;
-				3) name="40-60%";;
-				4) name="60-80%";;
-				5) name="Bottom20%";;
-				0) name="Not_expressed";;
-			esac
-			n=$(wc -l combined/DEG/temp_sorted_${analysisname}_${tissue}_exp${i}.bed | awk '{print $1}')
-			regions_labels+=("${name}($n)")	
-			sorted_regions+=("combined/DEG/temp_sorted_${analysisname}_${tissue}_exp${i}.bed")
-			\cp -Tf combined/DEG/temp_sorted_${analysisname}_${tissue}_exp${i}.bed combined/DEG/temp_sorted_${analysisname}_${tissue}_exp${i}.txt
-		done	
-		for strand in plus minus
-		do
-			case "${strand}" in
-				plus) 	bw_list="${tissue_chip_bw_list[*]} ${tissue_rnaseq_bw_list_plus[*]} ${tissue_rampage_bw_list_plus[*]} ${tissue_shrna_bw_list_plus[*]}"
-					sign="+";;
-				minus) 	bw_list="${tissue_chip_bw_list[*]} ${tissue_rnaseq_bw_list_minus[*]} ${tissue_rampage_bw_list_minus[*]} ${tissue_shrna_bw_list_minus[*]}"
-					sign="-";;
-			esac
-			regions=()
+			sorted_regions=()
+			regions_labels=()
 			for i in 1 2 3 4 5 0
 			do
-				awk -v OFS="\t" -v s=$sign '$6==s' combined/DEG/temp_sorted_${analysisname}_${tissue}_exp${i}.txt > combined/DEG/temp_sorted_${analysisname}_${tissue}_exp${i}.bed
-			done
-			printf "\nComputing scale-regions $strand strand matrix for split expression in ${tissue} in ${analysisname}\n"
-			computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${sorted_regions[@]} -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/regions_${analysisname}_${strand}.gz --quiet
-			printf "\nComputing reference-point on TSS $strand strand matrix for split expression in ${tissue} in $analysisname\n"
-			computeMatrix reference-point --referencePoint "TSS" --missingDataAsZero --skipZeros -R ${sorted_regions[@]} -S ${bw_list} -bs 50 -b 2000 -a 8000 -p ${threads} -o combined/matrix/tss_${analysisname}_${strand}.gz --quiet
-		done
-
-		### Merging stranded matrix, extracting scales and plotting heatmaps
-		for matrix in regions tss
-		do
-			tissue_labels="${tissue_labels_chip[*]} ${tissue_labels_rna[*]} ${tissue_labels_rampage[*]} ${tissue_labels_shrna[*]}"
-			printf "\nMerging stranded matrices aligned by ${matrix} for split expression in ${tissue} in ${analysisname}\n"
-			computeMatrixOperations rbind -m combined/matrix/${matrix}_${analysisname}_plus.gz combined/matrix/${matrix}_${analysisname}_minus.gz -o combined/matrix/${matrix}_${analysisname}.gz
-			printf "\nGetting scales for ${matrix} matrix for split expression in ${tissue} in ${analysisname}\n"
-			computeMatrixOperations dataRange -m combined/matrix/${matrix}_${analysisname}.gz > combined/matrix/values_${matrix}_${analysisname}.txt
-			mins=()
-			maxs=()
-			for sample in ${tissue_labels[@]}
+				case "${i}" in
+					1) name="Top20%";;
+					2) name="20-40%";;
+					3) name="40-60%";;
+					4) name="60-80%";;
+					5) name="Bottom20%";;
+					0) name="Not_expressed";;
+				esac
+				n=$(wc -l combined/DEG/temp_sorted_${analysisname}_${tissue}_exp${i}.bed | awk '{print $1}')
+				regions_labels+=("${name}($n)")	
+				sorted_regions+=("combined/DEG/temp_sorted_${analysisname}_${tissue}_exp${i}.bed")
+				\cp -Tf combined/DEG/temp_sorted_${analysisname}_${tissue}_exp${i}.bed combined/DEG/temp_sorted_${analysisname}_${tissue}_exp${i}.txt
+			done	
+			for strand in plus minus
 			do
-				mini=$(grep ${sample} combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $5}')
-				maxi=$(grep ${sample} combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $6}')
-				test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
-				if [[ ${test} == "yes" ]]; then
-					mins+=("0")
-					maxs+=("0.01")
-				else
-					mins+=("${mini}")
-					maxs+=("${maxi}")
-				fi
+				case "${strand}" in
+					plus) 	bw_list="${tissue_chip_bw_list[*]} ${tissue_rnaseq_bw_list_plus[*]} ${tissue_rampage_bw_list_plus[*]} ${tissue_shrna_bw_list_plus[*]}"
+						sign="+";;
+					minus) 	bw_list="${tissue_chip_bw_list[*]} ${tissue_rnaseq_bw_list_minus[*]} ${tissue_rampage_bw_list_minus[*]} ${tissue_shrna_bw_list_minus[*]}"
+						sign="-";;
+				esac
+				regions=()
+				for i in 1 2 3 4 5 0
+				do
+					awk -v OFS="\t" -v s=$sign '$6==s' combined/DEG/temp_sorted_${analysisname}_${tissue}_exp${i}.txt > combined/DEG/temp_sorted_${analysisname}_${tissue}_exp${i}.bed
+				done
+				printf "\nComputing scale-regions $strand strand matrix for split expression in ${tissue} in ${analysisname}\n"
+				computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${sorted_regions[@]} -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/regions_${analysisname}_${strand}.gz --quiet
+				printf "\nComputing reference-point on TSS $strand strand matrix for split expression in ${tissue} in $analysisname\n"
+				computeMatrix reference-point --referencePoint "TSS" --missingDataAsZero --skipZeros -R ${sorted_regions[@]} -S ${bw_list} -bs 50 -b 2000 -a 8000 -p ${threads} -o combined/matrix/tss_${analysisname}_${strand}.gz --quiet
 			done
-			computeMatrixOperations sort -m combined/matrix/${matrix}_${analysisname}.gz -R ${sorted_regions[@]} -o combined/matrix/final_${matrix}_${analysisname}.gz
-			plotProfile -m combined/matrix/final_${matrix}_${analysisname}.gz -out combined/plots/split_expression_${tissue}_${analysisname}_profile_${matrix}.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType mean --outFileNameData combined/matrix/values_${matrix}_${tissue}_${analysisname}.txt
-			ymins=()
-			ymaxs=()
-			for sample in ${tissue_labels[@]}
-			do
-			 	ymini=$(grep ${sample} combined/matrix/values_${matrix}_${tissue}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
-				ymaxi=$(grep ${sample} combined/matrix/values_${matrix}_${tissue}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.2}')
-				test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
-				if [[ ${test} == "yes" ]]; then
-					ymins+=("0")
-					ymaxs+=("0.01")
-				else
-					ymins+=("${ymini}")
-					ymaxs+=("${ymaxi}")
-				fi
-			done
-			printf "\nPlotting heatmap for ${matrix} matrix for split expression in ${tissue} in ${analysisname} scaling by sample\n"
-			plotHeatmap -m combined/matrix/final_${matrix}_${analysisname}.gz -out combined/plots/split_expression_${tissue}_${analysisname}_heatmap_${matrix}.pdf --sortRegions keep --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
-			if [[ ${matrix} == "tss" ]]; then
-				printf "\nPlotting heatmap for ${matrix} matrix for split expression in ${tissue} in ${analysisname} scaling by sample by sorting by length\n"
-				plotHeatmap -m combined/matrix/final_${matrix}_${analysisname}.gz -out combined/plots/split_expression_${tissue}_${analysisname}_heatmap_${matrix}_v2.pdf --sortRegions descend --sortUsing region_length --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
-			fi
-			printf "\nPlotting profile for ${matrix} matrix for split expression in ${tissue} in ${analysisname} scaling by sample\n"
-			plotProfile -m combined/matrix/final_${matrix}_${analysisname}.gz -out combined/plots/split_expression_${tissue}_${analysisname}_profile_${matrix}.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType mean --yMin ${ymins[@]} --yMax ${ymaxs[@]}
-		done
-	fi
-done
 
-rm -f combined/matrix/*${analysisname}*
-rm -f combined/DEG/temp*${analysisname}*
+			### Merging stranded matrix, extracting scales and plotting heatmaps
+			for matrix in regions tss
+			do
+				tissue_labels="${tissue_labels_chip[*]} ${tissue_labels_rna[*]} ${tissue_labels_rampage[*]} ${tissue_labels_shrna[*]}"
+				printf "\nMerging stranded matrices aligned by ${matrix} for split expression in ${tissue} in ${analysisname}\n"
+				computeMatrixOperations rbind -m combined/matrix/${matrix}_${analysisname}_plus.gz combined/matrix/${matrix}_${analysisname}_minus.gz -o combined/matrix/${matrix}_${analysisname}.gz
+				printf "\nGetting scales for ${matrix} matrix for split expression in ${tissue} in ${analysisname}\n"
+				computeMatrixOperations dataRange -m combined/matrix/${matrix}_${analysisname}.gz > combined/matrix/values_${matrix}_${analysisname}.txt
+				mins=()
+				maxs=()
+				for sample in ${tissue_labels[@]}
+				do
+					mini=$(grep ${sample} combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $5}')
+					maxi=$(grep ${sample} combined/matrix/values_${matrix}_${analysisname}.txt | awk '{print $6}')
+					test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+					if [[ ${test} == "yes" ]]; then
+						mins+=("0")
+						maxs+=("0.01")
+					else
+						mins+=("${mini}")
+						maxs+=("${maxi}")
+					fi
+				done
+				computeMatrixOperations sort -m combined/matrix/${matrix}_${analysisname}.gz -R ${sorted_regions[@]} -o combined/matrix/final_${matrix}_${analysisname}.gz
+				plotProfile -m combined/matrix/final_${matrix}_${analysisname}.gz -out combined/plots/split_expression_${tissue}_${analysisname}_profile_${matrix}.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType mean --outFileNameData combined/matrix/values_${matrix}_${tissue}_${analysisname}.txt
+				ymins=()
+				ymaxs=()
+				for sample in ${tissue_labels[@]}
+				do
+			 		ymini=$(grep ${sample} combined/matrix/values_${matrix}_${tissue}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
+					ymaxi=$(grep ${sample} combined/matrix/values_${matrix}_${tissue}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.2}')
+					test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+					if [[ ${test} == "yes" ]]; then
+						ymins+=("0")
+						ymaxs+=("0.01")
+					else
+						ymins+=("${ymini}")
+						ymaxs+=("${ymaxi}")
+					fi
+				done
+				printf "\nPlotting heatmap for ${matrix} matrix for split expression in ${tissue} in ${analysisname} scaling by sample\n"
+				plotHeatmap -m combined/matrix/final_${matrix}_${analysisname}.gz -out combined/plots/split_expression_${tissue}_${analysisname}_heatmap_${matrix}.pdf --sortRegions keep --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
+				if [[ ${matrix} == "tss" ]]; then
+					printf "\nPlotting heatmap for ${matrix} matrix for split expression in ${tissue} in ${analysisname} scaling by sample by sorting by length\n"
+					plotHeatmap -m combined/matrix/final_${matrix}_${analysisname}.gz -out combined/plots/split_expression_${tissue}_${analysisname}_heatmap_${matrix}_v2.pdf --sortRegions descend --sortUsing region_length --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
+				fi
+				printf "\nPlotting profile for ${matrix} matrix for split expression in ${tissue} in ${analysisname} scaling by sample\n"
+				plotProfile -m combined/matrix/final_${matrix}_${analysisname}.gz -out combined/plots/split_expression_${tissue}_${analysisname}_profile_${matrix}.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType mean --yMin ${ymins[@]} --yMax ${ymaxs[@]}
+			done
+		fi
+	done
+	rm -f combined/matrix/*${analysisname}*
+	rm -f combined/DEG/temp*${analysisname}*
+fi
 
 #########################################################################################
 ####################################### PART11 ##########################################
