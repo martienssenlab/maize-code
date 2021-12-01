@@ -1179,8 +1179,13 @@ do
 		printf "\nMaking heatmaps of distal enhancers (H3K27ac peak >2kb from TSS) in tissue ${tissue}\n"
 		printf "\nGetting bed file of distal enhancers for tissue ${tissue}\n"
 		bedtools sort -g ${ref_dir}/chrom.sizes -i ChIP/peaks/best_peaks_${line}_${tissue}_H3K27ac.bed > combined/peaks/temp_${analysisname}_${tissue}.bed
-		bedtools sort -g ${ref_dir}/chrom.sizes -i combined/DEG/sorted_expression_${analysisname}_${tissue}.bed > combined/peaks/temp_${analysisname}_${tissue}_expression.bed
-		bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {if ($17>= 2000 && $16=="+") print $1,$2+$10,$12,$4,$5,$16,$14,$15; else if ($17<= -2000 && $16=="-") print $1,$13,$2+$10,$4,$5,$16,$14,$15}' | sort -k5,5nr > combined/peaks/distal_${analysisname}_${tissue}.bed
+		if [ -s combined/DEG/sorted_expression_${analysisname}_${tissue}.bed ]; then
+			bedtools sort -g ${ref_dir}/chrom.sizes -i combined/DEG/sorted_expression_${analysisname}_${tissue}.bed > combined/peaks/temp_${analysisname}_${tissue}_expression.bed
+			bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {if ($17>= 2000 && $16=="+") print $1,$2+$10,$12,$4,$5,$16,$14,$15; else if ($17<= -2000 && $16=="-") print $1,$13,$2+$10,$4,$5,$16,$14,$15}' | sort -k5,5nr > combined/peaks/distal_${analysisname}_${tissue}.bed
+		else
+			bedtools sort -g ${ref_dir}/chrom.sizes -i ${regionfile} > combined/peaks/temp_${analysisname}_${tissue}_no_expression.bed
+			bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_no_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {if ($17>= 2000 && $16=="+") print $1,$2+$10,$12,$4,$5,$16,$14; else if ($17<= -2000 && $16=="-") print $1,$13,$2+$10,$4,$5,$16,$14}' | sort -k5,5nr > combined/peaks/distal_${analysisname}_${tissue}.bed
+		fi
 		tot=$(wc -l combined/peaks/distal_${analysisname}_${tissue}.bed | awk '{print $1}')
 		bin=$((tot/5))
 		min=0
@@ -1202,8 +1207,10 @@ do
 				3) name="40-60%";;
 				4) name="60-80%";;
 				5) name="Bottom20%";;
-			esac			
-			awk -v OFS="\t" -v g=${name} -v t=${tissue} '{print t,$4,$5,$7,$8,g }' combined/peaks/temp_distal_${analysisname}_${tissue}_group${i}.bed >> combined/peaks/temp2_distal_${analysisname}_${tissue}.txt
+			esac
+			if [ -s combined/DEG/sorted_expression_${analysisname}_${tissue}.bed ]; then
+				awk -v OFS="\t" -v g=${name} -v t=${tissue} '{print t,$4,$5,$7,$8,g }' combined/peaks/temp_distal_${analysisname}_${tissue}_group${i}.bed >> combined/peaks/temp2_distal_${analysisname}_${tissue}.txt
+			fi
 			n=$(wc -l combined/peaks/temp_distal_${analysisname}_${tissue}_group${i}.bed | awk '{print $1}')
 			regions_labels+=("${name}($n)")	
 			sorted_regions+=("combined/peaks/temp_distal_${analysisname}_${tissue}_group${i}.bed")
@@ -1288,7 +1295,7 @@ do
 		printf "\nTissue ${tissue} will not be processed (H3K27ac is present? ${test_k27ac}\tNumber of datasets in ${tissue}: ${#tissue_labels[*]})\n"
 	fi
 done
-if [[ ${test_k27ac} == "yes" ]] && [[ ${#tissue_bw_plus[@]} -ge 2 ]]; then
+if [[ ${test_k27ac} == "yes" ]] && [[ ${#tissue_bw_plus[@]} -ge 2 ]] && [ -s combined/DEG/sorted_expression_${analysisname}_${tissue}.bed ]; then
 	printf "Tissue\tPeak_ID\tPeakQuality\tGID\tRPKM\tGroup\n" > combined/peaks/all_grouped_distal_peaks_${analysisname}_*.txt
 	cat combined/peaks/temp2_distal_${analysisname}_*.txt > combined/peaks/all_grouped_distal_peaks_${analysisname}.txt
 fi
@@ -1375,27 +1382,35 @@ do
 	done	
 	printf "${header}\n" > combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt
 	paste combined/peaks/col_*_${analysisname}_${line}_${tissue}.txt >> combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt
-	
+	plot="No"
 	if [[ ${rnaseq} == 1 ]] && [[ ${rampage} == 1 ]] && [[ ${shrna} == 1 ]]; then
 		included_samples="RNAseq_and_RAMPAGE_and_shRNA"
+		plot="Yes"
 	elif [[ ${rnaseq} == 1 ]] && [[ ${rampage} == 1 ]]; then
 		included_samples="RNAseq_and_RAMPAGE"
+		plot="Yes"
 	elif [[ ${rnaseq} == 1 ]] && [[ ${shrna} == 1 ]]; then
 		included_samples="RNAseq_and_shRNA"
+		plot="Yes"
 	elif [[ ${rampage} == 1 ]] && [[ ${shrna} == 1 ]]; then
 		included_samples="RAMPAGE_and_shRNA"
+		plot="Yes"
 	elif [[ ${rnaseq} == 1 ]]; then
 		included_samples="RNAseq"
+		plot="Yes"
 	elif [[ ${rampage} == 1 ]]; then
 		included_samples="RAMPAGE"
+		plot="Yes"
 	elif [[ ${shRNA} == 1 ]]; then
 		included_samples="shRNA"
+		plot="Yes"
 	fi
-
-	#### To plot correlation between RNA expression datasets at distal peaks
-	printf "\nCreating scatter plot for ${analysisname} ${tissue} with R version:\n"
-	R --version
-	Rscript --vanilla ${mc_dir}/MaizeCode_R_scatter_distal_peaks.r ${analysisname} ${tissue} ${line} ${included_samples} combined/peaks/all_grouped_distal_peaks_${analysisname}.txt combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt
+	if [[ ${plot} == "Yes" ]]; then
+		#### To plot correlation between RNA expression datasets at distal peaks
+		printf "\nCreating scatter plot for ${analysisname} ${tissue} with R version:\n"
+		R --version
+		Rscript --vanilla ${mc_dir}/MaizeCode_R_scatter_distal_peaks.r ${analysisname} ${tissue} ${line} ${included_samples} combined/peaks/all_grouped_distal_peaks_${analysisname}.txt combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt
+	fi
 done
 
 ############################################################################################
