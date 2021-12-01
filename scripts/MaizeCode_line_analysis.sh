@@ -1295,7 +1295,8 @@ do
 		printf "\nTissue ${tissue} will not be processed (H3K27ac is present? ${test_k27ac}\tNumber of datasets in ${tissue}: ${#tissue_labels[*]})\n"
 	fi
 done
-if [[ ${test_k27ac} == "yes" ]] && [[ ${#tissue_bw_plus[@]} -ge 2 ]] && [ -s combined/DEG/sorted_expression_${analysisname}_${tissue}.bed ]; then
+numtissue=$(ls -1f combined/peaks/temp2_distal_${analysisname}_*.txt | wc -l)
+if [[ ${numtissue} -ge 1 ]]; then
 	printf "Tissue\tPeak_ID\tPeakQuality\tGID\tRPKM\tGroup\n" > combined/peaks/all_grouped_distal_peaks_${analysisname}_*.txt
 	cat combined/peaks/temp2_distal_${analysisname}_*.txt > combined/peaks/all_grouped_distal_peaks_${analysisname}.txt
 fi
