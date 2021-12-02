@@ -370,7 +370,7 @@ fi
 
 uniq_rnaseq_tissue_list=($(printf "%s\n" "${rnaseq_tissue_list[@]}" | sort -u))
 
-if [ ! -s combined/DEG/genes_rpkm_${analysisname}.txt ] && [[ ${#uniq_rnaseq_tissue_list[@]} -ge 2 ]]; then
+if [ ! -s combined/DEG/genes_rpkm_${analysisname}.txt ] && [[ ${#uniq_rnaseq_tissue_list[@]} -ge 1 ]]; then
 	for tissue in ${uniq_rnaseq_tissue_list[@]}
 	do
 		printf "Gathering gene expression levels for ${tissue}\n"
@@ -1466,7 +1466,7 @@ if [[ ${#uniq_rampage_tissue_list[*]} -ge 1 ]] && [[ ${ref} == "B73_v4" ]]; then
 	paste combined/TSS/temp_col_TSS_${analysisname}_*.txt | uniq > combined/TSS/matrix_upset_TSS_${analysisname}.txt
 	rm -f combined/TSS/temp_col_TSS_${analysisname}_*.txt
 	#### To make an Upset plot highlighting peaks in gene bodies
-	printf "\nCreating Distirbution and Upset plot for TSS in ${analysisname} with R version:\n"
+	printf "\nCreating distribution and Upset plot for TSS in ${analysisname} with R version:\n"
 	R --version
 	Rscript --vanilla ${mc_dir}/MaizeCode_R_TSS_distribution_upset.r ${analysisname} combined/TSS/Table_TSS_tissues_${analysisname}.txt combined/TSS/matrix_upset_TSS_${analysisname}.txt combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed combined/DEG/genes_rpkm_${analysisname}.txt
 fi
