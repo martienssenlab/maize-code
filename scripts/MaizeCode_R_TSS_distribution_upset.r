@@ -11,10 +11,9 @@ library(purrr)
 args = commandArgs(trailingOnly=TRUE)
 
 analysisname<-args[1]
-plotupset<-args[2]
 
 ### For distribution plot
-table<-read.delim(args[3], header = TRUE)
+table<-read.delim(args[2], header = TRUE)
 table$Gene<-as.factor(table$Gene)
 table$TE<-as.factor(table$TE)
 table$Label<-factor(table$Label, 
@@ -59,65 +58,63 @@ dev.off()
 
 ### For Upset plot
 
-if ( plotupset == "Yes" ) {
-	inputable<-read.delim(args[4], header = TRUE)
-	inputable$Label<-factor(inputable$Label, levels = c("helitron","LINE_element","LTR_retrotransposon",
+inputable<-read.delim(args[3], header = TRUE)
+inputable$Label<-factor(inputable$Label, levels = c("helitron","LINE_element","LTR_retrotransposon",
                                 "SINE_element","solo_LTR","terminal_inverted_repeat_element","Intergenic","Terminator","Gene_body",
                                 "Promoter"))
-	set1<-colnames(inputable)
-	sampleCols<-set1[! set1 %in% c("Line","Peak_ID","Gene","TE","Label","Labelcombined","GID")]
+set1<-colnames(inputable)
+sampleCols<-set1[! set1 %in% c("Line","Peak_ID","Gene","TE","Label","Labelcombined","GID")]
 
-	plot<-upset(inputable, sampleCols, name="RAMPAGE Peaks", 
-      		mode='exclusive_intersection',
-      		n_intersections=10, 
-      		sort_sets=FALSE,
-      		height_ratio = 0.75,
-      		base_annotations = list(
+plot<-upset(inputable, sampleCols, name="RAMPAGE Peaks", 
+	mode='exclusive_intersection',
+	n_intersections=10, 
+	sort_sets=FALSE,
+	height_ratio = 0.75,
+	base_annotations = list(
        		 'Shared TSS'=intersection_size(
         	  counts=FALSE, mapping=aes(fill=Label)) +
-        	  scale_fill_manual(values=c("Intergenic"="#B8B5B3","Terminator"="#B233FF",
+	scale_fill_manual(values=c("Intergenic"="#B8B5B3","Terminator"="#B233FF",
                                      "Gene_body"="#3358FF","Promoter"="#FF33E0","helitron"="#0B6D10","LINE_element"="#B9DCBA","LTR_retrotransposon"="#08AF0F",
                                 "SINE_element"="#92EB96","solo_LTR"="#11E119","terminal_inverted_repeat_element"="#184F19"),
-                            name="Genomic feature")
-	      ),
-	      set_sizes = (upset_set_size() + ylab("Total RAMPAGE Peaks") +
+                          name="Genomic feature")
+	),
+	set_sizes = (upset_set_size() + ylab("Total RAMPAGE Peaks") +
 	        theme(axis.text.x = element_text(angle = 45))),
-	      matrix = (intersection_matrix(geom = geom_point(shape = "circle",size = 3),
+	matrix = (intersection_matrix(geom = geom_point(shape = "circle",size = 3),
         	  segment = geom_segment(size = 1.5),
        		   outline_color = list(active = alpha("white", 0),inactive = alpha("white", 0))) +
-       		   scale_color_manual(values = c("TRUE" = "black", "FALSE" = alpha("white", 0)),
+       	scale_color_manual(values = c("TRUE" = "black", "FALSE" = alpha("white", 0)),
         	    labels = c("TRUE" = "yes", "FALSE" = "no"),
         	    breaks = c("TRUE", "FALSE"),
         	    guide = "none") +
-        	  theme(axis.ticks = element_blank(),
+        theme(axis.ticks = element_blank(),
         	    panel.grid = element_blank())
-      		),
+      	),
       	themes = upset_modify_themes(
       	  list(
-        	  "default" = theme(
+          "default" = theme(
         	    panel.grid.major.x = element_blank(),
         	    axis.ticks.y = element_line(size = 0.25, color = "#2e2e2e")
         	  ),
-        	  "intersections_matrix" = theme(
+          "intersections_matrix" = theme(
         	    panel.grid = element_blank(),
         	    panel.grid.major.y = element_line(color = c("#CFCCCF", "white"), size = 5)
        		   ),
-       		   "Intersection size" = theme(
+       	   "Intersection size" = theme(
        		     panel.grid = element_blank(),
         	  ),
-       		   "overall_sizes" = theme(
+       	   "overall_sizes" = theme(
         	    panel.grid = element_blank(),
         	    axis.ticks.x = element_line(size = 0.25, color = "#2e2e2e")
        		   )
        		 )
       	),
-      		stripes = alpha("white", 0)
-	)
+      	stripes = alpha("white", 0)
+)
 
-	pdf(paste0("combined/plots/Upset_TSS_",analysisname,".pdf"),10,8)
-	print(plot)
-	dev.off()
-}
+pdf(paste0("combined/plots/Upset_TSS_",analysisname,".pdf"),10,8)
+print(plot)
+dev.off()
 
 ### For violin plot
 
