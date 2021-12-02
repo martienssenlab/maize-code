@@ -1421,7 +1421,7 @@ done
 
 uniq_rampage_tissue_list=($(printf "%s\n" "${rampage_tissue_list[@]}" | sort -u))
 
-if [[ ${#uniq_rampage_tissue_list[*]} -ge 1 ]] && [[ ${ref} == "B73_v4" ]]; then
+if [[ ${#uniq_rampage_tissue_list[*]} -ge 2 ]] && [[ ${ref} == "B73_v4" ]]; then
 	if [ ! -s combined/TSS/${ref}_all_tes.bed ]; then
 		zcat /grid/martienssen/data_norepl/dropbox/maizecode/TEs/B73_v4_TEs.gff3.gz | awk -v OFS="\t" '$1 !~ /^#/ {print $1,$4-1,$5,$3,".",$7}' | bedtools sort -g ${ref_dir}/chrom.sizes > combined/TSS/${ref}_all_tes.bed
 	fi
@@ -1466,9 +1466,13 @@ if [[ ${#uniq_rampage_tissue_list[*]} -ge 1 ]] && [[ ${ref} == "B73_v4" ]]; then
 	paste combined/TSS/temp_col_TSS_${analysisname}_*.txt | uniq > combined/TSS/matrix_upset_TSS_${analysisname}.txt
 	rm -f combined/TSS/temp_col_TSS_${analysisname}_*.txt
 	#### To make an Upset plot highlighting peaks in gene bodies
+	upset="No"
+	if [[ ${#uniq_rampage_tissue_list[*]} -ge 2 ]]; then
+		upset="Yes"
+	fi
 	printf "\nCreating distribution and Upset plot for TSS in ${analysisname} with R version:\n"
 	R --version
-	Rscript --vanilla ${mc_dir}/MaizeCode_R_TSS_distribution_upset.r ${analysisname} combined/TSS/Table_TSS_tissues_${analysisname}.txt combined/TSS/matrix_upset_TSS_${analysisname}.txt combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed combined/DEG/genes_rpkm_${analysisname}.txt
+	Rscript --vanilla ${mc_dir}/MaizeCode_R_TSS_distribution_upset.r ${analysisname} ${upset} combined/TSS/Table_TSS_tissues_${analysisname}.txt combined/TSS/matrix_upset_TSS_${analysisname}.txt combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed combined/DEG/genes_rpkm_${analysisname}.txt
 fi
 
 ############################################################################################
@@ -1478,7 +1482,7 @@ fi
 
 uniq_shrna_tissue_list=($(printf "%s\n" "${shrna_tissue_list[@]}" | sort -u))
 
-if [[ ${#uniq_shrna_tissue_list[*]} -ge 1 ]] && [[ ${ref} == "B73_v4" ]]; then
+if [[ ${#uniq_shrna_tissue_list[*]} -ge 2 ]] && [[ ${ref} == "B73_v4" ]]; then
 	if [ ! -d combined/shRNA ]; then
 		mkdir combined/shRNA
 	fi
