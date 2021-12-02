@@ -118,14 +118,14 @@ dev.off()
 
 ### For violin plot
 
-inputable<-read.delim(args[5], header = TRUE)
+inputable<-read.delim(args[4], header = TRUE)
 inputable$Label<-factor(inputable$Label, levels = c("helitron","LINE_element","LTR_retrotransposon",
                                                     "SINE_element","solo_LTR","terminal_inverted_repeat_element","Intergenic","Terminator","Gene_body",
                                                     "Promoter"))
 inputable$GID<-as.factor(inputable$GID)
 inputable$Tissues<-as.factor(inputable$Tissues)
 
-exptable<-read.delim(args[6], header = TRUE)
+exptable<-read.delim(args[5], header = TRUE)
 exptable$Tissue<-as.factor(exptable$Tissue)
 exptable$GID<-as.factor(exptable$GID)
 
