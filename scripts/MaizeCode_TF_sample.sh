@@ -153,7 +153,7 @@ fi
 #### Removing duplicates, sorting, converting to bam and indexing file with samtools
 printf "\nRemoving low mapping quality reads (MapQ>=10), duplicates, sorting and indexing file with samtools version:\n"
 samtools --version
-samtools view -@ $threads -q 10 -b mapped/${name}.sam mapped/temp0_${name}.bam
+samtools view -@ $threads -q 10 -S -b mapped/${name}.sam > mapped/temp0_${name}.bam
 rm -f mapped/${name}.sam
 samtools fixmate -@ $threads -m mapped/temp0_${name}.bam mapped/temp1_${name}.bam
 samtools sort -@ $threads -o mapped/temp2_${name}.bam mapped/temp1_${name}.bam
