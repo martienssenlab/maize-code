@@ -1297,7 +1297,7 @@ do
 done
 numtissue=$(ls -1f combined/peaks/temp2_distal_${analysisname}_*.txt | wc -l)
 if [[ ${numtissue} -ge 1 ]]; then
-	printf "Tissue\tPeak_ID\tPeakQuality\tGID\tRPKM\tGroup\n" > combined/peaks/all_grouped_distal_peaks_${analysisname}_*.txt
+	printf "Tissue\tPeak_ID\tPeakQuality\tGID\tRPKM\tGroup\n" > combined/peaks/all_grouped_distal_peaks_${analysisname}.txt
 	cat combined/peaks/temp2_distal_${analysisname}_*.txt > combined/peaks/all_grouped_distal_peaks_${analysisname}.txt
 fi
 
