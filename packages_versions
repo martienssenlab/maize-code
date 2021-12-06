@@ -10,7 +10,7 @@ kentUtils (bedSort, bedGraphToBigWig)
 macs2 2.2.7.1
 meme 5.3.0
 multiqc 1.11
-parallel-fastq-dump 0.6.6; fastq-dump 2.8.0 (if downloading data from SRA)
+sra-tools 2.11.0 (if downloading data from SRA)
 pigz 2.3.4
 samtools 1.10 (Using htslib 1.10.2)
 seqkit 0.13.2
