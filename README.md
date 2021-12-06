@@ -30,7 +30,7 @@ kentUtils (bedSort, bedGraphToBigWig)
 macs2 2.2.7.1
 meme 5.3.0
 multiqc 1.11
-parallel-fastq-dump 0.6.6; fastq-dump 2.8.0 (if downloading data from SRA)
+sra-tools 2.11.0 (if downloading data from SRA)
 pigz 2.3.4
 samtools 1.10 (Using htslib 1.10.2)
 seqkit 0.13.2
@@ -46,7 +46,7 @@ pigz 2.3.4
 samtools 1.10 (Using htslib 1.10.2)
 bedtools 2.29.2
 bowtie2 64-bit 2.4.1; Compiler: gcc version 7.5.0 (crosstool-NG 1.24.0.131_87df0e6_dirty)
-parallel-fastq-dump : 0.6.6; fastq-dump : 2.8.0 (if downloading data from SRA)
+sra-tools 2.11.0 (if downloading data from SRA)
 fastqc 0.11.9
 cutadapt 2.10
 macs2 2.2.7.1
@@ -60,7 +60,7 @@ pigz 2.3.4
 samtools 1.10 (Using htslib 1.10.2)
 bedtools 2.29.2
 STAR 2.7.5c
-parallel-fastq-dump : 0.6.6; fastq-dump : 2.8.0 (if downloading data from SRA)
+sra-tools 2.11.0 (if downloading data from SRA)
 fastqc 0.11.9
 cutadapt 2.10
 kentUtils (bedSort, bedGraphToBigWig)
@@ -73,7 +73,7 @@ pigz 2.3.4
 samtools 1.10 (Using htslib 1.10.2)
 bedtools 2.29.2
 STAR 2.7.5c
-parallel-fastq-dump : 0.6.6; fastq-dump : 2.8.0 (if downloading data from SRA)
+sra-tools 2.11.0 (if downloading data from SRA)
 fastqc 0.11.9
 cutadapt 2.10
 kentUtils (bedSort, bedGraphToBigWig)
@@ -88,7 +88,7 @@ pigz 2.3.4
 samtools 1.10 (Using htslib 1.10.2)
 bedtools 2.29.2
 bowtie2 64-bit 2.4.1; Compiler: gcc version 7.5.0 (crosstool-NG 1.24.0.131_87df0e6_dirty)
-parallel-fastq-dump : 0.6.6; fastq-dump : 2.8.0 (if downloading data from SRA)
+sra-tools 2.11.0 (if downloading data from SRA)
 fastqc 0.11.9
 cutadapt 2.10
 macs2 2.2.7.1
@@ -105,7 +105,7 @@ pigz 2.3.4
 samtools 1.10 (Using htslib 1.10.2)
 bedtools 2.29.2
 bowtie2 64-bit 2.4.1; Compiler: gcc version 7.5.0 (crosstool-NG 1.24.0.131_87df0e6_dirty)
-parallel-fastq-dump : 0.6.6; fastq-dump : 2.8.0 (if downloading data from SRA)
+sra-tools 2.11.0 (if downloading data from SRA)
 fastqc 0.11.9
 cutadapt 2.10
 shortstack 3.8.5
