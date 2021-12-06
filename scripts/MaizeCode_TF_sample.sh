@@ -77,7 +77,7 @@ name=${line}_${tmp}_${chip}_${rep}
 if [[ $paired == "PE" ]]; then
   if [[ $step == "download" ]]; then
 	  if [[ $path == "SRA" ]]; then
-			printf "\nUsing parallel fastq-dump for $name ($sampleID)\n"
+			printf "\nUsing fasterq-dump for $name ($sampleID)\n"
 			fasterq-dump -e ${threads} --outdir ./fastq ${sampleID}
 			printf "\n$name ($sampleID) downloaded\nGzipping and renaming files..."
 			pigz -p ${threads} ./fastq/${sampleID}_1.fastq
@@ -118,7 +118,7 @@ elif [[ $paired == "SE" ]]; then
 	if [[ $step == "download" ]]; then
 		if [[ $path == "SRA" ]]; then
 		fasterq-dump -e 2 --outdir ./fastq SRR7153132
-			printf "\nUsing parallel fastq-dump for $name ($sampleID)\n"
+			printf "\nUsing fasterq-dump for $name ($sampleID)\n"
 			fasterq-dump -e ${threads} --outdir ./fastq ${sampleID}
 			printf "\n$name ($sampleID) downloaded\nRenaming files..."
 			pigz -p ${threads} ./fastq/${sampleID}.fastq
