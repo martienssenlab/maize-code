@@ -78,7 +78,7 @@ if [[ $paired == "PE" ]]; then
   if [[ $step == "download" ]]; then
 	  if [[ $path == "SRA" ]]; then
 			printf "\nUsing fasterq-dump for $name ($sampleID)\n"
-			fasterq-dump -e ${threads} --outdir ./fastq ${sampleID}
+			fasterq-dump -e ${threads} -m 1G --outdir ./fastq ${sampleID}
 			printf "\n$name ($sampleID) downloaded\nGzipping and renaming files..."
 			pigz -p ${threads} ./fastq/${sampleID}_1.fastq
 			mv ./fastq/${sampleID}_1.fastq.gz ./fastq/${name}_R1.fastq.gz
@@ -119,7 +119,7 @@ elif [[ $paired == "SE" ]]; then
 		if [[ $path == "SRA" ]]; then
 		fasterq-dump -e 2 --outdir ./fastq SRR7153132
 			printf "\nUsing fasterq-dump for $name ($sampleID)\n"
-			fasterq-dump -e ${threads} --outdir ./fastq ${sampleID}
+			fasterq-dump -e ${threads} -m 1G --outdir ./fastq ${sampleID}
 			printf "\n$name ($sampleID) downloaded\nRenaming files..."
 			pigz -p ${threads} ./fastq/${sampleID}.fastq
 			mv ./fastq/${sampleID}.fastq.gz ./fastq/${name}.fastq.gz
