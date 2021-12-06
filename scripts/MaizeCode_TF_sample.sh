@@ -78,9 +78,11 @@ if [[ $paired == "PE" ]]; then
   if [[ $step == "download" ]]; then
 	  if [[ $path == "SRA" ]]; then
 			printf "\nUsing parallel fastq-dump for $name ($sampleID)\n"
-			parallel-fastq-dump --threads $threads --split-files --gzip --sra-id ${sampleID} --outdir ./fastq 
-			printf "\n$name ($sampleID) downloaded\nRenaming files..."
+			fasterq-dump -e ${threads} --outdir ./fastq ${sampleID}
+			printf "\n$name ($sampleID) downloaded\nGzipping and renaming files..."
+			pigz -p ${threads} ./fastq/${sampleID}_1.fastq
 			mv ./fastq/${sampleID}_1.fastq.gz ./fastq/${name}_R1.fastq.gz
+			pigz -p ${threads} ./fastq/${sampleID}_2.fastq
 			mv ./fastq/${sampleID}_2.fastq.gz ./fastq/${name}_R2.fastq.gz
 			step="trim"
 		else
@@ -115,10 +117,12 @@ if [[ $paired == "PE" ]]; then
 elif [[ $paired == "SE" ]]; then
 	if [[ $step == "download" ]]; then
 		if [[ $path == "SRA" ]]; then
+		fasterq-dump -e 2 --outdir ./fastq SRR7153132
 			printf "\nUsing parallel fastq-dump for $name ($sampleID)\n"
-			parallel-fastq-dump --threads $threads --split-files --gzip --sra-id ${sampleID} --outdir ./fastq 
+			fasterq-dump -e ${threads} --outdir ./fastq ${sampleID}
 			printf "\n$name ($sampleID) downloaded\nRenaming files..."
-			mv ./fastq/${sampleID}_1.fastq.gz ./fastq/${name}.fastq.gz
+			pigz -p ${threads} ./fastq/${sampleID}.fastq
+			mv ./fastq/${sampleID}.fastq.gz ./fastq/${name}.fastq.gz
 			step="trim"
 		else
 			printf "\nCopying SE fastq for $name ($sampleID in $path)\n"
