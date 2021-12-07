@@ -162,8 +162,7 @@ do
 			mkdir ./TF/peaks
 		fi
 		if [ ! -s ./TF/motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt ]; then
-			wget http://jaspar.genereg.net/download/CORE/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
-			mv JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt ./TF/motifs/
+			cp /grid/martienssen/data_norepl/dropbox/maizecode/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt ./TF/motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
 		fi
 		datatype_list+=("${datatype}")
 		new_tf_sample+=("${name}")
