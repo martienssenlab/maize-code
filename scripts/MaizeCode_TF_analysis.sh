@@ -301,7 +301,7 @@ do
 					tomtom -oc motifs/${name}/tomtom3 motifs/${name}/meme3/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
 				fi
 			fi
-			if [ ! -d motifs/${name}/meme4 ] && [-s peaks/idr_${name}.narrowPeak ]; then
+			if [ ! -d motifs/${name}/meme4 ] && [ -s peaks/idr_${name}.narrowPeak ]; then
 				#### v4="replicated" peaks (peaks in both biological reps, i.e all peaks in idr) without masked sequences with MEME
 				printf "\nGetting peak fasta sequences for ${name} meme v4\n"
 				awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {a=$2+$10; print $1,a-50,a+50}' peaks/idr_${name}.narrowPeak > peaks/selected_motifs_${name}.bed
