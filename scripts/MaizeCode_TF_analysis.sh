@@ -59,7 +59,7 @@ tmp1=${samplefile##*temp_}
 export samplename=${tmp1%%_TF*}
 
 if [ ! -s reports/summary_TF_peaks.txt ]; then
-	printf "Line\tSample\tMark\tPeaks_in_Rep1\tPeaks_in_Rep2\tCommon_peaks\tCommon_peaks_IDR_0.05\tPeaks_in_merged\tPeaks_in_pseudo_reps\tSelected_peaks\n" > reports/summary_TF_peaks.txt
+	printf "Line\tSample\tPeaks_in_Rep1\tPeaks_in_Rep2\tCommon_peaks\tCommon_peaks_IDR_0.05\tPeaks_in_merged\tPeaks_in_pseudo_reps\tSelected_peaks\n" > reports/summary_TF_peaks.txt
 fi
 
 pidsa=()
@@ -244,7 +244,11 @@ do
 		merged=$(awk '{print $1,$2,$3}' peaks/${name}_merged_peaks.narrowPeak | sort -k1,1 -k2,2n -u | wc -l)
 		pseudos=$(awk '{print $1,$2,$3}' peaks/temp_${name}_pseudos.bed | sort -k1,1 -k2,2n -u | wc -l)
 		selected=$(cat peaks/temp_${name}_selected.bed | sort -k1,1 -k2,2n -u | wc -l)
-		awk -v OFS="\t" -v a=${line} -v b=${tf} -v d=${rep1} -v e=${rep2} -v f=${common} -v g=${idr} -v h=${merged} -v i=${pseudos} -v j=${selected} 'BEGIN {print a,b,d,e,f" ("f/d*100"%rep1;"f/e*100"%rep2)",g" ("g/f*100"%common)",h,i,j" ("j/h*100"%merged)"}' >> reports/summary_TF_peaks.txt
+		if [[ ${rep1} -gt 0 ]] && [[ ${rep2} -gt 0 ]] && [[ ${common} -gt 0 ]] && [[ ${merged} -gt 0 ]]; then
+			awk -v OFS="\t" -v a=${line} -v b=${tf} -v d=${rep1} -v e=${rep2} -v f=${common} -v g=${idr} -v h=${merged} -v i=${pseudos} -v j=${selected} 'BEGIN {print a,b,d,e,f" ("f/d*100"%rep1;"f/e*100"%rep2)",g" ("g/f*100"%common)",h,i,j" ("j/h*100"%merged)"}' >> reports/summary_TF_peaks.txt
+		else
+			awk -v OFS="\t" -v a=${line} -v b=${tf} -v d=${rep1} -v e=${rep2} -v f=${common} -v g=${idr} -v h=${merged} -v i=${pseudos} -v j=${selected} 'BEGIN {print a,b,d,e,f,g,h,i,j}' >> reports/summary_TF_peaks.txt		
+		fi
 		rm -f peaks/temp_${name}*
 		
 		#### To find motifs in different peak sets:
