@@ -260,8 +260,10 @@ do
 			bedtools getfasta -name -fi ${ref_dir}/${ref}.fa -bed peaks/selected_motifs_${name}.bed > peaks/selected_sequences_${name}.fa
 			printf "\nGetting motifs for ${name} with meme\n"
 			meme-chip -oc motifs/${name}/meme -meme-p ${threads} -meme-nmotifs 10 -streme-nmotifs 10 peaks/selected_sequences_${name}.fa
-			printf "\nLooking for similar motifs in JASPAR database with tomtom\n"
-			tomtom -oc motifs/${name}/tomtom motifs/${name}/meme/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
+			if [ -s motifs/${name}/meme/combined.meme ]; then
+				printf "\nLooking for similar motifs in JASPAR database with tomtom\n"
+				tomtom -oc motifs/${name}/tomtom motifs/${name}/meme/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
+			fi
 		fi
 		if [ ! -d motifs/${name}/meme2 ] && [ -s peaks/idr_${name}.narrowPeak ]; then
 			#### v2="replicated" peaks (peaks in both biological reps, i.e all peaks in idr) with MEME
@@ -270,8 +272,10 @@ do
 			bedtools getfasta -name -fi ${ref_dir}/${ref}.fa -bed peaks/selected_motifs_${name}.bed > peaks/selected_sequences_${name}.fa
 			printf "\nGetting motifs for ${name} with meme\n"
 			meme-chip -oc motifs/${name}/meme2 -meme-p ${threads} -meme-nmotifs 10 -streme-nmotifs 10 peaks/selected_sequences_${name}.fa
-			printf "\nLooking for similar motifs in JASPAR database with tomtom\n"
-			tomtom -oc motifs/${name}/tomtom2 motifs/${name}/meme2/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
+			if [ -s motifs/${name}/meme2/combined.meme ]; then
+				printf "\nLooking for similar motifs in JASPAR database with tomtom\n"
+				tomtom -oc motifs/${name}/tomtom2 motifs/${name}/meme2/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
+			fi
 		fi
 		
 		#### Needs a file of masked regions. Can be found online, or created with Repeat masker. 
@@ -292,8 +296,10 @@ do
 				bedtools getfasta -name -fi ${ref_dir}/${ref}.fa -bed peaks/masked_selected_motifs_${name}.bed > peaks/selected_sequences_${name}.fa
 				printf "\nGetting motifs for ${name} with meme\n"
 				meme-chip -oc motifs/${name}/meme3 -meme-p ${threads} -meme-nmotifs 10 -streme-nmotifs 10 peaks/selected_sequences_${name}.fa
-				printf "\nLooking for similar motifs in JASPAR database with tomtom\n"
-				tomtom -oc motifs/${name}/tomtom3 motifs/${name}/meme3/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
+				if [ -s motifs/${name}/meme3/combined.meme ]; then
+					printf "\nLooking for similar motifs in JASPAR database with tomtom\n"
+					tomtom -oc motifs/${name}/tomtom3 motifs/${name}/meme3/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
+				fi
 			fi
 			if [ ! -d motifs/${name}/meme4 ] && [-s peaks/idr_${name}.narrowPeak ]; then
 				#### v4="replicated" peaks (peaks in both biological reps, i.e all peaks in idr) without masked sequences with MEME
@@ -303,8 +309,10 @@ do
 				bedtools getfasta -name -fi ${ref_dir}/${ref}.fa -bed peaks/masked_selected_motifs_${name}.bed > peaks/selected_sequences_${name}.fa
 				printf "\nGetting motifs for ${name} with meme\n"
 				meme-chip -oc motifs/${name}/meme4 -meme-p ${threads} -meme-nmotifs 10 -streme-nmotifs 10 peaks/selected_sequences_${name}.fa
-				printf "\nLooking for similar motifs in JASPAR database with tomtom\n"
-				tomtom -oc motifs/${name}/tomtom4 motifs/${name}/meme4/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
+				if [ -s motifs/${name}/meme4/combined.meme ]; then
+					printf "\nLooking for similar motifs in JASPAR database with tomtom\n"
+					tomtom -oc motifs/${name}/tomtom4 motifs/${name}/meme4/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
+				fi
 			fi
 			if [ ! -d motifs/${name}/homer ] && [ -s peaks/best_peaks_${name}.bed ]; then
 				#### v5="selected" peaks (best peaks from selected, i.e. in merged and both pseudo reps) with HOMER		
