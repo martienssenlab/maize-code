@@ -253,7 +253,7 @@ do
 		
 		#### To find motifs in different peak sets:
 		
-		if [ ! -d motifs/${name}/meme ]; then
+		if [ ! -d motifs/${name}/meme ] && [ -s peaks/best_peaks_${name}.bed ]; then
 			#### v1="selected" peaks (best peaks from selected, i.e. in merged and both pseudo reps) with MEME		
 			printf "\nGetting peak fasta sequences for ${name} meme v1\n"
 			awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {a=$2+$10; print $1,a-50,a+50,$4}' peaks/best_peaks_${name}.bed > peaks/selected_motifs_${name}.bed
@@ -263,7 +263,7 @@ do
 			printf "\nLooking for similar motifs in JASPAR database with tomtom\n"
 			tomtom -oc motifs/${name}/tomtom motifs/${name}/meme/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
 		fi
-		if [ ! -d motifs/${name}/meme2 ]; then
+		if [ ! -d motifs/${name}/meme2 ] && [ -s peaks/idr_${name}.narrowPeak ]; then
 			#### v2="replicated" peaks (peaks in both biological reps, i.e all peaks in idr) with MEME
 			printf "\nGetting peak fasta sequences for ${name} meme v2\n"
 			awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {a=$2+$10; print $1,a-50,a+50}' peaks/idr_${name}.narrowPeak > peaks/selected_motifs_${name}.bed
@@ -284,7 +284,7 @@ do
 		# loadGenome.pl -name B73_v4 -org null -fasta ~/nlsas/Genomes/RepeatMasker/B73_v4/B73_v4.fa.masked -gtf ~/nlsas/Genomes/Zea_mays/B73_v4/temp_B73_v4.gtf -promoters "B73_v4-p"
 		
 		if [[ ${ref} == "B73_v4" ]]; then
-			if [ ! -d motifs/${name}/meme3 ]; then
+			if [ ! -d motifs/${name}/meme3 ] && [ -s peaks/best_peaks_${name}.bed ]; then
 				#### v3="selected" peaks (best peaks from selected, i.e. in merged and both pseudo reps) without masked sequences with MEME
 				printf "\nGetting peak fasta sequences for ${name} meme v3\n"
 				awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {a=$2+$10; print $1,a-50,a+50,$4}' peaks/best_peaks_${name}.bed > peaks/selected_motifs_${name}.bed
@@ -295,7 +295,7 @@ do
 				printf "\nLooking for similar motifs in JASPAR database with tomtom\n"
 				tomtom -oc motifs/${name}/tomtom3 motifs/${name}/meme3/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
 			fi
-			if [ ! -d motifs/${name}/meme4 ]; then
+			if [ ! -d motifs/${name}/meme4 ] && [-s peaks/idr_${name}.narrowPeak ]; then
 				#### v4="replicated" peaks (peaks in both biological reps, i.e all peaks in idr) without masked sequences with MEME
 				printf "\nGetting peak fasta sequences for ${name} meme v4\n"
 				awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {a=$2+$10; print $1,a-50,a+50}' peaks/idr_${name}.narrowPeak > peaks/selected_motifs_${name}.bed
@@ -306,7 +306,7 @@ do
 				printf "\nLooking for similar motifs in JASPAR database with tomtom\n"
 				tomtom -oc motifs/${name}/tomtom4 motifs/${name}/meme4/combined.meme motifs/JASPAR2020_CORE_plants_non-redundant_pfms_meme.txt
 			fi
-			if [ ! -d motifs/${name}/homer ]; then
+			if [ ! -d motifs/${name}/homer ] && [ -s peaks/best_peaks_${name}.bed ]; then
 				#### v5="selected" peaks (best peaks from selected, i.e. in merged and both pseudo reps) with HOMER		
 				printf "\nGetting motifs for ${name} with HOMER\n"
 				findMotifsGenome.pl peaks/best_peaks_${name}.bed B73_v4 motifs/${name}/homer -len 6,8,10 -size given -p ${thread}
