@@ -436,10 +436,12 @@ if [ ${#chip_sample_list[@]} -ge 1 ]; then
 	awk -v OFS="\t" 'BEGIN {printf "PeakID\tDistance\tGroup\n"} {if ($5<-2000) {d="Distal_downstream"; a=-$5} else if ($5<0) {d="Terminator"; a=-$5} else if ($5==0) {d="Gene_body"; a=$5} else if ($5>2000) {d="Distal_upstream"; a=$5} else {d="Promoter"; a=$5} print $4,a,d}' combined/peaks/peaks_${analysisname}.bed > combined/peaks/temp_col_${analysisname}_AAA.txt
 	paste combined/peaks/temp_col_${analysisname}_*.txt | uniq > combined/peaks/matrix_upset_ChIP_${analysisname}.txt
 	rm -f combined/peaks/temp_col_${analysisname}_*.txt
-	#### To make an Upset plot highlighting peaks in gene bodies
-	printf "\nCreating Upset plot for ${analysisname} with R version:\n"
-	R --version
-	Rscript --vanilla ${mc_dir}/MaizeCode_R_Upset_ChIP.r combined/peaks/matrix_upset_ChIP_${analysisname}.txt ${analysisname}
+	#### To make an Upset plot highlighting peaks in gene bodies (if more than one sample are present)
+	if [ ${#chip_sample_list[@]} -ge 2 ]; then
+		printf "\nCreating Upset plot for ${analysisname} with R version:\n"
+		R --version
+		Rscript --vanilla ${mc_dir}/MaizeCode_R_Upset_ChIP.r combined/peaks/matrix_upset_ChIP_${analysisname}.txt ${analysisname}
+	fi
 fi
 
 #############################################################################################
