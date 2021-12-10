@@ -17,37 +17,42 @@ sampleCols<-set1[! set1 %in% c("PeakID","Distance","Group")]
 
 H3K27ac<-colnames(inputable[grep(pattern="H3K27ac",x=colnames(inputable))])
 
-combosK27ac <- map(seq(1:length(H3K27ac)), ~ combn(H3K27ac, ., FUN = c, simplify = FALSE)) %>% 
-  unlist(recursive = FALSE)
-queryIntersectionsK27ac <- lmap(combosK27ac, ~ if_else(H3K27ac %in% unlist(.x), .x, list(NA))) %>%
-  discard(~ all(is.na(.x)))
-queriesK27ac <- map(queryIntersectionsK27ac, 
-               ~ upset_query(intersect = .x, color = "#EE616E", 
-                             fill = "#EE616E", only_components = c('intersections_matrix')))
+if ( length(H3K27ac) > 0) {
+  combosK27ac <- map(seq(1:length(H3K27ac)), ~ combn(H3K27ac, ., FUN = c, simplify = FALSE)) %>% 
+   unlist(recursive = FALSE)
+  queryIntersectionsK27ac <- lmap(combosK27ac, ~ if_else(H3K27ac %in% unlist(.x), .x, list(NA))) %>%
+    discard(~ all(is.na(.x)))
+  queriesK27ac <- map(queryIntersectionsK27ac, 
+                 ~ upset_query(intersect = .x, color = "#EE616E", 
+                               fill = "#EE616E", only_components = c('intersections_matrix')))
+  queriesK27acset <- map(H3K27ac, ~ upset_query(set = .x, fill = "#EE616E"))
+}
 
 H3K4me1<-colnames(inputable[grep(pattern="H3K4me1",x=colnames(inputable))])
 
-combosK4me1 <- map(seq(1:length(H3K4me1)), ~ combn(H3K4me1, ., FUN = c, simplify = FALSE)) %>% 
-  unlist(recursive = FALSE)
-queryIntersectionsK4me1 <- lmap(combosK4me1, ~ if_else(H3K4me1 %in% unlist(.x), .x, list(NA))) %>%
-  discard(~ all(is.na(.x)))
-queriesK4me1 <- map(queryIntersectionsK4me1, 
-                    ~ upset_query(intersect = .x, color = "#8D9BEE", 
-                                  fill = "#8D9BEE", only_components = c('intersections_matrix')))
+if ( length(H3K4me1) > 0) {
+  combosK4me1 <- map(seq(1:length(H3K4me1)), ~ combn(H3K4me1, ., FUN = c, simplify = FALSE)) %>% 
+    unlist(recursive = FALSE)
+  queryIntersectionsK4me1 <- lmap(combosK4me1, ~ if_else(H3K4me1 %in% unlist(.x), .x, list(NA))) %>%
+    discard(~ all(is.na(.x)))
+  queriesK4me1 <- map(queryIntersectionsK4me1, 
+                      ~ upset_query(intersect = .x, color = "#8D9BEE", 
+                                   fill = "#8D9BEE", only_components = c('intersections_matrix')))
+  queriesK4me1set <- map(H3K4me1, ~ upset_query(set = .x, fill = "#8D9BEE"))
+}
 
 H3K4me3<-colnames(inputable[grep(pattern="H3K4me3",x=colnames(inputable))])
 
-combosK4me3 <- map(seq(1:length(H3K4me3)), ~ combn(H3K4me3, ., FUN = c, simplify = FALSE)) %>% 
-  unlist(recursive = FALSE)
-queryIntersectionsK4me3 <- lmap(combosK4me3, ~ if_else(H3K4me3 %in% unlist(.x), .x, list(NA))) %>%
-  discard(~ all(is.na(.x)))
-queriesK4me3 <- map(queryIntersectionsK4me3, 
-                    ~ upset_query(intersect = .x, color = "#F1C062", 
-                                  fill = "#F1C062", 
-                                  only_components = c('intersections_matrix')))
-queriesK27acset <- map(H3K27ac, ~ upset_query(set = .x, fill = "#EE616E"))
-queriesK4me1set <- map(H3K4me1, ~ upset_query(set = .x, fill = "#8D9BEE"))
-queriesK4me3set <- map(H3K4me3, ~ upset_query(set = .x, fill = "#F1C062"))
+if ( length(H3K4me3) > 0) {
+  combosK4me3 <- map(seq(1:length(H3K4me3)), ~ combn(H3K4me3, ., FUN = c, simplify = FALSE)) %>% 
+    unlist(recursive = FALSE)
+  queryIntersectionsK4me3 <- lmap(combosK4me3, ~ if_else(H3K4me3 %in% unlist(.x), .x, list(NA))) %>%
+    discard(~ all(is.na(.x)))
+  queriesK4me3 <- map(queryIntersectionsK4me3, 
+                      ~ upset_query(intersect = .x, color = "#F1C062", 
+                                    fill = "#F1C062", only_components = c('intersections_matrix')))
+  queriesK4me3set <- map(H3K4me3, ~ upset_query(set = .x, fill = "#F1C062"))
+ }
 
 queries<-c(queriesK27ac, queriesK4me1, queriesK4me3)
 
