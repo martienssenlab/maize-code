@@ -468,19 +468,24 @@ do
 	fi
 done
 
-if [ ${#chip_sample_list[@]} -ge 1 ]; then
-	printf "\nPreparing merged H3K27ac peaks from files in $analysisname\n"
+insamplefile="no"
+if [ ${#chip_sample_list[@]} -ge 1 ]; then	
 	for sample in ${chip_sample_list[@]}
 	do
 		if [[ "${sample}" == *H3K27ac* ]]; then
+			insamplefile="yes"
 			awk -v OFS="\t" -v s=${sample} '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$2,$3,s}' ChIP/peaks/selected_peaks_${sample}.narrowPeak | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed
 		fi
 	done
-	sort -k1,1 -k2,2n combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed > combined/peaks/tmp2_peaks_H3K27ac_${analysisname}.bed
-	bedtools merge -i combined/peaks/tmp2_peaks_H3K27ac_${analysisname}.bed | sort -k1,1 -k2,2n > combined/peaks/merged_peaks_H3K27ac_${analysisname}.bed
-	rm -f combined/peaks/tmp*_peaks_H3K27ac_${analysisname}.bed
-	k27file="yes"
-elif [ ${nfile} -gt 0 ]; then
+	if [[ "${insamplefile}" == "yes" ]]; then
+		printf "\nPreparing merged H3K27ac peaks from files in $analysisname\n"
+		sort -k1,1 -k2,2n combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed > combined/peaks/tmp2_peaks_H3K27ac_${analysisname}.bed
+		bedtools merge -i combined/peaks/tmp2_peaks_H3K27ac_${analysisname}.bed | sort -k1,1 -k2,2n > combined/peaks/merged_peaks_H3K27ac_${analysisname}.bed
+		rm -f combined/peaks/tmp*_peaks_H3K27ac_${analysisname}.bed
+		k27file="yes"
+	fi
+fi
+if [[ "${insamplefile}" == "no" ]] && [ ${nfile} -gt 0 ]; then
 	printf "\nPreparing merged H3K27ac peaks from previously analyzed files, containing the following tissue(s):\n${prev_tissues[*]}"
 	sort -k1,1 -k2,2n combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed > combined/peaks/tmp2_peaks_H3K27ac_${analysisname}.bed
 	bedtools merge -i combined/peaks/tmp2_peaks_H3K27ac_${analysisname}.bed | sort -k1,1 -k2,2n > combined/peaks/merged_peaks_H3K27ac_${analysisname}.bed
