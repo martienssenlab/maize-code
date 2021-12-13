@@ -104,7 +104,7 @@ while read data line tissue sample rep sampleID path paired ref
 do
 	name=${line}_${tissue}_${sample}_${rep}
 	case "${data}" in
-		ChIP) 	env="ChIP";;
+		ChIP*) 	env="ChIP";;
 		RNAseq) env="RNA";;
 		RAMPAGE) env="RNA";;
 		shRNA) env="shRNA";;
@@ -220,10 +220,16 @@ pids=()
 while read data line tissue sample rep sampleID path paired ref
 do
 	ref_dir=${pathtoref}/${ref}
+	if [[ ${data} ~ "ChIP" ]] && [[ ${sample} == "Input" ]]; then
+		tmp=${data##ChIP_}
+		add="_${tmp}"
+	else
+		add=""
+	fi
 	case "${data}" in
-		ChIP) 	env="ChIP"
+		ChIP*) 	env="ChIP"
 			shortname=${line}_${tissue}_${sample}
-			name=${line}_${tissue}_${sample}_${rep};;
+			name=${line}_${tissue}_${sample}_${rep}${add};;
 		RNAseq) env="RNA"
 			shortname=${line}_${tissue}_${sample}
 			name=${line}_${tissue}_${sample}_${rep};;
@@ -299,8 +305,14 @@ fi
 
 while read data line tissue sample rep sampleID path paired ref
 do
+	if [[ ${data} ~ "ChIP" ]] && [[ ${sample} == "Input" ]]; then
+		tmp=${data##ChIP_}
+		add="_${tmp}"
+	else
+		add=""
+	fi
 	case "${data}" in
-		ChIP) env="ChIP"
+		ChIP*) env="ChIP"
 			stat="plot1"
 			name="${tissue}";;
 		RNAseq) env="RNA"
@@ -317,7 +329,7 @@ do
 			name="${line}_${tissue}_${sample}_${rep}";;
 	esac
 	if [[ ${stat} == "plot1" ]]; then
-		awk -v a=${line} -v b=${name} -v c=${sample} -v d=${rep} -v e=${ref} '$1==a && $2==b && $3==c && $4==d && $5==e' ${env}/reports/summary_mapping_stats.txt >> combined/reports/temp_mapping_stats_${samplename}.txt
+		awk -v a=${line} -v b=${name} -v c=${sample} -v d=${rep} -v e=${ref}${add} '$1==a && $2==b && $3==c && $4==d && $5==e' ${env}/reports/summary_mapping_stats.txt >> combined/reports/temp_mapping_stats_${samplename}.txt
 	elif [[ ${stat} == "plot2" ]]; then
 		cat shRNA/reports/sizes_*${name}* >> combined/reports/temp2_mapping_stats_${samplename}.txt
 	fi
