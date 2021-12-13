@@ -71,7 +71,13 @@ fi
 
 export ref=${ref_dir##*/}
 
-name=${line}_${tissue}_${mark}_${rep}
+tmp=${data##ChIP_}
+add="_${tmp}"
+if [[ ${mark} == "Input" ]]; then
+	name=${line}_${tissue}_${mark}_${rep}${add}
+else
+	name=${line}_${tissue}_${mark}_${rep}
+fi
 
 if [[ ${paired} == "PE" ]]; then
 	if [[ ${step} == "download" ]]; then
@@ -177,7 +183,7 @@ else
 	single=$(grep "aligned exactly 1 time" reports/mapping_${name}.txt | awk '{print $1}')
 fi
 allmap=$((multi+single))
-awk -v OFS="\t" -v l=${line} -v t=${tissue} -v m=${mark} -v r=${rep} -v g=${ref} -v a=${tot} -v b=${filt} -v c=${allmap} -v d=${single} 'BEGIN {print l,t,m,r,g,a,b" ("b/a*100"%)",c" ("c/a*100"%)",d" ("d/a*100"%)"}' >> reports/summary_mapping_stats.txt
+awk -v OFS="\t" -v l=${line} -v t=${tissue} -v m=${mark} -v r=${rep}${add} -v g=${ref} -v a=${tot} -v b=${filt} -v c=${allmap} -v d=${single} 'BEGIN {print l,t,m,r,g,a,b" ("b/a*100"%)",c" ("c/a*100"%)",d" ("d/a*100"%)"}' >> reports/summary_mapping_stats.txt
 
 printf "\nScript finished successfully!\n"
 touch chkpts/${name}_${ref}
