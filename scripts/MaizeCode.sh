@@ -220,7 +220,7 @@ pids=()
 while read data line tissue sample rep sampleID path paired ref
 do
 	ref_dir=${pathtoref}/${ref}
-	if [[ "${data}" ~= "ChIP" ]] && [[ ${sample} == "Input" ]]; then
+	if [[ "${data}" ~= "ChIP" ]] && [[ "${sample}" == "Input" ]]; then
 		tmp=${data##ChIP_}
 		add="_${tmp}"
 	else
