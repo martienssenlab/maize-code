@@ -55,9 +55,6 @@ if [ ! $samplefile ]; then
 	exit 1
 fi
 
-tmp1=${samplefile##*temp_}
-export samplename=${tmp1%%_ChIP*}
-
 if [ ! -s reports/summary_ChIP_peaks.txt ]; then
 	printf "Line\tTissue\tMark\tPeaks_in_Rep1\tPeaks_in_Rep2\tCommon_peaks\tCommon_peaks_IDR_0.05\tPeaks_in_merged\tPeaks_in_pseudo_reps\tSelected_peaks\n" > reports/summary_ChIP_peaks.txt
 fi
@@ -66,7 +63,8 @@ pidsa=()
 while read data line tissue mark paired ref_dir
 do
 	#### To merge bam files of replicates
-	
+	tmp=${data##ChIP_}
+	export add="_${tmp}"
 	export line
 	export tissue
 	export mark
@@ -74,21 +72,25 @@ do
 	export name=${line}_${tissue}_${mark}
 	export input=${line}_${tissue}_Input
 	export paired
-	if [ -s mapped/${input}_merged.bam ]; then
+	nbinput=${ls -1 mapped/${input}_Rep*${add}.bam | wc -l | awk '{print $1}'}
+	if [ -s mapped/${input}_merged${add}.bam ]; then
 		printf "\nReplicates of $input already merged\n"
 		export inputrep="two"
-	elif [ ! -s mapped/${input}_merged.bam ] && [ -e mapped/${input}_Rep2.bam ]; then
+	elif [ ! -s mapped/${input}_merged${add}.bam ] && [ ${nbinput} -eq 2 ]; then
 		printf "\nMerging replicates of $input\n"
-		samtools merge -@ $threads mapped/temp_${input}.bam mapped/${input}_Rep1.bam mapped/${input}_Rep2.bam
-		samtools sort -@ $threads -o mapped/${input}_merged.bam mapped/temp_${input}.bam
+		samtools merge -@ $threads mapped/temp_${input}.bam mapped/${input}_Rep*${add}.bam
+		samtools sort -@ $threads -o mapped/${input}_merged${add}.bam mapped/temp_${input}.bam
 		rm -f mapped/temp_${input}.bam
-		samtools index -@ $threads mapped/${input}_merged.bam
+		samtools index -@ $threads mapped/${input}_merged${add}.bam
 		export inputrep="two"
-	elif [ -e mapped/${input}_Rep1.bam ] && [ ! -e mapped/${input}_Rep2.bam ]; then
+	elif [ ${nbinput} -eq 1 ]; then
 		printf "\nOnly one replicate of $input\nIt will be used for all replicates\n"
 		export inputrep="one"
-	elif [ ! -e mapped/${input}_Rep1.bam ]; then
+	elif [ ${nbinput} -eq 0 ]; then
 		printf "\nNo Input file found, cannot proceed!\n"
+		exit 1
+	elif [ ${nbinput} -gt 2 ]; then
+		printf "\nMore than two Input files found, cannot proceed!\n"
 		exit 1
 	fi
 	printf "\nStarting single ChIP sample analysis for $name\n"
@@ -124,34 +126,34 @@ do
 			if [[ "$inputrep" == "two" ]]; then
 				case "$filetype" in
 					Rep1|Rep2) 	export namefiletype=mapped/${name}_${filetype}.bam
-							export inputfiletype=mapped/${input}_${filetype}.bam
+							export inputfiletype=mapped/${input}_${filetype}${add}.bam
 							export param=""
 							export clean="No";;
 					pseudo1|pseudo2)	export namefiletype=mapped/${name}_${filetype}.bam
-									export inputfiletype=mapped/${input}_merged.bam
+									export inputfiletype=mapped/${input}_merged${add}.bam
 									export param=""
 									export clean="Yes";;
 					merged)	export namefiletype=mapped/${name}_${filetype}.bam
-						export inputfiletype=mapped/${input}_${filetype}.bam
+						export inputfiletype=mapped/${input}_${filetype}${add}.bam
 						export param="-B"
 						export clean="No";;
 				esac
 			elif [[ "$inputrep" == "one" ]]; then
 				case "$filetype" in
 					Rep1) 	export namefiletype=mapped/${name}_${filetype}.bam
-						export inputfiletype=mapped/${input}_${filetype}.bam
+						export inputfiletype=mapped/${input}_${filetype}${add}.bam
 						export param=""
 						export clean="No";;
 					Rep2)	export namefiletype=mapped/${name}_${filetype}.bam
-						export inputfiletype=mapped/${input}_Rep1.bam
+						export inputfiletype=mapped/${input}_Rep1${add}.bam
 						export param=""
 						export clean="No";;
 					pseudo1|pseudo2)	export namefiletype=mapped/${name}_${filetype}.bam
-									export inputfiletype=mapped/${input}_Rep1.bam
+									export inputfiletype=mapped/${input}_Rep1${add}.bam
 									export param=""
 									export clean="Yes";;
 					merged)	export namefiletype=mapped/${name}_${filetype}.bam
-						export inputfiletype=mapped/${input}_Rep1.bam
+						export inputfiletype=mapped/${input}_Rep1${add}.bam
 						export param="-B"
 						export clean="No";;
 				esac
