@@ -12,8 +12,8 @@ usage="
 ##### Script for Maize code Histone ChIP data analysis, used by script MaizeCode_analysis.sh for ChIP data
 #####
 ##### sh MaiCode_ChIP_analysis.sh -f samplefile [-h]
-#####	-f: samplefile containing the samples to compare and the reference directory in 5 tab-delimited columns:
-##### 		Line, Tissue, Mark, PE or SE, Reference directory
+#####	-f: samplefile containing the samples to compare and the reference directory in 6 tab-delimited columns:
+##### 		Data, Line, Tissue, Mark, PE or SE, Reference directory
 ##### 	-h: help, returns usage
 ##### 
 ##### It merges the two replicate files, and creates pseudo-replicates by splitting the merged bam file into 2 halves
@@ -63,9 +63,10 @@ if [ ! -s reports/summary_ChIP_peaks.txt ]; then
 fi
 
 pidsa=()
-while read line tissue mark paired ref_dir
+while read data line tissue mark paired ref_dir
 do
 	#### To merge bam files of replicates
+	
 	export line
 	export tissue
 	export mark
