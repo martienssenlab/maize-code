@@ -121,7 +121,7 @@ ref_list=()
 while read data line tissue sample paired ref_dir
 do
 	case "${data}" in
-		ChIP) 	datatype="ChIP"
+		ChIP*) 	datatype="ChIP"
 			tmpname="${tissue}"
 			name=${line}_${tissue}_${sample};;
 		RNAseq) datatype="RNA"
