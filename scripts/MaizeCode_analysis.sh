@@ -146,7 +146,7 @@ do
 		fi
 		datatype_list+=("${datatype}")
 		new_chip_sample+=("${name}")
-		printf "${line}\t${tmpname}\t${sample}\t${paired}\t${ref_dir}\n" >> ${datatype}/temp_${samplename}_${datatype}.txt
+		printf "${data}\t${line}\t${tmpname}\t${sample}\t${paired}\t${ref_dir}\n" >> ${datatype}/temp_${samplename}_${datatype}.txt
 	elif [[ "${datatype}" == "RNA" ]]; then
 		if [ ! -d ./RNA/TSS ]; then
 			mkdir ./RNA/TSS
