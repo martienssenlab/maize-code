@@ -72,7 +72,7 @@ do
 	export name=${line}_${tissue}_${mark}
 	export input=${line}_${tissue}_Input
 	export paired
-	nbinput=${ls -1 mapped/${input}_Rep*${add}.bam | wc -l | awk '{print $1}'}
+	nbinput=$(ls -1 mapped/${input}_Rep*${add}.bam | wc -l | awk '{print $1}')
 	if [ -s mapped/${input}_merged${add}.bam ]; then
 		printf "\nReplicates of $input already merged\n"
 		export inputrep="two"
