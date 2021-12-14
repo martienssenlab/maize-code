@@ -74,7 +74,7 @@ do
 	export paired
 	nbinput=$(ls -1 mapped/${input}_Rep*${add}.bam | wc -l | awk '{print $1}')
 	if [ -s mapped/${input}_merged${add}.bam ]; then
-		printf "\nReplicates of $input already merged\n"
+		printf "\nReplicates of ${input}${add} already merged\n"
 		export inputrep="two"
 	elif [ ! -s mapped/${input}_merged${add}.bam ] && [ ${nbinput} -eq 2 ]; then
 		printf "\nMerging replicates of ${input}${add}\n"
