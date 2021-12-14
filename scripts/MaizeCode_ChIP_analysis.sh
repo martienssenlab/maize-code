@@ -77,14 +77,14 @@ do
 		printf "\nReplicates of $input already merged\n"
 		export inputrep="two"
 	elif [ ! -s mapped/${input}_merged${add}.bam ] && [ ${nbinput} -eq 2 ]; then
-		printf "\nMerging replicates of $input\n"
-		samtools merge -@ $threads mapped/temp_${input}.bam mapped/${input}_Rep*${add}.bam
-		samtools sort -@ $threads -o mapped/${input}_merged${add}.bam mapped/temp_${input}.bam
-		rm -f mapped/temp_${input}.bam
+		printf "\nMerging replicates of ${input}${add}\n"
+		samtools merge -@ $threads mapped/temp_${input}${add}.bam mapped/${input}_Rep*${add}.bam
+		samtools sort -@ $threads -o mapped/${input}_merged${add}.bam mapped/temp_${input}${add}.bam
+		rm -f mapped/temp_${input}${add}.bam
 		samtools index -@ $threads mapped/${input}_merged${add}.bam
 		export inputrep="two"
 	elif [ ${nbinput} -eq 1 ]; then
-		printf "\nOnly one replicate of $input\nIt will be used for all replicates\n"
+		printf "\nOnly one replicate of ${input}${add}\nIt will be used for all replicates\n"
 		export inputrep="one"
 	elif [ ${nbinput} -eq 0 ]; then
 		printf "\nNo Input file found, cannot proceed!\n"
@@ -158,7 +158,7 @@ do
 						export clean="No";;
 				esac
 			fi
-			printf "\nStarting single ChIP sample analysis for $name $filetype\n"
+			printf "\nStarting single ChIP sample analysis for ${name} ${filetype} using ${input}${add}\n"
 			qsub -N ${name}_${filetype} -V -cwd -sync y -pe threads 10 -l m_mem_free=6G -l tmp_free=50G -j y -o logs/analysis_${name}_${filetype}.log <<-'EOF2' &
 				#!/bin/bash
 				set -e -o pipefail
