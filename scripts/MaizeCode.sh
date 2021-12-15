@@ -102,7 +102,13 @@ datat_ref_list=()
 new_env=0
 while read data line tissue sample rep sampleID path paired ref
 do
-	name=${line}_${tissue}_${sample}_${rep}
+	if [[ "${data}" == "ChIP_"* ]] && [[ "${sample}" == "Input" ]]; then
+		tmp=${data#ChIP_}
+		add="_${tmp}"
+	else
+		add=""
+	fi
+	name=${line}_${tissue}_${sample}_${rep}${add}
 	case "${data}" in
 		ChIP*) 	env="ChIP";;
 		RNAseq) env="RNA";;
@@ -220,8 +226,8 @@ pids=()
 while read data line tissue sample rep sampleID path paired ref
 do
 	ref_dir=${pathtoref}/${ref}
-	if [[ "${data}" == "ChIP"* ]] && [[ "${sample}" == "Input" ]]; then
-		tmp=${data##ChIP_}
+	if [[ "${data}" == "ChIP_"* ]] && [[ "${sample}" == "Input" ]]; then
+		tmp=${data#ChIP_}
 		add="_${tmp}"
 	else
 		add=""
@@ -305,6 +311,12 @@ fi
 
 while read data line tissue sample rep sampleID path paired ref
 do
+	if [[ "${data}" == "ChIP_"* ]] && [[ "${sample}" == "Input" ]]; then
+		tmp=${data#ChIP_}
+		add="_${tmp}"
+	else
+		add=""
+	fi
 	case "${data}" in
 		ChIP*) env="ChIP"
 			stat="plot1"
