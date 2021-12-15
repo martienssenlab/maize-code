@@ -120,7 +120,7 @@ shrna_bw_list_minus=()
 while read data line tissue sample paired ref_dir
 do
 	case "${data}" in
-		ChIP) 	datatype="ChIP"
+		ChIP*) 	datatype="ChIP"
 			name=${line}_${tissue}_${sample};;
 		RNAseq) datatype="RNA"
 			name=${line}_${tissue}_${sample};;
@@ -141,7 +141,7 @@ do
 	if [[ ! "${line_list[@]}" =~ "${line}" ]]; then
 		line_list+=("${line}")
 	fi
-	if [[ "${datatype}" == "ChIP" ]]; then
+	if [[ "${datatype}" == "ChIP"* ]]; then
 		chip_bw_list+=("${datatype}/tracks/${name}_merged.bw")
 		chip_sample_list+=("${name}")
 		chip_tissue_list+=("${tissue}")
