@@ -12,7 +12,7 @@ usage="
 ##### Script for Maize code Histone ChIP data analysis, used by script MaizeCode.sh for ChIP samples
 #####
 ##### sh MaizeCode_ChIP_sample.sh -x datatype -d reference directory -l inbred line -t tissue -m histone mark -r replicate ID -i sample ID -f path to sample -p paired -s step
-##### 	-x: type of data (not used here yet mandatory, should be 'ChIP')
+##### 	-x: type of data (should be 'ChIP' or 'ChIP_*' where * is a index marking which input to use when several inputs are present)
 ##### 	-d: folder containing the reference directory (e.g. ~/data/Genomes/Zea_mays/B73_v4)
 ##### 	-l: inbred line (e.g. B73)
 ##### 	-t: tissue (e.g. endosperm)
@@ -71,9 +71,9 @@ fi
 
 export ref=${ref_dir##*/}
 
-tmp=${data##ChIP_}
-add="_${tmp}"
-if [[ ${mark} == "Input" ]]; then
+if [[ ${data} == "ChIP_"* ]] && [[ ${mark} == "Input" ]]; then
+	tmp=${data#ChIP_}
+	add="_${tmp}"
 	name=${line}_${tissue}_${mark}_${rep}${add}
 else
 	name=${line}_${tissue}_${mark}_${rep}
