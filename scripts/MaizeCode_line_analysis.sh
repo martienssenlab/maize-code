@@ -142,7 +142,11 @@ do
 		line_list+=("${line}")
 	fi
 	if [[ "${datatype}" == "ChIP"* ]]; then
-		chip_bw_list+=("${datatype}/tracks/${name}_merged.bw")
+		if [ -e ${datatype}/tracks/${name}_merged.bw ]; then
+			chip_bw_list+=("${datatype}/tracks/${name}_merged.bw")
+		else
+			chip_bw_list+=("${datatype}/tracks/${name}_Rep1.bw")
+		fi
 		chip_sample_list+=("${name}")
 		chip_tissue_list+=("${tissue}")
 		chip_mark_list+=("${sample}")
