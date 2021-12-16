@@ -732,7 +732,7 @@ do
 			maxs+=("${maxi}")
 		done		
 		ymini=$(grep "${mark}" combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
-		ymaxi=$(grep "${mark}" combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.2}')
+		ymaxi=$(grep "${mark}" combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
 		num=$(grep "${mark}" combined/matrix/values_profile_${matrix}_${analysisname}.txt | wc -l)
 		test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
 		if [[ ${test} == "yes" ]]; then
@@ -766,7 +766,7 @@ do
 	for sample in ${all_labels[@]}
 	do
 		ymini=$(grep ${sample} combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
-		ymaxi=$(grep ${sample} combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.2}')
+		ymaxi=$(grep ${sample} combined/matrix/values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END if (m<0) a=m*0.8; else a=m*1.2; print a}')
 		test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
 		if [[ ${test} == "yes" ]]; then
 			ymins2+=("0")
@@ -1303,7 +1303,7 @@ do
 		printf "\nPlotting median profile for distal peaks in tissue ${tissue} in ${analysisname} scaling by sample\n"
 		plotProfile -m combined/matrix/final_regions_${analysisname}_distal.gz -out combined/plots/distal_${tissue}_${analysisname}_profile_median.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType median --yMin ${ymins[@]} --yMax ${ymaxs[@]} --startLabel "enhancer" --endLabel "TSS"		
 	else
-		printf "\nTissue ${tissue} will not be processed (H3K27ac is present? ${test_k27ac}\tNumber of datasets in ${tissue}: ${#tissue_labels[*]})\n"
+		printf "\nTissue ${tissue} will not be processed\n"
 	fi
 done
 numtissue=$(ls -1f combined/peaks/temp2_distal_${analysisname}_*.txt | wc -l)
