@@ -15,8 +15,9 @@ inputable$Group<-factor(inputable$Group, levels=c("Distal_downstream","Terminato
 set1<-colnames(inputable)
 sampleCols<-set1[! set1 %in% c("PeakID","Distance","Group")]
 
+### To implement: Make a vector of colors and list all the unique ChIP marks to draw from to create queries instead of only these ones
 H3K27ac<-colnames(inputable[grep(pattern="H3K27ac",x=colnames(inputable))])
-
+queries<-c()
 if ( length(H3K27ac) > 0) {
   combosK27ac <- map(seq(1:length(H3K27ac)), ~ combn(H3K27ac, ., FUN = c, simplify = FALSE)) %>% 
    unlist(recursive = FALSE)
@@ -26,6 +27,7 @@ if ( length(H3K27ac) > 0) {
                  ~ upset_query(intersect = .x, color = "#EE616E", 
                                fill = "#EE616E", only_components = c('intersections_matrix')))
   queriesK27acset <- map(H3K27ac, ~ upset_query(set = .x, fill = "#EE616E"))
+  queries<-append(queries, queriesK27ac)
 }
 
 H3K4me1<-colnames(inputable[grep(pattern="H3K4me1",x=colnames(inputable))])
@@ -39,6 +41,7 @@ if ( length(H3K4me1) > 0) {
                       ~ upset_query(intersect = .x, color = "#8D9BEE", 
                                    fill = "#8D9BEE", only_components = c('intersections_matrix')))
   queriesK4me1set <- map(H3K4me1, ~ upset_query(set = .x, fill = "#8D9BEE"))
+  queries<-append(queries, queriesK4me1)
 }
 
 H3K4me3<-colnames(inputable[grep(pattern="H3K4me3",x=colnames(inputable))])
@@ -52,6 +55,7 @@ if ( length(H3K4me3) > 0) {
                       ~ upset_query(intersect = .x, color = "#F1C062", 
                                     fill = "#F1C062", only_components = c('intersections_matrix')))
   queriesK4me3set <- map(H3K4me3, ~ upset_query(set = .x, fill = "#F1C062"))
+  queries<-append(queries, queriesK4me3)
  }
 
 queries<-c(queriesK27ac, queriesK4me1, queriesK4me3)
