@@ -80,7 +80,7 @@ do
 	nbsample=$(ls -1 mapped/${name}_Rep*${add}.bam | wc -l | awk '{print $1}')
 	nbinput=$(ls -1 mapped/${input}_Rep*${add}.bam | wc -l | awk '{print $1}')
 	if [ ${nbsample} -eq 1 ]; then
-		printf "\nOnly one replicate of sample found, no merging of replicates possible performed\n"
+		printf "\nOnly one replicate of sample found, no merging of replicates possible\n"
 		export samplerep="one"
 		export inputrep="one"
 	elif [ ${nbsample} -gt 2 ]; then
@@ -296,6 +296,7 @@ do
 			merged=$(awk '{print $1,$2,$3}' peaks/${name}_merged_peaks.${peaktype}Peak | sort -k1,1 -k2,2n -u | wc -l)
 			pseudos=$(awk '{print $1,$2,$3}' peaks/temp_${name}_pseudos.bed | sort -k1,1 -k2,2n -u | wc -l)
 			selected=$(cat peaks/temp_${name}_selected.bed | sort -k1,1 -k2,2n -u | wc -l)
+			awk -v OFS="\t" -v a=$line -v b=$tissue -v c=$mark -v d=$rep1 -v e=$rep2 -v f=$common -v g=$idr -v h=$merged -v i=$pseudos -v j=$selected 'BEGIN {print a,b,c,d,e,f" ("f/d*100"%rep1;"f/e*100"%rep2)",g" ("g/f*100"%common)",h,i,j" ("j/h*100"%merged)"}' >> reports/summary_ChIP_peaks.txt
 		elif [[ "${samplerep}" == "one" ]]; then
 			rep1=$(awk '{print $1,$2,$3}' peaks/${name}_Rep1_peaks.${peaktype}Peak | sort -k1,1 -k2,2n -u | wc -l)
 			rep2=0
@@ -304,8 +305,8 @@ do
 			merged=$(awk '{print $1,$2,$3}' peaks/${name}_Rep1_peaks.${peaktype}Peak | sort -k1,1 -k2,2n -u | wc -l)
 			pseudos=$(awk '{print $1,$2,$3}' peaks/temp_${name}_pseudos.bed | sort -k1,1 -k2,2n -u | wc -l)
 			selected=$(cat peaks/temp_${name}_selected.bed | sort -k1,1 -k2,2n -u | wc -l)
+			awk -v OFS="\t" -v a=$line -v b=$tissue -v c=$mark -v d=$rep1 -v e=$rep2 -v f=$common -v g=$idr -v h=$merged -v i=$pseudos -v j=$selected 'BEGIN {print a,b,c,d,e,f" ("f/d*100"%rep1;0%rep2)",g" (0%common)",h,i,j" ("j/h*100"%merged)"}' >> reports/summary_ChIP_peaks.txt
 		fi
-		awk -v OFS="\t" -v a=$line -v b=$tissue -v c=$mark -v d=$rep1 -v e=$rep2 -v f=$common -v g=$idr -v h=$merged -v i=$pseudos -v j=$selected 'BEGIN {print a,b,c,d,e,f" ("f/d*100"%rep1;"f/e*100"%rep2)",g" ("g/f*100"%common)",h,i,j" ("j/h*100"%merged)"}' >> reports/summary_ChIP_peaks.txt
 		rm -f peaks/temp_${name}*
 		touch chkpts/analysis_${name}
 	EOF1
