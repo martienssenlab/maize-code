@@ -77,7 +77,7 @@ do
 	export name=${line}_${tissue}_${mark}
 	export input=${line}_${tissue}_Input
 	export paired
-	nbsample=$(ls -1 mapped/${name}_Rep*${add}.bam | wc -l | awk '{print $1}')
+	nbsample=$(ls -1 mapped/${name}_Rep*.bam | wc -l | awk '{print $1}')
 	nbinput=$(ls -1 mapped/${input}_Rep*${add}.bam | wc -l | awk '{print $1}')
 	if [ ${nbsample} -eq 1 ]; then
 		printf "\nOnly one replicate of sample found, no merging of replicates possible\n"
