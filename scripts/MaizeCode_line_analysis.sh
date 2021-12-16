@@ -1108,6 +1108,7 @@ rm -f combined/DEG/temp*${analysisname}*
 uniq_chip_tissue_list=($(printf "%s\n" "${chip_tissue_list[@]}" | sort -u))
 
 h3k27actissues=()
+createfile="no"
 for tissue in ${uniq_chip_tissue_list[@]}
 do
 	tissue_labels=()
@@ -1221,6 +1222,7 @@ do
 			esac
 			if [ -s combined/DEG/sorted_expression_${analysisname}_${tissue}.bed ]; then
 				awk -v OFS="\t" -v g=${name} -v t=${tissue} '{print t,$4,$5,$7,$8,g }' combined/peaks/temp_distal_${analysisname}_${tissue}_group${i}.bed >> combined/peaks/temp2_distal_${analysisname}_${tissue}.txt
+				createfile="yes"
 			fi
 			n=$(wc -l combined/peaks/temp_distal_${analysisname}_${tissue}_group${i}.bed | awk '{print $1}')
 			regions_labels+=("${name}($n)")	
@@ -1306,8 +1308,7 @@ do
 		printf "\nTissue ${tissue} will not be processed\n"
 	fi
 done
-numtissue=$(ls -1f combined/peaks/temp2_distal_${analysisname}_*.txt | wc -l)
-if [[ ${numtissue} -ge 1 ]]; then
+if [[ "${createfile}" == "yes" ]]; then
 	printf "Tissue\tPeak_ID\tPeakQuality\tGID\tRPKM\tGroup\n" > combined/peaks/all_grouped_distal_peaks_${analysisname}.txt
 	cat combined/peaks/temp2_distal_${analysisname}_*.txt > combined/peaks/all_grouped_distal_peaks_${analysisname}.txt
 fi
