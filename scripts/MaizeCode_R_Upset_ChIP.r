@@ -58,8 +58,6 @@ if ( length(H3K4me3) > 0) {
   queries<-append(queries, queriesK4me3)
  }
 
-# queries<-c(queriesK27ac, queriesK4me1, queriesK4me3)
-
 inputable <- inputable %>% 
   mutate(
     exclusive_mark = case_when(
