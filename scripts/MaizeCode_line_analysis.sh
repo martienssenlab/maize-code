@@ -1460,6 +1460,8 @@ bedGraphToBigWig ChIP/tracks/temp2_${regionname}.bg ${ref_dir}/chrom.sizes ChIP/
 rm -f ChIP/tracks/temp*.bg
 
 ### Need to add this TE file for all inbreds
+tefilebw=""
+tefilebed=""
 if [[ ${ref} == "B73_v4" ]]; then
 	if [ ! -s combined/TSS/${ref}_all_tes.bed ]; then
 		zcat /grid/martienssen/data_norepl/dropbox/maizecode/TEs/B73_v4_TEs.gff3.gz | awk -v OFS="\t" '$1 !~ /^#/ {print $1,$4-1,$5,$3,".",$7}' | bedtools sort -g ${ref_dir}/chrom.sizes > combined/TSS/${ref}_all_tes.bed
@@ -1467,6 +1469,8 @@ if [[ ${ref} == "B73_v4" ]]; then
 	awk -v OFS="\t" '$1~/^[1-9]/ {print $1,$2,$3,"1"}' combined/TSS/${ref}_all_tes.bed | bedtools sort -g ${ref_dir}/chrom.sizes > ChIP/tracks/temp_${ref}_all_tes.bg
 	bedtools merge -i ChIP/tracks/temp_${ref}_all_tes.bg -o max -c 4 | LC_COLLATE=C sort -k1,1 -k2,2n > ChIP/tracks/temp2_${ref}_all_tes.bg
 	bedGraphToBigWig ChIP/tracks/temp2_${ref}_all_tes.bg ${ref_dir}/chrom.sizes ChIP/tracks/${ref}_all_tes.bw
+	tefilebw="ChIP/tracks/${ref}_all_tes.bw"
+	tefilebed="combined/TSS/${ref}_all_tes.bed"
 	rm -f ChIP/tracks/temp*.bg
 fi
 
@@ -1555,25 +1559,29 @@ do
 		for strand in plus minus
 		do
 			case "$strand" in
-				plus)	bw="${tissue_bw_plus[*]} "
-						regions="${regions_list_plus[*]}";;
-				minus)	bw=("ChIP/tracks/B73_${tissue}_H3K27ac_merged.bw" "ChIP/tracks/B73_${tissue}_H3K4me1_merged.bw" "ChIP/tracks/B73_${tissue}_H3K4me3_merged.bw" "RNA/tracks/B73_${tissue}_RNAseq_merged_minus.bw" "RNA/tracks/B73_${tissue}_RAMPAGE_merged_minus.bw" "ChIP/tracks/B73_v4_all_genes.bw" "ChIP/tracks/B73_v4_all_tes.bw")
-						regions="${regions_list_minus[*]}";;
+				plus)	bw="${tissue_bw_plus[*]} ChIP/tracks/${regionname}.bw ${tefilebw}"
+					regions="${regions_list_plus[*]}";;
+				minus)	bw="${tissue_bw_minus[*]} ChIP/tracks/${regionname}.bw ${tefilebw}"
+					regions="${regions_list_minus[*]}";;
 			esac
-			printf "\nComputing matrix for ${line} ${tissue} ${strand} strand\n"
-			computeMatrix scale-regions -q --missingDataAsZero --skipZeros -R ${regions} -S ${bw[@]} -bs 10 -b 3000 -a 3000 -m 1000 -p ${threads} -o combined/matrix/regions_enhancers_${line}_${tissue}_${strand}.gz
+			printf "\nComputing matrix for all enhancers in ${tissue} (${strand} strand)\n"
+			computeMatrix scale-regions -q --missingDataAsZero --skipZeros -R ${regions} -S ${bw[@]} -bs 10 -b 3000 -a 3000 -m 1000 -p ${threads} -o combined/matrix/regions_enhancers_${analysisname}_${tissue}_${strand}.gz
 		done
-		computeMatrixOperations rbind -m combined/matrix/regions_enhancers_${line}_${tissue}_plus.gz combined/matrix/regions_enhancers_${line}_${tissue}_minus.gz -o combined/matrix/regions_enhancers_${line}_${tissue}.gz
-		
-		printf "\nGetting scales for ${line} ${tissue}\n"
-		plotProfile -m combined/matrix/regions_enhancers_${line}_${tissue}.gz -out combined/plots/enhancers_${line}_${tissue}_temp_profile.pdf --samplesLabel ${label_list[@]} --averageType mean --outFileNameData combined/matrix/values_enhancers_${line}_${tissue}.txt
+		computeMatrixOperations rbind -m combined/matrix/regions_enhancers_${analysisname}_${tissue}_plus.gz combined/matrix/regions_enhancers_${analysisname}_${tissue}_minus.gz -o combined/matrix/regions_enhancers_${analysisname}_${tissue}.gz
+		if [[ ${tefilebw} != "" ]]; then
+			label_list="${tissue_labels[*]} Genes TEs"
+		else
+			label_list="${tissue_labels[*]} Genes"
+		fi
+		printf "\nGetting scales for all enhancers in ${tissue}\n"
+		plotProfile -m combined/matrix/regions_enhancers_${analysisname}_${tissue}.gz -out combined/plots/enhancers_${analysisname}_${tissue}_temp_profile.pdf --samplesLabel ${label_list[@]} --averageType mean --outFileNameData combined/matrix/values_enhancers_${analysisname}_${tissue}.txt
 		rm -f combined/plots/enhancers_${line}_${tissue}_temp_profile.pdf
 		ymins=()
 		ymaxs=()
 		for sample in ${label_list[@]}
 		do
-			ymini=$(grep $sample combined/matrix/values_enhancers_${line}_${tissue}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.5; else a=m*0.5; print a}')
-			ymaxi=$(grep $sample combined/matrix/values_enhancers_${line}_${tissue}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.5}')
+			ymini=$(grep $sample combined/matrix/values_enhancers_${analysisname}_${tissue}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.5; else a=m*0.5; print a}')
+			ymaxi=$(grep $sample combined/matrix/values_enhancers_${analysisname}_${tissue}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.5}')
 			test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
 			if [[ "${test}" == "yes" ]]; then
 				ymins+=("0")
@@ -1583,48 +1591,50 @@ do
 				ymaxs+=("${ymaxi}")
 			fi
 		done
-		computeMatrixOperations dataRange -m combined/matrix/regions_enhancers_${line}_${tissue}.gz > combined/matrix/values_enhancers_${line}_${tissue}.txt
+		computeMatrixOperations dataRange -m combined/matrix/regions_enhancers_${analysisname}_${tissue}.gz > combined/matrix/values_enhancers_${analysisname}_${tissue}.txt
 		mins=()
 		maxs=()
-		totnb=${#label_list[*]}
-		arr=$((totnb-2))
-		for (( i=1; i<=${arr}; i++ ))
+		totnb=${#tissue_labels[*]}
+		for (( i=1; i<=${totnb}; i++ ))
 		do 
-			mini=$(awk -v i=$i 'NR==(i+1) {print $5}' combined/matrix/values_enhancers_${line}_${tissue}.txt)		
-			maxi=$(awk -v i=$i 'NR==(i+1) {print $6}' combined/matrix/values_enhancers_${line}_${tissue}.txt)
+			mini=$(awk -v i=$i 'NR==(i+1) {print $5}' combined/matrix/values_enhancers_${analysisname}_${tissue}.txt)		
+			maxi=$(awk -v i=$i 'NR==(i+1) {print $6}' combined/matrix/values_enhancers_${analysisname}_${tissue}.txt)
 			test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
 			if [[ "${test}" == "yes" ]]; then
 				mins+=("0")
-				maxs+=("0.01")
+				maxs+=("0.005")
 			else
 				mins+=("${mini}")
 				maxs+=("${maxi}")
 			fi
 		done
-		mins+=("0" "0")
-		maxs+=("1" "1")
-		printf "\nSorting heatmap for ${line} ${tissue}\n"
-		computeMatrixOperations sort -m combined/matrix/regions_enhancers_${line}_${tissue}.gz -R ${regions_list[*]} -o combined/matrix/regions_enhancers_${line}_${tissue}_sorted.gz
-		printf "\nPlotting heatmap for ${line} ${tissue}\n"
-		plotHeatmap -m combined/matrix/regions_enhancers_${line}_${tissue}_sorted.gz -out combined/plots/enhancers_${line}_${tissue}.pdf --sortRegions keep --samplesLabel ${label_list[*]} --regionsLabel ${regions_label[*]} --colorMap 'seismic' --interpolationMethod 'bilinear' --yMin ${ymins[@]} --yMax ${ymaxs[@]} --zMin ${mins[@]} --zMax ${maxs[@]}
-		plotHeatmap -m combined/matrix/regions_enhancers_${line}_${tissue}_sorted.gz -out combined/plots/enhancers_${line}_${tissue}_sorted.pdf --sortRegions descend --sortUsing mean --sortUsingSamples 1 --samplesLabel ${label_list[*]} --regionsLabel ${regions_label[*]} --colorMap 'seismic' --interpolationMethod 'bilinear' --yMin ${ymins[@]} --yMax ${ymaxs[@]} --zMin ${mins[@]} --zMax ${maxs[@]}
+		if [[ ${tefilebw} != "" ]]; then
+			mins+=("0" "0")
+			maxs+=("1" "1")
+		else
+			mins+=("0")
+			maxs+=("1")
+		fi		
+		printf "\nSorting enhancers matrix in ${tissue}\n"
+		computeMatrixOperations sort -m combined/matrix/regions_enhancers_${analysisname}_${tissue}.gz -R ${regions_list[*]} -o combined/matrix/regions_enhancers_${analysisname}_${tissue}_sorted.gz
+		printf "\nPlotting heatmap of all enhancers in ${tissue}\n"
+		plotHeatmap -m combined/matrix/regions_enhancers_${analysisname}_${tissue}_sorted.gz -out combined/plots/enhancers_${line}_${tissue}.pdf --sortRegions keep --samplesLabel ${label_list[*]} --regionsLabel ${regions_label[*]} --colorMap 'seismic' --interpolationMethod 'bilinear' --yMin ${ymins[@]} --yMax ${ymaxs[@]} --zMin ${mins[@]} --zMax ${maxs[@]}
+		plotHeatmap -m combined/matrix/regions_enhancers_${analysisname}_${tissue}_sorted.gz -out combined/plots/enhancers_${line}_${tissue}_sorted.pdf --sortRegions descend --sortUsing mean --samplesLabel ${label_list[*]} --regionsLabel ${regions_label[*]} --colorMap 'seismic' --interpolationMethod 'bilinear' --yMin ${ymins[@]} --yMax ${ymaxs[@]} --zMin ${mins[@]} --zMax ${maxs[@]}
 		
 		for type in genic promoter terminator distal_upstream distal_downstream
 		do
-			regions_list="combined/peaks/sorted_enhancers_${type}_${line}_${tissue}_${analysisname}_plus.txt combined/peaks/sorted_enhancers_${type}_${line}_${tissue}_${analysisname}_minus.txt"
-			nb1=$(wc -l combined/peaks/sorted_enhancers_${type}_${line}_${tissue}_${analysisname}_plus.txt | awk '{print $1}')
-			nb2=$(wc -l combined/peaks/sorted_enhancers_${type}_${line}_${tissue}_${analysisname}_minus.txt | awk '{print $1}')
+			regions_list="combined/peaks/temp_sorted_enhancers_${type}_${line}_${tissue}_${analysisname}_plus.txt combined/peaks/temp_sorted_enhancers_${type}_${line}_${tissue}_${analysisname}_minus.txt"
+			nb1=$(wc -l combined/peaks/temp_sorted_enhancers_${type}_${line}_${tissue}_${analysisname}_plus.txt | awk '{print $1}')
+			nb2=$(wc -l combined/peaks/temp_sorted_enhancers_${type}_${line}_${tissue}_${analysisname}_minus.txt | awk '{print $1}')
 			regions_label="${type}_plus(${nb1}) ${type}_minus(${nb2})"
-			computeMatrixOperations sort -m combined/matrix/regions_enhancers_${line}_${tissue}.gz -R ${regions_list} -o combined/matrix/regions_enhancers_${line}_${tissue}_${type}.gz
-			printf "\nPlotting heatmap for ${line} ${tissue} ${type}\n"
-			plotHeatmap -m combined/matrix/regions_enhancers_${line}_${tissue}_${type}.gz -out combined/plots/enhancers_${line}_${tissue}_${type}.pdf --sortRegions keep --samplesLabel ${label_list[*]} --regionsLabel ${regions_label} --colorMap 'seismic' --interpolationMethod 'bilinear' --yMin ${ymins[@]} --yMax ${ymaxs[@]} --zMin ${mins[@]} --zMax ${maxs[@]}
+			computeMatrixOperations sort -m combined/matrix/regions_enhancers_${analysisname}_${tissue}.gz -R ${regions_list} -o combined/matrix/regions_enhancers_${analysisname}_${tissue}_${type}.gz
+			printf "\nPlotting ${type} enhancer heatmap for ${tissue}\n"
+			plotHeatmap -m combined/matrix/regions_enhancers_${analysisname}_${tissue}_${type}.gz -out combined/plots/enhancers_${analysisname}_${tissue}_${type}.pdf --sortRegions keep --samplesLabel ${label_list[*]} --regionsLabel ${regions_label} --colorMap 'seismic' --interpolationMethod 'bilinear' --yMin ${ymins[@]} --yMax ${ymaxs[@]} --zMin ${mins[@]} --zMax ${maxs[@]}
 		done
-	done
+		rm -f combined/peaks/temp*${analysisname}*
+	fi
 done		
-
-
-
-
+rm -f combined/peaks/temp*${analysisname}*
 
 ############################################################################################
 ########################################## PART14 ##########################################
@@ -1638,7 +1648,7 @@ if [[ ${#uniq_rampage_tissue_list[*]} -ge 2 ]] && [[ ${ref} == "B73_v4" ]]; then
 		zcat /grid/martienssen/data_norepl/dropbox/maizecode/TEs/B73_v4_TEs.gff3.gz | awk -v OFS="\t" '$1 !~ /^#/ {print $1,$4-1,$5,$3,".",$7}' | bedtools sort -g ${ref_dir}/chrom.sizes > combined/TSS/${ref}_all_tes.bed
 	fi
 
-	if [[ -e combined/TSS/tmp_TSS_peaks_${analysisname}.bed ]]; then
+	if [ -e combined/TSS/tmp_TSS_peaks_${analysisname}.bed ]; then
 		rm -f combined/TSS/tmp_TSS_peaks_${analysisname}.bed
 	fi
 	for tissue in ${uniq_rampage_tissue_list[@]}
