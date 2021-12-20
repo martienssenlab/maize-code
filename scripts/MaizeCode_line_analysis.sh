@@ -724,7 +724,7 @@ do
 		test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
 		if [[ ${test} == "yes" ]]; then
 			mini=("0")
-			maxi=("0.01")
+			maxi=("0.005")
 		fi
 		for i in $(seq 1 ${num})
 		do
@@ -755,7 +755,7 @@ do
 		test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
 		if [[ ${test} == "yes" ]]; then
 			mins2+=("0")
-			maxs2+=("0.01")
+			maxs2+=("0.005")
 		else
 			mins2+=("${mini}")
 			maxs2+=("${maxi}")
@@ -1061,7 +1061,7 @@ do
 				test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
 				if [[ ${test} == "yes" ]]; then
 					mins+=("0")
-					maxs+=("0.01")
+					maxs+=("0.005")
 				else
 					mins+=("${mini}")
 					maxs+=("${maxi}")
@@ -1268,7 +1268,7 @@ do
 			test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
 			if [[ ${test} == "yes" ]]; then
 				mins+=("0")
-				maxs+=("0.01")
+				maxs+=("0.005")
 			else
 				mins+=("${mini}")
 				maxs+=("${maxi}")
@@ -1628,7 +1628,7 @@ if [[ "${ref}" == "B73_v4" ]]; then
 					test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
 					if [[ ${test} == "yes" ]]; then
 						mini=("0")
-						maxi=("0.01")
+						maxi=("0.005")
 					fi
 					for i in $(seq 1 ${num})
 					do
@@ -1659,7 +1659,7 @@ if [[ "${ref}" == "B73_v4" ]]; then
 					test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
 					if [[ ${test} == "yes" ]]; then
 						mins2+=("0")
-						maxs2+=("0.01")
+						maxs2+=("0.005")
 					else
 						mins2+=("${mini}")
 						maxs2+=("${maxi}")
