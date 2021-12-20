@@ -25,14 +25,15 @@ usage="
 ##### PART8: plot different heatmaps and metaplots of all ChIP and RNA samples in the samplefile on all input regions (and on TEs for B73_v4, need a TE gff file)
 ##### PART9: plot heatmaps and metaplots on DEGs
 ##### PART10: plot heatmaps and metaplots on genes split by expression levels
-##### PART11: plot heatmaps and metaplots on distal peaks split by H3K27ac ChIPseq quality
+##### PART11: plot heatmaps and metaplots on H3K27ac distal peaks split by H3K27ac ChIPseq quality
 ##### PART12: gather RNAseq, shRNA and RAMPAGE expression at H3K27ac distal peaks and make various scatter plots
-##### PART13: Plot the distribution of RAMPAGE "TSS" peaks in genes and TEs for each tissue and an upset plot among all tissues (need a TE gff file)
-##### PART14: Plot the distribution of shRNA clusters in genes and TEs for each tissue and an upset plot among all tissues (need a TE gff file)
+##### PART13: plot heatmaps and metaplots on enhancers (H3K27ac peaks) split by distance to nearest gene, sorted by RNA expression at enhancers (uses part11 and part12)
+##### PART14: plot the distribution of RAMPAGE "TSS" peaks in genes and TEs for each tissue and an upset plot among all tissues (need a TE gff file)
+##### PART15: plot the distribution of shRNA clusters in genes and TEs for each tissue and an upset plot among all tissues (need a TE gff file)
 ##### Under development:
 ##### PART5: compare TF peaks with DEGs
 ##### PART7: perform differential peak calling between all pairs of ChIP samples for each mark
-##### PART15: Plot heatmaps on all TEs
+##### PART16: plot heatmaps on all TEs
 
 #####
 ##### Requirements: bedtools, deeptools, macs2, R (+R packages: ggplot2,limma,edgeR,dplyr,tidyr,stringr,gplots,cowplot,ComplexUpset,purrr)
@@ -1109,6 +1110,7 @@ uniq_chip_tissue_list=($(printf "%s\n" "${chip_tissue_list[@]}" | sort -u))
 
 h3k27actissues=()
 createfile="no"
+enhancerfile="no"
 for tissue in ${uniq_chip_tissue_list[@]}
 do
 	tissue_labels=()
@@ -1190,6 +1192,7 @@ do
 	if [[ ${test_k27ac} == "yes" ]] && [[ ${#tissue_bw_plus[@]} -ge 2 ]]; then
 		printf "\nMaking heatmaps of distal enhancers (H3K27ac peak >2kb from TSS) in tissue ${tissue}\n"
 		printf "\nGetting bed file of distal enhancers for tissue ${tissue}\n"
+		enhancerfile="yes"
 		bedtools sort -g ${ref_dir}/chrom.sizes -i ChIP/peaks/best_peaks_${line}_${tissue}_H3K27ac.bed | awk '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/)'> combined/peaks/temp_${analysisname}_${tissue}.bed
 		if [ -s combined/DEG/sorted_expression_${analysisname}_${tissue}.bed ]; then
 			bedtools sort -g ${ref_dir}/chrom.sizes -i combined/DEG/sorted_expression_${analysisname}_${tissue}.bed > combined/peaks/temp_${analysisname}_${tissue}_expression.bed
@@ -1207,7 +1210,7 @@ do
 			bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_no_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{if ($17>0 && $17<2000 && $16=="+") print $1,$2,$3,$4,$5,$16,$14; else if ($17>-2000 && $17<0 && $16=="-") print $1,$2,$3,$4,$5,$16,$14}' > combined/peaks/enhancers_promoter_${analysisname}_${tissue}.bed
 			bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_no_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{if ($17>0 && $17<2000 && $16=="-") print $1,$2,$3,$4,$5,$16,$14; else if ($17>-2000 && $17<0 && $16=="+") print $1,$2,$3,$4,$5,$16,$14}' > combined/peaks/enhancers_terminator_${analysisname}_${tissue}.bed
 			bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_no_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{if ($17==0) print $1,$2,$3,$4,$5,$16,$14}' > combined/peaks/enhancers_genic_${analysisname}_${tissue}.bed
-		fi
+		fi		
 		tot=$(wc -l combined/peaks/distal_${analysisname}_${tissue}.bed | awk '{print $1}')
 		bin=$((tot/5))
 		min=0
@@ -1323,6 +1326,16 @@ if [[ "${createfile}" == "yes" ]]; then
 	cat combined/peaks/temp2_distal_${analysisname}_*.txt > combined/peaks/all_grouped_distal_peaks_${analysisname}.txt
 fi
 
+if [[ "${enhancerfile}" == "yes" ]]; then
+	printf "Line\tTissue\tEnhancer\tCount\n" > combined/peaks/summary_enhancers_${analysisname}.txt
+	for tissue in ${h3k27actissues[@]}
+	do
+		for type in genic promoter terminator distal_upstream distal_downstream 
+		do
+			wc -l combined/peaks/complete_enhancers_${type}_${analysisname}_${tissue}.txt | awk -v OFS="\t" -v l=$line -v t=$tissue -v d=$type '{print l,t,d,$1}' >> combined/peaks/summary_enhancers_${analysisname}.txt
+		done
+	done
+fi
 rm -f combined/matrix/*${analysisname}*
 rm -f combined/peaks/temp*${analysisname}*
 
@@ -1437,7 +1450,184 @@ do
 done
 
 ############################################################################################
-########################################## PART13 ##########################################
+######################################### PART13 ###########################################
+############## Making scatter plots of RNA expression on distal H3K27ac peaks ##############
+############################################################################################
+
+awk -v OFS="\t" '$1~/^[1-9]/ {print $1,$2,$3,"1"}' ${regionfile} | bedtools sort -g ${ref_dir}/chrom.sizes > ChIP/tracks/temp_${regionname}.bg
+bedtools merge -i ChIP/tracks/temp_${regionname}.bg -o max -c 4 | LC_COLLATE=C sort -k1,1 -k2,2n > ChIP/tracks/temp2_${regionname}.bg
+bedGraphToBigWig ChIP/tracks/temp2_${regionname}.bg ${ref_dir}/chrom.sizes ChIP/tracks/${regionname}.bw
+rm -f ChIP/tracks/temp*.bg
+
+### Need to add this TE file for all inbreds
+if [[ ${ref} == "B73_v4" ]]; then
+	if [ ! -s combined/TSS/${ref}_all_tes.bed ]; then
+		zcat /grid/martienssen/data_norepl/dropbox/maizecode/TEs/B73_v4_TEs.gff3.gz | awk -v OFS="\t" '$1 !~ /^#/ {print $1,$4-1,$5,$3,".",$7}' | bedtools sort -g ${ref_dir}/chrom.sizes > combined/TSS/${ref}_all_tes.bed
+	fi
+	awk -v OFS="\t" '$1~/^[1-9]/ {print $1,$2,$3,"1"}' combined/TSS/${ref}_all_tes.bed | bedtools sort -g ${ref_dir}/chrom.sizes > ChIP/tracks/temp_${ref}_all_tes.bg
+	bedtools merge -i ChIP/tracks/temp_${ref}_all_tes.bg -o max -c 4 | LC_COLLATE=C sort -k1,1 -k2,2n > ChIP/tracks/temp2_${ref}_all_tes.bg
+	bedGraphToBigWig ChIP/tracks/temp2_${ref}_all_tes.bg ${ref_dir}/chrom.sizes ChIP/tracks/${ref}_all_tes.bw
+	rm -f ChIP/tracks/temp*.bg
+fi
+
+for tissue in ${h3k27actissues[@]}
+do
+	tissue_labels=()
+	tissue_bw_plus=()
+	tissue_bw_minus=()
+	rnaseq=0
+	rampage=0
+	for sample in ${chip_sample_list[@]}
+	do
+		if [[ ${sample} =~ ${tissue} ]]; then
+			tissue_labels+=("${sample}")
+		fi
+	done
+	for bw in ${chip_bw_list[@]}
+	do
+		if [[ ${bw} =~ ${tissue} ]]; then
+			tissue_bw_plus+=("${bw}")
+			tissue_bw_minus+=("${bw}")
+		fi
+	done
+	for bw in ${rnaseq_bw_list_plus[*]}
+	do					
+		if [[ ${bw} =~ ${tissue} ]]; then
+			tissue_bw_plus+=("${bw}")
+		fi
+	done
+	for bw in ${rnaseq_bw_list_minus[*]}
+	do					
+		if [[ ${bw} =~ ${tissue} ]]; then
+			tissue_bw_minus+=("${bw}")
+		fi
+	done
+	for sample in ${rnaseq_sample_list[*]}
+	do
+		if [[ ${sample} =~ ${tissue} ]]; then
+			tissue_labels+=("${sample}")
+			rnaseq=1
+		fi
+	done
+	for bw in ${rampage_bw_list_plus[*]}
+	do					
+		if [[ $bw =~ $tissue ]]; then
+			tissue_bw_plus+=("$bw")
+		fi
+	done
+	for bw in ${rampage_bw_list_minus[*]}
+	do					
+		if [[ ${bw} =~ ${tissue} ]]; then
+			tissue_bw_minus+=("${bw}")
+		fi
+	done
+	for sample in ${rampage_sample_list[*]}
+	do
+		if [[ ${sample} =~ ${tissue} ]]; then
+			tissue_labels+=("${sample}")
+			rampage=1
+		fi
+	done
+	if [[ ${rnaseq} == 1 ]] && [[ ${rampage} == 1 ]]; then
+		regions_list=()
+		regions_list_plus=()
+		regions_list_minus=()
+		regions_label=()
+		for type in genic promoter terminator distal_upstream distal_downstream
+		do
+			awk 'NR==1 {print $1,$2,$3,$4,"Peak_quality","Gene_strand","Gene_ID","Gene_expression",$5,$6,$7,$8}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt > combined/peaks/temp_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
+			while read chr start stop peakID quality strand GID expression
+			do
+				awk -v OFS="\t" -v p=${peakID} -v q=${quality} -v s=${strand} -v g=${GID} -v e=${expression} '$4 == p {print $1,$2,$3,$4,q,s,g,e,$5,$6,$7,$8}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt >> combined/peaks/temp_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
+			done < combined/peaks/enhancers_${type}_${analysisname}_${tissue}.bed
+			
+			awk -v OFS="\t" 'NR>1 {print $1,$2,$3,$4,$5,$6,$9+$10,$11+$12}' combined/peaks/temp_enhancers_${type}_${line}_${tissue}_${analysisname}.txt | sort -k6,6 -k7,7nr -k8,8nr > combined/peaks/complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt			
+			awk '$6=="+"' combined/peaks/complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt > combined/peaks/temp_sorted_enhancers_${type}_${line}_${tissue}_${analysisname}_plus.txt
+			awk '$6=="-"' combined/peaks/complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt > combined/peaks/temp_sorted_enhancers_${type}_${line}_${tissue}_${analysisname}_minus.txt
+			regions_list_plus+=("combined/peaks/temp_sorted_enhancers_${type}_${line}_${tissue}_${analysisname}_plus.txt")
+			regions_list_minus+=("combined/peaks/temp_sorted_enhancers_${type}_${line}_${tissue}_${analysisname}_minus.txt")
+			regions_list+=("combined/peaks/temp_sorted_enhancers_${type}_${line}_${tissue}_${analysisname}_plus.txt" "combined/peaks/temp_sorted_enhancers_${type}_${line}_${tissue}_${analysisname}_minus.txt")
+			nb1=$(wc -l combined/peaks/temp_sorted_enhancers_${type}_${line}_${tissue}_${analysisname}_plus.txt | awk '{print $1}')
+			nb2=$(wc -l combined/peaks/temp_sorted_enhancers_${type}_${line}_${tissue}_${analysisname}_minus.txt | awk '{print $1}')
+			regions_label+=("${type}_plus(${nb1})" "${type}_minus(${nb2})")
+		done
+			
+		for strand in plus minus
+		do
+			case "$strand" in
+				plus)	bw="${tissue_bw_plus[*]} "
+						regions="${regions_list_plus[*]}";;
+				minus)	bw=("ChIP/tracks/B73_${tissue}_H3K27ac_merged.bw" "ChIP/tracks/B73_${tissue}_H3K4me1_merged.bw" "ChIP/tracks/B73_${tissue}_H3K4me3_merged.bw" "RNA/tracks/B73_${tissue}_RNAseq_merged_minus.bw" "RNA/tracks/B73_${tissue}_RAMPAGE_merged_minus.bw" "ChIP/tracks/B73_v4_all_genes.bw" "ChIP/tracks/B73_v4_all_tes.bw")
+						regions="${regions_list_minus[*]}";;
+			esac
+			printf "\nComputing matrix for ${line} ${tissue} ${strand} strand\n"
+			computeMatrix scale-regions -q --missingDataAsZero --skipZeros -R ${regions} -S ${bw[@]} -bs 10 -b 3000 -a 3000 -m 1000 -p ${threads} -o combined/matrix/regions_enhancers_${line}_${tissue}_${strand}.gz
+		done
+		computeMatrixOperations rbind -m combined/matrix/regions_enhancers_${line}_${tissue}_plus.gz combined/matrix/regions_enhancers_${line}_${tissue}_minus.gz -o combined/matrix/regions_enhancers_${line}_${tissue}.gz
+		
+		printf "\nGetting scales for ${line} ${tissue}\n"
+		plotProfile -m combined/matrix/regions_enhancers_${line}_${tissue}.gz -out combined/plots/enhancers_${line}_${tissue}_temp_profile.pdf --samplesLabel ${label_list[@]} --averageType mean --outFileNameData combined/matrix/values_enhancers_${line}_${tissue}.txt
+		rm -f combined/plots/enhancers_${line}_${tissue}_temp_profile.pdf
+		ymins=()
+		ymaxs=()
+		for sample in ${label_list[@]}
+		do
+			ymini=$(grep $sample combined/matrix/values_enhancers_${line}_${tissue}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.5; else a=m*0.5; print a}')
+			ymaxi=$(grep $sample combined/matrix/values_enhancers_${line}_${tissue}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.5}')
+			test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+			if [[ "${test}" == "yes" ]]; then
+				ymins+=("0")
+				ymaxs+=("0.01")
+			else
+				ymins+=("${ymini}")
+				ymaxs+=("${ymaxi}")
+			fi
+		done
+		computeMatrixOperations dataRange -m combined/matrix/regions_enhancers_${line}_${tissue}.gz > combined/matrix/values_enhancers_${line}_${tissue}.txt
+		mins=()
+		maxs=()
+		totnb=${#label_list[*]}
+		arr=$((totnb-2))
+		for (( i=1; i<=${arr}; i++ ))
+		do 
+			mini=$(awk -v i=$i 'NR==(i+1) {print $5}' combined/matrix/values_enhancers_${line}_${tissue}.txt)		
+			maxi=$(awk -v i=$i 'NR==(i+1) {print $6}' combined/matrix/values_enhancers_${line}_${tissue}.txt)
+			test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+			if [[ "${test}" == "yes" ]]; then
+				mins+=("0")
+				maxs+=("0.01")
+			else
+				mins+=("${mini}")
+				maxs+=("${maxi}")
+			fi
+		done
+		mins+=("0" "0")
+		maxs+=("1" "1")
+		printf "\nSorting heatmap for ${line} ${tissue}\n"
+		computeMatrixOperations sort -m combined/matrix/regions_enhancers_${line}_${tissue}.gz -R ${regions_list[*]} -o combined/matrix/regions_enhancers_${line}_${tissue}_sorted.gz
+		printf "\nPlotting heatmap for ${line} ${tissue}\n"
+		plotHeatmap -m combined/matrix/regions_enhancers_${line}_${tissue}_sorted.gz -out combined/plots/enhancers_${line}_${tissue}.pdf --sortRegions keep --samplesLabel ${label_list[*]} --regionsLabel ${regions_label[*]} --colorMap 'seismic' --interpolationMethod 'bilinear' --yMin ${ymins[@]} --yMax ${ymaxs[@]} --zMin ${mins[@]} --zMax ${maxs[@]}
+		plotHeatmap -m combined/matrix/regions_enhancers_${line}_${tissue}_sorted.gz -out combined/plots/enhancers_${line}_${tissue}_sorted.pdf --sortRegions descend --sortUsing mean --sortUsingSamples 1 --samplesLabel ${label_list[*]} --regionsLabel ${regions_label[*]} --colorMap 'seismic' --interpolationMethod 'bilinear' --yMin ${ymins[@]} --yMax ${ymaxs[@]} --zMin ${mins[@]} --zMax ${maxs[@]}
+		
+		for type in genic promoter terminator distal_upstream distal_downstream
+		do
+			regions_list="combined/peaks/sorted_enhancers_${type}_${line}_${tissue}_${analysisname}_plus.txt combined/peaks/sorted_enhancers_${type}_${line}_${tissue}_${analysisname}_minus.txt"
+			nb1=$(wc -l combined/peaks/sorted_enhancers_${type}_${line}_${tissue}_${analysisname}_plus.txt | awk '{print $1}')
+			nb2=$(wc -l combined/peaks/sorted_enhancers_${type}_${line}_${tissue}_${analysisname}_minus.txt | awk '{print $1}')
+			regions_label="${type}_plus(${nb1}) ${type}_minus(${nb2})"
+			computeMatrixOperations sort -m combined/matrix/regions_enhancers_${line}_${tissue}.gz -R ${regions_list} -o combined/matrix/regions_enhancers_${line}_${tissue}_${type}.gz
+			printf "\nPlotting heatmap for ${line} ${tissue} ${type}\n"
+			plotHeatmap -m combined/matrix/regions_enhancers_${line}_${tissue}_${type}.gz -out combined/plots/enhancers_${line}_${tissue}_${type}.pdf --sortRegions keep --samplesLabel ${label_list[*]} --regionsLabel ${regions_label} --colorMap 'seismic' --interpolationMethod 'bilinear' --yMin ${ymins[@]} --yMax ${ymaxs[@]} --zMin ${mins[@]} --zMax ${maxs[@]}
+		done
+	done
+done		
+
+
+
+
+
+############################################################################################
+########################################## PART14 ##########################################
 ############################## RAMPAGE TSS at genes and TEs ################################
 ############################################################################################
 
@@ -1494,7 +1684,7 @@ if [[ ${#uniq_rampage_tissue_list[*]} -ge 2 ]] && [[ ${ref} == "B73_v4" ]]; then
 fi
 
 ############################################################################################
-########################################## PART14 ##########################################
+########################################## PART15 ##########################################
 ############################ shRNA clusters at genes and TEs ###############################
 ############################################################################################
 
@@ -1553,7 +1743,7 @@ if [[ ${#uniq_shrna_tissue_list[*]} -ge 2 ]] && [[ ${ref} == "B73_v4" ]]; then
 fi
 
 #########################################################################################
-####################################### PART15 ##########################################
+####################################### PART16 ##########################################
 ########################## Making heatmaps on all TEs ###################################
 #########################################################################################
 
