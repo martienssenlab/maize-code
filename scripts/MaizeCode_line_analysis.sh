@@ -27,13 +27,14 @@ usage="
 ##### PART10: plot heatmaps and metaplots on genes split by expression levels
 ##### PART11: plot heatmaps and metaplots on H3K27ac distal peaks split by H3K27ac ChIPseq quality
 ##### PART12: gather RNAseq, shRNA and RAMPAGE expression at H3K27ac distal peaks and make various scatter plots
-##### PART13: plot heatmaps and metaplots on enhancers (H3K27ac peaks) split by distance to nearest gene, sorted by RNA expression at enhancers (uses part11 and part12)
-##### PART14: plot the distribution of RAMPAGE "TSS" peaks in genes and TEs for each tissue and an upset plot among all tissues (need a TE gff file)
-##### PART15: plot the distribution of shRNA clusters in genes and TEs for each tissue and an upset plot among all tissues (need a TE gff file)
+##### PART13: plot heatmaps and metaplots on enhancers (H3K27ac peaks) split by distance to nearest gene, sorted by RNA expression at enhancers (uses part2, part3, part11 and part12)
+##### PART14: plot heatmaps and metaplots on enhancers (H3K27ac peaks) split by distance to nearest gene, sorted by RNA expression at enhancers (uses part13)
+##### PART15: plot the distribution of RAMPAGE "TSS" peaks in genes and TEs for each tissue and an upset plot among all tissues (need a TE gff file)
+##### PART16: plot the distribution of shRNA clusters in genes and TEs for each tissue and an upset plot among all tissues (need a TE gff file)
 ##### Under development:
 ##### PART5: compare TF peaks with DEGs
 ##### PART7: perform differential peak calling between all pairs of ChIP samples for each mark
-##### PART16: plot heatmaps on all TEs
+##### PART17: plot heatmaps on all TEs
 
 #####
 ##### Requirements: bedtools, deeptools, macs2, R (+R packages: ggplot2,limma,edgeR,dplyr,tidyr,stringr,gplots,cowplot,ComplexUpset,purrr)
@@ -272,23 +273,29 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 	if [ ${#rnaseq_name_list[@]} -ge 3 ]; then
 		for namei in ${rnaseq_name_list[@]}
 		do
-			if ls combined/DEG/DEG_${analysisname}_${namei}_vs*.txt 1> /dev/null 2>&1; then
-				for file in $(ls combined/DEG/DEG_${analysisname}_${namei}_vs*.txt)
+			if [ -e combined/peaks/temp_all_${namei}_${analysisname}_DEG_GID.txt ]; then
+				rm -f combined/peaks/temp_all_${namei}_${analysisname}_DEG_GID.txt
+			fi
+			if ls combined/DEG/DEG_${analysisname}_${namei}_vs_*.txt 1> /dev/null 2>&1; then
+				cat combined/DEG/DEG_${analysisname}_${namei}_vs_*.txt | awk '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $4}' > combined/peaks/temp_all_${namei}_${analysisname}_DEG_GID.txt
+				for file in $(ls combined/DEG/DEG_${analysisname}_${namei}_vs_*.txt)
 				do
 					awk -v OFS="\t" '$11 == "DOWN" {print $1,$2,$3,$4,".",$6}' ${file} > ${file}.DOWN.temp.bed
 					awk -v OFS="\t" '$11 == "UP" {print $1,$2,$3,$4,".",$6}' ${file} > ${file}.UP.temp.bed
 				done
 			fi
 			if ls combined/DEG/DEG_${analysisname}_*_vs_${namei}.txt 1> /dev/null 2>&1; then
-				for file in $(ls combined/DEG/DEG_${analysisname}_*vs_${namei}.txt)
+				cat combined/DEG/DEG_${analysisname}_*_vs_${namei}.txt | awk '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $4}' >> combined/peaks/temp_all_${namei}_${analysisname}_DEG_GID.txt
+				for file in $(ls combined/DEG/DEG_${analysisname}_*_vs_${namei}.txt)
 				do
 					awk -v OFS="\t" '$11 == "DOWN" {print $1,$2,$3,$4,".",$6}' ${file} >> ${file}.UP.temp.bed
 					awk -v OFS="\t" '$11 == "UP" {print $1,$2,$3,$4,".",$6}' ${file} >> ${file}.DOWN.temp.bed
 				done
 			fi
 			printf "\nGetting DEGs specific in ${namei}\n"
-			filearraydown=( $(ls combined/DEG/DEG_${analysisname}_*vs*.txt.DOWN.temp.bed | grep "${namei}") )
-			filearrayup=( $(ls combined/DEG/DEG_${analysisname}_*vs*.txt.UP.temp.bed | grep "${namei}") )
+			sort -u combined/peaks/temp_all_${namei}_${analysisname}_DEG_GID.txt > combined/peaks/all_${namei}_${analysisname}_DEG_GID.txt
+			filearraydown=( $(ls combined/DEG/DEG_${analysisname}_*_vs_*.txt.DOWN.temp.bed | grep "${namei}") )
+			filearrayup=( $(ls combined/DEG/DEG_${analysisname}_*_vs_*.txt.UP.temp.bed | grep "${namei}") )
 			i=0
 			max=$((${#filearraydown[@]}-1))
 			cat ${filearraydown[i]} > combined/DEG/temp_tissue_spec_DEG_${analysisname}_DOWN_${i}.txt
@@ -460,6 +467,23 @@ if [ -s combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed ]; then
 	rm -f combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed
 fi
 
+insamplefile="no"
+if [ ${#chip_sample_list[@]} -ge 1 ]; then	
+	for sample in ${chip_sample_list[@]}
+	do
+		if [[ "${sample}" == *H3K27ac* ]]; then
+			insamplefile="yes"
+			awk -v OFS="\t" -v s=${sample} '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$2,$3,s}' ChIP/peaks/selected_peaks_${sample}.narrowPeak | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed
+		fi
+	done
+	if [[ "${insamplefile}" == "yes" ]]; then
+		printf "\nPreparing merged H3K27ac peaks from files in ${analysisname}\n"
+		sort -k1,1 -k2,2n combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed > combined/peaks/tmp2_peaks_H3K27ac_${analysisname}.bed
+		bedtools merge -i combined/peaks/tmp2_peaks_H3K27ac_${analysisname}.bed | sort -k1,1 -k2,2n > combined/peaks/merged_peaks_H3K27ac_${analysisname}.bed
+		rm -f combined/peaks/tmp*_peaks_H3K27ac_${analysisname}.bed
+		k27file="yes"
+	fi
+fi
 nfile=0
 prev_tissues=()
 for file in ChIP/peaks/selected_peaks_${line}_*_H3K27ac.narrowPeak
@@ -472,24 +496,6 @@ do
 		prev_tissues+=("${tissue}")
 	fi
 done
-
-insamplefile="no"
-if [ ${#chip_sample_list[@]} -ge 1 ]; then	
-	for sample in ${chip_sample_list[@]}
-	do
-		if [[ "${sample}" == *H3K27ac* ]]; then
-			insamplefile="yes"
-			awk -v OFS="\t" -v s=${sample} '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$2,$3,s}' ChIP/peaks/selected_peaks_${sample}.narrowPeak | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed
-		fi
-	done
-	if [[ "${insamplefile}" == "yes" ]]; then
-		printf "\nPreparing merged H3K27ac peaks from files in $analysisname\n"
-		sort -k1,1 -k2,2n combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed > combined/peaks/tmp2_peaks_H3K27ac_${analysisname}.bed
-		bedtools merge -i combined/peaks/tmp2_peaks_H3K27ac_${analysisname}.bed | sort -k1,1 -k2,2n > combined/peaks/merged_peaks_H3K27ac_${analysisname}.bed
-		rm -f combined/peaks/tmp*_peaks_H3K27ac_${analysisname}.bed
-		k27file="yes"
-	fi
-fi
 if [[ "${insamplefile}" == "no" ]] && [ ${nfile} -gt 0 ]; then
 	printf "\nPreparing merged H3K27ac peaks from previously analyzed files, containing the following tissue(s):\n${prev_tissues[*]}"
 	sort -k1,1 -k2,2n combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed > combined/peaks/tmp2_peaks_H3K27ac_${analysisname}.bed
@@ -528,9 +534,9 @@ if [ ${#tf_sample_list[@]} -ge 1 ]; then
 	#### To get distance to closest gene (and the gene model name)
 	printf "\nGetting closest region of ${analysisname}\n"
 	if [[ ${ref} == "B73_v4" || ${ref} == "B73_v5" ]]; then
-		bedtools closest -a combined/peaks/tmp3_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/peaks/peaks_${analysisname}.bed
+		bedtools closest -a combined/peaks/tmp3_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/peaks/TF_peaks_${analysisname}.bed
 	else
-		bedtools closest -a combined/peaks/tmp3_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[:=;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/peaks/peaks_${analysisname}.bed
+		bedtools closest -a combined/peaks/tmp3_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[:=;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/peaks/TF_peaks_${analysisname}.bed
 	fi
 	rm -f combined/peaks/tmp*_peaks_${analysisname}.bed
 	#### To create a matrix of peak presence in each sample
@@ -539,17 +545,17 @@ if [ ${#tf_sample_list[@]} -ge 1 ]; then
 		for sample in ${tf_sample_list[@]} H3K27ac
 		do
 			printf "${sample}\n" > combined/peaks/temp_col_${analysisname}_${sample}.txt
-			awk -v OFS="\t" -v s=${sample} '{if ($0 ~ s) print "1"; else print "0"}' combined/peaks/peaks_${analysisname}.bed >> combined/peaks/temp_col_${analysisname}_${sample}.txt
+			awk -v OFS="\t" -v s=${sample} '{if ($0 ~ s) print "1"; else print "0"}' combined/peaks/TF_peaks_${analysisname}.bed >> combined/peaks/temp_col_${analysisname}_${sample}.txt
 		done
 	else
 		for sample in ${tf_sample_list[@]}
 		do
 			printf "${sample}\n" > combined/peaks/temp_col_${analysisname}_${sample}.txt
-			awk -v OFS="\t" -v s=${sample} '{if ($0 ~ s) print "1"; else print "0"}' combined/peaks/peaks_${analysisname}.bed >> combined/peaks/temp_col_${analysisname}_${sample}.txt
+			awk -v OFS="\t" -v s=${sample} '{if ($0 ~ s) print "1"; else print "0"}' combined/peaks/TF_peaks_${analysisname}.bed >> combined/peaks/temp_col_${analysisname}_${sample}.txt
 		done
 	fi
 	#### To group peaks based on their distance (gene body (x=0), promoter (0<x<2kb upstream), terminator (0<x<2kb downstream), distal)
-	awk -v OFS="\t" 'BEGIN {printf "PeakID\tDistance\tGroup\n"} {if ($5<-2000) {d="Distal_downstream"; a=-$5} else if ($5<0) {d="Terminator"; a=-$5} else if ($5==0) {d="Gene_body"; a=$5} else if ($5>2000) {d="Distal_upstream"; a=$5} else {d="Promoter"; a=$5} print $4,a,d}' combined/peaks/peaks_${analysisname}.bed > combined/peaks/temp_col_${analysisname}_AAA.txt
+	awk -v OFS="\t" 'BEGIN {printf "PeakID\tDistance\tGroup\n"} {if ($5<-2000) {d="Distal_downstream"; a=-$5} else if ($5<0) {d="Terminator"; a=-$5} else if ($5==0) {d="Gene_body"; a=$5} else if ($5>2000) {d="Distal_upstream"; a=$5} else {d="Promoter"; a=$5} print $4,a,d}' combined/peaks/TF_peaks_${analysisname}.bed > combined/peaks/temp_col_${analysisname}_AAA.txt
 	paste combined/peaks/temp_col_${analysisname}_*.txt | uniq > combined/peaks/matrix_upset_TF_${analysisname}.txt
 	rm -f combined/peaks/temp_col_${analysisname}_*.txt
 	#### To make an Upset plot highlighting peaks in gene bodies
@@ -1451,6 +1457,72 @@ done
 
 ############################################################################################
 ######################################### PART13 ###########################################
+################# Gathering all information on each type of enhancers ######################
+############################################################################################
+
+########## Implement more flexibility (no RNA data, no TF, etc..) and check with part11 for non-redundant files!!!!
+
+for tissue in ${h3k27actissues[@]}
+do
+	if [ -e combined/peaks/all_${line}_${tissue}_${analysisname}_DEG_GID.txt ] && [ -e combined/DEG/sorted_expression_${analysisname}_${tissue}.bed ] && [ -e combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt ]; then
+		printf "Gathering all information for enhancers of ${line} ${tissue}\n"
+		awk '$1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/' ChIP/peaks/best_peaks_${line}_${tissue}_H3K27ac.bed > combined/peaks/temp_${analysisname}_${tissue}_prev.bed
+		bedtools sort -g ${ref_dir}/chrom.sizes -i combined/peaks/temp_${analysisname}_${tissue}_prev.bed > combined/peaks/temp_${analysisname}_${tissue}.bed
+		bedtools sort -g ${ref_dir}/chrom.sizes -i combined/DEG/sorted_expression_${analysisname}_${tissue}.bed > combined/peaks/temp_${analysisname}_${tissue}_expression.bed
+		bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {if ($17>= 2000 && $16=="+") print $1,$2,$3,$4,$5,$16,$14,$15; else if ($17<= -2000 && $16=="-") print $1,$2,$3,$4,$5,$16,$14,$15}' > combined/peaks/enhancers_distal_upstream_${analysisname}_${tissue}.bed
+		bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {if ($17>= 2000 && $16=="-") print $1,$2,$3,$4,$5,$16,$14,$15; else if ($17<= -2000 && $16=="+") print $1,$2,$3,$4,$5,$16,$14,$15}' > combined/peaks/enhancers_distal_downstream_${analysisname}_${tissue}.bed
+		bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {if ($17>0 && $17<2000 && $16=="+") print $1,$2,$3,$4,$5,$16,$14,$15; else if ($17>-2000 && $17<0 && $16=="-") print $1,$2,$3,$4,$5,$16,$14,$15}' > combined/peaks/enhancers_promoter_${analysisname}_${tissue}.bed
+		bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {if ($17>0 && $17<2000 && $16=="-") print $1,$2,$3,$4,$5,$16,$14,$15; else if ($17>-2000 && $17<0 && $16=="+") print $1,$2,$3,$4,$5,$16,$14,$15}' > combined/peaks/enhancers_terminator_${analysisname}_${tissue}.bed
+		bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {if ($17==0) print $1,$2,$3,$4,$5,$16,$14,$15}' > combined/peaks/enhancers_genic_${analysisname}_${tissue}.bed	
+		rm -f combined/peaks/temp_${analysisname}*
+		
+		for type in distal_upstream distal_downstream promoter terminator genic
+		do
+			printf "Focusing on ${type} enhancers\n"
+			if [ -e combined/peaks/temp_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt ]; then
+				rm -f combined/peaks/temp_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
+			fi
+			while read chr start stop peakID quality strand GID expression
+			do
+				### To recover enhancer expression for each enhancer
+				RNA_plus=$(awk -v p=${peakID} '$4 == p {print $5}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
+				RNA_minus=$(awk -v p=${peakID} '$4 == p {print $6}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
+				RAMPAGE_plus=$(awk -v p=${peakID} '$4 == p {print $7}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
+				RAMPAGE_minus=$(awk -v p=${peakID} '$4 == p {print $8}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
+				### To recover DEG status for each GID
+				if grep -q "$GID" combined/DEG/only_${line}_${tissue}_DEG_UP_${analysisname}.bed
+				then
+					DEG="unique_UP"
+				elif grep -q "$GID" combined/DEG/only_${line}_${tissue}_DEG_DOWN_${analysisname}.bed
+				then
+					DEG="unique_DOWN"
+				elif grep -q "$GID" combined/peaks/all_${line}_${tissue}_${analysisname}_DEG_GID.txt
+				then
+					DEG="DEG"
+				else
+					DEG="Not_DEG"
+				fi
+				### To gather all data
+				printf "${chr}\t${start}\t${stop}\t${peakID}\t${quality}\t${strand}\t${GID}\t${expression}\t${RNA_plus}\t${RNA_minus}\t${RAMPAGE_plus}\t${RAMPAGE_minus}\t${DEG}\n" >> combined/peaks/temp_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
+			done < combined/peaks/enhancers_${type}_${analysisname}_${tissue}.bed
+						
+			if [[ "${tf}" == "yes" ]]; then
+				printf "chr\tstart\tend\tpeakID\tquality\tstrand\tRNA_plus\tRNA_minus\tRAMPAGE_plus\tRAMPAGE_minus\tGID\texpression\tDEG\tTFs\n" > combined/peaks/complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
+				### To intersect with TF peaks
+				bedtools sort -g ${ref_dir}/chrom.sizes -i combined/peaks/temp_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt > combined/peaks/temp2_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
+				bedtools sort -g ${ref_dir}/chrom.sizes -i combined/peaks/peaks_TFs_on_B73_v4_all_genes.bed > combined/peaks/temp3_TFs_${analysisname}.txt
+				bedtools intersect -wao -a combined/peaks/temp2_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt -b combined/peaks/temp3_TFs_${analysisname}.txt | awk -v OFS="\t" '{if ($20 == ".") t="None"; else t=$20 ; print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,t}' > combined/peaks/temp4_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
+				bedtools merge -o distinct -c 4,5,6,7,8,9,10,11,12,13,14 -i combined/peaks/temp4_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt >> combined/peaks/complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
+			else
+				printf "chr\tstart\tend\tpeakID\tquality\tstrand\tRNA_plus\tRNA_minus\tRAMPAGE_plus\tRAMPAGE_minus\tGID\texpression\tDEG\n" > combined/peaks/complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
+				bedtools sort -g ${ref_dir}/chrom.sizes -i combined/peaks/temp_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt >> combined/peaks/complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
+			fi
+		done
+		rm -f combined/peaks/temp*${analysisname}*
+
+
+############################################################################################
+######################################### PART14 ###########################################
 ####################### Making heatmaps on all types of enhancers ##########################
 ############################################################################################
 
