@@ -467,6 +467,7 @@ if [ -s combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed ]; then
 	rm -f combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed
 fi
 
+k27file="no"
 insamplefile="no"
 if [ ${#chip_sample_list[@]} -ge 1 ]; then	
 	for sample in ${chip_sample_list[@]}
@@ -502,9 +503,6 @@ if [[ "${insamplefile}" == "no" ]] && [ ${nfile} -gt 0 ]; then
 	bedtools merge -i combined/peaks/tmp2_peaks_H3K27ac_${analysisname}.bed | sort -k1,1 -k2,2n > combined/peaks/merged_peaks_H3K27ac_${analysisname}.bed
 	rm -f combined/peaks/tmp*_peaks_H3K27ac_${analysisname}.bed
 	k27file="yes"
-else
-	printf "\nNo H3K27ac files found for ${line} line\n"
-	k27file="no"
 fi
 
 #### To make a single file containing all TF peaks of the same analysis with or without H3K27ac peaks
