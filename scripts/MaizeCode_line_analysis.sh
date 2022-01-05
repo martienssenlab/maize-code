@@ -1201,10 +1201,10 @@ do
 		if [ -s combined/DEG/sorted_expression_${analysisname}_${tissue}.bed ]; then
 			bedtools sort -g ${ref_dir}/chrom.sizes -i combined/DEG/sorted_expression_${analysisname}_${tissue}.bed > combined/peaks/temp_${analysisname}_${tissue}_expression.bed
 			bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{if ($17>= 2000 && $16=="+") print $1,$2+$10,$12,$4,$5,$16,$14,$15; else if ($17<= -2000 && $16=="-") print $1,$13,$2+$10,$4,$5,$16,$14,$15}' | sort -k5,5nr > combined/peaks/distal_${analysisname}_${tissue}.bed
-			bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{if ($17>= 2000 && $16=="+") print $1,$2,$3,$4,$5,$16,$14,$15; else if ($17<= -2000 && $16=="-") print $1,$2,$3,$4,$5,$16,$14,$15}' > combined/peaks/enhancers_distal_upstream_${analysisname}_${tissue}.bed
-			bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{if ($17>= 2000 && $16=="-") print $1,$2,$3,$4,$5,$16,$14,$15; else if ($17<= -2000 && $16=="+") print $1,$2,$3,$4,$5,$16,$14,$15}' > combined/peaks/enhancers_distal_downstream_${analysisname}_${tissue}.bed
-			bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{if ($17>0 && $17<2000 && $16=="+") print $1,$2,$3,$4,$5,$16,$14,$15; else if ($17>-2000 && $17<0 && $16=="-") print $1,$2,$3,$4,$5,$16,$14,$15}' > combined/peaks/enhancers_promoter_${analysisname}_${tissue}.bed
-			bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{if ($17>0 && $17<2000 && $16=="-") print $1,$2,$3,$4,$5,$16,$14,$15; else if ($17>-2000 && $17<0 && $16=="+") print $1,$2,$3,$4,$5,$16,$14,$15}' > combined/peaks/enhancers_terminator_${analysisname}_${tissue}.bed
+			bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{if ($17>= 2000 && $16=="+") print $1,$2,$3,$4,$5,$16,$14,$15; else if ($17<= -2000 && $16=="-") print $1,$2,$3,$4,$5,$16,$14,$15}' > combined/peaks/enhancers_distal_upstream_${analysisname}_${tissue}.txt
+			bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{if ($17>= 2000 && $16=="-") print $1,$2,$3,$4,$5,$16,$14,$15; else if ($17<= -2000 && $16=="+") print $1,$2,$3,$4,$5,$16,$14,$15}' > combined/peaks/enhancers_distal_downstream_${analysisname}_${tissue}.txt
+			bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{if ($17>0 && $17<2000 && $16=="+") print $1,$2,$3,$4,$5,$16,$14,$15; else if ($17>-2000 && $17<0 && $16=="-") print $1,$2,$3,$4,$5,$16,$14,$15}' > combined/peaks/enhancers_promoter_${analysisname}_${tissue}.txt
+			bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{if ($17>0 && $17<2000 && $16=="-") print $1,$2,$3,$4,$5,$16,$14,$15; else if ($17>-2000 && $17<0 && $16=="+") print $1,$2,$3,$4,$5,$16,$14,$15}' > combined/peaks/enhancers_terminator_${analysisname}_${tissue}.txt
 			bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{if ($17==0) print $1,$2,$3,$4,$5,$16,$14,$15}' > combined/peaks/enhancers_genic_${analysisname}_${tissue}.bed
 		else
 			bedtools sort -g ${ref_dir}/chrom.sizes -i ${regionfile} > combined/peaks/temp_${analysisname}_${tissue}_no_expression.bed
@@ -1523,7 +1523,7 @@ do
 				colnb=$((colnb+1))
 			fi
 			printf "${rowi}\n" >> combined/peaks/temp_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
-		done < combined/peaks/enhancers_${type}_${analysisname}_${tissue}.bed
+		done < combined/peaks/enhancers_${type}_${analysisname}_${tissue}.txt
 		if [ ${tf} -gt 0 ]; then
 			printf "Adding TF information\n"
 			printf "${header}\tTFs\n" > combined/peaks/complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
@@ -1532,7 +1532,9 @@ do
 			for (i=5; i<=${limit}; i++)
 			do
 				printf ",${i}" >> ${array}
+				printf "ARRAY ${i}: ${array}"
 			done
+			printf "ARRAY FINALE: ${array}"
 			bedtools sort -g ${ref_dir}/chrom.sizes -i combined/peaks/temp_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt > combined/peaks/temp2_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
 			bedtools sort -g ${ref_dir}/chrom.sizes -i combined/peaks/TF_peaks_${analysisname}.bed > combined/peaks/temp3_TFs_${analysisname}.txt
 			bedtools intersect -wao -a combined/peaks/temp2_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt -b combined/peaks/temp3_TFs_${analysisname}.txt | awk -v OFS="\t" '{if ($20 == ".") t="None"; else t=$20 ; print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,t}' > combined/peaks/temp4_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
