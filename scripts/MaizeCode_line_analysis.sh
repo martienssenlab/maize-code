@@ -1457,39 +1457,57 @@ done
 
 ############################################################################################
 ######################################### PART13 ###########################################
-################# Gathering all information on each type of enhancers ######################
+############# Gathering all available information on each type of enhancers ################
 ############################################################################################
 
-########## Implement more flexibility (no RNA data, no TF, etc..) and check with part11 for non-redundant files!!!!
-
+rna="0"
+rampage="0"
+deg="0"
+tf="0"
 for tissue in ${h3k27actissues[@]}
 do
-	if [ -e combined/peaks/all_${line}_${tissue}_${analysisname}_DEG_GID.txt ] && [ -e combined/DEG/sorted_expression_${analysisname}_${tissue}.bed ] && [ -e combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt ]; then
-		printf "Gathering all information for enhancers of ${line} ${tissue}\n"
-		awk '$1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/' ChIP/peaks/best_peaks_${line}_${tissue}_H3K27ac.bed > combined/peaks/temp_${analysisname}_${tissue}_prev.bed
-		bedtools sort -g ${ref_dir}/chrom.sizes -i combined/peaks/temp_${analysisname}_${tissue}_prev.bed > combined/peaks/temp_${analysisname}_${tissue}.bed
-		bedtools sort -g ${ref_dir}/chrom.sizes -i combined/DEG/sorted_expression_${analysisname}_${tissue}.bed > combined/peaks/temp_${analysisname}_${tissue}_expression.bed
-		bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {if ($17>= 2000 && $16=="+") print $1,$2,$3,$4,$5,$16,$14,$15; else if ($17<= -2000 && $16=="-") print $1,$2,$3,$4,$5,$16,$14,$15}' > combined/peaks/enhancers_distal_upstream_${analysisname}_${tissue}.bed
-		bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {if ($17>= 2000 && $16=="-") print $1,$2,$3,$4,$5,$16,$14,$15; else if ($17<= -2000 && $16=="+") print $1,$2,$3,$4,$5,$16,$14,$15}' > combined/peaks/enhancers_distal_downstream_${analysisname}_${tissue}.bed
-		bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {if ($17>0 && $17<2000 && $16=="+") print $1,$2,$3,$4,$5,$16,$14,$15; else if ($17>-2000 && $17<0 && $16=="-") print $1,$2,$3,$4,$5,$16,$14,$15}' > combined/peaks/enhancers_promoter_${analysisname}_${tissue}.bed
-		bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {if ($17>0 && $17<2000 && $16=="-") print $1,$2,$3,$4,$5,$16,$14,$15; else if ($17>-2000 && $17<0 && $16=="+") print $1,$2,$3,$4,$5,$16,$14,$15}' > combined/peaks/enhancers_terminator_${analysisname}_${tissue}.bed
-		bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {if ($17==0) print $1,$2,$3,$4,$5,$16,$14,$15}' > combined/peaks/enhancers_genic_${analysisname}_${tissue}.bed	
-		rm -f combined/peaks/temp_${analysisname}*
-		
-		for type in distal_upstream distal_downstream promoter terminator genic
+	rna=$(grep "RNAseq" combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt | wc -l)
+	rampage=$(grep "RAMPAGE" combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt | wc -l)
+	shrna=$(grep "shRNA" combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt | wc -l)
+	if [ -e combined/peaks/all_${line}_${tissue}_${analysisname}_DEG_GID.txt ]; then
+		deg="1"
+	fi
+	if [ -e combined/peaks/TF_peaks_${analysisname}.bed ]; then
+		tf="1"
+	fi
+	for type in distal_upstream distal_downstream promoter terminator genic
+	do
+		printf "Gathering all available RNA, RAMPAGE and DEG data for ${type} enhancers of ${line} ${tissue}\n"
+		if [ -e combined/peaks/temp_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt ]; then
+			rm -f combined/peaks/temp_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
+		fi
+		while read chr start stop peakID quality strand GID expression
 		do
-			printf "Focusing on ${type} enhancers\n"
-			if [ -e combined/peaks/temp_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt ]; then
-				rm -f combined/peaks/temp_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
+			colnb=7
+			header="Chr\tStart\tStop\tPeakID\tQuality\tstrand\tGID"
+			rowi="${chr}\t${start}\t${stop}\t${peakID}\t${quality}\t${strand}\t${GID}"
+			if [ ${rna} -gt 0 ]; then	
+				RNAseq_plus=$(awk -v p=${peakID} '$4 == p {print $5}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
+				RNAseq_minus=$(awk -v p=${peakID} '$4 == p {print $6}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
+				rowi="${rowi}\t${expression}\t${RNA_plus}\t${RNA_minus}"
+				header="${header}\texpression\tRNA_plus\tRNA_minus"
+				colnb=$((colnb+3))
 			fi
-			while read chr start stop peakID quality strand GID expression
-			do
-				### To recover enhancer expression for each enhancer
-				RNA_plus=$(awk -v p=${peakID} '$4 == p {print $5}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
-				RNA_minus=$(awk -v p=${peakID} '$4 == p {print $6}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
+			if [ ${rampage} -gt 0 ]; then
 				RAMPAGE_plus=$(awk -v p=${peakID} '$4 == p {print $7}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
 				RAMPAGE_minus=$(awk -v p=${peakID} '$4 == p {print $8}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
-				### To recover DEG status for each GID
+				header="${header}\tRAMPAGE_plus\tRAMPAGE_minus"
+				rowi="${rowi}\t${RAMPAGE_plus}\t${RAMPAGE_minus}"
+				colnb=$((colnb+2))
+			fi
+			if [ ${shrna} -gt 0 ]; then
+				shRNA_plus=$(awk -v p=${peakID} '$4 == p {print $9}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
+				shRNA_minus=$(awk -v p=${peakID} '$4 == p {print $10}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
+				header="${header}\tshRNA_plus\tshRNA_minus"
+				rowi="${rowi}\t${shRNA_plus}\t${shRNA_minus}"
+				colnb=$((colnb+2))
+			fi
+			if [ ${deg} -gt 0 ]; then
 				if grep -q "$GID" combined/DEG/only_${line}_${tissue}_DEG_UP_${analysisname}.bed
 				then
 					DEG="unique_UP"
@@ -1502,23 +1520,33 @@ do
 				else
 					DEG="Not_DEG"
 				fi
-				### To gather all data
-				printf "${chr}\t${start}\t${stop}\t${peakID}\t${quality}\t${strand}\t${GID}\t${expression}\t${RNA_plus}\t${RNA_minus}\t${RAMPAGE_plus}\t${RAMPAGE_minus}\t${DEG}\n" >> combined/peaks/temp_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
-			done < combined/peaks/enhancers_${type}_${analysisname}_${tissue}.bed
-						
-			if [[ "${tf}" == "yes" ]]; then
-				printf "chr\tstart\tend\tpeakID\tquality\tstrand\tRNA_plus\tRNA_minus\tRAMPAGE_plus\tRAMPAGE_minus\tGID\texpression\tDEG\tTFs\n" > combined/peaks/complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
-				### To intersect with TF peaks
-				bedtools sort -g ${ref_dir}/chrom.sizes -i combined/peaks/temp_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt > combined/peaks/temp2_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
-				bedtools sort -g ${ref_dir}/chrom.sizes -i combined/peaks/peaks_TFs_on_B73_v4_all_genes.bed > combined/peaks/temp3_TFs_${analysisname}.txt
-				bedtools intersect -wao -a combined/peaks/temp2_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt -b combined/peaks/temp3_TFs_${analysisname}.txt | awk -v OFS="\t" '{if ($20 == ".") t="None"; else t=$20 ; print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,t}' > combined/peaks/temp4_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
-				bedtools merge -o distinct -c 4,5,6,7,8,9,10,11,12,13,14 -i combined/peaks/temp4_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt >> combined/peaks/complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
-			else
-				printf "chr\tstart\tend\tpeakID\tquality\tstrand\tRNA_plus\tRNA_minus\tRAMPAGE_plus\tRAMPAGE_minus\tGID\texpression\tDEG\n" > combined/peaks/complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
-				bedtools sort -g ${ref_dir}/chrom.sizes -i combined/peaks/temp_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt >> combined/peaks/complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
+				header="${header}\tDEG"
+				rowi="${rowi}\t${DEG}"
+				colnb=$((colnb+1))
 			fi
-		done
+			printf "${rowi}\n" >> combined/peaks/temp_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
+		done < combined/peaks/enhancers_${type}_${analysisname}_${tissue}.bed
+		if [ ${tf} -gt 0 ]; then
+			printf "Adding TF information\n"
+			printf "${header}\tTFs\n" > combined/peaks/complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
+			array="4"
+			limit=$((colnb+1))
+			for (i=5; i<=${limit}; i++)
+			do
+				printf ",${i}" >> ${array}
+			done
+			bedtools sort -g ${ref_dir}/chrom.sizes -i combined/peaks/temp_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt > combined/peaks/temp2_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
+			bedtools sort -g ${ref_dir}/chrom.sizes -i combined/peaks/TF_peaks_${analysisname}.bed > combined/peaks/temp3_TFs_${analysisname}.txt
+			bedtools intersect -wao -a combined/peaks/temp2_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt -b combined/peaks/temp3_TFs_${analysisname}.txt | awk -v OFS="\t" '{if ($20 == ".") t="None"; else t=$20 ; print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,t}' > combined/peaks/temp4_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
+			bedtools merge -o distinct -c ${array} -i combined/peaks/temp4_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt >> combined/peaks/complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
+		else
+			printf "No TF information to add\n"
+			printf "${header}\n" > combined/peaks/complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
+			bedtools sort -g ${ref_dir}/chrom.sizes -i combined/peaks/temp_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt >> combined/peaks/complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
+		fi
 		rm -f combined/peaks/temp*${analysisname}*
+	done
+done
 
 
 ############################################################################################
