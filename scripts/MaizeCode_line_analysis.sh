@@ -1336,7 +1336,7 @@ if [[ "${enhancerfile}" == "yes" ]]; then
 	do
 		for type in genic promoter terminator distal_upstream distal_downstream 
 		do
-			wc -l combined/peaks/complete_enhancers_${type}_${analysisname}_${tissue}.txt | awk -v OFS="\t" -v l=$line -v t=$tissue -v d=$type '{print l,t,d,$1}' >> combined/peaks/summary_enhancers_${analysisname}.txt
+			wc -l combined/peaks/enhancers_${type}_${analysisname}_${tissue}.txt | awk -v OFS="\t" -v l=$line -v t=$tissue -v d=$type '{print l,t,d,$1}' >> combined/peaks/summary_enhancers_${analysisname}.txt
 		done
 	done
 fi
