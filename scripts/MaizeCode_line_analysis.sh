@@ -1529,7 +1529,7 @@ do
 			printf "${header}\tTFs\n" > combined/peaks/complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
 			array="4"
 			limit=$((colnb+1))
-			for (i=5; i<=${limit}; i++)
+			for (( i=5; i<=${limit}; i++ ))
 			do
 				printf ",${i}" >> ${array}
 				printf "ARRAY ${i}: ${array}"
