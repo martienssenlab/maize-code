@@ -11,25 +11,24 @@ library(purrr)
 args = commandArgs(trailingOnly=TRUE)
 
 analysisname<-args[1]
+TELabels<-c(unlist(strsplit(args[2],",")))
+AllLabels<-c(TELabels,"Intergenic","Terminator","Gene_body","Promoter")
 
 ### For distribution plot
 
-table<-read.delim(args[2], header = TRUE)
+table<-read.delim(args[3], header = TRUE)
 table$Gene<-as.factor(table$Gene)
 table$TE<-as.factor(table$TE)
-table$Label<-factor(table$Label, 
-                     levels = c("helitron","LINE_element","LTR_retrotransposon",
-                                "SINE_element","solo_LTR","terminal_inverted_repeat_element","Intergenic","Terminator","Gene_body",
-                                "Promoter"))
+table$Label<-factor(table$Label, levels = AllLabels)
 table$Labelcombined<-as.factor(table$Labelcombined)
 
 plot1<-ggplot(table, aes(Tissue, fill=Label)) +
   geom_bar(stat="count", position="stack", show.legend = F) +
   labs(title="", x="",y="Number of shRNA clusters") +
-  scale_fill_manual(values=c("Intergenic"="#B8B5B3","Terminator"="#B233FF",
-                                     "Gene_body"="#3358FF","Promoter"="#FF33E0","helitron"="#0B6D10","LINE_element"="#B9DCBA","LTR_retrotransposon"="#08AF0F",
-                                "SINE_element"="#92EB96","solo_LTR"="#11E119","terminal_inverted_repeat_element"="#184F19"),
-                            name="Genomic feature") +
+#  scale_fill_manual(values=c("Intergenic"="#B8B5B3","Terminator"="#B233FF",
+#                                     "Gene_body"="#3358FF","Promoter"="#FF33E0","helitron"="#0B6D10","LINE_element"="#B9DCBA","LTR_retrotransposon"="#08AF0F",
+#                                "SINE_element"="#92EB96","solo_LTR"="#11E119","terminal_inverted_repeat_element"="#184F19"),
+#                            name="Genomic feature") +
   theme(panel.grid=element_blank(),
         panel.grid.major.y = element_line(colour="grey"),
         axis.ticks=element_blank(),
@@ -39,10 +38,10 @@ plot1<-ggplot(table, aes(Tissue, fill=Label)) +
 plot2<-ggplot(table, aes(Tissue, fill=Label)) +
   geom_bar(stat="count", position="fill", show.legend = T) +
   labs(title="", x="",y="Percentage of shRNA clusters", fill="Genomic feature") +
-  scale_fill_manual(values=c("Intergenic"="#B8B5B3","Terminator"="#B233FF",
-                                     "Gene_body"="#3358FF","Promoter"="#FF33E0","helitron"="#0B6D10","LINE_element"="#B9DCBA","LTR_retrotransposon"="#08AF0F",
-                                "SINE_element"="#92EB96","solo_LTR"="#11E119","terminal_inverted_repeat_element"="#184F19"),
-                            name="Genomic feature") +
+#  scale_fill_manual(values=c("Intergenic"="#B8B5B3","Terminator"="#B233FF",
+#                                     "Gene_body"="#3358FF","Promoter"="#FF33E0","helitron"="#0B6D10","LINE_element"="#B9DCBA","LTR_retrotransposon"="#08AF0F",
+#                                "SINE_element"="#92EB96","solo_LTR"="#11E119","terminal_inverted_repeat_element"="#184F19"),
+#                            name="Genomic feature") +
   theme(panel.grid=element_blank(),
         panel.grid.major.y = element_line(colour="grey"),
         axis.ticks=element_blank(),
@@ -59,10 +58,8 @@ dev.off()
 
 ### For Upset plot
 
-inputable<-read.delim(args[3], header = TRUE)
-inputable$Label<-factor(inputable$Label, levels = c("helitron","LINE_element","LTR_retrotransposon",
-                                "SINE_element","solo_LTR","terminal_inverted_repeat_element","Intergenic","Terminator","Gene_body",
-                                "Promoter"))
+inputable<-read.delim(args[4], header = TRUE)
+inputable$Label<-factor(inputable$Label, levels = AllLabels)
 set1<-colnames(inputable)
 sampleCols<-set1[! set1 %in% c("Line","Cluster_ID","Gene","TE","Label","Labelcombined","GID")]
 
@@ -73,11 +70,11 @@ plot<-upset(inputable, sampleCols, name="shRNA clusters",
       height_ratio = 0.75,
       base_annotations = list(
         'Shared shRNA clusters'=intersection_size(
-          counts=FALSE, mapping=aes(fill=Label)) +
-          scale_fill_manual(values=c("Intergenic"="#B8B5B3","Terminator"="#B233FF",
-                                     "Gene_body"="#3358FF","Promoter"="#FF33E0","helitron"="#0B6D10","LINE_element"="#B9DCBA","LTR_retrotransposon"="#08AF0F",
-                                "SINE_element"="#92EB96","solo_LTR"="#11E119","terminal_inverted_repeat_element"="#184F19"),
-                            name="Genomic feature")
+          counts=FALSE, mapping=aes(fill=Label)) 
+#	+ scale_fill_manual(values=c("Intergenic"="#B8B5B3","Terminator"="#B233FF",
+#                                     "Gene_body"="#3358FF","Promoter"="#FF33E0","helitron"="#0B6D10","LINE_element"="#B9DCBA","LTR_retrotransposon"="#08AF0F",
+#                                "SINE_element"="#92EB96","solo_LTR"="#11E119","terminal_inverted_repeat_element"="#184F19"),
+#                            name="Genomic feature")
       ),
       set_sizes = (upset_set_size() + ylab("Total shRNA clusters") +
         theme(axis.text.x = element_text(angle = 45))),
@@ -119,15 +116,13 @@ dev.off()
 
 ### For violin plot, if expression table is given
 
-if ( length(args) == 5 ) {
-	inputable<-read.delim(args[4], header = TRUE)
-	inputable$Label<-factor(inputable$Label, levels = c("helitron","LINE_element","LTR_retrotransposon",
-                                                    "SINE_element","solo_LTR","terminal_inverted_repeat_element","Intergenic","Terminator","Gene_body",
-                                                    "Promoter"))
+if ( length(args) == 6 ) {
+	inputable<-read.delim(args[5], header = TRUE)
+	inputable$Label<-factor(inputable$Label, levels = AllLabels)
 	inputable$GID<-as.factor(inputable$GID)
 	inputable$Tissues<-as.factor(inputable$Tissues)
 
-	exptable<-read.delim(args[5], header = TRUE)
+	exptable<-read.delim(args[6], header = TRUE)
 	exptable$Tissue<-as.factor(exptable$Tissue)
 	exptable$GID<-as.factor(exptable$GID)
 
