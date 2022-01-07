@@ -1574,6 +1574,12 @@ if [ -s /grid/martienssen/data_norepl/dropbox/maizecode/TEs/${ref}_TEs.gff3.gz ]
 	tefilebw="ChIP/tracks/${ref}_all_tes.bw"
 	tefilebed="combined/TSS/${ref}_all_tes.bed"
 	rm -f ChIP/tracks/temp*.bg
+	awk '{print $4}' combined/TSS/${ref}_all_tes.bed | sort -u > combined/TSS/${ref}_TE_types.txt
+	TEtypestring=""
+	while read TEtype
+	do
+		TEtypestring+="${TEtypestring},${TEtype}"
+	done < combined/TSS/${ref}_TE_types.txt
 fi
 
 for tissue in ${h3k27actissues[@]}
@@ -1769,7 +1775,7 @@ if [[ ${#uniq_rampage_tissue_list[*]} -ge 2 ]] && [[ ${tefilebw} != "" ]]; then
 	#### To make an Upset plot highlighting peaks in gene bodies
 	printf "\nCreating distribution and Upset plot for TSS in ${analysisname} with R version:\n"
 	R --version
-	Rscript --vanilla ${mc_dir}/MaizeCode_R_TSS_distribution_upset.r ${analysisname} combined/TSS/Table_TSS_tissues_${analysisname}.txt combined/TSS/matrix_upset_TSS_${analysisname}.txt combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed combined/DEG/genes_rpkm_${analysisname}.txt
+	Rscript --vanilla ${mc_dir}/MaizeCode_R_TSS_distribution_upset.r ${analysisname} ${TEtypestring} combined/TSS/Table_TSS_tissues_${analysisname}.txt combined/TSS/matrix_upset_TSS_${analysisname}.txt combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed combined/DEG/genes_rpkm_${analysisname}.txt
 fi
 
 ############################################################################################
@@ -1825,7 +1831,7 @@ if [[ ${#uniq_shrna_tissue_list[*]} -ge 2 ]] && [[ ${tefilebw} != "" ]]; then
 	#### To make an Upset plot highlighting peaks in gene bodies
 	printf "\nCreating Distirbution and Upset plot for shRNA clusters in ${analysisname} with R version:\n"
 	R --version
-	Rscript --vanilla ${mc_dir}/MaizeCode_R_shRNA_distribution_upset.r ${analysisname} combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}.txt combined/shRNA/matrix_upset_shRNA_clusters_${analysisname}.txt combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed combined/DEG/genes_rpkm_${analysisname}.txt
+	Rscript --vanilla ${mc_dir}/MaizeCode_R_shRNA_distribution_upset.r ${analysisname} ${TEtypestring} combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}.txt combined/shRNA/matrix_upset_shRNA_clusters_${analysisname}.txt combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed combined/DEG/genes_rpkm_${analysisname}.txt
 fi
 
 #########################################################################################
@@ -1838,7 +1844,6 @@ rampagesamples=${#rampage_bw_list_plus[@]}
 shrnasamples=${#shrna_bw_list_plus[@]}
 totsamples=$((rnaseqsamples+rampagesamples+shrnasamples))
 if [[ ${tefilebw} != "" ]] && [ ${totsamples} -gt 0 ]; then
-	awk '{print $4}' combined/TSS/${ref}_all_tes.bed | sort -u > combined/TSS/${ref}_TE_types.txt
 	#### Computing the stranded matrix
 	while read TEtype
 	do
