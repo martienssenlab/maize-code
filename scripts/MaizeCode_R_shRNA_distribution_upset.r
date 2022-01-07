@@ -117,37 +117,39 @@ pdf(paste0("combined/plots/Upset_shRNA_clusters_",analysisname,".pdf"),10,8)
 print(plot)
 dev.off()
 
-### For violin plot
+### For violin plot, if expression table is given
 
-inputable<-read.delim(args[4], header = TRUE)
-inputable$Label<-factor(inputable$Label, levels = c("helitron","LINE_element","LTR_retrotransposon",
+if ( length(args) == 5 ) {
+	inputable<-read.delim(args[4], header = TRUE)
+	inputable$Label<-factor(inputable$Label, levels = c("helitron","LINE_element","LTR_retrotransposon",
                                                     "SINE_element","solo_LTR","terminal_inverted_repeat_element","Intergenic","Terminator","Gene_body",
                                                     "Promoter"))
-inputable$GID<-as.factor(inputable$GID)
-inputable$Tissues<-as.factor(inputable$Tissues)
+	inputable$GID<-as.factor(inputable$GID)
+	inputable$Tissues<-as.factor(inputable$Tissues)
 
-exptable<-read.delim(args[5], header = TRUE)
-exptable$Tissue<-as.factor(exptable$Tissue)
-exptable$GID<-as.factor(exptable$GID)
+	exptable<-read.delim(args[5], header = TRUE)
+	exptable$Tissue<-as.factor(exptable$Tissue)
+	exptable$GID<-as.factor(exptable$GID)
 
-filteredtable<-inputable %>%
-  filter(Label=="Gene_body") %>%
-  select(Tissues,GID) %>%
-  unique() %>%
-  merge(exptable, by="GID") %>%
-  group_by(Tissues)
+	filteredtable<-inputable %>%
+	  filter(Label=="Gene_body") %>%
+	  select(Tissues,GID) %>%
+	  unique() %>%
+	  merge(exptable, by="GID") %>%
+	  group_by(Tissues)
   
-plot3<-ggplot(filteredtable, aes(Tissue, RPKM+1, fill=Tissue)) +
-  geom_violin(show.legend = T) +
-  scale_y_continuous(trans="log10",
+	plot3<-ggplot(filteredtable, aes(Tissue, RPKM+1, fill=Tissue)) +
+	  geom_violin(show.legend = T) +
+	  scale_y_continuous(trans="log10",
                      labels=scales::label_number_si(accuracy = 1)) +
-  facet_wrap(~Tissues, scales="free_y") +
-  theme(panel.grid=element_blank(),
-        panel.grid.major.y = element_line(colour="grey"),
-        axis.ticks=element_blank(),
-        panel.background=element_blank(),
-        axis.text.x=element_blank())
+	  facet_wrap(~Tissues, scales="free_y") +
+	  theme(panel.grid=element_blank(),
+	        panel.grid.major.y = element_line(colour="grey"),
+	        axis.ticks=element_blank(),
+	        panel.background=element_blank(),
+	        axis.text.x=element_blank())
 
-pdf(paste0("combined/plots/RNAseq_expression_in_shRNA_genes_",analysisname,".pdf"),12,10)
-print(plot3)
-dev.off()
+	pdf(paste0("combined/plots/RNAseq_expression_in_shRNA_genes_",analysisname,".pdf"),12,10)
+	print(plot3)
+	dev.off()
+}
