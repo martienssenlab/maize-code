@@ -1555,7 +1555,6 @@ do
 			bedtools intersect -wao -a combined/peaks/temp2_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt -b combined/peaks/temp3_TFs_${analysisname}.txt | awk -v OFS="\t" '{if ($20 == ".") t="None"; else t=$20 ; print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,t}' > combined/peaks/temp4_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
 			bedtools merge -o distinct -c ${array} -i combined/peaks/temp4_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt >> combined/peaks/complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
 		else
-			printf "No TF information to add\n"
 			printf "${header}\n" > combined/peaks/complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
 			bedtools sort -g ${ref_dir}/chrom.sizes -i combined/peaks/temp_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt >> combined/peaks/complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
 		fi
