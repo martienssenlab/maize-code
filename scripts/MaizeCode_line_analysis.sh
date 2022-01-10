@@ -648,8 +648,12 @@ if [ ${total_sample_number} -lt 2 ]; then
 	exit 0
 fi
 
-printf "\nDoing analysis for ${analysisname} with deeptools version:\n"
-deeptools --version
+if [[ "${total}" != "TEST" ]]; then
+	printf "\nDoing complete analysis for ${analysisname} with deeptools version:\n"
+	deeptools --version
+else
+	printf "\nDoing testing analysis for ${analysisname}\n"
+fi
 
 uniq_chip_mark_list=($(printf "%s\n" "${chip_mark_list[@]}" | sort -u))
 
@@ -1199,8 +1203,8 @@ do
 	done
 	
 	if [[ ${test_k27ac} == "yes" ]] && [[ ${#tissue_bw_plus[@]} -ge 2 ]]; then
-		printf "\nMaking heatmaps of distal enhancers (H3K27ac peak >2kb from TSS) in tissue ${tissue}\n"
-		printf "\nGetting bed file of distal enhancers for tissue ${tissue}\n"
+		printf "\nMaking heatmaps of distal enhancers (H3K27ac peak >2kb from TSS) in ${tissue}\n"
+		printf "\nGetting bed file of distal enhancers for ${tissue}\n"
 		enhancerfile="yes"
 		bedtools sort -g ${ref_dir}/chrom.sizes -i ChIP/peaks/best_peaks_${line}_${tissue}_H3K27ac.bed | awk '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/)'> combined/peaks/temp_${analysisname}_${tissue}.bed
 		if [ -s combined/DEG/sorted_expression_${analysisname}_${tissue}.bed ]; then
@@ -1264,12 +1268,12 @@ do
 			do
 				awk -v OFS="\t" -v s=${sign} '$6==s' combined/peaks/temp_distal_${analysisname}_${tissue}_group${i}.txt > combined/peaks/temp_distal_${analysisname}_${tissue}_group${i}.bed
 			done
-			printf "\nComputing scale-regions ${strand} strand matrix for tissue ${tissue}\n"
+			printf "\nComputing scale-regions ${strand} strand matrix for ${tissue}\n"
 			computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${sorted_regions[@]} -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/regions_${analysisname}_distal_${strand}.gz --quiet
 		done
-		printf "\nMerging stranded matrices for distal peaks in tissue ${tissue}\n"
+		printf "\nMerging stranded matrices for distal peaks in ${tissue}\n"
 		computeMatrixOperations rbind -m combined/matrix/regions_${analysisname}_distal_plus.gz combined/matrix/regions_${analysisname}_distal_minus.gz -o combined/matrix/regions_${analysisname}_distal.gz
-		printf "\nGetting scales for distal peaks in tissue ${tissue}\n"
+		printf "\nGetting scales for distal peaks in ${tissue}\n"
 		computeMatrixOperations dataRange -m combined/matrix/regions_${analysisname}_distal.gz > combined/matrix/values_regions_distal_${analysisname}.txt
 		mins=()
 		maxs=()
@@ -1303,9 +1307,9 @@ do
 				ymaxs+=("${ymaxi}")
 			fi
 		done
-		printf "\nPlotting heatmap for distal peaks in tissue ${tissue} in ${analysisname} scaling by sample\n"
+		printf "\nPlotting heatmap for distal peaks in ${tissue} in ${analysisname} scaling by sample\n"
 		plotHeatmap -m combined/matrix/final_regions_${analysisname}_distal.gz -out combined/plots/distal_${tissue}_${analysisname}_heatmap_mean.pdf --sortRegions keep --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear' --startLabel "enhancer" --endLabel "TSS"
-		printf "\nPlotting mean profile for distal peaks in tissue ${tissue} in ${analysisname} scaling by sample\n"
+		printf "\nPlotting mean profile for distal peaks in ${tissue} in ${analysisname} scaling by sample\n"
 		plotProfile -m combined/matrix/final_regions_${analysisname}_distal.gz -out combined/plots/distal_${tissue}_${analysisname}_profile_mean.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType mean --yMin ${ymins[@]} --yMax ${ymaxs[@]} --startLabel "enhancer" --endLabel "TSS"
 		
 		plotProfile -m combined/matrix/final_regions_${analysisname}_distal.gz -out combined/plots/distal_${tissue}_${analysisname}_profile_median.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType median --outFileNameData combined/matrix/values_regions_distal_${analysisname}.txt
@@ -1324,7 +1328,7 @@ do
 				ymaxs+=("${ymaxi}")
 			fi
 		done
-		printf "\nPlotting median profile for distal peaks in tissue ${tissue} in ${analysisname} scaling by sample\n"
+		printf "\nPlotting median profile for distal peaks in ${tissue} in ${analysisname} scaling by sample\n"
 		plotProfile -m combined/matrix/final_regions_${analysisname}_distal.gz -out combined/plots/distal_${tissue}_${analysisname}_profile_median.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType median --yMin ${ymins[@]} --yMax ${ymaxs[@]} --startLabel "enhancer" --endLabel "TSS"		
 	else
 		printf "\nTissue ${tissue} will not be processed\n"
@@ -1469,19 +1473,23 @@ deg="0"
 tf="0"
 for tissue in ${h3k27actissues[@]}
 do
+	printf "Gathering all available RNA, RAMPAGE and DEG data for enhancers of ${line} ${tissue}\n"
 	rna=$(grep "RNAseq" combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt | wc -l)
 	rampage=$(grep "RAMPAGE" combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt | wc -l)
 	shrna=$(grep "shRNA" combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt | wc -l)
-	if [ -e combined/peaks/all_${line}_${tissue}_${analysisname}_DEG_GID.txt ]; then
+	printf "RNAseq status: ${rna}\nRAMPAGE status: ${rampage}\nshRNA status: ${shrna}\n"
+	if [ -s combined/peaks/all_${line}_${tissue}_${analysisname}_DEG_GID.txt ]; then
 		deg="1"
+		printf "Including DEG (status: ${deg})\n"
 	fi
-	if [ -e combined/peaks/TF_peaks_${analysisname}.bed ]; then
+	if [ -s combined/peaks/TF_peaks_${analysisname}.bed ]; then
 		tf="1"
+		printf "Including TF (status: ${tf})\n"
 	fi
 	for type in distal_upstream distal_downstream promoter terminator genic
 	do
 		printf "Gathering all available RNA, RAMPAGE and DEG data for ${type} enhancers of ${line} ${tissue}\n"
-		if [ -e combined/peaks/temp_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt ]; then
+		if [ -s combined/peaks/temp_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt ]; then
 			rm -f combined/peaks/temp_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
 		fi
 		while read chr start stop peakID quality strand GID expression
