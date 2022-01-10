@@ -1467,23 +1467,29 @@ done
 ############# Gathering all available information on each type of enhancers ################
 ############################################################################################
 
-rna="0"
-rampage="0"
-deg="0"
-tf="0"
+rna="no"
+rampage="no"
+deg="no"
+tf="no"
 for tissue in ${h3k27actissues[@]}
 do
 	printf "Gathering all available RNA, RAMPAGE and DEG data for enhancers of ${line} ${tissue}\n"
-	rna=$(grep "RNAseq" combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt | wc -l)
-	rampage=$(grep "RAMPAGE" combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt | wc -l)
-	shrna=$(grep "shRNA" combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt | wc -l)
+	if [ $(grep "RNAseq" combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt | wc -l) -gt 0 ]; then
+		rna="yes"
+	fi
+	if [ $(grep "RAMPAGE" combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt | wc -l) -gt 0 ]; then
+		rampage="yes"
+	fi
+	if [ $(grep "shRNA" combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt | wc -l) -gt 0 ]; then
+		shrna="yes"
+	fi
 	printf "RNAseq status: ${rna}\nRAMPAGE status: ${rampage}\nshRNA status: ${shrna}\n"
 	if [ -s combined/peaks/all_${line}_${tissue}_${analysisname}_DEG_GID.txt ]; then
-		deg="1"
+		deg="yes"
 		printf "Including DEG (status: ${deg})\n"
 	fi
 	if [ -s combined/peaks/TF_peaks_${analysisname}.bed ]; then
-		tf="1"
+		tf="yes"
 		printf "Including TF (status: ${tf})\n"
 	fi
 	for type in distal_upstream distal_downstream promoter terminator genic
@@ -1497,28 +1503,28 @@ do
 			colnb=7
 			header="Chr\tStart\tStop\tPeakID\tQuality\tstrand\tGID"
 			rowi="${chr}\t${start}\t${stop}\t${peakID}\t${quality}\t${strand}\t${GID}"
-			if [ ${rna} -gt 0 ]; then	
+			if [[ "${rna}" == "yes" ]]; then	
 				RNAseq_plus=$(awk -v p=${peakID} '$4 == p {print $5}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
 				RNAseq_minus=$(awk -v p=${peakID} '$4 == p {print $6}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
 				rowi="${rowi}\t${expression}\t${RNA_plus}\t${RNA_minus}"
 				header="${header}\texpression\tRNA_plus\tRNA_minus"
 				colnb=$((colnb+3))
 			fi
-			if [ ${rampage} -gt 0 ]; then
+			if [[ ${rampage} == "yes" ]]; then
 				RAMPAGE_plus=$(awk -v p=${peakID} '$4 == p {print $7}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
 				RAMPAGE_minus=$(awk -v p=${peakID} '$4 == p {print $8}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
 				header="${header}\tRAMPAGE_plus\tRAMPAGE_minus"
 				rowi="${rowi}\t${RAMPAGE_plus}\t${RAMPAGE_minus}"
 				colnb=$((colnb+2))
 			fi
-			if [ ${shrna} -gt 0 ]; then
+			if [[ ${shrna} == "yes" ]]; then
 				shRNA_plus=$(awk -v p=${peakID} '$4 == p {print $9}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
 				shRNA_minus=$(awk -v p=${peakID} '$4 == p {print $10}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
 				header="${header}\tshRNA_plus\tshRNA_minus"
 				rowi="${rowi}\t${shRNA_plus}\t${shRNA_minus}"
 				colnb=$((colnb+2))
 			fi
-			if [ ${deg} -gt 0 ]; then
+			if [[ ${deg} == "yes" ]]; then
 				if grep -q "$GID" combined/DEG/only_${line}_${tissue}_DEG_UP_${analysisname}.bed
 				then
 					DEG="unique_UP"
@@ -1537,7 +1543,7 @@ do
 			fi
 			printf "${rowi}\n" >> combined/peaks/temp_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
 		done < combined/peaks/enhancers_${type}_${analysisname}_${tissue}.txt
-		if [ ${tf} -gt 0 ]; then
+		if [[ ${tf} == "yes" ]]; then
 			printf "Adding TF information\n"
 			printf "${header}\tTFs\n" > combined/peaks/complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
 			array="4"
