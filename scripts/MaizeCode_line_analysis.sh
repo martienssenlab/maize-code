@@ -1679,7 +1679,7 @@ do
 				printf "\nComputing matrix for ${type} enhancers in ${tissue} (${strand} strand)\n"
 				computeMatrix scale-regions -q --missingDataAsZero --skipZeros -R ${regions} -S ${bw[@]} -bs 10 -b 3000 -a 3000 -m 1000 -p ${threads} -o combined/matrix/regions_enhancers_${type}_${analysisname}_${tissue}_${strand}.gz
 			done
-			computeMatrixOperations rbind -m combined/matrix/regions_enhancers_${analysisname}_${tissue}_plus.gz combined/matrix/regions_enhancers_${type}_${analysisname}_${tissue}_minus.gz -o combined/matrix/regions_enhancers_${type}_${analysisname}_${tissue}.gz
+			computeMatrixOperations rbind -m combined/matrix/regions_enhancers_${type}_${analysisname}_${tissue}_plus.gz combined/matrix/regions_enhancers_${type}_${analysisname}_${tissue}_minus.gz -o combined/matrix/regions_enhancers_${type}_${analysisname}_${tissue}.gz
 			if [[ ${tefilebw} != "" ]]; then
 				label_list="${tissue_labels[*]} Genes TEs"
 			else
