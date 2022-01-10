@@ -1471,8 +1471,7 @@ deg="0"
 tf="0"
 for tissue in ${h3k27actissues[@]}
 do
-	printf "Gathering all available RNA, RAMPAGE and DEG data for enhancers of ${line} ${tissue}\n"
-	printf "RNAseq status: ${rna}\nRAMPAGE status: ${rampage}\nshRNA status: ${shrna}\n"
+	printf "Gathering all available data for enhancers of ${line} ${tissue}\n"
 	if [ -s combined/peaks/all_${line}_${tissue}_${analysisname}_DEG_GID.txt ]; then
 		deg="1"
 		printf "Including DEG (status: ${deg})\n"
@@ -1492,7 +1491,7 @@ do
 			colnb=7
 			header="Chr\tStart\tStop\tPeakID\tQuality\tstrand\tGID"
 			rowi="${chr}\t${start}\t${stop}\t${peakID}\t${quality}\t${strand}\t${GID}"
-			if [[ ${rna} == 1 ]]; then	
+			if [[ ${rnaseq} == 1 ]]; then	
 				RNAseq_plus=$(awk -v p=${peakID} '$4 == p {print $5}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
 				RNAseq_minus=$(awk -v p=${peakID} '$4 == p {print $6}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
 				rowi="${rowi}\t${expression}\t${RNAseq_plus}\t${RNAseq_minus}"
@@ -1555,7 +1554,6 @@ do
 		rm -f combined/peaks/temp*${analysisname}*
 	done
 done
-
 
 ############################################################################################
 ######################################### PART14 ###########################################
