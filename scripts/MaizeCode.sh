@@ -416,7 +416,7 @@ elif [[ "$total" == "NO" ]]; then
 	analysisname="${samplename}_on_all_genes"
 	check="combined/chkpts/${analysisname}"
 elif [[ "$total" == "TEST" ]]; then
-	printf "\nPerforming partial analysis on all genes\n"
+	printf "\nPerforming testing analysis on all genes\n"
 	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -z &
 	analysisname="${samplename}_on_all_genes"
 	check="combined/chkpts/${analysisname}"
