@@ -1540,7 +1540,7 @@ do
 			fi
 			printf "${rowi}\n" >> combined/peaks/temp_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
 		done < combined/peaks/enhancers_${type}_${analysisname}_${tissue}.txt
-		if [[ ${tf} == 1 ]]; then
+		if [[ ${tf} == "Yes" ]]; then
 			printf "${header}\tTFs\n" > combined/peaks/complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
 			array="4"
 			limit=$((colnb+1))
@@ -1729,9 +1729,11 @@ do
 			fi		
 			printf "\nSorting ${type} enhancers matrix in ${tissue}\n"
 			computeMatrixOperations sort -m combined/matrix/regions_enhancers_${type}_${analysisname}_${tissue}.gz -R ${regions_sorted} -o combined/matrix/regions_enhancers_${type}_${analysisname}_${tissue}_sorted.gz
-			printf "\nPlotting heatmap of all enhancers in ${tissue}\n"
-			plotHeatmap -m combined/matrix/regions_enhancers_${type}_${analysisname}_${tissue}_sorted.gz -out combined/plots/enhancers_${type}_${line}_${tissue}_presorted.pdf --sortRegions keep --samplesLabel ${label_list[*]} --regionsLabel ${regions_label[*]} --colorMap 'seismic' --interpolationMethod 'bilinear' --yMin ${ymins[@]} --yMax ${ymaxs[@]} --zMin ${mins[@]} --zMax ${maxs[@]}
-			plotHeatmap -m combined/matrix/regions_enhancers_${type}_${analysisname}_${tissue}_sorted.gz -out combined/plots/enhancers_${type}_${line}_${tissue}_newsort.pdf --sortRegions descend --sortUsing mean --samplesLabel ${label_list[*]} --regionsLabel ${regions_label[*]} --colorMap 'seismic' --interpolationMethod 'bilinear' --yMin ${ymins[@]} --yMax ${ymaxs[@]} --zMin ${mins[@]} --zMax ${maxs[@]}
+			printf "\nPlotting heatmap of ${type} enhancers in ${tissue}\n"
+			plotHeatmap -m combined/matrix/regions_enhancers_${type}_${analysisname}_${tissue}_sorted.gz -out combined/plots/enhancers_${type}_${line}_${tissue}_presorted.pdf --sortRegions keep --samplesLabel ${label_list[*]} --colorMap 'seismic' --interpolationMethod 'bilinear' --yMin ${ymins[@]} --yMax ${ymaxs[@]} --zMin ${mins[@]} --zMax ${maxs[@]}
+			plotHeatmap -m combined/matrix/regions_enhancers_${type}_${analysisname}_${tissue}_sorted.gz -out combined/plots/enhancers_${type}_${line}_${tissue}_newsort.pdf --sortRegions descend --sortUsing mean --samplesLabel ${label_list[*]} --colorMap 'seismic' --interpolationMethod 'bilinear' --yMin ${ymins[@]} --yMax ${ymaxs[@]} --zMin ${mins[@]} --zMax ${maxs[@]}
+#			plotHeatmap -m combined/matrix/regions_enhancers_${type}_${analysisname}_${tissue}_sorted.gz -out combined/plots/enhancers_${type}_${line}_${tissue}_presorted.pdf --sortRegions keep --samplesLabel ${label_list[*]} --regionsLabel ${regions_label[*]} --colorMap 'seismic' --interpolationMethod 'bilinear' --yMin ${ymins[@]} --yMax ${ymaxs[@]} --zMin ${mins[@]} --zMax ${maxs[@]}
+#			plotHeatmap -m combined/matrix/regions_enhancers_${type}_${analysisname}_${tissue}_sorted.gz -out combined/plots/enhancers_${type}_${line}_${tissue}_newsort.pdf --sortRegions descend --sortUsing mean --samplesLabel ${label_list[*]} --regionsLabel ${regions_label[*]} --colorMap 'seismic' --interpolationMethod 'bilinear' --yMin ${ymins[@]} --yMax ${ymaxs[@]} --zMin ${mins[@]} --zMax ${maxs[@]}
 		done
 		rm -f combined/peaks/temp*${analysisname}*
 		rm -f combined/matrix/*${analysisname}*.gz
