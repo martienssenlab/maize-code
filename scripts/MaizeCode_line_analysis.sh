@@ -1546,10 +1546,9 @@ do
 			limit=$((colnb+1))
 			for (( i=5; i<=${limit}; i++ ))
 			do
-				printf ",${i}" >> ${array}
-				printf "ARRAY ${i}: ${array}"
+				array="${array},${i}"
 			done
-			printf "ARRAY FINALE: ${array}"
+			printf "ARRAY FINALE: ${array}\n"
 			bedtools sort -g ${ref_dir}/chrom.sizes -i combined/peaks/temp_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt > combined/peaks/temp2_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
 			bedtools sort -g ${ref_dir}/chrom.sizes -i combined/peaks/TF_peaks_${analysisname}.bed > combined/peaks/temp3_TFs_${analysisname}.txt
 			bedtools intersect -wao -a combined/peaks/temp2_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt -b combined/peaks/temp3_TFs_${analysisname}.txt | awk -v OFS="\t" '{if ($20 == ".") t="None"; else t=$20 ; print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,t}' > combined/peaks/temp4_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
