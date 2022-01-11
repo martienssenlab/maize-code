@@ -62,6 +62,22 @@ if [ ! -s reports/summary_TF_peaks.txt ]; then
 	printf "Line\tSample\tPeaks_in_Rep1\tPeaks_in_Rep2\tCommon_peaks\tCommon_peaks_IDR_0.05\tPeaks_in_merged\tPeaks_in_pseudo_reps\tSelected_peaks\n" > reports/summary_TF_peaks.txt
 fi
 
+if [ -s ${ref_dir}/*.fa.gz ]; then
+	fa_file=$(ls ${ref_dir}/*.fa.gz)
+	pigz -p ${threads} -dc ${fa_file} > ${ref_dir}/temp_${ref}.fa
+	fasta=${ref_dir}/temp_${ref}.fa
+elif [ -s ${ref_dir}/*.fa ]; then
+	fa_file=$(ls ${ref_dir}/*.fa)
+	fasta=${fa_file}
+elif [ -s ${ref_dir}/*.fasta.gz ]; then
+	fa_file=$(ls ${ref_dir}/*.fasta.gz)
+	pigz -p ${threads} -dc ${fa_file} > ${ref_dir}/temp_${ref}.fa
+	fasta=${ref_dir}/temp_${ref}.fa
+elif [ -s ${ref_dir}/*.fasta ]; then
+	fa_file=$(ls ${ref_dir}/*.fasta)
+	fasta=${fa_file}
+fi
+
 pidsa=()
 while read line tf chip paired ref_dir
 do
@@ -257,7 +273,7 @@ do
 			#### v1="selected" peaks (best peaks from selected, i.e. in merged and both pseudo reps) with MEME		
 			printf "\nGetting peak fasta sequences for ${name} meme v1\n"
 			awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {a=$2+$10; print $1,a-50,a+50,$4}' peaks/best_peaks_${name}.bed > peaks/selected_motifs_${name}.bed
-			bedtools getfasta -name -fi ${ref_dir}/${ref}.fa -bed peaks/selected_motifs_${name}.bed > peaks/selected_sequences_${name}.fa
+			bedtools getfasta -name -fi ${fasta} -bed peaks/selected_motifs_${name}.bed > peaks/selected_sequences_${name}.fa
 			printf "\nGetting motifs for ${name} with meme\n"
 			meme-chip -oc motifs/${name}/meme -meme-p ${threads} -meme-nmotifs 10 -streme-nmotifs 10 peaks/selected_sequences_${name}.fa
 			if [ -s motifs/${name}/meme/combined.meme ]; then
@@ -269,7 +285,7 @@ do
 			#### v2="replicated" peaks (peaks in both biological reps, i.e all peaks in idr) with MEME
 			printf "\nGetting peak fasta sequences for ${name} meme v2\n"
 			awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {a=$2+$10; print $1,a-50,a+50}' peaks/idr_${name}.narrowPeak > peaks/selected_motifs_${name}.bed
-			bedtools getfasta -name -fi ${ref_dir}/${ref}.fa -bed peaks/selected_motifs_${name}.bed > peaks/selected_sequences_${name}.fa
+			bedtools getfasta -name -fi ${fasta} -bed peaks/selected_motifs_${name}.bed > peaks/selected_sequences_${name}.fa
 			printf "\nGetting motifs for ${name} with meme\n"
 			meme-chip -oc motifs/${name}/meme2 -meme-p ${threads} -meme-nmotifs 10 -streme-nmotifs 10 peaks/selected_sequences_${name}.fa
 			if [ -s motifs/${name}/meme2/combined.meme ]; then
@@ -293,7 +309,7 @@ do
 				printf "\nGetting peak fasta sequences for ${name} meme v3\n"
 				awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {a=$2+$10; print $1,a-50,a+50,$4}' peaks/best_peaks_${name}.bed > peaks/selected_motifs_${name}.bed
 				bedtools intersect -v -wa -a peaks/selected_motifs_${name}.bed -b tracks/${ref}_masked_regions.bed > peaks/masked_selected_motifs_${name}.bed
-				bedtools getfasta -name -fi ${ref_dir}/${ref}.fa -bed peaks/masked_selected_motifs_${name}.bed > peaks/selected_sequences_${name}.fa
+				bedtools getfasta -name -fi ${fasta} -bed peaks/masked_selected_motifs_${name}.bed > peaks/selected_sequences_${name}.fa
 				printf "\nGetting motifs for ${name} with meme\n"
 				meme-chip -oc motifs/${name}/meme3 -meme-p ${threads} -meme-nmotifs 10 -streme-nmotifs 10 peaks/selected_sequences_${name}.fa
 				if [ -s motifs/${name}/meme3/combined.meme ]; then
@@ -306,7 +322,7 @@ do
 				printf "\nGetting peak fasta sequences for ${name} meme v4\n"
 				awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {a=$2+$10; print $1,a-50,a+50}' peaks/idr_${name}.narrowPeak > peaks/selected_motifs_${name}.bed
 				bedtools intersect -v -wa -a peaks/selected_motifs_${name}.bed -b tracks/${ref}_masked_regions.bed > peaks/masked_selected_motifs_${name}.bed
-				bedtools getfasta -name -fi ${ref_dir}/${ref}.fa -bed peaks/masked_selected_motifs_${name}.bed > peaks/selected_sequences_${name}.fa
+				bedtools getfasta -name -fi ${fasta} -bed peaks/masked_selected_motifs_${name}.bed > peaks/selected_sequences_${name}.fa
 				printf "\nGetting motifs for ${name} with meme\n"
 				meme-chip -oc motifs/${name}/meme4 -meme-p ${threads} -meme-nmotifs 10 -streme-nmotifs 10 peaks/selected_sequences_${name}.fa
 				if [ -s motifs/${name}/meme4/combined.meme ]; then
@@ -344,5 +360,9 @@ done < $samplefile
 
 printf "\nWaiting for each sample to be processed individually\n"
 wait ${pidsa[*]}
+
+if [ -e ${ref_dir}/temp_${ref}.fa ]; then
+	rm -f ${ref_dir}/temp_${ref}.fa
+fi
 printf "\nScript finished successfully!\n"
 
