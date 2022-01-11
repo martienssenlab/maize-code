@@ -62,22 +62,6 @@ if [ ! -s reports/summary_TF_peaks.txt ]; then
 	printf "Line\tSample\tPeaks_in_Rep1\tPeaks_in_Rep2\tCommon_peaks\tCommon_peaks_IDR_0.05\tPeaks_in_merged\tPeaks_in_pseudo_reps\tSelected_peaks\n" > reports/summary_TF_peaks.txt
 fi
 
-if [ -s ${ref_dir}/*.fa.gz ]; then
-	fa_file=$(ls ${ref_dir}/*.fa.gz)
-	pigz -p ${threads} -dc ${fa_file} > ${ref_dir}/temp_${ref}.fa
-	fasta=${ref_dir}/temp_${ref}.fa
-elif [ -s ${ref_dir}/*.fa ]; then
-	fa_file=$(ls ${ref_dir}/*.fa)
-	fasta=${fa_file}
-elif [ -s ${ref_dir}/*.fasta.gz ]; then
-	fa_file=$(ls ${ref_dir}/*.fasta.gz)
-	pigz -p ${threads} -dc ${fa_file} > ${ref_dir}/temp_${ref}.fa
-	fasta=${ref_dir}/temp_${ref}.fa
-elif [ -s ${ref_dir}/*.fasta ]; then
-	fa_file=$(ls ${ref_dir}/*.fasta)
-	fasta=${fa_file}
-fi
-
 pidsa=()
 while read line tf chip paired ref_dir
 do
@@ -268,7 +252,24 @@ do
 		rm -f peaks/temp_${name}*
 		
 		#### To find motifs in different peak sets:
-		
+		if [ -s ${ref_dir}/temp_${ref}.fa ]; then
+			fasta=${ref_dir}/temp_${ref}.fa
+		elif [ -s ${ref_dir}/*.fa.gz ]; then
+			fa_file=$(ls ${ref_dir}/*.fa.gz)
+			pigz -p ${threads} -dc ${fa_file} > ${ref_dir}/temp_${ref}.fa
+			fasta=${ref_dir}/temp_${ref}.fa
+		elif [ -s ${ref_dir}/*.fa ]; then
+			fa_file=$(ls ${ref_dir}/*.fa)
+			fasta=${fa_file}
+		elif [ -s ${ref_dir}/*.fasta.gz ]; then
+			fa_file=$(ls ${ref_dir}/*.fasta.gz)
+			pigz -p ${threads} -dc ${fa_file} > ${ref_dir}/temp_${ref}.fa
+			fasta=${ref_dir}/temp_${ref}.fa
+		elif [ -s ${ref_dir}/*.fasta ]; then
+			fa_file=$(ls ${ref_dir}/*.fasta)
+			fasta=${fa_file}
+		fi
+
 		if [ ! -d motifs/${name}/meme ] && [ -s peaks/best_peaks_${name}.bed ]; then
 			#### v1="selected" peaks (best peaks from selected, i.e. in merged and both pseudo reps) with MEME		
 			printf "\nGetting peak fasta sequences for ${name} meme v1\n"
