@@ -1589,7 +1589,7 @@ if [ -s /grid/martienssen/data_norepl/dropbox/maizecode/TEs/${ref}_TEs.gff3.gz ]
 	TEtypestring=""
 	while read TEtype
 	do
-		TEtypestring+="${TEtypestring},${TEtype}"
+		TEtypestring="${TEtypestring},${TEtype}"
 	done < combined/TSS/${ref}_TE_types.txt
 fi
 
