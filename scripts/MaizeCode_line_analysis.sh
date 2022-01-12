@@ -1769,7 +1769,11 @@ if [[ ${#uniq_rampage_tissue_list[*]} -ge 2 ]] && [[ ${tefilebw} != "" ]]; then
 	sort -k1,1 -k2,2n combined/TSS/tmp_TSS_peaks_${analysisname}.bed > combined/TSS/tmp2_TSS_peaks_${analysisname}.bed
 	bedtools merge -i combined/TSS/tmp2_TSS_peaks_${analysisname}.bed -c 4 -o distinct | bedtools sort -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{print $1,$2,$3,"Peak_"NR,$4}'> combined/TSS/tmp3_TSS_peaks_${analysisname}.bed
 	printf "\nGetting closest gene for TSS in ${analysisname}\n"
-	bedtools closest -a combined/TSS/tmp3_TSS_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/TSS/tmp4_TSS_peaks_${analysisname}.bed
+	if [[ ${ref} == "B73_v4" || ${ref} == "B73_v5" ]]; then
+		bedtools closest -a combined/TSS/tmp3_TSS_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/TSS/tmp4_TSS_peaks_${analysisname}.bed
+	else
+		bedtools closest -a combined/TSS/tmp3_TSS_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[:=;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/TSS/tmp4_TSS_peaks_${analysisname}.bed
+	fi
 	printf "\nGrouping based on distance\n"
 	awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/TSS/tmp4_TSS_peaks_${analysisname}.bed > combined/TSS/tmp5_TSS_peaks_${analysisname}.bed
 	printf "\nIntersecting with TEs\n"
@@ -1820,12 +1824,15 @@ if [[ ${#uniq_shrna_tissue_list[*]} -ge 2 ]] && [[ ${tefilebw} != "" ]]; then
 	done
 	printf "Line\tTissue\tCluster_ID\tGene\tTE\tLabel\tLabelcombined\n" > combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}.txt
 	cat combined/shRNA/Clusters_in_genes_and_tes_*_${analysisname}.bed >> combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}.txt
-	
 	printf "\nPreparing merged shRNA cluster file for ${analysisname}\n"
 	sort -k1,1 -k2,2n combined/shRNA/tmp_shRNA_clusters_${analysisname}.bed > combined/shRNA/tmp2_shRNA_clusters_${analysisname}.bed
 	bedtools merge -i combined/shRNA/tmp2_shRNA_clusters_${analysisname}.bed -c 4 -o distinct | bedtools sort -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{print $1,$2,$3,"Cluster_"NR,$4}'> combined/shRNA/tmp3_shRNA_clusters_${analysisname}.bed
 	printf "\nGetting closest gene for clusters in ${analysisname}\n"
-	bedtools closest -a combined/shRNA/tmp3_shRNA_clusters_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/shRNA/tmp4_shRNA_clusters_${analysisname}.bed
+	if [[ ${ref} == "B73_v4" || ${ref} == "B73_v5" ]]; then
+		bedtools closest -a combined/shRNA/tmp3_shRNA_clusters_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/shRNA/tmp4_shRNA_clusters_${analysisname}.bed
+	else
+		bedtools closest -a combined/shRNA/tmp3_shRNA_clusters_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[:=;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/shRNA/tmp4_shRNA_clusters_${analysisname}.bed
+	fi
 	printf "\nGrouping based on distance\n"
 	awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/shRNA/tmp4_shRNA_clusters_${analysisname}.bed > combined/shRNA/tmp5_shRNA_clusters_${analysisname}.bed
 	printf "\nIntersecting with TEs\n"
