@@ -11,7 +11,7 @@ library(purrr)
 args = commandArgs(trailingOnly=TRUE)
 
 analysisname<-args[1]
-TELabels<-c(unlist(strsplit(args[2],",")))
+TELabels<-c(unique(unlist(strsplit(args[2],","))))
 AllLabels<-c(TELabels,"Intergenic","Terminator","Gene_body","Promoter")
 
 ### For distribution plot
