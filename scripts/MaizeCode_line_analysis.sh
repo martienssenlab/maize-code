@@ -134,8 +134,7 @@ do
 		shRNA) datatype="shRNA"
 			name=${line}_${tissue}_${sample};;
 		TF_*) datatype="TF"
-			tmpname=${data##TF_}
-			name=${line}_${tmpname};;
+			name=${data##TF_};;
 	esac
 
 	ref=${ref_dir##*/}
@@ -520,14 +519,14 @@ if [ ${#tf_sample_list[@]} -ge 1 ]; then
 		do
 			case "${sample}" in
 				H3K27ac)	file="combined/peaks/merged_peaks_H3K27ac_${analysisname}.bed";;
-				*)	file="TF/peaks/idr_${sample}.narrowPeak";;
+				*)	file="TF/peaks/idr_${line}_${sample}.narrowPeak";;
 			esac
 			awk -v OFS="\t" -v s=${sample} '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {print $1,$2,$3,s}' ${file} | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_${analysisname}.bed
 		done
 	else 
 		for sample in ${tf_sample_list[@]}
 		do
-			awk -v OFS="\t" -v s=${sample} '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {print $1,$2,$3,s}' TF/peaks/idr_${sample}.narrowPeak | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_${analysisname}.bed
+			awk -v OFS="\t" -v s=${sample} '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {print $1,$2,$3,s}' TF/peaks/idr_${line}_${sample}.narrowPeak | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_${analysisname}.bed
 		done
 	fi
 	sort -k1,1 -k2,2n combined/peaks/tmp_peaks_${analysisname}.bed > combined/peaks/tmp2_peaks_${analysisname}.bed
