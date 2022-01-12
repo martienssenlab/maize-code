@@ -1651,7 +1651,7 @@ do
 			rampage=1
 		fi
 	done
-	if [[ ${rnaseq} == 1 ]] && [[ ${rampage} == 1 ]]; then
+	if [[ ${rnaseq} == 1 ]] && [[ ${rampage} == 1 ]] && [[ "${total}" != "TEST" ]]; then
 		regions_list=()
 		regions_list_plus=()
 		regions_list_minus=()
