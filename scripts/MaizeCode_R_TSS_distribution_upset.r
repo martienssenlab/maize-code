@@ -12,9 +12,7 @@ args = commandArgs(trailingOnly=TRUE)
 
 analysisname<-args[1]
 TELabels<-c(unlist(strsplit(args[2],",")))
-TELabels
 AllLabels<-c(TELabels,"Intergenic","Terminator","Gene_body","Promoter")
-AllLabels
 ### For distribution plot
 table<-read.delim(args[3], header = TRUE)
 table$Gene<-as.factor(table$Gene)
