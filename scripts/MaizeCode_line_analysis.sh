@@ -1962,9 +1962,9 @@ if [[ ${tefilebw} != "" ]] && [ ${totsamples} -gt 0 ] && [[ "${total}" != "TEST"
 			nb=$(wc -l combined/TSS/${ref}_${TEtype}_${analysisname}_${strand}.bed | awk '{print $1}')
 			if [[ ${nb} -gt 0 ]]; then
 				printf "\nComputing scale-regions ${strand} strand matrix for ${TEtype} from ${analysisname}\n"
-				computeMatrix scale-regions -q --missingDataAsZero --skipZeros -R combined/TSS/${ref}_${TEtype}_${analysisname}_${strand}.bed -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/TE_regions_${TEtype}_${analysisname}_${strand}.gz
+				computeMatrix scale-regions -q --missingDataAsZero --skipZeros -R combined/TSS/${ref}_${TEtype}_${analysisname}_${strand}.bed -S ${bw_list} -bs 100 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/TE_regions_${TEtype}_${analysisname}_${strand}.gz
 				printf "\nComputing reference-point on TSS ${strand} strand matrix for ${TEtype} from ${analysisname}\n"
-				computeMatrix reference-point --referencePoint "TSS" -q --missingDataAsZero --skipZeros -R combined/TSS/${ref}_${TEtype}_${analysisname}_${strand}.bed -S ${bw_list} -bs 50 -b 2000 -a 8000 -p ${threads} -o combined/matrix/TE_tss_${TEtype}_${analysisname}_${strand}.gz
+				computeMatrix reference-point --referencePoint "TSS" -q --missingDataAsZero --skipZeros -R combined/TSS/${ref}_${TEtype}_${analysisname}_${strand}.bed -S ${bw_list} -bs 100 -b 2000 -a 8000 -p ${threads} -o combined/matrix/TE_tss_${TEtype}_${analysisname}_${strand}.gz
 			fi
 		done
 		#### Merging stranded matrix, extracting scales and plotting heatmaps
