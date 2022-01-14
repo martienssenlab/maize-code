@@ -17,7 +17,7 @@ usage="
 ##### 	-r: bedfile containing the regions that are to be ploted over
 #####	-t: If set, partial analysis will be performed (no heatmap with deeptools)
 #####	-z: If set, partial analysis will be performed for testing
-#####	-x: If set, analysis on repeats will be performed
+#####	-x: If set, heatmaps on repeats will be performed (can take a very long time)
 ##### 	-h: help, returns usage
 ##### 
 ##### After preparing all the data in the samplefile (PART1) it will, depending on the types of data present:
