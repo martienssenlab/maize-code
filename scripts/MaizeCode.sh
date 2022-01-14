@@ -18,7 +18,7 @@ usage="
 #####	-c: if set, only single samples analysis proceeds, not grouped analysis per line (default=not set, keep going with the complete analysis)
 #####	-t: if set, only partial grouped analysis per line, no heatmaps with deeptools (default=not set, keep going with the complete analysis)
 #####	-z: if set, only partial analysis per line for testing (default=not set, keep going with the complete analysis)
-#####	-x: if set, the analysis for TEs will be performed per line (default=not set, will not do the TE analysis as it takes a long time)
+#####	-x: if set, heatmaps on TEs will be performed for each line (default=not set, will not do the TE analysis because it takes a very long time)
 ##### 	-h: help, returns usage
 #####
 ##### The samplefile should be a tab-delimited text file with 8 columns:
