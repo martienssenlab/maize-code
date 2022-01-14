@@ -17,6 +17,7 @@ usage="
 ##### 	-r: bedfile containing the regions that are to be ploted over
 #####	-t: If set, partial analysis will be performed (no heatmap with deeptools)
 #####	-z: If set, partial analysis will be performed for testing
+#####	-x: If set, analysis on repeats will be performed
 ##### 	-h: help, returns usage
 ##### 
 ##### After preparing all the data in the samplefile (PART1) it will, depending on the types of data present:
@@ -1947,7 +1948,7 @@ rnaseqsamples=${#rnaseq_bw_list_plus[@]}
 rampagesamples=${#rampage_bw_list_plus[@]}
 shrnasamples=${#shrna_bw_list_plus[@]}
 totsamples=$((rnaseqsamples+rampagesamples+shrnasamples))
-if [[ ${tefilebw} != "" ]] && [ ${totsamples} -gt 0 ] && [[ "${total}" != "TEST" ]]; then
+if [[ ${tefilebw} != "" ]] && [ ${totsamples} -gt 0 ] && [[ "${repeats}" == "YES" ]]; then
 	#### Computing the stranded matrix
 	while read TEtype
 	do
