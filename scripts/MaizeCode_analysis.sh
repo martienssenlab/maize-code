@@ -20,7 +20,7 @@ usage="
 #####	-s: If set, the script does not progress into the line data analysis, only single sample analysis will be performed
 #####	-t: If set, partial analysis will be performed (no heatmap with deeptools)
 #####	-z: If set, partial analysis will be performed for testing
-#####	-x: If set, analysis on repeats will be performed
+#####	-x: If set, analysis on repeats will be performed (can take a very long time)
 ##### 	-h: help, returns usage
 ##### 
 ##### It sends each type of sample to its specific analysis file (MaizeCode_ChIP_analysis.sh, MaizeCode_TF_analysis.sh or MaizeCode_RNA_analysis.sh)
