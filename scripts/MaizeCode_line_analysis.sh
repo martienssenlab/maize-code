@@ -1722,12 +1722,14 @@ do
 				mins+=("0")
 				maxs+=("1")
 			fi
+			printf "\nSorting matrix for ${line} ${tissue} ${type}\n"
+			computeMatrixOperations sort -m combined/matrix/regions_enhancers_${type}_${line}_${tissue}_${analysisname}.gz -R combined/peaks/sorted_enhancers_${type}_${line}_${tissue}_${analysisname}.txt -o combined/matrix/sorted_regions_enhancers_${type}_${line}_${tissue}_${analysisname}.gz
 			printf "\nPlotting heatmap for ${line} ${tissue} ${type}\n"
-			plotHeatmap -m combined/matrix/regions_enhancers_${type}_${line}_${tissue}_${analysisname}.gz -out combined/plots/enhancers_${type}_${line}_${tissue}_${analysisname}_sortedbyRNA.pdf --sortRegions keep --samplesLabel ${label_list[*]} --regionsLabel ${regions_label} --colorMap 'seismic' --interpolationMethod 'bilinear' --yMin ${ymins[@]} --yMax ${ymaxs[@]} --zMin ${mins[@]} --zMax ${maxs[@]}
-			plotHeatmap -m combined/matrix/regions_enhancers_${type}_${line}_${tissue}_${analysisname}.gz -out combined/plots/enhancers_${type}_${line}_${tissue}_${analysisname}_sortedbyAUTO.pdf --sortRegions descend --sortUsing mean --samplesLabel ${label_list[*]} --regionsLabel ${regions_label} --colorMap 'seismic' --interpolationMethod 'bilinear' --yMin ${ymins[@]} --yMax ${ymaxs[@]} --zMin ${mins[@]} --zMax ${maxs[@]}
+			plotHeatmap -m combined/matrix/sorted_regions_enhancers_${type}_${line}_${tissue}_${analysisname}.gz -out combined/plots/enhancers_${type}_${line}_${tissue}_${analysisname}_sortedbyRNA.pdf --sortRegions keep --samplesLabel ${label_list[*]} --regionsLabel ${regions_label} --colorMap 'seismic' --interpolationMethod 'bilinear' --yMin ${ymins[@]} --yMax ${ymaxs[@]} --zMin ${mins[@]} --zMax ${maxs[@]}
+			plotHeatmap -m combined/matrix/sorted_regions_enhancers_${type}_${line}_${tissue}_${analysisname}.gz -out combined/plots/enhancers_${type}_${line}_${tissue}_${analysisname}_sortedbyAUTO.pdf --sortRegions descend --sortUsing mean --samplesLabel ${label_list[*]} --regionsLabel ${regions_label} --colorMap 'seismic' --interpolationMethod 'bilinear' --yMin ${ymins[@]} --yMax ${ymaxs[@]} --zMin ${mins[@]} --zMax ${maxs[@]}
 		done
 		rm -f combined/peaks/temp*${analysisname}*
-#		rm -f combined/matrix/*${analysisname}*.gz	
+		rm -f combined/matrix/*${analysisname}*.gz	
 #		regions_list=()
 #		regions_list_plus=()
 #		regions_list_minus=()
