@@ -1669,7 +1669,7 @@ do
 					minus)	bw="${tissue_bw_minus[*]} ChIP/tracks/${regionname}.bw ${tefilebw}"
 						regions="combined/peaks/sorted_enhancers_${type}_${line}_${tissue}_${analysisname}_minus.txt";;
 				esac
-				printf "\nComputing matrix for ${line} ${tissue} ${strand} strand\n"
+				printf "\nComputing matrix for ${line} ${tissue} ${type} ${strand} strand\n"
 				computeMatrix scale-regions -q --missingDataAsZero --skipZeros -R ${regions} -S ${bw[@]} -bs 10 -b 3000 -a 3000 -m 1000 -p ${threads} -o combined/matrix/regions_enhancers_${type}_${line}_${tissue}_${analysisname}_${strand}.gz
 			done
 			computeMatrixOperations rbind -m combined/matrix/regions_enhancers_${type}_${line}_${tissue}_${analysisname}_plus.gz combined/matrix/regions_enhancers_${type}_${line}_${tissue}_${analysisname}_minus.gz -o combined/matrix/regions_enhancers_${type}_${line}_${tissue}_${analysisname}.gz
@@ -1682,7 +1682,7 @@ do
 				totnb=${#label_list[*]}
 				arr=$((totnb-1))
 			fi
-			printf "\nGetting scales for ${line} ${tissue}\n"
+			printf "\nGetting scales for ${line} ${tissue} ${type}\n"
 			plotProfile -m combined/matrix/regions_enhancers_${type}_${line}_${tissue}_${analysisname}.gz -out combined/plots/enhancers_${type}_${line}_${tissue}_${analysisname}_temp_profile.pdf --samplesLabel ${label_list[@]} --averageType mean --outFileNameData combined/matrix/values_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
 			rm -f combined/plots/enhancers_${type}_${line}_${tissue}_${analysisname}_temp_profile.pdf
 			ymins=()
@@ -1724,8 +1724,8 @@ do
 				maxs+=("1")
 			fi
 			printf "\nPlotting heatmap for ${line} ${tissue} ${type}\n"
-			plotHeatmap -m combined/matrix/regions_enhancers_${type}_${line}_${tissue}_${type}_${analysisname}.gz -out combined/plots/enhancers_${type}_${line}_${tissue}_${analysisname}_sortedbyRNA.pdf --sortRegions keep --samplesLabel ${label_list[*]} --regionsLabel ${regions_label} --colorMap 'seismic' --interpolationMethod 'bilinear' --yMin ${ymins[@]} --yMax ${ymaxs[@]} --zMin ${mins[@]} --zMax ${maxs[@]}
-			plotHeatmap -m combined/matrix/regions_enhancers_${type}_${line}_${tissue}_${type}_${analysisname}.gz -out combined/plots/enhancers_${type}_${line}_${tissue}_${analysisname}_sortedbyAUTO.pdf --sortRegions descend --sortUsing mean --samplesLabel ${label_list[*]} --regionsLabel ${regions_label} --colorMap 'seismic' --interpolationMethod 'bilinear' --yMin ${ymins[@]} --yMax ${ymaxs[@]} --zMin ${mins[@]} --zMax ${maxs[@]}
+			plotHeatmap -m combined/matrix/regions_enhancers_${type}_${line}_${tissue}_${analysisname}.gz -out combined/plots/enhancers_${type}_${line}_${tissue}_${analysisname}_sortedbyRNA.pdf --sortRegions keep --samplesLabel ${label_list[*]} --regionsLabel ${regions_label} --colorMap 'seismic' --interpolationMethod 'bilinear' --yMin ${ymins[@]} --yMax ${ymaxs[@]} --zMin ${mins[@]} --zMax ${maxs[@]}
+			plotHeatmap -m combined/matrix/regions_enhancers_${type}_${line}_${tissue}_${analysisname}.gz -out combined/plots/enhancers_${type}_${line}_${tissue}_${analysisname}_sortedbyAUTO.pdf --sortRegions descend --sortUsing mean --samplesLabel ${label_list[*]} --regionsLabel ${regions_label} --colorMap 'seismic' --interpolationMethod 'bilinear' --yMin ${ymins[@]} --yMax ${ymaxs[@]} --zMin ${mins[@]} --zMax ${maxs[@]}
 		done
 		rm -f combined/peaks/temp*${analysisname}*
 		rm -f combined/matrix/*${analysisname}*.gz	
