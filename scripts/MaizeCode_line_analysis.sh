@@ -1670,9 +1670,9 @@ do
 						regions="combined/peaks/sorted_enhancers_${type}_${line}_${tissue}_${analysisname}_minus.txt";;
 				esac
 				printf "\nComputing matrix for ${line} ${tissue} ${strand} strand\n"
-				computeMatrix scale-regions -q --missingDataAsZero --skipZeros -R ${regions} -S ${bw[@]} -bs 10 -b 3000 -a 3000 -m 1000 -p ${threads} -o combined/matrix/regions_enhancers_${line}_${tissue}_${analysisname}_${strand}.gz
+				computeMatrix scale-regions -q --missingDataAsZero --skipZeros -R ${regions} -S ${bw[@]} -bs 10 -b 3000 -a 3000 -m 1000 -p ${threads} -o combined/matrix/regions_enhancers_${type}_${line}_${tissue}_${analysisname}_${strand}.gz
 			done
-			computeMatrixOperations rbind -m combined/matrix/regions_enhancers_${line}_${tissue}_${analysisname}_plus.gz combined/matrix/regions_enhancers_${line}_${tissue}_${analysisname}_minus.gz -o combined/matrix/regions_enhancers_${line}_${tissue}_${analysisname}.gz
+			computeMatrixOperations rbind -m combined/matrix/regions_enhancers_${type}_${line}_${tissue}_${analysisname}_plus.gz combined/matrix/regions_enhancers_${type}_${line}_${tissue}_${analysisname}_minus.gz -o combined/matrix/regions_enhancers_${type}_${line}_${tissue}_${analysisname}.gz
 			if [[ ${tefilebw} != "" ]]; then
 				label_list="${tissue_labels[*]} Genes TEs"
 				totnb=${#label_list[*]}
@@ -1683,14 +1683,14 @@ do
 				arr=$((totnb-1))
 			fi
 			printf "\nGetting scales for ${line} ${tissue}\n"
-			plotProfile -m combined/matrix/regions_enhancers_${line}_${tissue}_${analysisname}.gz -out combined/plots/enhancers_${line}_${tissue}_${analysisname}_temp_profile.pdf --samplesLabel ${label_list[@]} --averageType mean --outFileNameData combined/matrix/values_enhancers_${line}_${tissue}_${analysisname}.txt
-			rm -f combined/plots/enhancers_${line}_${tissue}_${analysisname}_temp_profile.pdf
+			plotProfile -m combined/matrix/regions_enhancers_${type}_${line}_${tissue}_${analysisname}.gz -out combined/plots/enhancers_${type}_${line}_${tissue}_${analysisname}_temp_profile.pdf --samplesLabel ${label_list[@]} --averageType mean --outFileNameData combined/matrix/values_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
+			rm -f combined/plots/enhancers_${type}_${line}_${tissue}_${analysisname}_temp_profile.pdf
 			ymins=()
 			ymaxs=()
 			for sample in ${label_list[@]}
 			do
-				ymini=$(grep $sample combined/matrix/values_enhancers_${line}_${tissue}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.5; else a=m*0.5; print a}')
-				ymaxi=$(grep $sample combined/matrix/values_enhancers_${line}_${tissue}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.5}')
+				ymini=$(grep $sample combined/matrix/values_enhancers_${type}_${line}_${tissue}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.5; else a=m*0.5; print a}')
+				ymaxi=$(grep $sample combined/matrix/values_enhancers_${type}_${line}_${tissue}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.5}')
 				test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
 				if [[ "${test}" == "yes" ]]; then
 					ymins+=("0")
@@ -1700,13 +1700,13 @@ do
 					ymaxs+=("${ymaxi}")
 				fi
 			done
-			computeMatrixOperations dataRange -m combined/matrix/regions_enhancers_${line}_${tissue}_${analysisname}.gz > combined/matrix/values_enhancers_${line}_${tissue}_${analysisname}.txt
+			computeMatrixOperations dataRange -m combined/matrix/regions_enhancers_${type}_${line}_${tissue}_${analysisname}.gz > combined/matrix/values_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
 			mins=()
 			maxs=()
 			for (( i=1; i<=${arr}; i++ ))
 			do 
-				mini=$(awk -v i=$i 'NR==(i+1) {print $5}' combined/matrix/values_enhancers_${line}_${tissue}_${analysisname}.txt)		
-				maxi=$(awk -v i=$i 'NR==(i+1) {print $6}' combined/matrix/values_enhancers_${line}_${tissue}_${analysisname}.txt)
+				mini=$(awk -v i=$i 'NR==(i+1) {print $5}' combined/matrix/values_enhancers_${type}_${line}_${tissue}_${analysisname}.txt)		
+				maxi=$(awk -v i=$i 'NR==(i+1) {print $6}' combined/matrix/values_enhancers_${type}_${line}_${tissue}_${analysisname}.txt)
 				test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
 				if [[ "${test}" == "yes" ]]; then
 					mins+=("0")
@@ -1724,10 +1724,11 @@ do
 				maxs+=("1")
 			fi
 			printf "\nPlotting heatmap for ${line} ${tissue} ${type}\n"
-			plotHeatmap -m combined/matrix/regions_enhancers_${line}_${tissue}_${type}_${analysisname}.gz -out combined/plots/enhancers_${type}_${line}_${tissue}_${analysisname}_sortedbyRNA.pdf --sortRegions keep --samplesLabel ${label_list[*]} --regionsLabel ${regions_label} --colorMap 'seismic' --interpolationMethod 'bilinear' --yMin ${ymins[@]} --yMax ${ymaxs[@]} --zMin ${mins[@]} --zMax ${maxs[@]}
-			plotHeatmap -m combined/matrix/regions_enhancers_${line}_${tissue}_${type}_${analysisname}.gz -out combined/plots/enhancers_${type}_${line}_${tissue}_${analysisname}_sortedbyAUTO.pdf --sortRegions descend --sortUsing mean --samplesLabel ${label_list[*]} --regionsLabel ${regions_label} --colorMap 'seismic' --interpolationMethod 'bilinear' --yMin ${ymins[@]} --yMax ${ymaxs[@]} --zMin ${mins[@]} --zMax ${maxs[@]}
+			plotHeatmap -m combined/matrix/regions_enhancers_${type}_${line}_${tissue}_${type}_${analysisname}.gz -out combined/plots/enhancers_${type}_${line}_${tissue}_${analysisname}_sortedbyRNA.pdf --sortRegions keep --samplesLabel ${label_list[*]} --regionsLabel ${regions_label} --colorMap 'seismic' --interpolationMethod 'bilinear' --yMin ${ymins[@]} --yMax ${ymaxs[@]} --zMin ${mins[@]} --zMax ${maxs[@]}
+			plotHeatmap -m combined/matrix/regions_enhancers_${type}_${line}_${tissue}_${type}_${analysisname}.gz -out combined/plots/enhancers_${type}_${line}_${tissue}_${analysisname}_sortedbyAUTO.pdf --sortRegions descend --sortUsing mean --samplesLabel ${label_list[*]} --regionsLabel ${regions_label} --colorMap 'seismic' --interpolationMethod 'bilinear' --yMin ${ymins[@]} --yMax ${ymaxs[@]} --zMin ${mins[@]} --zMax ${maxs[@]}
 		done
-				
+		rm -f combined/peaks/temp*${analysisname}*
+		rm -f combined/matrix/*${analysisname}*.gz	
 #		regions_list=()
 #		regions_list_plus=()
 #		regions_list_minus=()
