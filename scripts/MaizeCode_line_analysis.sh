@@ -1657,9 +1657,8 @@ do
 			awk -v OFS="\t" 'NR>1 {print $1,$2,$3,$4,$5,$6,$9+$10,$11+$12,$7}' combined/peaks/complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt | sort -k7,7nr -k8,8nr > combined/peaks/sorted_enhancers_${type}_${line}_${tissue}_${analysisname}.txt			
 			awk '$6=="+"' combined/peaks/sorted_enhancers_${type}_${line}_${tissue}_${analysisname}.txt > combined/peaks/sorted_enhancers_${type}_${line}_${tissue}_${analysisname}_plus.txt
 			awk '$6=="-"' combined/peaks/sorted_enhancers_${type}_${line}_${tissue}_${analysisname}.txt > combined/peaks/sorted_enhancers_${type}_${line}_${tissue}_${analysisname}_minus.txt
-			nb1=$(wc -l combined/peaks/sorted_enhancers_${type}_${line}_${tissue}_${analysisname}_plus.txt | awk '{print $1}')
-			nb2=$(wc -l combined/peaks/sorted_enhancers_${type}_${line}_${tissue}_${analysisname}_minus.txt | awk '{print $1}')
-			regions_label+=("${type}_plus(${nb1})" "${type}_minus(${nb2})")
+			nb=$(wc -l combined/peaks/sorted_enhancers_${type}_${line}_${tissue}_${analysisname}.txt | awk '{print $1}')
+			regions_label="${type}(${nb})"
 			
 			for strand in plus minus
 			do
@@ -1728,7 +1727,7 @@ do
 			plotHeatmap -m combined/matrix/regions_enhancers_${type}_${line}_${tissue}_${analysisname}.gz -out combined/plots/enhancers_${type}_${line}_${tissue}_${analysisname}_sortedbyAUTO.pdf --sortRegions descend --sortUsing mean --samplesLabel ${label_list[*]} --regionsLabel ${regions_label} --colorMap 'seismic' --interpolationMethod 'bilinear' --yMin ${ymins[@]} --yMax ${ymaxs[@]} --zMin ${mins[@]} --zMax ${maxs[@]}
 		done
 		rm -f combined/peaks/temp*${analysisname}*
-		rm -f combined/matrix/*${analysisname}*.gz	
+#		rm -f combined/matrix/*${analysisname}*.gz	
 #		regions_list=()
 #		regions_list_plus=()
 #		regions_list_minus=()
