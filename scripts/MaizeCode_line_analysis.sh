@@ -1674,15 +1674,9 @@ do
 			computeMatrixOperations rbind -m combined/matrix/regions_enhancers_${type}_${line}_${tissue}_${analysisname}_plus.gz combined/matrix/regions_enhancers_${type}_${line}_${tissue}_${analysisname}_minus.gz -o combined/matrix/regions_enhancers_${type}_${line}_${tissue}_${analysisname}.gz
 			if [[ ${tefilebw} != "" ]]; then
 				label_list="${tissue_labels[*]} Genes TEs"
-				totnb=${#label_list[*]}
-				arr=$((totnb-2))
-				printf "arr1: ${arr}\n"
 			else
 				label_list="${tissue_labels[*]} Genes"
-				totnb=${#label_list[*]}
-				arr=$((totnb-1))
 			fi
-			printf "arr2: ${arr}\n"
 			printf "\nGetting scales for ${line} ${tissue} ${type}\n"
 			plotProfile -m combined/matrix/regions_enhancers_${type}_${line}_${tissue}_${analysisname}.gz -out combined/plots/enhancers_${type}_${line}_${tissue}_${analysisname}_temp_profile.pdf --samplesLabel ${label_list[@]} --averageType mean --outFileNameData combined/matrix/values_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
 			rm -f combined/plots/enhancers_${type}_${line}_${tissue}_${analysisname}_temp_profile.pdf
@@ -1704,6 +1698,7 @@ do
 			computeMatrixOperations dataRange -m combined/matrix/regions_enhancers_${type}_${line}_${tissue}_${analysisname}.gz > combined/matrix/values_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
 			mins=()
 			maxs=()
+			arr=${#tissue_labels[*]}
 			for (( i=1; i<=${arr}; i++ ))
 			do 
 				mini=$(awk -v i=$i 'NR==(i+1) {print $5}' combined/matrix/values_enhancers_${type}_${line}_${tissue}_${analysisname}.txt)		
