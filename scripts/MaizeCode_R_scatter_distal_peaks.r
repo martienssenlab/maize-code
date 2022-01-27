@@ -184,7 +184,7 @@ if ( grepl( "RNAseq", included_samples, fixed = TRUE) && grepl( "shRNA", include
 }
 
 if ( grepl( "RAMPAGE", included_samples, fixed = TRUE) && grepl( "shRNA", included_samples, fixed = TRUE) ) {
-  plot5<-ggplot(tableTOT, aes(RAMPAGE+0.01, shRNA+0.1, size=PeakQuality, alpha=PeakQuality, color=PeakQuality)) +
+  plot6<-ggplot(tableTOT, aes(RAMPAGE+0.01, shRNA+0.1, size=PeakQuality, alpha=PeakQuality, color=PeakQuality)) +
   geom_point() +
   scale_color_gradient(low="grey20", high="#0394fc", guide="legend", trans="log10") +
   scale_alpha_continuous(guide="legend", trans="log10") +
@@ -208,6 +208,6 @@ if ( grepl( "RAMPAGE", included_samples, fixed = TRUE) && grepl( "shRNA", includ
         legend.key=element_blank())
   
   pdf(paste0("combined/plots/scatter_distal_peaks_shRNA_vs_RAMPAGE_",line,"_",tissue,"_",analysisname,".pdf"),12,8)
-  print(plot5)
+  print(plot6)
   dev.off()
 }
