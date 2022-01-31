@@ -440,16 +440,15 @@ if [ ${#chip_sample_list[@]} -ge 1 ]; then
 		bedtools closest -a combined/peaks/tmp3_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[=;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/peaks/peaks_${analysisname}.bed
 	fi
 	rm -f combined/peaks/tmp*_peaks_${analysisname}.bed
-	awk -v OFS="\t" '{print $1,$2,$3,$4,$5}' combined/peaks/peaks_${analysisname}.bed | uniq > combined/peaks/unique_peaks_${analysisname}.bed
 	#### To create a matrix of peak presence in each sample
 	printf "\nCreating matrix file for ${analysisname}\n"
 	for sample in ${chip_sample_list[@]}
 	do
 		printf "${sample}\n" > combined/peaks/temp_col_${analysisname}_${sample}.txt
-		awk -v OFS="\t" -v s=${sample} '{if ($0 ~ s) print "1"; else print "0"}' combined/peaks/unique_peaks_${analysisname}.bed >> combined/peaks/temp_col_${analysisname}_${sample}.txt
+		awk -v OFS="\t" -v s=${sample} '{if ($0 ~ s) print "1"; else print "0"}' combined/peaks/peaks_${analysisname}.bed >> combined/peaks/temp_col_${analysisname}_${sample}.txt
 	done
 	#### To group peaks based on their distance (gene body (x=0), promoter (0<x<2kb upstream), terminator (0<x<2kb downstream), distal)
-	awk -v OFS="\t" 'BEGIN {printf "PeakID\tDistance\tGroup\n"} {if ($5<-2000) {d="Distal_downstream"; a=-$5} else if ($5<0) {d="Terminator"; a=-$5} else if ($5==0) {d="Gene_body"; a=$5} else if ($5>2000) {d="Distal_upstream"; a=$5} else {d="Promoter"; a=$5} print $4,a,d}' combined/peaks/unique_peaks_${analysisname}.bed > combined/peaks/temp_col_${analysisname}_AAA.txt
+	awk -v OFS="\t" 'BEGIN {printf "PeakID\tDistance\tGroup\n"} {if ($5<-2000) {d="Distal_downstream"; a=-$5} else if ($5<0) {d="Terminator"; a=-$5} else if ($5==0) {d="Gene_body"; a=$5} else if ($5>2000) {d="Distal_upstream"; a=$5} else {d="Promoter"; a=$5} print $4,a,d}' combined/peaks/peaks_${analysisname}.bed > combined/peaks/temp_col_${analysisname}_AAA.txt
 	paste combined/peaks/temp_col_${analysisname}_*.txt | uniq > combined/peaks/matrix_upset_ChIP_${analysisname}.txt
 	rm -f combined/peaks/temp_col_${analysisname}_*.txt
 	#### To make an Upset plot highlighting peaks in gene bodies (if more than one sample are present)
