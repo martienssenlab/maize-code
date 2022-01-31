@@ -68,8 +68,8 @@ if [ -s ${ref_dir}/*.fa.gz ]; then
 	fa_file=$(ls ${ref_dir}/*.fa.gz)
 	fa_filename=${fa_file##*/}
 	printf "\nGzipped fasta file found in ${ref_dir}:\n ${fa_filename}\n"
-	pigz -p ${threads} -dc ${fa_file} > ${ref_dir}/temp_${ref}.fa
-	fasta=${ref_dir}/temp_${ref}.fa
+	pigz -p ${threads} -dc ${fa_file} > ${ref_dir}/temp_${datatype}_${ref}.fa
+	fasta=${ref_dir}/temp_${datatype}_${ref}.fa
 elif [ -s ${ref_dir}/*.fa ]; then
 	fa_file=$(ls ${ref_dir}/*.fa)
 	fa_filename=${fa_file##*/}
@@ -79,8 +79,8 @@ elif [ -s ${ref_dir}/*.fasta.gz ]; then
 	fa_file=$(ls ${ref_dir}/*.fasta.gz)
 	fa_filename=${fa_file##*/}
 	printf "\nGzipped fasta file found in ${ref_dir}:\n ${fa_filename}\n"
-	pigz -p ${threads} -dc ${fa_file} > ${ref_dir}/temp_${ref}.fa
-	fasta=${ref_dir}/temp_${ref}.fa
+	pigz -p ${threads} -dc ${fa_file} > ${ref_dir}/temp_${datatype}_${ref}.fa
+	fasta=${ref_dir}/temp_${datatype}_${ref}.fa
 elif [ -s ${ref_dir}/*.fasta ]; then
 	fa_file=$(ls ${ref_dir}/*.fasta)
 	fa_filename=${fa_file##*/}
@@ -95,8 +95,8 @@ if [ -s ${ref_dir}/*.gff*.gz ]; then
 	gff_file=$(ls ${ref_dir}/*gff*.gz)
 	gff_filename=${gff_file##*/}
 	printf "\nGzipped GFF annotation file found in ${ref_dir}:\n ${gff_filename}\n"
-	pigz -p ${threads} -dc ${gff_file} > ${ref_dir}/temp_${ref}.gff	
-	gff=${ref_dir}/temp_${ref}.gff
+	pigz -p ${threads} -dc ${gff_file} > ${ref_dir}/temp_${datatype}_${ref}.gff	
+	gff=${ref_dir}/temp_${datatype}_${ref}.gff
 elif [ -s ${ref_dir}/*.gff* ]; then
 	gff_file=$(ls ${ref_dir}/*.gff*)
 	gff_filename=${gff_file##*/}
@@ -111,8 +111,8 @@ if [ -s ${ref_dir}/*.gtf.gz ]; then
 	gtf_file=$(ls ${ref_dir}/*gtf.gz)
 	gtf_filename=${gtf_file##*/}
 	printf "\nGzipped GTF annotation file found in ${ref_dir}:\n ${gtf_filename}\n"
-	pigz -p ${threads} -dc ${gtf_file} > ${ref_dir}/temp_${ref}.gtf	
-	gtf=${ref_dir}/temp_${ref}.gtf
+	pigz -p ${threads} -dc ${gtf_file} > ${ref_dir}/temp_${datatype}_${ref}.gtf	
+	gtf=${ref_dir}/temp_${datatype}_${ref}.gtf
 elif [ -s ${ref_dir}/*.gtf ]; then
 	gtf_file=$(ls ${ref_dir}/*.gtf)
 	gtf_filename=${gtf_file##*/}
@@ -188,7 +188,7 @@ else
 	exit 1
 fi
 
-rm -f ${ref_dir}/temp_*
+rm -f ${ref_dir}/temp_${datatype}*
 
 printf "\nScript finished successfully!\n"
 touch ${datatype}/chkpts/env_${ref}
