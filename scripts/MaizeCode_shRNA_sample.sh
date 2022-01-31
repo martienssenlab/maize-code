@@ -73,6 +73,16 @@ export ref=${ref_dir##*/}
 
 name=${line}_${tissue}_${rnatype}_${rep}
 
+if [ -s ${ref_dir}/*.fa.gz ]; then
+	fasta=$(ls ${ref_dir}/*.fa.gz)
+elif [ -s ${ref_dir}/*.fa ]; then
+	fasta=$(ls ${ref_dir}/*.fa)
+elif [ -s ${ref_dir}/*.fasta.gz ]; then
+	fasta=$(ls ${ref_dir}/*.fasta.gz)
+elif [ -s ${ref_dir}/*.fasta ]; then
+	fasta=$(ls ${ref_dir}/*.fasta)
+fi
+
 if [[ ${paired} == "PE" ]]; then
 	
 	###### THIS PART OF THE PE PIPELINE WILL NOT WORK AS IS !!! NOT THAT USEFUL ANYWAY, BUT NEED TO BE CHANGED JUST IN CASE ######
@@ -115,7 +125,7 @@ if [[ ${paired} == "PE" ]]; then
   	#### Aligning reads to filter out structural RNAs (rRNAs, snoRNAs and tRNAs) with bowtie2
 	bowtie2 --very-sensitive -p ${threads} -x structural_RNA/zm_structural_RNAs -1 fastq/trimmed_${name}_R1.fastq.gz -2 fastq/trimmed_${name}_R2.fastq.gz | samtools view -@ ${threads} -f 0x4 | samtools fastq -@ ${threads} | gzip > fastq/filtered_${name}.fastq.gz
 	#### Mapping and identifying sRNA loci with shortstack
-	ShortStack --readfile fastq/filtered_${name}.fastq.gz --genomefile ${ref_dir}/$ref.fa --bowtie_cores $threads --sort_mem 4G --mmap u --dicermin 20 --dicermax 24 --bowtie_m all --mismatches 1 --foldsize 1000 --pad 250 --outdir mapped/${name}
+	ShortStack --readfile fastq/filtered_${name}.fastq.gz --genomefile ${fasta} --bowtie_cores $threads --sort_mem 4G --mmap u --dicermin 20 --dicermax 24 --bowtie_m all --mismatches 1 --foldsize 1000 --pad 250 --outdir mapped/${name}
 	#### Making bigiwig tracks
 	samtools index -@ $threads mapped/${name}/filtered_${name}.bam
 	printf "\nMaking plus track for $name\n"
@@ -162,7 +172,7 @@ elif [[ ${paired} == "SE" ]]; then
   	bowtie2 --version
 	bowtie2 --very-sensitive -p ${threads} -x structural_RNA/zm_structural_RNAs -U fastq/trimmed_${name}.fastq.gz | samtools view -@ ${threads} -f 0x4 | samtools fastq -@ ${threads} | gzip > fastq/filtered_${name}.fastq.gz
 	#### Mapping and identifying sRNA loci with shortstack
-	ShortStack --readfile fastq/filtered_${name}.fastq.gz --genomefile ${ref_dir}/$ref.fa --bowtie_cores ${threads} --sort_mem 4G --mmap u --dicermin 20 --dicermax 24 --bowtie_m all --mismatches 1 --foldsize 1000 --pad 250 --outdir mapped/${name}
+	ShortStack --readfile fastq/filtered_${name}.fastq.gz --genomefile ${fasta} --bowtie_cores ${threads} --sort_mem 4G --mmap u --dicermin 20 --dicermax 24 --bowtie_m all --mismatches 1 --foldsize 1000 --pad 250 --outdir mapped/${name}
 	#### Making bigiwig tracks
 	samtools index -@ ${threads} mapped/${name}/filtered_${name}.bam
 	printf "\nMaking plus track for ${name}\n"
