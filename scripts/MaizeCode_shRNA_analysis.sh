@@ -64,6 +64,22 @@ do
 	printf "\nStarting single RNA sample analysis for ${name}\n"	
 	export ref_dir=${ref_dir}
 	export ref=${ref_dir##*/}
+	if [ -s ${ref_dir}/*.fa.gz ]; then
+		fa_file=$(ls ${ref_dir}/*.fa.gz)
+		pigz -p ${threads} -dc ${fa_file} > ${ref_dir}/temp_${datatype}_${ref}.fa
+		fasta=${ref_dir}/temp_${datatype}_${ref}.fa
+	elif [ -s ${ref_dir}/*.fa ]; then
+		fa_file=$(ls ${ref_dir}/*.fa)
+		fasta=${fa_file}
+	elif [ -s ${ref_dir}/*.fasta.gz ]; then
+		fa_file=$(ls ${ref_dir}/*.fasta.gz)
+		pigz -p ${threads} -dc ${fa_file} > ${ref_dir}/temp_${datatype}_${ref}.fa
+		fasta=${ref_dir}/temp_${datatype}_${ref}.fa
+	elif [ -s ${ref_dir}/*.fasta ]; then
+		fa_file=$(ls ${ref_dir}/*.fasta)
+		fasta=${fa_file}
+	fi
+	export fasta
 	qsub -N ${name} -V -cwd -sync y -pe threads 20 -l m_mem_free=5G -l tmp_free=50G -j y -o logs/analysis_${name}.log <<-'EOF' &
 		#!/bin/bash
 		set -e -o pipefail
@@ -85,7 +101,7 @@ do
 		#### To map and identify sRNA loci with ShortStack
 		if [ ! -s mapped/${name}/ShortStack_All.gff3 ]; then
 			rm -fr mapped/${name}
-			ShortStack --bamfile mapped/${name}_merged.bam --genomefile ${ref_dir}/$ref.fa --sort_mem 5G --mmap u --dicermin 20 --dicermax 24 --bowtie_m all --mismatches 1 --foldsize 1000 --pad 250 --outdir mapped/${name}
+			ShortStack --bamfile mapped/${name}_merged.bam --genomefile ${fasta} --sort_mem 5G --mmap u --dicermin 20 --dicermax 24 --bowtie_m all --mismatches 1 --foldsize 1000 --pad 250 --outdir mapped/${name}
 		fi
 		#### To make bw files of merged samples if not already existing		
 		if [ ! -s tracks/${name}_merged_minus.bw ]; then
@@ -103,5 +119,7 @@ done < ${samplefile}
 
 printf "\nWaiting for samples to be processed individually\n"
 wait ${pids[*]}
+
+rm -f ${ref_dir}/temp_${datatype}_${ref}.fa
 
 printf "\nScript finished successfully!\n"
