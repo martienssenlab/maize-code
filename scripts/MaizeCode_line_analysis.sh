@@ -202,7 +202,7 @@ fi
 if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 	#### This step will need to be automatized to potentially change which line/organism to have the GO terms for 
 	#### It would require people to have the required files or dowload them
-	if [[ ${ref} == "B73_v4" ]] || [[ ${ref} == "W22_v2" ]] || [[ ${ref} == "NC350_NAM" ]]; then
+	if [[ ${ref} == "B73_v4" ]] || [[ ${ref} == "B73_v5" ]] || [[ ${ref} == "W22_v2" ]] || [[ ${ref} == "NC350_NAM" ]]; then
 		if [ ! -d combined/GO ]; then
 			mkdir combined/GO
 		fi
