@@ -66,15 +66,15 @@ do
 	export ref=${ref_dir##*/}
 	if [ -s ${ref_dir}/*.fa.gz ]; then
 		fa_file=$(ls ${ref_dir}/*.fa.gz)
-		pigz -p ${threads} -dc ${fa_file} > ${ref_dir}/temp_${datatype}_${ref}.fa
-		fasta=${ref_dir}/temp_${datatype}_${ref}.fa
+		pigz -p ${threads} -dc ${fa_file} > ${ref_dir}/temp_${rnatype}_${ref}.fa
+		fasta=${ref_dir}/temp_${rnatype}_${ref}.fa
 	elif [ -s ${ref_dir}/*.fa ]; then
 		fa_file=$(ls ${ref_dir}/*.fa)
 		fasta=${fa_file}
 	elif [ -s ${ref_dir}/*.fasta.gz ]; then
 		fa_file=$(ls ${ref_dir}/*.fasta.gz)
-		pigz -p ${threads} -dc ${fa_file} > ${ref_dir}/temp_${datatype}_${ref}.fa
-		fasta=${ref_dir}/temp_${datatype}_${ref}.fa
+		pigz -p ${threads} -dc ${fa_file} > ${ref_dir}/temp_${rnatype}_${ref}.fa
+		fasta=${ref_dir}/temp_${rnatype}_${ref}.fa
 	elif [ -s ${ref_dir}/*.fasta ]; then
 		fa_file=$(ls ${ref_dir}/*.fasta)
 		fasta=${fa_file}
