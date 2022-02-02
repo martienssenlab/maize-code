@@ -214,9 +214,9 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 				printf "\nCopying GO information file\n"
 				cp /grid/martienssen/data_norepl/dropbox/maizecode/GO/${ref}_infoGO.tab combined/GO/${ref}/
 			fi
-			if [ ! -d combined/GO/${ref}/${ref}_genes_info.tab ]; then
+			if [ ! -s combined/GO/${ref}/${ref}_genes_info.tab ]; then
 				printf "\nCopying gene information file\n"
-				cp -r /grid/martienssen/data_norepl/dropbox/maizecode/GO/${ref}_genes_info.tab combined/GO/${ref}/
+				cp /grid/martienssen/data_norepl/dropbox/maizecode/GO/${ref}_genes_info.tab combined/GO/${ref}/
 			fi
 			printf "\nCreating GO database\n"
 			Rscript --vanilla ${mc_dir}/MaizeCode_R_build_GOdatabase.r combined/GO/${ref}/${ref}_infoGO.tab combined/GO/${ref}/${ref}_genes_info.tab ${ref}
