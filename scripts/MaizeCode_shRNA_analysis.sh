@@ -1,7 +1,7 @@
 #!/bin/bash
 #$ -V
 #$ -cwd
-#$ -pe threads 1
+#$ -pe threads 2
 #$ -l m_mem_free=2G
 #$ -l tmp_free=10G
 #$ -o shRNAanalysis.log
