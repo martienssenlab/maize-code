@@ -8,7 +8,6 @@
 #$ -j y
 #$ -N lineanalysis
 
-### changement
 usage="
 ##### Script for Maize code inbred line data analysis, used by script MaizeCode_analyis.sh if -s was not set and region file exists
 #####
