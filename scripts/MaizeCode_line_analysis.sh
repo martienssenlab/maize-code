@@ -1551,7 +1551,7 @@ do
 			bedtools sort -g ${ref_dir}/chrom.sizes -i combined/peaks/temp_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt > combined/peaks/temp2_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
 			bedtools sort -g ${ref_dir}/chrom.sizes -i combined/peaks/TF_peaks_${analysisname}.bed > combined/peaks/temp3_TFs_${analysisname}.txt
 			tfcol=$((colnb+7))
-			bedtools intersect -wao -a combined/peaks/temp2_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt -b combined/peaks/temp3_TFs_${analysisname}.txt | awk -v OFS="\t" -v c=${tfcol} -v a=${colnb} '{if ($c == ".") t="None"; else t=$c ; for (i=1; i<=a; i++) {printf $i"t"}; print t}' > combined/peaks/temp4_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
+			bedtools intersect -wao -a combined/peaks/temp2_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt -b combined/peaks/temp3_TFs_${analysisname}.txt | awk -v OFS="\t" -v c=${tfcol} -v a=${colnb} '{if ($c == ".") t="None"; else t=$c ; for (i=1; i<=a; i++) {printf $i"\t"}; print t}' > combined/peaks/temp4_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
 			bedtools merge -o distinct -c ${array} -i combined/peaks/temp4_complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt >> combined/peaks/complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
 		else
 			printf "${header}\n" > combined/peaks/complete_enhancers_${type}_${line}_${tissue}_${analysisname}.txt
