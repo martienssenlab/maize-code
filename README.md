@@ -22,7 +22,6 @@ bedtools 2.29.2
 bowtie2 64-bit 2.4.1; Compiler: gcc version 7.5.0 (crosstool-NG 1.24.0.131_87df0e6_dirty)
 cutadapt 2.10
 deeptools 3.5.0
-dplyr 1.0.6
 fastqc 0.11.9
 homer 4.11
 IDR 2.0.4.2
