@@ -385,7 +385,7 @@ fi
 
 uniq_rnaseq_tissue_list=($(printf "%s\n" "${rnaseq_tissue_list[@]}" | sort -u))
 
-if [ ! -s combined/DEG/genes_rpkm_${analysisname}.txt ] && [[ ${#uniq_rnaseq_tissue_list[@]} -ge 1 ]]; then
+if [[ ${#uniq_rnaseq_tissue_list[@]} -ge 1 ]]; then
 	for tissue in ${uniq_rnaseq_tissue_list[@]}
 	do
 		printf "Gathering gene expression levels for ${tissue}\n"
