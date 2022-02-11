@@ -1,7 +1,7 @@
 #!/bin/bash
 #$ -V
 #$ -cwd
-#$ -pe threads 20
+#$ -pe threads 32
 #$ -l m_mem_free=4G
 #$ -l tmp_free=8G
 #$ -o lineanalysis.log
