@@ -1577,6 +1577,9 @@ rm -f ChIP/tracks/temp*.bg
 tefilebw=""
 tefilebed=""
 if [ -s /grid/martienssen/data_norepl/dropbox/maizecode/TEs/${ref}_TEs.gff3.gz ]; then
+	if [ ! -d combined/TSS ]; then
+		mkdir combined/TSS
+	fi	
 	if [ ! -s combined/TSS/${ref}_all_tes.bed ]; then
 		zcat /grid/martienssen/data_norepl/dropbox/maizecode/TEs/${ref}_TEs.gff3.gz | awk -v OFS="\t" '$1 !~ /^#/ {print $1,$4-1,$5,$3,".",$7}' | bedtools sort -g ${ref_dir}/chrom.sizes > combined/TSS/${ref}_all_tes.bed
 	fi
@@ -1814,7 +1817,7 @@ if [[ ${#uniq_shrna_tissue_list[*]} -ge 2 ]] && [[ ${tefilebw} != "" ]]; then
 		printf "\nGrouping based on distance for ${tissue}\n"
 		awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/shRNA/temp_clusters_${analysisname}.bed > combined/shRNA/temp2_clusters_${analysisname}.bed
 		printf "\nIntersecting TE for ${tissue}\n"
-		bedtools intersect -a combined/shRNA/temp2_clusters_${analysisname}.bed -b combined/shRNA/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v t=${tissue} -v l=${line} '{if ($13==".") print l,t,l"_"t"_"$4,$9,"No",$9,$9; else if ($9 == "Intergenic") print l,t,l"_"t"_"$4,$9,$13,$13,$13; else print l,t,l"_"t"_"$4,$9,$13,$13,$13"_in_"$9}' > combined/shRNA/Clusters_in_genes_and_tes_${tissue}_${analysisname}.bed
+		bedtools intersect -a combined/shRNA/temp2_clusters_${analysisname}.bed -b combined/TSS/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v t=${tissue} -v l=${line} '{if ($13==".") print l,t,l"_"t"_"$4,$9,"No",$9,$9; else if ($9 == "Intergenic") print l,t,l"_"t"_"$4,$9,$13,$13,$13; else print l,t,l"_"t"_"$4,$9,$13,$13,$13"_in_"$9}' > combined/shRNA/Clusters_in_genes_and_tes_${tissue}_${analysisname}.bed
 		rm -f combined/shRNA/temp*_clusters_${analysisname}.bed
 	done
 	printf "Line\tTissue\tCluster_ID\tGene\tTE\tLabel\tLabelcombined\n" > combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}.txt
@@ -1831,7 +1834,7 @@ if [[ ${#uniq_shrna_tissue_list[*]} -ge 2 ]] && [[ ${tefilebw} != "" ]]; then
 	printf "\nGrouping based on distance\n"
 	awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/shRNA/tmp4_shRNA_clusters_${analysisname}.bed > combined/shRNA/tmp5_shRNA_clusters_${analysisname}.bed
 	printf "\nIntersecting with TEs\n"
-	bedtools intersect -a combined/shRNA/tmp5_shRNA_clusters_${analysisname}.bed -b combined/shRNA/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v l=${line} 'BEGIN {printf "Line\tCluster_ID\tGene\tTE\tLabel\tLabelcombined\tGID\tTissues\tPeak_coordinates\n"} {if ($13==".") print l,$4,$9,"No",$9,$9,$8,$7,$1":"$2"-"$3; else if ($9 == "Intergenic") print l,$4,$9,$13,$13,$13,$8,$7,$1":"$2"-"$3; else print l,$4,$9,$13,$13,$13"_in_"$9,$8,$7,$1":"$2"-"$3}' > combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed
+	bedtools intersect -a combined/shRNA/tmp5_shRNA_clusters_${analysisname}.bed -b combined/TSS/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v l=${line} 'BEGIN {printf "Line\tCluster_ID\tGene\tTE\tLabel\tLabelcombined\tGID\tTissues\tPeak_coordinates\n"} {if ($13==".") print l,$4,$9,"No",$9,$9,$8,$7,$1":"$2"-"$3; else if ($9 == "Intergenic") print l,$4,$9,$13,$13,$13,$8,$7,$1":"$2"-"$3; else print l,$4,$9,$13,$13,$13"_in_"$9,$8,$7,$1":"$2"-"$3}' > combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed
 	rm -f combined/shRNA/tmp*_shRNA_clusters_${analysisname}.bed
 	#### To create a matrix of peak presence in each sample
 	printf "\nCreating matrix file for ${analysisname}\n"
