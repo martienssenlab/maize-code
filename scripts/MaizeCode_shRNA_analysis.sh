@@ -64,20 +64,20 @@ do
 	printf "\nStarting single RNA sample analysis for ${name}\n"	
 	export ref_dir=${ref_dir}
 	export ref=${ref_dir##*/}
-	if [ -s ${ref_dir}/*.fa.gz ]; then
-		fa_file=$(ls ${ref_dir}/*.fa.gz)
-		pigz -p ${threads} -dc ${fa_file} > ${ref_dir}/temp_${rnatype}_${ref}.fa
-		fasta=${ref_dir}/temp_${rnatype}_${ref}.fa
-	elif [ -s ${ref_dir}/*.fa ]; then
+	if [ -s ${ref_dir}/*.fa ]; then
 		fa_file=$(ls ${ref_dir}/*.fa)
 		fasta=${fa_file}
-	elif [ -s ${ref_dir}/*.fasta.gz ]; then
-		fa_file=$(ls ${ref_dir}/*.fasta.gz)
-		pigz -p ${threads} -dc ${fa_file} > ${ref_dir}/temp_${rnatype}_${ref}.fa
-		fasta=${ref_dir}/temp_${rnatype}_${ref}.fa
 	elif [ -s ${ref_dir}/*.fasta ]; then
 		fa_file=$(ls ${ref_dir}/*.fasta)
 		fasta=${fa_file}
+	elif [ -s ${ref_dir}/*.fa.gz ]; then
+		fa_file=$(ls ${ref_dir}/*.fa.gz)
+		pigz -p ${threads} -dc ${fa_file} > ${ref_dir}/temp_${rnatype}_${ref}.fa
+		fasta=${ref_dir}/temp_${rnatype}_${ref}.fa
+	elif [ -s ${ref_dir}/*.fasta.gz ]; then
+		fa_file=$(ls ${ref_dir}/*.fasta.gz)
+		pigz -p ${threads} -dc ${fa_file} > ${ref_dir}/temp_${rnatype}_${ref}.fa
+		fasta=${ref_dir}/temp_${rnatype}_${ref}.fa	
 	fi
 	export fasta
 	qsub -N ${name} -V -cwd -sync y -pe threads 20 -l m_mem_free=5G -l tmp_free=50G -j y -o logs/analysis_${name}.log <<-'EOF' &
