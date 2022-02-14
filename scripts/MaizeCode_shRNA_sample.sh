@@ -73,20 +73,20 @@ export ref=${ref_dir##*/}
 
 name=${line}_${tissue}_${rnatype}_${rep}
 
-if [ -s ${ref_dir}/*.fa.gz ]; then
+if [ -s ${ref_dir}/*.fa ]; then
+	fa_file=$(ls ${ref_dir}/*.fa)
+	fasta=${fa_file}
+elif [ -s ${ref_dir}/*.fasta ]; then
+	fa_file=$(ls ${ref_dir}/*.fasta)
+	fasta=${fa_file}
+elif [ -s ${ref_dir}/*.fa.gz ]; then
 	fa_file=$(ls ${ref_dir}/*.fa.gz)
 	pigz -p ${threads} -dc ${fa_file} > ${ref_dir}/temp_${data}_${ref}.fa
 	fasta=${ref_dir}/temp_${data}_${ref}.fa
-elif [ -s ${ref_dir}/*.fa ]; then
-	fa_file=$(ls ${ref_dir}/*.fa)
-	fasta=${fa_file}
 elif [ -s ${ref_dir}/*.fasta.gz ]; then
 	fa_file=$(ls ${ref_dir}/*.fasta.gz)
 	pigz -p ${threads} -dc ${fa_file} > ${ref_dir}/temp_${data}_${ref}.fa
 	fasta=${ref_dir}/temp_${data}_${ref}.fa
-elif [ -s ${ref_dir}/*.fasta ]; then
-	fa_file=$(ls ${ref_dir}/*.fasta)
-	fasta=${fa_file}
 fi
 
 if [[ ${paired} == "PE" ]]; then
