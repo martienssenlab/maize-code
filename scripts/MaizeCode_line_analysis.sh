@@ -263,7 +263,7 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 	paste combined/DEG/col_A*_${analysisname}* > combined/DEG/counts_${analysisname}.txt
 	rm -f combined/DEG/col_A*_${analysisname}*
 	#### To run the DEG analysis on R
-	if [[ ${ref} == "B73_v4" ]] || [[ ${ref} == "W22_v2" ]] || [[ ${ref} == "NC350_NAM" ]]; then
+	if [[ ${ref} == "B73_v4" ]] || [[ ${ref} == "B73_v5" ]] || [[ ${ref} == "W22_v2" ]] || [[ ${ref} == "NC350_NAM" ]]; then
 		printf "\nLaunching DEG analysis (and GO) with R version:\n"
 		R --version
 		Rscript --vanilla ${mc_dir}/MaizeCode_R_DEG_GO.r ${ref} combined/DEG/counts_${analysisname}.txt combined/DEG/samples_${analysisname}.txt ${analysisname} ${regionfile}
@@ -314,7 +314,7 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 			cat combined/DEG/temp_tissue_spec_DEG_${analysisname}_UP_${max}.txt | sort -u > combined/DEG/only_${namei}_DEG_UP_${analysisname}.bed
 			rm -f combined/DEG/DEG_${analysisname}_*.temp.bed
 			rm -f combined/DEG/temp_tissue_spec_DEG_${analysisname}*
-			if [[ ${ref} == "B73_v4" ]] || [[ ${ref} == "W22_v2" ]] || [[ ${ref} == "NC350_NAM" ]]; then
+			if [[ ${ref} == "B73_v4" ]] || [[ ${ref} == "B73_v5" ]] || [[ ${ref} == "W22_v2" ]] || [[ ${ref} == "NC350_NAM" ]]; then
 				printf "\nMaking GO enrichment plot for ${namei} tissue with R version:\n"
 				R --version
 				Rscript --vanilla ${mc_dir}/MaizeCode_R_GO.r ${ref} combined/DEG/counts_${analysisname}.txt combined/DEG/only_${namei}_DEG_DOWN_${analysisname}.bed ${namei}_DOWN_in_${analysisname}
