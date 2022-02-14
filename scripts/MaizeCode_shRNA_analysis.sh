@@ -120,6 +120,6 @@ done < ${samplefile}
 printf "\nWaiting for samples to be processed individually\n"
 wait ${pids[*]}
 
-rm -f ${ref_dir}/temp_${datatype}_${ref}*
+rm -f ${ref_dir}/temp_${rnatype}_${ref}*
 
 printf "\nScript finished successfully!\n"
