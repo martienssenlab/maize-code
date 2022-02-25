@@ -1716,7 +1716,6 @@ do
 					maxs+=("${maxi}")
 				fi
 			done
-			printf "1 mins: ${mins}\nmaxs: ${maxs}\n"
 			if [[ ${tefilebw} != "" ]]; then
 				mins+=("0" "0")
 				maxs+=("1" "1")
@@ -1724,7 +1723,6 @@ do
 				mins+=("0")
 				maxs+=("1")
 			fi
-			printf "2 mins: ${mins}\nmaxs: ${maxs}\n"
 			printf "\nSorting matrix for ${line} ${tissue} ${type}\n"
 			computeMatrixOperations sort -m combined/matrix/regions_enhancers_${type}_${line}_${tissue}_${analysisname}.gz -R combined/peaks/sorted_enhancers_${type}_${line}_${tissue}_${analysisname}.txt -o combined/matrix/sorted_regions_enhancers_${type}_${line}_${tissue}_${analysisname}.gz
 			printf "\nPlotting heatmap for ${line} ${tissue} ${type}\n"
