@@ -1688,7 +1688,8 @@ do
 			ymaxs=()
 			for sample in ${label_list[@]}
 			do
-				ymini=$(grep $sample combined/matrix/values_enhancers_${type}_${line}_${tissue}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.5; else a=m*0.5; print a}')
+				ymini1=$(grep $sample combined/matrix/values_enhancers_${type}_${line}_${tissue}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.5; else a=m*0.5; print a}')
+				ymini=$(printf "%.18f" "${ymini1}")
 				ymaxi=$(grep $sample combined/matrix/values_enhancers_${type}_${line}_${tissue}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {print m*1.5}')
 				test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
 				if [[ "${test}" == "yes" ]]; then
