@@ -722,7 +722,7 @@ if [[ "${total}" != "TEST" ]]; then
 		printf "\nMerging stranded matrices aligned by ${matrix} of ${analysisname}\n"
 		computeMatrixOperations rbind -m combined/matrix/temp_all_genes_${matrix}_${analysisname}_plus.gz combined/matrix/temp_all_genes_${matrix}_${analysisname}_minus.gz -o combined/matrix/all_genes_${matrix}_${analysisname}.gz
 		printf "\nGetting scales for ${matrix} matrix of ${analysisname}\n"
-		computeMatrixOperations dataRange -m combined/matrix/${matrix}_${analysisname}.gz > combined/matrix/temp_values_${matrix}_${analysisname}.txt
+		computeMatrixOperations dataRange -m combined/matrix/all_genes_${matrix}_${analysisname}.gz > combined/matrix/temp_values_${matrix}_${analysisname}.txt
 		plotProfile -m combined/matrix/all_genes_${matrix}_${analysisname}.gz -out combined/plots/temp_${matrix}_${analysisname}_profile.pdf --samplesLabel ${all_labels[@]} --averageType mean --outFileNameData combined/matrix/temp_values_profile_${matrix}_${analysisname}.txt
 		rm -f combined/plots/temp_${matrix}_${analysisname}_profile.pdf
 		mins=()
