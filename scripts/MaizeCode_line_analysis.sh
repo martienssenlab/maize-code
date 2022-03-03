@@ -1270,18 +1270,18 @@ do
 				awk -v OFS="\t" -v s=${sign} '$6==s' combined/peaks/temp_distal_${analysisname}_${tissue}_group${i}.txt > combined/peaks/temp_distal_${analysisname}_${tissue}_group${i}.bed
 			done
 			printf "\nComputing scale-regions ${strand} strand matrix for ${tissue}\n"
-			computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${sorted_regions[@]} -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/temp_distal_regions_${analysisname}_${strand}.gz --quiet
+			computeMatrix scale-regions --missingDataAsZero --skipZeros -R ${sorted_regions[@]} -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/temp_distal_${tissue}_${analysisname}_${strand}.gz --quiet
 		done
 		printf "\nMerging stranded matrices for distal peaks in ${tissue}\n"
-		computeMatrixOperations rbind -m combined/matrix/temp_distal_regions_${analysisname}_plus.gz combined/matrix/temp_distal_regions_${analysisname}_minus.gz -o combined/matrix/temp_distal_regions_${analysisname}.gz
+		computeMatrixOperations rbind -m combined/matrix/temp_distal_${tissue}_${analysisname}_plus.gz combined/matrix/temp_distal_${tissue}_${analysisname}_minus.gz -o combined/matrix/temp_distal_${tissue}_${analysisname}.gz
 		printf "\nGetting scales for distal peaks in ${tissue}\n"
-		computeMatrixOperations dataRange -m combined/matrix/temp_distal_regions_${analysisname}.gz > combined/matrix/temp_values_distal_regions_${analysisname}.txt
+		computeMatrixOperations dataRange -m combined/matrix/temp_distal_${tissue}_${analysisname}.gz > combined/matrix/temp_values_distal_${tissue}_${analysisname}.txt
 		mins=()
 		maxs=()
 		for sample in ${tissue_labels[@]}
 		do
-			mini=$(grep ${sample} combined/matrix/temp_values_distal_regions_${analysisname}.txt | awk '{print $5}')
-			maxi=$(grep ${sample} combined/matrix/temp_values_distal_regions_${analysisname}.txt | awk '{print $6}')
+			mini=$(grep ${sample} combined/matrix/temp_values_distal_${tissue}_${analysisname}.txt | awk '{print $5}')
+			maxi=$(grep ${sample} combined/matrix/temp_values_distal_${tissue}_${analysisname}.txt | awk '{print $6}')
 			test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
 			if [[ ${test} == "yes" ]]; then
 				mins+=("0")
@@ -1291,14 +1291,14 @@ do
 				maxs+=("${maxi}")
 			fi
 		done
-		computeMatrixOperations sort -m combined/matrix/temp_distal_regions_${analysisname}.gz -R ${sorted_regions[@]} -o combined/matrix/distal_regions_${analysisname}.gz
-		plotProfile -m combined/matrix/distal_regions_${analysisname}.gz -out combined/plots/distal_${tissue}_${analysisname}_profile_mean.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType mean --outFileNameData combined/matrix/temp2_values_distal_regions_${analysisname}.txt
+		computeMatrixOperations sort -m combined/matrix/temp_distal_${tissue}_${analysisname}.gz -R ${sorted_regions[@]} -o combined/matrix/distal_${tissue}_${analysisname}.gz
+		plotProfile -m combined/matrix/distal_${tissue}_${analysisname}.gz -out combined/plots/distal_${tissue}_${analysisname}_profile_mean.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType mean --outFileNameData combined/matrix/temp2_values_distal_${tissue}_${analysisname}.txt
 		ymins=()
 		ymaxs=()
 		for sample in ${tissue_labels[@]}
 		do
-		 	ymini=$(grep ${sample} combined/matrix/temp2_values_distal_regions_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
-			ymaxi=$(grep ${sample} combined/matrix/temp2_values_distal_regions_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
+		 	ymini=$(grep ${sample} combined/matrix/temp2_values_distal_${tissue}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
+			ymaxi=$(grep ${sample} combined/matrix/temp2_values_distal_${tissue}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
 			test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
 			if [[ ${test} == "yes" ]]; then
 				ymins+=("0")
@@ -1309,17 +1309,17 @@ do
 			fi
 		done
 		printf "\nPlotting heatmap for distal peaks in ${tissue} in ${analysisname} scaling by sample\n"
-		plotHeatmap -m combined/matrix/distal_regions_${analysisname}.gz -out combined/plots/distal_${tissue}_${analysisname}_heatmap_mean.pdf --sortRegions keep --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear' --startLabel "enhancer" --endLabel "TSS"
+		plotHeatmap -m combined/matrix/distal_${tissue}_${analysisname}.gz -out combined/plots/distal_${tissue}_${analysisname}_heatmap_mean.pdf --sortRegions keep --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear' --startLabel "enhancer" --endLabel "TSS"
 		printf "\nPlotting mean profile for distal peaks in ${tissue} in ${analysisname} scaling by sample\n"
-		plotProfile -m combined/matrix/distal_regions_${analysisname}.gz -out combined/plots/distal_${tissue}_${analysisname}_profile_mean.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType mean --yMin ${ymins[@]} --yMax ${ymaxs[@]} --startLabel "enhancer" --endLabel "TSS"
+		plotProfile -m combined/matrix/distal_${tissue}_${analysisname}.gz -out combined/plots/distal_${tissue}_${analysisname}_profile_mean.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType mean --yMin ${ymins[@]} --yMax ${ymaxs[@]} --startLabel "enhancer" --endLabel "TSS"
 		
-		plotProfile -m combined/matrix/distal_regions_${analysisname}.gz -out combined/plots/distal_${tissue}_${analysisname}_profile_median.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType median --outFileNameData combined/matrix/temp3_values_distal_regions_${analysisname}.txt
+		plotProfile -m combined/matrix/distal_${tissue}_${analysisname}.gz -out combined/plots/distal_${tissue}_${analysisname}_profile_median.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType median --outFileNameData combined/matrix/temp3_values_distal_${tissue}_${analysisname}.txt
 		ymins=()
 		ymaxs=()
 		for sample in ${tissue_labels[@]}
 		do
-		 	ymini=$(grep ${sample} combined/matrix/temp3_values_distal_regions_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
-			ymaxi=$(grep ${sample} combined/matrix/temp3_values_distal_regions_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
+		 	ymini=$(grep ${sample} combined/matrix/temp3_values_distal_${tissue}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
+			ymaxi=$(grep ${sample} combined/matrix/temp3_values_distal_${tissue}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
 			test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
 			if [[ ${test} == "yes" ]]; then
 				ymins+=("0")
