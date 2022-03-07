@@ -21,7 +21,7 @@ line<-args[3]
 if ( grepl("TIL", line, fixed=TRUE) ) { ncbiID=76912
  } else { ncbiID=381124 }
 
-fGOzm<-info[,c(2,5,7)]
+fGOzm<-unique(info[,c(2,5,7)])
 colnames(fGOzm)<-c("GID","GO","EVIDENCE")
 
 fSymzm<-select(genes, GID, Type, Description)
