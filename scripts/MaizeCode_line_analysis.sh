@@ -1330,7 +1330,7 @@ do
 			fi
 		done
 		printf "\nPlotting median profile for distal peaks in ${tissue} in ${analysisname} scaling by sample\n"
-		plotProfile -m combined/matrix/distal_regions_${analysisname}.gz -out combined/plots/distal_${tissue}_${analysisname}_profile_median.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType median --yMin ${ymins[@]} --yMax ${ymaxs[@]} --startLabel "enhancer" --endLabel "TSS"		
+		plotProfile -m combined/matrix/distal_${tissue}_${analysisname}.gz -out combined/plots/distal_${tissue}_${analysisname}_profile_median.pdf --samplesLabel ${tissue_labels[@]} --regionsLabel ${regions_labels[@]} --averageType median --yMin ${ymins[@]} --yMax ${ymaxs[@]} --startLabel "enhancer" --endLabel "TSS"		
 	else
 		printf "\nTissue ${tissue} will not be processed\n"
 	fi
