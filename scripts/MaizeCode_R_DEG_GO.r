@@ -113,8 +113,7 @@ plotGOs<-function(TopGoResults, ont, name) {
   simMatrix<-calculateSimMatrix(TopGoResults$GO.ID,
                                 orgdb="org.Zmays.eg.db",
                                 ont=ont,
-#				keytype="GID",
-                                method="Rel")
+                                method="Wang")
   if ( nrow(simMatrix) > 1 ) {
   	scores<-setNames(-log10(as.numeric(TopGoResults$classicFisher)), TopGoResults$GO.ID)
   	reducedTerms<-reduceSimMatrix(simMatrix,
