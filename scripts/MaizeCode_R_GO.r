@@ -83,8 +83,10 @@ plotGOs<-function(TopGoResults, ont, name) {
 }
 
 for ( ont in c("BP","MF") ) {
+  print(paste0("Getting ",ont," for ",samplename))
   TopGOresults<-getGO(ont, samplename)
   if ( nrow(TopGOresults) > 1 ) {
-  plotGOs(TopGOresults, ont, samplename)
+	  print(paste0("plotting ",ont," for ",samplename))
+	  plotGOs(TopGOresults, ont, samplename)
     }
 }
