@@ -161,6 +161,7 @@ for (i in 1:(length(tissues)-1)) {
 	names(geneList)<-allGenes
 	samplename<-paste0("UP_in_",sample1,"_vs_",sample2)
 	for ( ont in c("BP","MF") ) {
+		print(paste0("plotting ",ont," for ",samplename))
 		TopGOresults<-getGO(ont, geneList, updeg, samplename)
 		if ( nrow(TopGOresults) > 0 ) {
 			plotGOs(TopGOresults, ont, samplename)
@@ -172,6 +173,7 @@ for (i in 1:(length(tissues)-1)) {
 	names(geneList)<-allGenes
 	samplename<-paste0("DOWN_in_",sample1,"_vs_",sample2)
 	for ( ont in c("BP","MF") ) {
+		print(paste0("plotting ",ont," for ",samplename))
 		TopGOresults<-getGO(ont, geneList, downdeg, samplename)
 		if ( nrow(TopGOresults) > 1 ) {
 			plotGOs(TopGOresults, ont, samplename)
