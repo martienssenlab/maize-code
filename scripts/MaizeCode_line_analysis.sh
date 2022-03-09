@@ -284,16 +284,16 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 				cat combined/DEG/DEG_${analysisname}_${namei}_vs_*.txt | awk '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $4}' > combined/peaks/temp_all_${namei}_${analysisname}_DEG_GID.txt
 				for file in $(ls combined/DEG/DEG_${analysisname}_${namei}_vs_*.txt)
 				do
-					awk -v OFS="\t" '$11 == "DOWN" {print $1,$2,$3,$4,".",$6}' ${file} > ${file}.DOWN.temp.bed
-					awk -v OFS="\t" '$11 == "UP" {print $1,$2,$3,$4,".",$6}' ${file} > ${file}.UP.temp.bed
+					awk -v OFS="\t" '$11 == "DOWN" && ($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$2,$3,$4,".",$6}' ${file} > ${file}.DOWN.temp.bed
+					awk -v OFS="\t" '$11 == "UP" && ($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$2,$3,$4,".",$6}' ${file} > ${file}.UP.temp.bed
 				done
 			fi
 			if ls combined/DEG/DEG_${analysisname}_*_vs_${namei}.txt 1> /dev/null 2>&1; then
 				cat combined/DEG/DEG_${analysisname}_*_vs_${namei}.txt | awk '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $4}' >> combined/peaks/temp_all_${namei}_${analysisname}_DEG_GID.txt
 				for file in $(ls combined/DEG/DEG_${analysisname}_*_vs_${namei}.txt)
 				do
-					awk -v OFS="\t" '$11 == "DOWN" {print $1,$2,$3,$4,".",$6}' ${file} >> ${file}.UP.temp.bed
-					awk -v OFS="\t" '$11 == "UP" {print $1,$2,$3,$4,".",$6}' ${file} >> ${file}.DOWN.temp.bed
+					awk -v OFS="\t" '$11 == "DOWN" && ($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$2,$3,$4,".",$6}' ${file} >> ${file}.UP.temp.bed
+					awk -v OFS="\t" '$11 == "UP" && ($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$2,$3,$4,".",$6}' ${file} >> ${file}.DOWN.temp.bed
 				done
 			fi
 			printf "\nGetting DEGs specific in ${namei}\n"
