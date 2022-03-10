@@ -71,7 +71,7 @@ plotGOs<-function(TopGoResults, ont, name) {
   	scores<-setNames(-log10(as.numeric(TopGoResults$classicFisher)), TopGoResults$GO.ID)
   	reducedTerms<-reduceSimMatrix(simMatrix,
   	                              scores,
-  	                              threshold = 0.7,
+  	                              threshold = 0.5,
   	                              orgdb="org.Zmays.eg.db")
   	pdf(paste0("combined/plots/topGO_",name,"_",ont,"_treemap.pdf"), width=8, height=8)
   	treemapPlot(reducedTerms, size = "score")
