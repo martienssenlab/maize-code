@@ -157,6 +157,8 @@ elif [[ ${datatype} == "RNA" ]]; then
 		printf "\nBuilding STAR index directory for ${ref}\n"
 		mkdir ${gen_dir}
 		STAR --runThreadN ${threads} --runMode genomeGenerate --genomeDir ${gen_dir} --genomeFastaFiles ${fasta} --sjdbGTFfile ${gtf}
+	else
+		printf "\nSTAR index already exists for ${ref} in ${ref_dir}\n"
 	fi
 elif [[ ${datatype} == "TF" ]]; then
 	if [ ! -s ${datatype}/reports/summary_mapping_stats.txt ]; then
