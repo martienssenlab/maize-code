@@ -142,6 +142,8 @@ if [[ ${datatype} == "ChIP" ]]; then
 	fi
 	if ls ${ref_dir}/*.bt2* 1> /dev/null 2>&1; then
 		printf "\nBowtie2 index already exists for ${ref} in ${ref_dir}\n"
+	elif grep -q "Building Bowtie2 index" TF/logs/env_${ref}.log; then
+		printf "\nBowtie2 index already being prepared for TF for ${ref} in ${ref_dir}\n"
 	else
 		printf "\nBuilding Bowtie2 index for $ref\n"
 		bowtie2-build --threads ${threads} ${fasta} ${ref_dir}/${ref}
@@ -162,6 +164,8 @@ elif [[ ${datatype} == "TF" ]]; then
 	fi
 	if ls ${ref_dir}/*.bt2* 1> /dev/null 2>&1; then
 		printf "\nBowtie2 index already exists for ${ref} in ${ref_dir}\n"
+	elif grep -q "Building Bowtie2 index" ChIP/logs/env_${ref}.log; then
+		printf "\nBowtie2 index already being prepared for ChIP for ${ref} in ${ref_dir}\n"
 	else
 		printf "\nBuilding Bowtie2 index for ${ref}\n"
 		bowtie2-build --threads ${threads} ${fasta} ${ref_dir}/${ref}
