@@ -141,7 +141,6 @@ if [[ ${new_env} == 0 ]]; then
 else
 	uniq_newref_list=($(printf "%s\n" "${newref_list[@]}" | sort -u))
 	uniq_newdatatype_list=($(printf "%s\n" "${newdatatype_list[@]}" | sort -u))
-
 	check_list=()
 	pids=()
 	for ref in ${uniq_newref_list[@]}
