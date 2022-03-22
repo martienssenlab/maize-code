@@ -1848,7 +1848,7 @@ if [[ ${#uniq_shrna_tissue_list[*]} -ge 2 ]] && [[ ${tefilebw} != "" ]]; then
 	paste combined/shRNA/temp_col_clusters_${analysisname}_*.txt | uniq > combined/shRNA/matrix_upset_shRNA_clusters_${analysisname}.txt
 	rm -f combined/shRNA/temp_col_clusters_${analysisname}_*.txt
 	#### To make an Upset plot highlighting peaks in gene bodies
-	printf "\nCreating Distirbution and Upset plot for shRNA clusters in ${analysisname} with R version:\n"
+	printf "\nCreating Distribution and Upset plot for shRNA clusters in ${analysisname} with R version:\n"
 	R --version
 	Rscript --vanilla ${mc_dir}/MaizeCode_R_shRNA_distribution_upset.r ${analysisname} ${TEtypestring} combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}.txt combined/shRNA/matrix_upset_shRNA_clusters_${analysisname}.txt combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed combined/DEG/genes_rpkm_${analysisname}.txt
 fi
