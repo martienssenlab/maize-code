@@ -36,7 +36,7 @@ seqkit 0.13.2
 shortstack 3.8.5
 STAR 2.7.5c
 wget 1.20.1
-R 4.0.3 + R packages: dplyr 1.0.6, tidyr 1.1.3, ggplot2 3.3.5, cowplot 1.1.1, RColorBrewer 1.1-2, AnnotationForge 1.32.0, rrvgo 1.5.3, topGO 2.42.0, purrr 0.3.4, limma 3.46.0, edgeR 3.32.1, stringr 1.4.0, ComplexUpset 1.2.1
+R 4.0.3 + R packages: dplyr 1.0.6, tidyr 1.1.3, ggplot2 3.3.5, cowplot 1.1.1, RColorBrewer 1.1-2, AnnotationForge 1.32.0, rrvgo 1.5.3, topGO 2.42.0, purrr 0.3.4, limma 3.46.0, edgeR 3.32.1, stringr 1.4.0, ComplexUpset 1.2.1, wesanderson 0.3.6
 
 Histone ChIPseq:
 R 4.0.3 + R libraries: dplyr 1.0.6, tidyr 1.1.3, ggplot2 3.3.5, cowplot 1.1.1, RColorBrewer 1.1-2, purrr 0.3.4, ComplexUpset 1.2.1
@@ -98,7 +98,7 @@ homer 4.11
 wget 1.20.1
 
 shRNA samples:
-R 4.0.3 + R libraries: dplyr 1.0.6, tidyr 1.1.3, ggplot2 3.3.5
+R 4.0.3 + R libraries: dplyr 1.0.6, tidyr 1.1.3, ggplot2 3.3.5, wesanderson 0.3.6
 multiqc 1.11
 pigz 2.3.4
 samtools 1.10 (Using htslib 1.10.2)
