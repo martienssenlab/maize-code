@@ -25,11 +25,10 @@ table$TE<-as.factor(table$TE)
 table$Label<-factor(table$Label, levels = AllLabels)
 table$Labelcombined<-as.factor(table$Labelcombined)
 
-
 plot1<-ggplot(table, aes(Tissue, fill=Label)) +
   geom_bar(stat="count", position="stack", show.legend = F) +
   labs(title="", x="",y="Number of shRNA clusters") +
-  scale_fill_discrete(colors = pal) +
+  scale_fill_discrete(type = pal) +
 #  scale_fill_manual(values=c("Intergenic"="#B8B5B3","Terminator"="#B233FF",
 #                                     "Gene_body"="#3358FF","Promoter"="#FF33E0","helitron"="#0B6D10","LINE_element"="#B9DCBA","LTR_retrotransposon"="#08AF0F",
 #                                "SINE_element"="#92EB96","solo_LTR"="#11E119","terminal_inverted_repeat_element"="#184F19"),
@@ -43,7 +42,7 @@ plot1<-ggplot(table, aes(Tissue, fill=Label)) +
 plot2<-ggplot(table, aes(Tissue, fill=Label)) +
   geom_bar(stat="count", position="fill", show.legend = T) +
   labs(title="", x="",y="Percentage of shRNA clusters", fill="Genomic feature") +
-  scale_fill_discrete(colors = pal) +
+  scale_fill_discrete(type = pal) +
 #  scale_fill_manual(values=c("Intergenic"="#B8B5B3","Terminator"="#B233FF",
 #                                     "Gene_body"="#3358FF","Promoter"="#FF33E0","helitron"="#0B6D10","LINE_element"="#B9DCBA","LTR_retrotransposon"="#08AF0F",
 #                                "SINE_element"="#92EB96","solo_LTR"="#11E119","terminal_inverted_repeat_element"="#184F19"),
@@ -77,7 +76,7 @@ plot<-upset(inputable, sampleCols, name="shRNA clusters",
       base_annotations = list(
         'Shared shRNA clusters'=intersection_size(
           counts=FALSE, mapping=aes(fill=Label))
-	  + scale_fill_discrete(colors = pal)
+	  + scale_fill_discrete(type = pal)
 #	+ scale_fill_manual(values=c("Intergenic"="#B8B5B3","Terminator"="#B233FF",
 #                                     "Gene_body"="#3358FF","Promoter"="#FF33E0","helitron"="#0B6D10","LINE_element"="#B9DCBA","LTR_retrotransposon"="#08AF0F",
 #                                "SINE_element"="#92EB96","solo_LTR"="#11E119","terminal_inverted_repeat_element"="#184F19"),
