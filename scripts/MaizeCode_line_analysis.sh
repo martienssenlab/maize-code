@@ -1433,6 +1433,7 @@ do
 	done	
 	printf "${header}\n" > combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt
 	paste combined/peaks/col_*_${analysisname}_${line}_${tissue}.txt >> combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt
+	rm -f combined/peaks/col_*_${analysisname}_${line}_${tissue}.txt
 	plot="No"
 	if [[ ${rnaseq} == 1 ]] && [[ ${rampage} == 1 ]] && [[ ${shrna} == 1 ]]; then
 		included_samples="RNAseq_and_RAMPAGE_and_shRNA"
