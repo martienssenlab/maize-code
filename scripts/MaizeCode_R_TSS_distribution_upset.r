@@ -7,12 +7,16 @@ library(RColorBrewer)
 library(cowplot)
 library(ComplexUpset)
 library(purrr)
+library(wesanderson)
 
 args = commandArgs(trailingOnly=TRUE)
 
 analysisname<-args[1]
 TELabels<-c(unlist(strsplit(args[2],",")))
 AllLabels<-c(TELabels,"Intergenic","Terminator","Gene_body","Promoter")
+pal<-rev(wes_palette("Cavalcanti1", length(TELabels)-1, type = "continuous"))
+pal<-c(pal, wes_palette("Royal1", 4))
+
 ### For distribution plot
 table<-read.delim(args[3], header = TRUE)
 table$Gene<-as.factor(table$Gene)
@@ -23,10 +27,7 @@ table$Labelcombined<-as.factor(table$Labelcombined)
 plot1<-ggplot(table, aes(Tissue, fill=Label)) +
   geom_bar(stat="count", position="stack", show.legend = F) +
   labs(title="", x="",y="Number of RAMPAGE peaks") +
-#  scale_fill_manual(values=c("Intergenic"="#B8B5B3","Terminator"="#B233FF",
-#                                "Gene_body"="#3358FF","Promoter"="#FF33E0","helitron"="#0B6D10","LINE_element"="#B9DCBA","LTR_retrotransposon"="#08AF0F",
-#                                "SINE_element"="#92EB96","solo_LTR"="#11E119","terminal_inverted_repeat_element"="#184F19"),
-#                            name="Genomic feature") +
+  scale_fill_discrete(type = pal) +
   theme(panel.grid=element_blank(),
         panel.grid.major.y = element_line(colour="grey"),
         axis.ticks=element_blank(),
@@ -36,10 +37,7 @@ plot1<-ggplot(table, aes(Tissue, fill=Label)) +
 plot2<-ggplot(table, aes(Tissue, fill=Label)) +
   geom_bar(stat="count", position="fill", show.legend = T) +
   labs(title="", x="",y="Percentage of RAMPAGE peaks", fill="Genomic feature") +
-#  scale_fill_manual(values=c("Intergenic"="#B8B5B3","Terminator"="#B233FF",
-#                                     "Gene_body"="#3358FF","Promoter"="#FF33E0","helitron"="#0B6D10","LINE_element"="#B9DCBA","LTR_retrotransposon"="#08AF0F",
-#                                "SINE_element"="#92EB96","solo_LTR"="#11E119","terminal_inverted_repeat_element"="#184F19"),
-#                            name="Genomic feature") +
+  scale_fill_discrete(type = pal) +
   theme(panel.grid=element_blank(),
         panel.grid.major.y = element_line(colour="grey"),
         axis.ticks=element_blank(),
@@ -68,11 +66,8 @@ plot<-upset(inputable, sampleCols, name="RAMPAGE Peaks",
 	height_ratio = 0.75,
 	base_annotations = list(
        		 'Shared TSS'=intersection_size(
-        	  counts=FALSE, mapping=aes(fill=Label)) 
-#	+ scale_fill_manual(values=c("Intergenic"="#B8B5B3","Terminator"="#B233FF",
-#                                     "Gene_body"="#3358FF","Promoter"="#FF33E0","helitron"="#0B6D10","LINE_element"="#B9DCBA","LTR_retrotransposon"="#08AF0F",
-#                                "SINE_element"="#92EB96","solo_LTR"="#11E119","terminal_inverted_repeat_element"="#184F19"),
-#                          name="Genomic feature")
+        	  counts=FALSE, mapping=aes(fill=Label))
+		+ scale_fill_discrete(type = pal)
 	),
 	set_sizes = (upset_set_size() + ylab("Total RAMPAGE Peaks") +
 	        theme(axis.text.x = element_text(angle = 45))),
