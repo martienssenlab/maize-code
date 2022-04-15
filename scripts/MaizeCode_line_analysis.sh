@@ -1759,7 +1759,7 @@ if [[ ${#uniq_rampage_tissue_list[*]} -ge 2 ]] && [[ ${tefilebw} != "" ]]; then
 		printf "\nGrouping based on distance for ${tissue}\n"
 		awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/TSS/temp_TSS_${analysisname}.bed > combined/TSS/temp2_TSS_${analysisname}.bed
 		printf "\nIntersecting TE for ${tissue}\n"
-		bedtools intersect -a combined/TSS/temp2_TSS_${analysisname}.bed -b combined/TSS/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v t=${tissue} -v l=${line} '{if ($13==".") print l,t,l"_"t"_"$4,$9,"No",$9,$9; else if ($9 == "Intergenic") print l,t,l"_"t"_"$4,$9,$13,$13,$13; else print l,t,l"_"t"_"$4,$9,$13,$13,$13"_in_"$9}' > combined/TSS/temp3_TSS_${tissue}_${analysisname}.bed
+		bedtools intersect -a combined/TSS/temp2_TSS_${analysisname}.bed -b combined/TSS/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v t=${tissue} -v l=${line} '{if ($13==".") print l,t,l"_"t"_"$4,$9,"No",$9,$9; else if ($9 == "Intergenic") print l,t,l"_"t"_"$4,$9,$13,$13,$13; else print l,t,l"_"t"_"$4,$9,$13,$13,$13"_in_"$9}' > combined/TSS/temp3_TSS_${analysisname}.bed
 		awk -v OFS="\t" 'BEGIN {a=""} {if ($3!=a) print; a=$3}' combined/TSS/temp3_TSS_${analysisname}.bed > combined/TSS/TSS_in_genes_and_tes_${tissue}_${analysisname}.bed
 		rm -f combined/TSS/temp*_TSS_${analysisname}.bed
 	done
