@@ -150,6 +150,7 @@ The samples that have already been processed will not be repeated but will still
 - Always process the Input samples with their corresponding ChIP in the `MaizeCode.sh` script.
 - The analysis will have to be adapted to the desired output, but running the default complete pipeline should give a first look at the data and generate all the files required for further analysis.
 - These are still preliminary version of the scripts!
+- If you want to map samples to different references of the same inbred line (e.g. B73 v3 and B73 NAM) it is much safer to run a new analysis in a different folder
 
 ---
 
