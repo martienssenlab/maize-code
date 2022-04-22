@@ -1798,7 +1798,11 @@ if [[ ${#uniq_rampage_tissue_list[*]} -ge 2 ]] && [[ ${tefilebw} != "" ]]; then
 	#### To make an Upset plot highlighting peaks in gene bodies
 	printf "\nCreating distribution and Upset plot for TSS in ${analysisname} with R version:\n"
 	R --version
-	Rscript --vanilla ${mc_dir}/MaizeCode_R_TSS_distribution_upset.r ${analysisname} ${TEtypestring} combined/TSS/Table_TSS_tissues_${analysisname}.txt combined/TSS/matrix_upset_TSS_${analysisname}.txt combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed combined/DEG/genes_rpkm_${analysisname}.txt
+	if [ -e combined/DEG/genes_rpkm_${analysisname}.txt ]; then
+		Rscript --vanilla ${mc_dir}/MaizeCode_R_TSS_distribution_upset.r ${analysisname} ${TEtypestring} combined/TSS/Table_TSS_tissues_${analysisname}.txt combined/TSS/matrix_upset_TSS_${analysisname}.txt combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed combined/DEG/genes_rpkm_${analysisname}.txt
+	else
+		Rscript --vanilla ${mc_dir}/MaizeCode_R_TSS_distribution_upset.r ${analysisname} ${TEtypestring} combined/TSS/Table_TSS_tissues_${analysisname}.txt combined/TSS/matrix_upset_TSS_${analysisname}.txt combined/TSS/all_TSS_in_genes_and_tes_${analysisname}.bed
+	fi
 fi
 
 ############################################################################################
@@ -1859,7 +1863,11 @@ if [[ ${#uniq_shrna_tissue_list[*]} -ge 2 ]] && [[ ${tefilebw} != "" ]]; then
 	#### To make an Upset plot highlighting peaks in gene bodies
 	printf "\nCreating Distribution and Upset plot for shRNA clusters in ${analysisname} with R version:\n"
 	R --version
-	Rscript --vanilla ${mc_dir}/MaizeCode_R_shRNA_distribution_upset.r ${analysisname} ${TEtypestring} combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}.txt combined/shRNA/matrix_upset_shRNA_clusters_${analysisname}.txt combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed combined/DEG/genes_rpkm_${analysisname}.txt
+	if [ -e combined/DEG/genes_rpkm_${analysisname}.txt ]; then
+		Rscript --vanilla ${mc_dir}/MaizeCode_R_shRNA_distribution_upset.r ${analysisname} ${TEtypestring} combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}.txt combined/shRNA/matrix_upset_shRNA_clusters_${analysisname}.txt combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed combined/DEG/genes_rpkm_${analysisname}.txt
+	else
+		Rscript --vanilla ${mc_dir}/MaizeCode_R_shRNA_distribution_upset.r ${analysisname} ${TEtypestring} combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}.txt combined/shRNA/matrix_upset_shRNA_clusters_${analysisname}.txt combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed
+	fi
 fi
 
 #########################################################################################
