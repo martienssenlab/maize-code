@@ -1819,55 +1819,64 @@ if [[ ${#uniq_shrna_tissue_list[*]} -ge 2 ]] && [[ ${tefilebw} != "" ]]; then
 	if [[ -e combined/shRNA/tmp_shRNA_clusters_${analysisname}.bed ]]; then
 		rm -f combined/shRNA/tmp_shRNA_clusters_${analysisname}.bed
 	fi
-	for tissue in ${uniq_shrna_tissue_list[@]}
+	for class in MIRNA {20..24}
 	do
-		printf "\nMaking shRNA cluster file for ${tissue}\n"
-		awk -v OFS="\t" '($0 !~ /^#/) && ($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$4,$5,$3"_"NR,"."}' shRNA/mapped/${line}_${tissue}_shRNA/ShortStack_All.gff3 | bedtools sort -g ${ref_dir}/chrom.sizes > combined/shRNA/${line}_${tissue}_shRNA_clusters.bed
-		awk -v OFS="\t" -v t=${tissue} '{print $1,$2,$3,t}' combined/shRNA/${line}_${tissue}_shRNA_clusters.bed | sort -k1,1 -k2,2n -u >> combined/shRNA/tmp_shRNA_clusters_${analysisname}.bed
-		printf "\nGetting closest gene for ${tissue}\n"	
-		bedtools closest -a combined/shRNA/${line}_${tissue}_shRNA_clusters.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/shRNA/temp_clusters_${analysisname}.bed
-		printf "\nGrouping based on distance for ${tissue}\n"
-		awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/shRNA/temp_clusters_${analysisname}.bed > combined/shRNA/temp2_clusters_${analysisname}.bed
-		printf "\nIntersecting TE for ${tissue}\n"
-		bedtools intersect -a combined/shRNA/temp2_clusters_${analysisname}.bed -b combined/TSS/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v t=${tissue} -v l=${line} '{if ($13==".") print l,t,l"_"t"_"$4,$9,"No",$9,$9; else if ($9 == "Intergenic") print l,t,l"_"t"_"$4,$9,$13,$13,$13; else print l,t,l"_"t"_"$4,$9,$13,$13,$13"_in_"$9}' > combined/shRNA/temp3_clusters_${analysisname}.bed
-		awk -v OFS="\t" 'BEGIN {a=""} {if ($3!=a) print; a=$3}' combined/shRNA/temp3_clusters_${analysisname}.bed > combined/shRNA/clusters_in_genes_and_tes_${tissue}_${analysisname}.bed
-		rm -f combined/shRNA/temp*_clusters_${analysisname}.bed
+		for tissue in ${uniq_shrna_tissue_list[@]}
+		do
+			printf "\nMaking ${class} shRNA cluster file for ${tissue}\n"
+			if [[ "${class}" == "MIRNA" ]]; then
+				awk -F"[=;]" -v OFS="\t" '($0 !~ /^#/) && $6=="Y" {print $1,$2}' shRNA/mapped/${line}_${tissue}_shRNA/ShortStack_All.gff3 | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$4,$5,$10,$6}' > combined/shRNA/${line}_${tissue}_shRNA_clusters_${class}.bed
+			else
+				awk -F"[=;]" -v OFS="\t" -v s=${class} '($0 !~ /^#/) && $6=="N" && $4==s {print $1,$2}' shRNA/mapped/${line}_${tissue}_shRNA/ShortStack_All.gff3 | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$4,$5,$10,$6}' >> combined/shRNA/${line}_${tissue}_shRNA_clusters_${class}.bed
+			fi
+			awk -v OFS="\t" -v t=${tissue} '{print $1,$2,$3,t}' combined/shRNA/${line}_${tissue}_shRNA_clusters_${class}.bed | sort -V -k1,1 -k2,2n -u >> combined/shRNA/tmp_shRNA_clusters_${analysisname}_${class}.bed
+			if [[ ${ref} == "B73_v4" ]] || [[ ${ref} == "B73_v3" ]]; then
+				bedtools closest -a combined/shRNA/${line}_${tissue}_shRNA_clusters_${class}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/shRNA/temp_clusters_${analysisname}_${class}.bed		
+			else
+				bedtools closest -a combined/shRNA/${line}_${tissue}_shRNA_clusters_${class}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[=;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/shRNA/temp_clusters_${analysisname}_${class}.bed
+			fi
+			awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/shRNA/temp_clusters_${analysisname}_${class}.bed > combined/shRNA/temp2_clusters_${analysisname}_${class}.bed
+			printf "\nIntersecting with TEs for ${tissue} ${class} shRNA\n"
+			bedtools intersect -a combined/shRNA/temp2_clusters_${analysisname}_${class}.bed -b combined/TSS/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v t=${tissue} -v l=${line} '{if ($13==".") print l,t,l"_"t"_"$4,$9,"No",$9,$9; else if ($9 == "Intergenic") print l,t,l"_"t"_"$4,$9,$13,$13,$13; else print l,t,l"_"t"_"$4,$9,$13,$13,$13"_in_"$9}' > combined/shRNA/temp3_clusters_${analysisname}_${class}.bed
+			awk -v OFS="\t" 'BEGIN {a=""} {if ($3!=a) print; a=$3}' combined/shRNA/temp3_clusters_${analysisname}_${class}.bed > combined/shRNA/clusters_in_genes_and_tes_${tissue}_${analysisname}_${class}.bed
+			rm -f combined/shRNA/temp*_clusters_${analysisname}_${class}.bed
+		done
+		printf "Line\tTissue\tCluster_ID\tGene\tTE\tLabel\tLabelcombined\n" > combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}_${class}.txt
+		cat combined/shRNA/clusters_in_genes_and_tes_*_${analysisname}_${class}.bed >> combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}_${class}.txt
+		printf "\nPreparing merged ${class} shRNA cluster file for ${analysisname}\n"
+		sort -V -k1,1 -k2,2n combined/shRNA/tmp_shRNA_clusters_${analysisname}_${class}.bed > combined/shRNA/tmp2_shRNA_clusters_${analysisname}_${class}.bed
+		bedtools merge -i combined/shRNA/tmp2_shRNA_clusters_${analysisname}_${class}.bed -c 4 -o distinct | bedtools sort -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{print $1,$2,$3,"Cluster_"NR,$4}'> combined/shRNA/tmp3_shRNA_clusters_${analysisname}_${class}.bed
+		printf "\nGetting closest gene for clusters in ${analysisname}\n"
+		if [[ ${ref} == "B73_v4" ]] || [[ ${ref} == "B73_v3" ]]; then
+			bedtools closest -a combined/shRNA/tmp3_shRNA_clusters_${analysisname}_${class}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/shRNA/tmp4_shRNA_clusters_${analysisname}_${class}.bed
+		else
+			bedtools closest -a combined/shRNA/tmp3_shRNA_clusters_${analysisname}_${class}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[:=;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/shRNA/tmp4_shRNA_clusters_${analysisname}_${class}.bed
+		fi
+		printf "\nGrouping based on distance\n"
+		awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/shRNA/tmp4_shRNA_clusters_${analysisname}_${class}.bed > combined/shRNA/tmp5_shRNA_clusters_${analysisname}_${class}.bed
+		printf "\nIntersecting with TEs\n"
+		bedtools intersect -a combined/shRNA/tmp5_shRNA_clusters_${analysisname}_${class}.bed -b combined/TSS/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v l=${line} 'BEGIN {printf "Line\tCluster_ID\tGene\tTE\tLabel\tLabelcombined\tGID\tTissues\tPeak_coordinates\n"} {if ($13==".") print l,$4,$9,"No",$9,$9,$8,$7,$1":"$2"-"$3; else if ($9 == "Intergenic") print l,$4,$9,$13,$13,$13,$8,$7,$1":"$2"-"$3; else print l,$4,$9,$13,$13,$13"_in_"$9,$8,$7,$1":"$2"-"$3}' > combined/shRNA/temp6_shRNA_clusters_${analysisname}_${class}.bed
+		awk -v OFS="\t" 'BEGIN {a=""} {if ($2!=a) print; a=$2}' combined/shRNA/temp6_shRNA_clusters_${analysisname}_${class}.bed > combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}_${class}.bed
+		rm -f combined/shRNA/tmp*_shRNA_clusters_${analysisname}_${class}.bed
+		#### To create a matrix of peak presence in each sample
+		printf "\nCreating matrix file for ${analysisname}\n"
+		for tissue in ${uniq_shrna_tissue_list[@]}
+		do
+			printf "${tissue}\n" > combined/shRNA/temp_col_clusters_${analysisname}_${tissue}_${class}.txt
+			awk -v OFS="\t" -v t=${tissue} 'NR>1 {if ($8 ~ t) print "1"; else print "0"}' combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}_${class}.bed >> combined/shRNA/temp_col_clusters_${analysisname}_${tissue}_${class}.txt
+		done
+		awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7}' combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}_${class}.bed > combined/shRNA/temp_col_clusters_${analysisname}_${class}_AAA.txt
+		paste combined/shRNA/temp_col_clusters_${analysisname}_${class}_*.txt | uniq > combined/shRNA/matrix_upset_shRNA_clusters_${analysisname}_${class}.txt
+		rm -f combined/shRNA/temp_col_clusters_${analysisname}_${class}_*.txt
+		#### To make an Upset plot highlighting peaks in gene bodies
+		printf "\nCreating Distribution and Upset plot for ${class} shRNA clusters in ${analysisname} with R version:\n"
+		R --version
+		if [ -e combined/DEG/genes_rpkm_${analysisname}.txt ]; then
+			Rscript --vanilla ${mc_dir}/MaizeCode_R_shRNA_distribution_upset.r ${analysisname}_${class} ${TEtypestring} combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}_${class}.txt combined/shRNA/matrix_upset_shRNA_clusters_${analysisname}_${class}.txt combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}_${class}.bed combined/DEG/genes_rpkm_${analysisname}.txt
+		else
+			Rscript --vanilla ${mc_dir}/MaizeCode_R_shRNA_distribution_upset.r ${analysisname}_${class} ${TEtypestring} combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}_${class}.txt combined/shRNA/matrix_upset_shRNA_clusters_${analysisname}_${class}.txt combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed
+		fi
 	done
-	printf "Line\tTissue\tCluster_ID\tGene\tTE\tLabel\tLabelcombined\n" > combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}.txt
-	cat combined/shRNA/clusters_in_genes_and_tes_*_${analysisname}.bed >> combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}.txt
-	printf "\nPreparing merged shRNA cluster file for ${analysisname}\n"
-	sort -k1,1 -k2,2n combined/shRNA/tmp_shRNA_clusters_${analysisname}.bed > combined/shRNA/tmp2_shRNA_clusters_${analysisname}.bed
-	bedtools merge -i combined/shRNA/tmp2_shRNA_clusters_${analysisname}.bed -c 4 -o distinct | bedtools sort -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{print $1,$2,$3,"Cluster_"NR,$4}'> combined/shRNA/tmp3_shRNA_clusters_${analysisname}.bed
-	printf "\nGetting closest gene for clusters in ${analysisname}\n"
-	if [[ ${ref} == "B73_v4" ]] || [[ ${ref} == "B73_v3" ]]; then
-		bedtools closest -a combined/shRNA/tmp3_shRNA_clusters_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/shRNA/tmp4_shRNA_clusters_${analysisname}.bed
-	else
-		bedtools closest -a combined/shRNA/tmp3_shRNA_clusters_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[:=;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/shRNA/tmp4_shRNA_clusters_${analysisname}.bed
-	fi
-	printf "\nGrouping based on distance\n"
-	awk -v OFS="\t" '{if ($5<-2000) {d="Intergenic"} else if ($5<0) {d="Terminator"} else if ($5==0) {d="Gene_body"} else if ($5>2000) {d="Intergenic"} else {d="Promoter"} print $0,d}' combined/shRNA/tmp4_shRNA_clusters_${analysisname}.bed > combined/shRNA/tmp5_shRNA_clusters_${analysisname}.bed
-	printf "\nIntersecting with TEs\n"
-	bedtools intersect -a combined/shRNA/tmp5_shRNA_clusters_${analysisname}.bed -b combined/TSS/${ref}_all_tes.bed -loj | awk -v OFS="\t" -v l=${line} 'BEGIN {printf "Line\tCluster_ID\tGene\tTE\tLabel\tLabelcombined\tGID\tTissues\tPeak_coordinates\n"} {if ($13==".") print l,$4,$9,"No",$9,$9,$8,$7,$1":"$2"-"$3; else if ($9 == "Intergenic") print l,$4,$9,$13,$13,$13,$8,$7,$1":"$2"-"$3; else print l,$4,$9,$13,$13,$13"_in_"$9,$8,$7,$1":"$2"-"$3}' > combined/shRNA/temp6_shRNA_clusters_${analysisname}.bed
-	awk -v OFS="\t" 'BEGIN {a=""} {if ($2!=a) print; a=$2}' combined/shRNA/temp6_shRNA_clusters_${analysisname}.bed > combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed
-	rm -f combined/shRNA/tmp*_shRNA_clusters_${analysisname}.bed
-	#### To create a matrix of peak presence in each sample
-	printf "\nCreating matrix file for ${analysisname}\n"
-	for tissue in ${uniq_shrna_tissue_list[@]}
-	do
-		printf "${tissue}\n" > combined/shRNA/temp_col_clusters_${analysisname}_${tissue}.txt
-		awk -v OFS="\t" -v t=${tissue} 'NR>1 {if ($8 ~ t) print "1"; else print "0"}' combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed >> combined/shRNA/temp_col_clusters_${analysisname}_${tissue}.txt
-	done
-	awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7}' combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed > combined/shRNA/temp_col_clusters_${analysisname}_AAA.txt
-	paste combined/shRNA/temp_col_clusters_${analysisname}_*.txt | uniq > combined/shRNA/matrix_upset_shRNA_clusters_${analysisname}.txt
-	rm -f combined/shRNA/temp_col_clusters_${analysisname}_*.txt
-	#### To make an Upset plot highlighting peaks in gene bodies
-	printf "\nCreating Distribution and Upset plot for shRNA clusters in ${analysisname} with R version:\n"
-	R --version
-	if [ -e combined/DEG/genes_rpkm_${analysisname}.txt ]; then
-		Rscript --vanilla ${mc_dir}/MaizeCode_R_shRNA_distribution_upset.r ${analysisname} ${TEtypestring} combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}.txt combined/shRNA/matrix_upset_shRNA_clusters_${analysisname}.txt combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed combined/DEG/genes_rpkm_${analysisname}.txt
-	else
-		Rscript --vanilla ${mc_dir}/MaizeCode_R_shRNA_distribution_upset.r ${analysisname} ${TEtypestring} combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}.txt combined/shRNA/matrix_upset_shRNA_clusters_${analysisname}.txt combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed
-	fi
 fi
 
 #########################################################################################
