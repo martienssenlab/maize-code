@@ -1569,10 +1569,14 @@ done
 ####################### Making heatmaps on all types of enhancers ##########################
 ############################################################################################
 
-awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$2,$3,"1"}' ${regionfile} | bedtools sort -g ${ref_dir}/chrom.sizes > ChIP/tracks/temp_${regionname}.bg
-bedtools merge -i ChIP/tracks/temp_${regionname}.bg -o max -c 4 | LC_COLLATE=C sort -k1,1 -k2,2n > ChIP/tracks/temp2_${regionname}.bg
-bedGraphToBigWig ChIP/tracks/temp2_${regionname}.bg ${ref_dir}/chrom.sizes ChIP/tracks/${regionname}.bw
-rm -f ChIP/tracks/temp*.bg
+if [ ! -d combined/tracks ]; then
+	mkdir combined/tracks
+fi
+
+awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$2,$3,"1"}' ${regionfile} | bedtools sort -g ${ref_dir}/chrom.sizes > combined/tracks/temp_${regionname}.bg
+bedtools merge -i combined/tracks/temp_${regionname}.bg -o max -c 4 | LC_COLLATE=C sort -k1,1 -k2,2n > combined/tracks/temp2_${regionname}.bg
+bedGraphToBigWig combined/tracks/temp2_${regionname}.bg ${ref_dir}/chrom.sizes combined/tracks/${regionname}.bw
+rm -f combined/tracks/temp*.bg
 
 ### Need to add the TE file for all other inbreds (based on reference name)
 ### Maybe changing the way to use the references altogether, like adding a reference folder in the git hub and have them add theirs there
@@ -1586,12 +1590,12 @@ if [ -s /grid/martienssen/data_norepl/dropbox/maizecode/TEs/${ref}_TEs.gff3.gz ]
 	if [ ! -s combined/TSS/${ref}_all_tes.bed ]; then
 		zcat /grid/martienssen/data_norepl/dropbox/maizecode/TEs/${ref}_TEs.gff3.gz | awk -v OFS="\t" '$1 !~ /^#/ {print $1,$4-1,$5,$3,".",$7}' | bedtools sort -g ${ref_dir}/chrom.sizes > combined/TSS/${ref}_all_tes.bed
 	fi
-	awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$2,$3,"1"}' combined/TSS/${ref}_all_tes.bed | bedtools sort -g ${ref_dir}/chrom.sizes > ChIP/tracks/temp_${ref}_all_tes.bg
-	bedtools merge -i ChIP/tracks/temp_${ref}_all_tes.bg -o max -c 4 | LC_COLLATE=C sort -k1,1 -k2,2n > ChIP/tracks/temp2_${ref}_all_tes.bg
-	bedGraphToBigWig ChIP/tracks/temp2_${ref}_all_tes.bg ${ref_dir}/chrom.sizes ChIP/tracks/${ref}_all_tes.bw
-	tefilebw="ChIP/tracks/${ref}_all_tes.bw"
+	awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$2,$3,"1"}' combined/TSS/${ref}_all_tes.bed | bedtools sort -g ${ref_dir}/chrom.sizes > combined/tracks/temp_${ref}_all_tes.bg
+	bedtools merge -i combined/tracks/temp_${ref}_all_tes.bg -o max -c 4 | LC_COLLATE=C sort -k1,1 -k2,2n > combined/tracks/temp2_${ref}_all_tes.bg
+	bedGraphToBigWig combined/tracks/temp2_${ref}_all_tes.bg ${ref_dir}/chrom.sizes combined/tracks/${ref}_all_tes.bw
+	tefilebw="combined/tracks/${ref}_all_tes.bw"
 	tefilebed="combined/TSS/${ref}_all_tes.bed"
-	rm -f ChIP/tracks/temp*.bg
+	rm -f combined/tracks/temp*.bg
 	awk '{print $4}' combined/TSS/${ref}_all_tes.bed | sort -u > combined/TSS/${ref}_TE_types.txt
 	TEtypestring=""
 	while read TEtype
@@ -1670,9 +1674,9 @@ do
 			for strand in plus minus
 			do
 				case "$strand" in
-					plus)	bw="${tissue_bw_plus[*]} ChIP/tracks/${regionname}.bw ${tefilebw}"
+					plus)	bw="${tissue_bw_plus[*]} combined/tracks/${regionname}.bw ${tefilebw}"
 						regions="combined/peaks/sorted_enhancers_${type}_${line}_${tissue}_${analysisname}_plus.txt";;
-					minus)	bw="${tissue_bw_minus[*]} ChIP/tracks/${regionname}.bw ${tefilebw}"
+					minus)	bw="${tissue_bw_minus[*]} combined/tracks/${regionname}.bw ${tefilebw}"
 						regions="combined/peaks/sorted_enhancers_${type}_${line}_${tissue}_${analysisname}_minus.txt";;
 				esac
 				printf "\nComputing matrix for ${line} ${tissue} ${type} ${strand} strand\n"
@@ -1770,7 +1774,7 @@ if [[ ${#uniq_rampage_tissue_list[*]} -ge 2 ]] && [[ ${tefilebw} != "" ]]; then
 	sort -k1,1 -k2,2n combined/TSS/tmp_TSS_peaks_${analysisname}.bed > combined/TSS/tmp2_TSS_peaks_${analysisname}.bed
 	bedtools merge -i combined/TSS/tmp2_TSS_peaks_${analysisname}.bed -c 4 -o distinct | bedtools sort -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{print $1,$2,$3,"Peak_"NR,$4}'> combined/TSS/tmp3_TSS_peaks_${analysisname}.bed
 	printf "\nGetting closest gene for TSS in ${analysisname}\n"
-	if [[ ${ref} == "B73_v4" ]]; then
+	if [[ ${ref} == "B73_v4" ]] || [[ ${ref} == "B73_v3" ]]; then
 		bedtools closest -a combined/TSS/tmp3_TSS_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/TSS/tmp4_TSS_peaks_${analysisname}.bed
 	else
 		bedtools closest -a combined/TSS/tmp3_TSS_peaks_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[:=;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/TSS/tmp4_TSS_peaks_${analysisname}.bed
@@ -1831,7 +1835,7 @@ if [[ ${#uniq_shrna_tissue_list[*]} -ge 2 ]] && [[ ${tefilebw} != "" ]]; then
 	sort -k1,1 -k2,2n combined/shRNA/tmp_shRNA_clusters_${analysisname}.bed > combined/shRNA/tmp2_shRNA_clusters_${analysisname}.bed
 	bedtools merge -i combined/shRNA/tmp2_shRNA_clusters_${analysisname}.bed -c 4 -o distinct | bedtools sort -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{print $1,$2,$3,"Cluster_"NR,$4}'> combined/shRNA/tmp3_shRNA_clusters_${analysisname}.bed
 	printf "\nGetting closest gene for clusters in ${analysisname}\n"
-	if [[ ${ref} == "B73_v4" ]]; then
+	if [[ ${ref} == "B73_v4" ]] || [[ ${ref} == "B73_v3" ]]; then
 		bedtools closest -a combined/shRNA/tmp3_shRNA_clusters_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[:;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/shRNA/tmp4_shRNA_clusters_${analysisname}.bed
 	else
 		bedtools closest -a combined/shRNA/tmp3_shRNA_clusters_${analysisname}.bed -b ${regionfile} -g ${ref_dir}/chrom.sizes -D ref | awk -v OFS="\t" '{if ($11=="+") print $1,$2,$3,$4,$12,$11,$5,$9; else print $1,$2,$3,$4,-$12,$11,$5,$9}' | awk -F"[:=;]" -v OFS="\t" '{print $1,$2}' | awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$9}' > combined/shRNA/tmp4_shRNA_clusters_${analysisname}.bed
