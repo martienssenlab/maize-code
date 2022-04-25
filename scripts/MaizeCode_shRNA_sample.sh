@@ -187,10 +187,12 @@ elif [[ ${paired} == "SE" ]]; then
 	#### Filtering only small RNA sizes (15 to 32nt)
 	samtools view -h mapped/${name}/filtered_${name}.bam | awk '(length($10) >= 20 && length($10) <= 24) || $1 ~ /^@/' | samtools view -bS - > mapped/${name}/sized_${name}.bam
 	#### Getting stats of size distribution
-  	printf "\nGetting stats for ${name}\n"
+  	printf "\nGetting trimmed stats for ${name}\n"
   	zcat fastq/trimmed_${name}.fastq.gz | awk '{if(NR%4==2) print length($1)}' | sort -n | uniq -c | awk -v OFS="\t" -v n=${name} '{print n,"trimmed",$2,$1}' > reports/sizes_trimmed_${name}.txt
-  	zcat fastq/filtered_${name}.fastq.gz | awk '{if(NR%4==2) print length($1)}' | sort -n | uniq -c | awk -v OFS="\t" -v n=${name} '{print n,"filtered",$2,$1}' > reports/sizes_filtered_${name}.txt
-  	samtools view mapped/${name}/filtered_${name}.bam | awk '$2==0 || $2==16 {print length($10)}' | sort -n | uniq -c | awk -v OFS="\t" -v n=${name} '{print n,"mapped",$2,$1}' > reports/sizes_mapped_${name}.txt
+  	printf "\nGetting filtered stats for ${name}\n"
+	zcat fastq/filtered_${name}.fastq.gz | awk '{if(NR%4==2) print length($1)}' | sort -n | uniq -c | awk -v OFS="\t" -v n=${name} '{print n,"filtered",$2,$1}' > reports/sizes_filtered_${name}.txt
+  	printf "\nGetting mapped stats for ${name}\n"
+	samtools view mapped/${name}/filtered_${name}.bam | awk '$2==0 || $2==16 {print length($10)}' | sort -n | uniq -c | awk -v OFS="\t" -v n=${name} '{print n,"mapped",$2,$1}' > reports/sizes_mapped_${name}.txt
 else
 	printf "\nData format missing: paired-end (PE) or single-end (SE)?\n"
 	exit 1
