@@ -178,7 +178,7 @@ elif [[ ${paired} == "SE" ]]; then
   	bowtie2 --version
 	bowtie2 --very-sensitive -p ${threads} -x structural_RNA/zm_structural_RNAs -U fastq/trimmed_${name}.fastq.gz | samtools view -@ ${threads} -f 0x4 | samtools fastq -@ ${threads} | gzip -c > fastq/filtered_${name}.fastq.gz
 	#### Mapping and identifying sRNA loci with shortstack
-	ShortStack --readfile fastq/filtered_${name}.fastq.gz --genomefile ${fasta} --bowtie_cores ${threads} --sort_mem 8G --mmap u --dicermin 20 --dicermax 24 --bowtie_m 1000 --mismatches 1 --foldsize 1000 --pad 250 --outdir mapped/${name}
+	ShortStack --readfile fastq/filtered_${name}.fastq.gz --genomefile ${fasta} --bowtie_cores ${threads} --sort_mem 6G --mmap u --dicermin 20 --dicermax 24 --bowtie_m 1000 --mismatches 1 --foldsize 1000 --pad 250 --outdir mapped/${name}
 	#### Making bigiwig tracks
 	samtools index -@ ${threads} mapped/${name}/filtered_${name}.bam
 	printf "\nMaking plus track for ${name}\n"
