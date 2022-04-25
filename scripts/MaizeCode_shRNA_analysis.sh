@@ -101,7 +101,7 @@ do
 		#### To map and identify sRNA loci with ShortStack
 		if [ ! -s mapped/${name}/ShortStack_All.gff3 ]; then
 			rm -fr mapped/${name}
-			ShortStack --bamfile mapped/${name}_merged.bam --genomefile ${fasta} --sort_mem 5G --mmap u --dicermin 20 --dicermax 24 --bowtie_m 1000 --mismatches 1 --foldsize 1000 --pad 250 --outdir mapped/${name}
+			ShortStack --bamfile mapped/${name}_merged.bam --genomefile ${fasta} --sort_mem 6G --mmap u --dicermin 20 --dicermax 24 --bowtie_m 1000 --mismatches 1 --foldsize 1000 --pad 250 --outdir mapped/${name}
 		fi
 		#### To make bw files of merged samples if not already existing		
 		if [ ! -s tracks/${name}_merged_minus.bw ]; then
