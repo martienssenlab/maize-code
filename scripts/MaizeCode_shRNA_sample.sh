@@ -129,7 +129,7 @@ if [[ ${paired} == "PE" ]]; then
 		fastqc -o reports/ fastq/trimmed_${name}_R2.fastq.gz
 	fi
   	#### Aligning reads to filter out structural RNAs (rRNAs, snoRNAs and tRNAs) with bowtie2
-	bowtie2 --very-sensitive -p ${threads} -x structural_RNA/zm_structural_RNAs -1 fastq/trimmed_${name}_R1.fastq.gz -2 fastq/trimmed_${name}_R2.fastq.gz | samtools view -@ ${threads} -f 0x4 | samtools fastq -@ ${threads} | gzip > fastq/filtered_${name}.fastq.gz
+	bowtie2 --very-sensitive -p ${threads} -x structural_RNA/zm_structural_RNAs -1 fastq/trimmed_${name}_R1.fastq.gz -2 fastq/trimmed_${name}_R2.fastq.gz | samtools view -@ ${threads} -f 0x4 | samtools fastq -@ ${threads} > fastq/filtered_${name}.fastq.gz
 	#### Mapping and identifying sRNA loci with shortstack
 	ShortStack --readfile fastq/filtered_${name}.fastq.gz --genomefile ${fasta} --bowtie_cores $threads --sort_mem 4G --mmap u --dicermin 20 --dicermax 24 --bowtie_m all --mismatches 1 --foldsize 1000 --pad 250 --outdir mapped/${name}
 	#### Making bigiwig tracks
@@ -176,7 +176,7 @@ elif [[ ${paired} == "SE" ]]; then
 	#### Aligning reads to filter out structural RNAs (rRNAs, snoRNAs and tRNAs) with bowtie2
   	printf "\nAligning reads to filter out structural RNAs with bowtie2 version:\n"
   	bowtie2 --version
-	bowtie2 --very-sensitive -p ${threads} -x structural_RNA/zm_structural_RNAs -U fastq/trimmed_${name}.fastq.gz | samtools view -@ ${threads} -f 0x4 | samtools fastq -@ ${threads} | gzip > fastq/filtered_${name}.fastq.gz
+	bowtie2 --very-sensitive -p ${threads} -x structural_RNA/zm_structural_RNAs -U fastq/trimmed_${name}.fastq.gz | samtools view -@ ${threads} -f 0x4 | samtools fastq -@ ${threads} > fastq/filtered_${name}.fastq.gz
 	#### Mapping and identifying sRNA loci with shortstack
 	ShortStack --readfile fastq/filtered_${name}.fastq.gz --genomefile ${fasta} --bowtie_cores ${threads} --sort_mem 6G --mmap u --dicermin 20 --dicermax 24 --bowtie_m 1000 --mismatches 1 --foldsize 1000 --pad 250 --outdir mapped/${name}
 	#### Making bigiwig tracks
