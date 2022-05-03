@@ -1874,7 +1874,7 @@ if [[ ${#uniq_shrna_tissue_list[*]} -ge 2 ]] && [[ ${tefilebw} != "" ]]; then
 		if [ -e combined/DEG/genes_rpkm_${analysisname}.txt ]; then
 			Rscript --vanilla ${mc_dir}/MaizeCode_R_shRNA_distribution_upset.r ${analysisname}_${class} ${TEtypestring} combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}_${class}.txt combined/shRNA/matrix_upset_shRNA_clusters_${analysisname}_${class}.txt combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}_${class}.bed combined/DEG/genes_rpkm_${analysisname}.txt
 		else
-			Rscript --vanilla ${mc_dir}/MaizeCode_R_shRNA_distribution_upset.r ${analysisname}_${class} ${TEtypestring} combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}_${class}.txt combined/shRNA/matrix_upset_shRNA_clusters_${analysisname}_${class}.txt combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}.bed
+			Rscript --vanilla ${mc_dir}/MaizeCode_R_shRNA_distribution_upset.r ${analysisname}_${class} ${TEtypestring} combined/shRNA/Table_shRNA_clusters_tissues_${analysisname}_${class}.txt combined/shRNA/matrix_upset_shRNA_clusters_${analysisname}_${class}.txt combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}_${class}.bed
 		fi
 	done
 fi
