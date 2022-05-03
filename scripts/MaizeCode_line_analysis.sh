@@ -1863,7 +1863,7 @@ if [[ ${#uniq_shrna_tissue_list[*]} -ge 2 ]] && [[ ${tefilebw} != "" ]]; then
 		for tissue in ${uniq_shrna_tissue_list[@]}
 		do
 			printf "${tissue}\n" > combined/shRNA/temp_col_clusters_${analysisname}_${tissue}_${class}.txt
-			awk -v OFS="\t" -v t=${tissue} 'NR>1 {if ($8 ~ t) print "1"; else print "0"}' combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}_${class}.bed >> combined/shRNA/temp_col_clusters_${analysisname}_${tissue}_${class}.txt
+			awk -v OFS="\t" -v t=${tissue} 'NR>1 {if ($8 ~ t) print "1"; else print "0"}' combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}_${class}.bed >> combined/shRNA/temp_col_clusters_${analysisname}_${class}_${tissue}.txt
 		done
 		awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7}' combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}_${class}.bed > combined/shRNA/temp_col_clusters_${analysisname}_${class}_AAA.txt
 		paste combined/shRNA/temp_col_clusters_${analysisname}_${class}_*.txt | uniq > combined/shRNA/matrix_upset_shRNA_clusters_${analysisname}_${class}.txt
