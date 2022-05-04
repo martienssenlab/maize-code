@@ -1819,15 +1819,17 @@ if [[ ${#uniq_shrna_tissue_list[*]} -ge 2 ]] && [[ ${tefilebw} != "" ]]; then
 	if [[ -e combined/shRNA/tmp_shRNA_clusters_${analysisname}.bed ]]; then
 		rm -f combined/shRNA/tmp_shRNA_clusters_${analysisname}.bed
 	fi
-	for class in MIRNA {20..24}
+	for class in all MIRNA {20..24}
 	do
 		for tissue in ${uniq_shrna_tissue_list[@]}
 		do
 			printf "\nMaking ${class} shRNA cluster file for ${tissue}\n"
 			if [[ "${class}" == "MIRNA" ]]; then
-				awk -F"[=;]" -v OFS="\t" '($0 !~ /^#/) && $6=="Y" {print $1,$2}' shRNA/mapped/${line}_${tissue}_shRNA/ShortStack_All.gff3 | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$4,$5,$10,$6}' > combined/shRNA/${line}_${tissue}_shRNA_clusters_${class}.bed
+				awk -F"[=;]" -v OFS="\t" '($0 !~ /^#/) && $6=="Y" {print $1,$2}' shRNA/mapped/${line}_${tissue}_shRNA/ShortStack_All.gff3 | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$4,$5,$10,$6,$7}' > combined/shRNA/${line}_${tissue}_shRNA_clusters_${class}.bed
+			elif [[ "${class}" == "all" ]]; then
+				awk -F"[=;]" -v OFS="\t" '($0 !~ /^#/) {print $1,$2}' shRNA/mapped/${line}_${tissue}_shRNA/ShortStack_All.gff3 | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$4,$5,$10,$6,$7}' >> combined/shRNA/${line}_${tissue}_shRNA_clusters_${class}.bed
 			else
-				awk -F"[=;]" -v OFS="\t" -v s=${class} '($0 !~ /^#/) && $6=="N" && $4==s {print $1,$2}' shRNA/mapped/${line}_${tissue}_shRNA/ShortStack_All.gff3 | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$4,$5,$10,$6}' >> combined/shRNA/${line}_${tissue}_shRNA_clusters_${class}.bed
+				awk -F"[=;]" -v OFS="\t" -v s=${class} '($0 !~ /^#/) && $6=="N" && $4==s {print $1,$2}' shRNA/mapped/${line}_${tissue}_shRNA/ShortStack_All.gff3 | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$4,$5,$10,$6,$7}' >> combined/shRNA/${line}_${tissue}_shRNA_clusters_${class}.bed
 			fi
 			awk -v OFS="\t" -v t=${tissue} '{print $1,$2,$3,t}' combined/shRNA/${line}_${tissue}_shRNA_clusters_${class}.bed | sort -V -k1,1 -k2,2n -u >> combined/shRNA/tmp_shRNA_clusters_${analysisname}_${class}.bed
 			if [[ ${ref} == "B73_v4" ]] || [[ ${ref} == "B73_v3" ]]; then
@@ -1862,7 +1864,7 @@ if [[ ${#uniq_shrna_tissue_list[*]} -ge 2 ]] && [[ ${tefilebw} != "" ]]; then
 		printf "\nCreating matrix file for ${analysisname}\n"
 		for tissue in ${uniq_shrna_tissue_list[@]}
 		do
-			printf "${tissue}\n" > combined/shRNA/temp_col_clusters_${analysisname}_${tissue}_${class}.txt
+			printf "${tissue}\n" > combined/shRNA/temp_col_clusters_${analysisname}_${class}_${tissue}.txt
 			awk -v OFS="\t" -v t=${tissue} 'NR>1 {if ($8 ~ t) print "1"; else print "0"}' combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}_${class}.bed >> combined/shRNA/temp_col_clusters_${analysisname}_${class}_${tissue}.txt
 		done
 		awk -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7}' combined/shRNA/all_shRNA_clusters_in_genes_and_tes_${analysisname}_${class}.bed > combined/shRNA/temp_col_clusters_${analysisname}_${class}_AAA.txt
