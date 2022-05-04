@@ -1825,11 +1825,11 @@ if [[ ${#uniq_shrna_tissue_list[*]} -ge 2 ]] && [[ ${tefilebw} != "" ]]; then
 		do
 			printf "\nMaking ${class} shRNA cluster file for ${tissue}\n"
 			if [[ "${class}" == "MIRNA" ]]; then
-				awk -F"[=;]" -v OFS="\t" '($0 !~ /^#/) && $6=="Y" {print $1,$2}' shRNA/mapped/${line}_${tissue}_shRNA/ShortStack_All.gff3 | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$4,$5,$10,$6,$7}' > combined/shRNA/${line}_${tissue}_shRNA_clusters_${class}.bed
+				awk -F"[=;]" -v OFS="\t" '($0 !~ /^#/) && $6=="Y" {print $1,$2}' shRNA/mapped/${line}_${tissue}_shRNA/ShortStack_All.gff3 | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$4,$5,$10,$6}' > combined/shRNA/${line}_${tissue}_shRNA_clusters_${class}.bed
 			elif [[ "${class}" == "all" ]]; then
-				awk -F"[=;]" -v OFS="\t" '($0 !~ /^#/) {print $1,$2}' shRNA/mapped/${line}_${tissue}_shRNA/ShortStack_All.gff3 | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$4,$5,$10,$6,$7}' >> combined/shRNA/${line}_${tissue}_shRNA_clusters_${class}.bed
+				awk -F"[=;]" -v OFS="\t" '($0 !~ /^#/) {print $1,$2}' shRNA/mapped/${line}_${tissue}_shRNA/ShortStack_All.gff3 | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$4,$5,$10,$6}' >> combined/shRNA/${line}_${tissue}_shRNA_clusters_${class}.bed
 			else
-				awk -F"[=;]" -v OFS="\t" -v s=${class} '($0 !~ /^#/) && $6=="N" && $4==s {print $1,$2}' shRNA/mapped/${line}_${tissue}_shRNA/ShortStack_All.gff3 | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$4,$5,$10,$6,$7}' >> combined/shRNA/${line}_${tissue}_shRNA_clusters_${class}.bed
+				awk -F"[=;]" -v OFS="\t" -v s=${class} '($0 !~ /^#/) && $6=="N" && $4==s {print $1,$2}' shRNA/mapped/${line}_${tissue}_shRNA/ShortStack_All.gff3 | awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$4,$5,$10,$6}' >> combined/shRNA/${line}_${tissue}_shRNA_clusters_${class}.bed
 			fi
 			awk -v OFS="\t" -v t=${tissue} '{print $1,$2,$3,t}' combined/shRNA/${line}_${tissue}_shRNA_clusters_${class}.bed | sort -V -k1,1 -k2,2n -u >> combined/shRNA/tmp_shRNA_clusters_${analysisname}_${class}.bed
 			if [[ ${ref} == "B73_v4" ]] || [[ ${ref} == "B73_v3" ]]; then
