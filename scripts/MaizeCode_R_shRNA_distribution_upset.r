@@ -41,7 +41,7 @@ plot1<-ggplot(table, aes(Tissue, fill=Label)) +
 plot2<-ggplot(table, aes(Tissue, fill=Label)) +
   geom_bar(stat="count", position="fill", show.legend = T) +
   labs(title="", x="",y="Percentage of shRNA clusters", fill="Genomic feature") +
-  scale_fill_discrete(type = pal) +
+  scale_fill_discrete(type = pal2) +
   theme(panel.grid=element_blank(),
         panel.grid.major.y = element_line(colour="grey"),
         axis.ticks=element_blank(),
