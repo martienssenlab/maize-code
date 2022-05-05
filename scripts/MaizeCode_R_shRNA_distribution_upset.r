@@ -16,6 +16,7 @@ TELabels<-c(unlist(strsplit(args[2],",")))
 AllLabels<-c(TELabels,"Intergenic","Terminator","Gene_body","Promoter")
 pal<-rev(wes_palette("Cavalcanti1", length(TELabels)-1, type = "continuous"))
 pal<-c(pal, wes_palette("Royal1", 4))
+names(pal)<-AllLabels
 
 ### For distribution plot
 
