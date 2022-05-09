@@ -11,7 +11,7 @@
 usage="
 ##### Script for Maize code inbred line data analysis, used by script MaizeCode_analyis.sh if -s was not set and region file exists
 #####
-##### sh MaiCode_line_analysis.sh -f samplefile -r regionfile [-t] [-z]
+##### sh MaiCode_line_analysis.sh -f samplefile -r regionfile [-t] [-z] [-x]
 #####	-f: samplefile containing the samples to compare and in 5 tab-delimited columns:
 ##### 		Line, Tissue, Sample, PE or SE, Reference genome directory
 ##### 	-r: bedfile containing the regions that are to be ploted over
@@ -57,7 +57,7 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts ":f:r:tzh" opt; do
+while getopts ":f:r:tzxh" opt; do
 	case ${opt} in
 		h) 	printf "${usage}\n"
 			exit 0;;
@@ -67,6 +67,8 @@ while getopts ":f:r:tzh" opt; do
 			export total="NO";;
 		z)	printf "\nPartial analysis to be performed for testing\n" 
 			export total="TEST";;
+		x)	printf "\nAnalysis to be performed on TEs\n"
+			export repeats="YES";;
 		*)	printf "\nUnknown argument!\n${usage}\n"
 			exit 1;;
 	esac
