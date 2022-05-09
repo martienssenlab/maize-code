@@ -129,7 +129,7 @@ if [[ ${paired} == "PE" ]]; then
 		fastqc -o reports/ fastq/trimmed_${name}_R2.fastq.gz
 	fi
   	#### Aligning reads to filter out structural RNAs (rRNAs, snoRNAs and tRNAs) with bowtie2
-	bowtie2 --very-sensitive -p ${threads} -x structural_RNA/zm_structural_RNAs -1 fastq/trimmed_${name}_R1.fastq.gz -2 fastq/trimmed_${name}_R2.fastq.gz | samtools view -@ ${threads} -f 0x4 | samtools fastq -@ ${threads} | gzip -c > fastq/filtered_${name}.fastq.gz
+	bowtie2 --very-sensitive -p ${threads} -x structural_RNA/zm_structural_RNAs -1 fastq/trimmed_${name}_R1.fastq.gz -2 fastq/trimmed_${name}_R2.fastq.gz | samtools view -@ ${threads} -f 0x4 | samtools fastq -@ ${threads} -c 6 > fastq/filtered_${name}.fastq.gz
 	#### Mapping and identifying sRNA loci with shortstack
 	ShortStack --readfile fastq/filtered_${name}.fastq.gz --genomefile ${fasta} --bowtie_cores $threads --sort_mem 4G --mmap u --dicermin 20 --dicermax 24 --bowtie_m all --mismatches 1 --foldsize 1000 --pad 250 --outdir mapped/${name}
 	#### Making bigiwig tracks
@@ -138,7 +138,7 @@ if [[ ${paired} == "PE" ]]; then
 	bamCoverage --filterRNAstrand forward -bs 1 -p $threads --normalizeUsing CPM -b mapped/${name}/filtered_${name}.bam -o tracks/${name}_plus.bw
 	bamCoverage --filterRNAstrand reverse -bs 1 -p $threads --normalizeUsing CPM -b mapped/${name}/filtered_${name}.bam -o tracks/${name}_minus.bw
 	#### Filtering only small RNA sizes (15 to 32nt)
-#	seqkit seq --max-len 32 --min-len 15 fastq/filtered_${name}.fastq.gz | gzip -c > fastq/sized_${name}.fastq.gz
+#	seqkit seq --max-len 32 --min-len 15 fastq/filtered_${name}.fastq.gz | gzip > fastq/sized_${name}.fastq.gz
 	touch chkpts/${name}
 	
 	###########
@@ -176,21 +176,24 @@ elif [[ ${paired} == "SE" ]]; then
 	#### Aligning reads to filter out structural RNAs (rRNAs, snoRNAs and tRNAs) with bowtie2
   	printf "\nAligning reads to filter out structural RNAs with bowtie2 version:\n"
   	bowtie2 --version
-	bowtie2 --very-sensitive -p ${threads} -x structural_RNA/zm_structural_RNAs -U fastq/trimmed_${name}.fastq.gz | samtools view -@ ${threads} -f 0x4 | samtools fastq -@ ${threads} | gzip -c > fastq/filtered_${name}.fastq.gz
+	bowtie2 --very-sensitive -p ${threads} -x structural_RNA/zm_structural_RNAs -U fastq/trimmed_${name}.fastq.gz | samtools view -@ ${threads} -f 0x4 | samtools fastq -@ ${threads} > fastq/filtered_${name}.fastq
+	gzip fastq/filtered_${name}.fastq
 	#### Mapping and identifying sRNA loci with shortstack
-	ShortStack --readfile fastq/filtered_${name}.fastq.gz --genomefile ${fasta} --bowtie_cores ${threads} --sort_mem 8G --mmap u --dicermin 20 --dicermax 24 --bowtie_m 1000 --mismatches 1 --foldsize 1000 --pad 250 --outdir mapped/${name}
+	ShortStack --readfile fastq/filtered_${name}.fastq.gz --genomefile ${fasta} --bowtie_cores ${threads} --sort_mem 6G --mmap u --dicermin 20 --dicermax 24 --bowtie_m 1000 --mismatches 1 --foldsize 1000 --pad 250 --outdir mapped/${name}
 	#### Making bigiwig tracks
 	samtools index -@ ${threads} mapped/${name}/filtered_${name}.bam
 	printf "\nMaking plus track for ${name}\n"
 	bamCoverage --filterRNAstrand forward -bs 1 -p ${threads} --normalizeUsing CPM -b mapped/${name}/filtered_${name}.bam -o tracks/${name}_plus.bw
 	bamCoverage --filterRNAstrand reverse -bs 1 -p ${threads} --normalizeUsing CPM -b mapped/${name}/filtered_${name}.bam -o tracks/${name}_minus.bw
 	#### Filtering only small RNA sizes (15 to 32nt)
-	samtools view -h mapped/${name}/filtered_${name}.bam | awk 'length($10) <= 32 || $1 ~ /^@/' | samtools view -bS - > mapped/${name}/sized_${name}.bam
+	samtools view -h mapped/${name}/filtered_${name}.bam | awk '(length($10) >= 20 && length($10) <= 24) || $1 ~ /^@/' | samtools view -bS - > mapped/${name}/sized_${name}.bam
 	#### Getting stats of size distribution
-  	printf "\nGetting stats for ${name}\n"
+  	printf "\nGetting trimmed stats for ${name}\n"
   	zcat fastq/trimmed_${name}.fastq.gz | awk '{if(NR%4==2) print length($1)}' | sort -n | uniq -c | awk -v OFS="\t" -v n=${name} '{print n,"trimmed",$2,$1}' > reports/sizes_trimmed_${name}.txt
-  	zcat fastq/filtered_${name}.fastq.gz | awk '{if(NR%4==2) print length($1)}' | sort -n | uniq -c | awk -v OFS="\t" -v n=${name} '{print n,"filtered",$2,$1}' > reports/sizes_filtered_${name}.txt
-  	samtools view mapped/${name}/filtered_${name}.bam | awk '$2==0 || $2==16 {print length($10)}' | sort -n | uniq -c | awk -v OFS="\t" -v n=${name} '{print n,"mapped",$2,$1}' > reports/sizes_mapped_${name}.txt
+  	printf "\nGetting filtered stats for ${name}\n"
+	zcat fastq/filtered_${name}.fastq.gz | awk '{if(NR%4==2) print length($1)}' | sort -n | uniq -c | awk -v OFS="\t" -v n=${name} '{print n,"filtered",$2,$1}' > reports/sizes_filtered_${name}.txt
+  	printf "\nGetting mapped stats for ${name}\n"
+	samtools view mapped/${name}/filtered_${name}.bam | awk '$2==0 || $2==16 {print length($10)}' | sort -n | uniq -c | awk -v OFS="\t" -v n=${name} '{print n,"mapped",$2,$1}' > reports/sizes_mapped_${name}.txt
 else
 	printf "\nData format missing: paired-end (PE) or single-end (SE)?\n"
 	exit 1

@@ -14,8 +14,9 @@ args = commandArgs(trailingOnly=TRUE)
 analysisname<-args[1]
 TELabels<-c(unlist(strsplit(args[2],",")))
 AllLabels<-c(TELabels,"Intergenic","Terminator","Gene_body","Promoter")
-pal<-rev(wes_palette("Cavalcanti1", length(TELabels)-1, type = "continuous"))
+pal<-rev(wes_palette("Cavalcanti1", length(TELabels), type = "continuous"))
 pal<-c(pal, wes_palette("Royal1", 4))
+names(pal)<-AllLabels
 
 ### For distribution plot
 
@@ -25,10 +26,12 @@ table$TE<-as.factor(table$TE)
 table$Label<-factor(table$Label, levels = AllLabels)
 table$Labelcombined<-as.factor(table$Labelcombined)
 
+pal2<-pal[ AllLabels %in% table$Label]
+
 plot1<-ggplot(table, aes(Tissue, fill=Label)) +
   geom_bar(stat="count", position="stack", show.legend = F) +
   labs(title="", x="",y="Number of shRNA clusters") +
-  scale_fill_discrete(type = pal) +
+  scale_fill_discrete(type = pal2) +
   theme(panel.grid=element_blank(),
         panel.grid.major.y = element_line(colour="grey"),
         axis.ticks=element_blank(),
@@ -38,7 +41,7 @@ plot1<-ggplot(table, aes(Tissue, fill=Label)) +
 plot2<-ggplot(table, aes(Tissue, fill=Label)) +
   geom_bar(stat="count", position="fill", show.legend = T) +
   labs(title="", x="",y="Percentage of shRNA clusters", fill="Genomic feature") +
-  scale_fill_discrete(type = pal) +
+  scale_fill_discrete(type = pal2) +
   theme(panel.grid=element_blank(),
         panel.grid.major.y = element_line(colour="grey"),
         axis.ticks=element_blank(),
@@ -68,7 +71,7 @@ plot<-upset(inputable, sampleCols, name="shRNA clusters",
       base_annotations = list(
         'Shared shRNA clusters'=intersection_size(
           counts=FALSE, mapping=aes(fill=Label))
-	  + scale_fill_discrete(type = pal)
+	  + scale_fill_discrete(type = pal2)
       ),
       set_sizes = (upset_set_size() + ylab("Total shRNA clusters") +
         theme(axis.text.x = element_text(angle = 45))),
