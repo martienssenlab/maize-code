@@ -428,7 +428,7 @@ if [ ${#chip_sample_list[@]} -ge 1 ]; then
 	for sample in ${chip_sample_list[@]}
 	do
 		case "${sample}" in
-			*H3K4me1*|*H3K27me1*|*H3K27me2*|*H3K27me3*|*H3K9me1*|*H3K9me2*|*H3K9me3*) export peaktype="broad";;
+			*H3K4me1*|*H3K27me1*|*H3K27me2*|*H3K27me3*|*H3K9me1*|*H3K9me2*|*H3K9me3*|*H3K20me1*|*DDM1*) export peaktype="broad";;
 			*H3K27ac*|*H3K4me3*) export peaktype="narrow";;
 		esac
 		awk -v OFS="\t" -v s=${sample} '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {print $1,$2,$3,s}' ChIP/peaks/selected_peaks_${sample}.${peaktype}Peak | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_${analysisname}.bed
