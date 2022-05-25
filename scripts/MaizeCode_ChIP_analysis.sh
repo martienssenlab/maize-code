@@ -140,7 +140,7 @@ do
 		fi
 		#### To call either broad or narrow peaks if not already exisiting
 		case "${mark}" in
-			H3K4me1|H3K27me1|H3K27me2|H3K27me3|H3K9me1|H3K9me2|H3K9me3|H3K20me1|DDM1|) export peaktype="broad";;
+			H3K4me1|H3K27me1|H3K27me2|H3K27me3|H3K9me1|H3K9me2|H3K9me3|H4K20me1|DDM1) export peaktype="broad";;
 			H3K27ac|H3K4me3) export peaktype="narrow";;
 		esac
 		if [[ "${samplerep}" == "two" ]]; then
