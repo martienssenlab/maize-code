@@ -1950,7 +1950,6 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 			all_samples+=("shRNA")
 			all_labels+=("${shrna_sample_list[*]}")
 		fi
-		printf "all_samples: ${all_samples[*]}\nall_labels: ${all_labels[*]}\n"
 		for matrix in TE_regions TE_tss
 		do
 			mat="empty"
@@ -2008,13 +2007,9 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 				ymaxs2=()
 				for sample in ${all_labels[@]}
 				do
-					printf "sample: ${sample}\n"
 					mini=$(grep "${sample}" combined/matrix/temp_values_${matrix}_${TEtype}_${analysisname}.txt | awk '{print $5}')
-					printf "mini: ${mini}\n"
 					maxi=$(grep "${sample}" combined/matrix/temp_values_${matrix}_${TEtype}_${analysisname}.txt | awk '{print $6}')
-					printf "maxi: ${maxi}\n"
 					test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
-					printf "Got there 3! mini: ${mini}\nmaxi: ${maxi}\ntest: ${test}\n"
 					if [[ ${test} == "yes" ]]; then
 						mins2+=("0")
 						maxs2+=("0.005")
@@ -2025,7 +2020,6 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 					ymini=$(grep "${sample}" combined/matrix/temp_values_profile_${matrix}_${TEtype}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
 					ymaxi=$(grep "${sample}" combined/matrix/temp_values_profile_${matrix}_${TEtype}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
 					test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
-					printf "Got there 4! mini: ${ymini}\nmaxi: ${ymaxi}\ntest: ${test}\n"
 					if [[ ${test} == "yes" ]]; then
 						ymins2+=("0")
 						ymaxs2+=("0.01")
