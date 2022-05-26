@@ -1888,21 +1888,35 @@ fi
 ########################## Making heatmaps on all TEs ###################################
 #########################################################################################
 
-rnaseqsamples=${#rnaseq_bw_list_plus[@]}
-rampagesamples=${#rampage_bw_list_plus[@]}
-shrnasamples=${#shrna_bw_list_plus[@]}
-totsamples=$((rnaseqsamples+rampagesamples+shrnasamples))
-if [[ ${tefilebw} != "" ]] && [ ${totsamples} -gt 0 ] && [[ "${repeats}" == "YES" ]]; then
+if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 	#### Computing the stranded matrix
 	while read TEtype
 	do
 		awk -v t=${TEtype} '$4==t && $6=="+"' combined/TSS/${ref}_all_tes.bed > combined/TSS/${ref}_${TEtype}_${analysisname}_plus.bed
 		awk -v t=${TEtype} '$4==t && $6=="-"' combined/TSS/${ref}_all_tes.bed > combined/TSS/${ref}_${TEtype}_${analysisname}_minus.bed
+		regionlabel=$(cat combined/TSS/${ref}_${TEtype}_${analysisname}_plus.bed combined/TSS/${ref}_${TEtype}_${analysisname}_minus.bed | wc -l combined/TSS/${ref}_all_tes.bed | awk -v n=${TEtype} '{print n"("$1")"}')
+
+		#### Reordering the samples by ChIPseq mark
+		for mark in ${uniq_chip_mark_list[@]}
+		do
+			for sample in ${chip_sample_list[@]}
+			do
+				if [[ ${sample} =~ ${mark} ]]; then
+					sorted_labels+=("${sample}")
+				fi
+			done
+			for bw in ${chip_bw_list[@]}
+			do
+				if [[ ${bw} =~ ${mark} ]]; then
+					sorted_marks+=("${bw}")
+				fi
+			done
+		done
 		for strand in plus minus
 		do
 			case "${strand}" in
-				plus) 	bw_list="${rnaseq_bw_list_plus[@]} ${rampage_bw_list_plus[@]} ${shrna_bw_list_plus[@]}";;
-				minus) 	bw_list="${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]} ${shrna_bw_list_minus[@]}";;
+				plus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_plus[@]} ${rampage_bw_list_plus[@]} ${shrna_bw_list_plus[@]}";;
+				minus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]} ${shrna_bw_list_minus[@]}";;
 			esac
 			nb=$(wc -l combined/TSS/${ref}_${TEtype}_${analysisname}_${strand}.bed | awk '{print $1}')
 			if [[ ${nb} -gt 0 ]]; then
@@ -1915,6 +1929,11 @@ if [[ ${tefilebw} != "" ]] && [ ${totsamples} -gt 0 ] && [[ "${repeats}" == "YES
 		#### Merging stranded matrix, extracting scales and plotting heatmaps
 		all_samples=()
 		all_labels=()
+		if [ ${#sorted_marks[@]} -gt 0 ]; then
+			printf "\nIncluding ChIPseq samples\n"
+			all_samples+=("${uniq_chip_mark_list[*]}")
+			all_labels+=("${sorted_labels[*]}")
+		fi
 		if [ ${#rnaseq_bw_list_plus[@]} -gt 0 ]; then
 			printf "\nIncluding RNAseq samples\n"
 			all_samples+=("RNAseq")
@@ -2012,9 +2031,9 @@ if [[ ${tefilebw} != "" ]] && [ ${totsamples} -gt 0 ] && [[ "${repeats}" == "YES
 					fi
 				done
 				printf "\nPlotting heatmap for ${matrix} ${TEtype} matrix of ${analysisname} scaling by mark\n"
-				plotHeatmap -m ${mat} -out combined/plots/${analysisname}_heatmap_${matrix}_${TEtype}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
+				plotHeatmap -m ${mat} -out combined/plots/${analysisname}_heatmap_${matrix}_${TEtype}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --regionsLabel ${regionlabel} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
 				printf "\nPlotting heatmap for ${matrix} ${TEtype} matrix of ${analysisname} scaling by sample\n"
-				plotHeatmap -m ${mat} -out combined/plots/${analysisname}_heatmap_${matrix}_${TEtype}_v2.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --colorMap 'seismic' --zMin ${mins2[@]} --zMax ${maxs2[@]} --yMin ${ymins2[@]} --yMax ${ymaxs2[@]} --interpolationMethod 'bilinear'
+				plotHeatmap -m ${mat} -out combined/plots/${analysisname}_heatmap_${matrix}_${TEtype}_v2.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --regionsLabel ${regionlabel} --colorMap 'seismic' --zMin ${mins2[@]} --zMax ${maxs2[@]} --yMin ${ymins2[@]} --yMax ${ymaxs2[@]} --interpolationMethod 'bilinear'
 			fi
 		done
 	done < combined/TSS/${ref}_TE_types.txt
