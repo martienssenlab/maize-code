@@ -1952,14 +1952,14 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 		for matrix in TE_regions TE_tss
 		do
 			mat="empty"
-			if [[ -s combined/matrix/${matrix}_${TEtype}_${analysisname}_plus.gz ]] && [[ -s combined/matrix/${matrix}_${TEtype}_${analysisname}_minus.gz ]]; then
+			if [[ -s combined/matrix/temp_${matrix}_${TEtype}_${analysisname}_plus.gz ]] && [[ -s combined/matrix/temp_${matrix}_${TEtype}_${analysisname}_minus.gz ]]; then
 				printf "\nMerging stranded matrices aligned by ${matrix} ${TEtype} of ${analysisname}\n"
-				computeMatrixOperations rbind -m combined/matrix/${matrix}_${TEtype}_${analysisname}_plus.gz combined/matrix/${matrix}_${TEtype}_${analysisname}_minus.gz -o combined/matrix/${matrix}_${TEtype}_${analysisname}.gz
+				computeMatrixOperations rbind -m combined/matrix/temp_${matrix}_${TEtype}_${analysisname}_plus.gz combined/matrix/temp_${matrix}_${TEtype}_${analysisname}_minus.gz -o combined/matrix/${matrix}_${TEtype}_${analysisname}.gz
 				mat="combined/matrix/${matrix}_${TEtype}_${analysisname}.gz"
-			elif [[ -s combined/matrix/${matrix}_${TEtype}_${analysisname}_plus.gz ]]; then
-				mat="combined/matrix/${matrix}_${TEtype}_${analysisname}_plus.gz"
-			elif [[ -s combined/matrix/${matrix}_${TEtype}_${analysisname}_minus.gz ]]; then
-				mat="combined/matrix/${matrix}_${TEtype}_${analysisname}_minus.gz"
+			elif [[ -s combined/matrix/temp_${matrix}_${TEtype}_${analysisname}_plus.gz ]]; then
+				mat="combined/matrix/temp_${matrix}_${TEtype}_${analysisname}_plus.gz"
+			elif [[ -s combined/matrix/temp_${matrix}_${TEtype}_${analysisname}_minus.gz ]]; then
+				mat="combined/matrix/temp_${matrix}_${TEtype}_${analysisname}_minus.gz"
 			fi
 			if [[ ${mat} != "empty" ]]; then	
 				printf "\nGetting scales for ${matrix} ${TEtype} matrix of ${analysisname}\n"
