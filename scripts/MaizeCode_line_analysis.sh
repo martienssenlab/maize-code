@@ -699,7 +699,7 @@ if [[ "${total}" != "TEST" ]]; then
 
 	#### Merging stranded matrix, extracting scales and plotting heatmaps
 	all_samples=()
-	all_lables=()
+	all_labels=()
 	if [ ${#sorted_marks[@]} -gt 0 ]; then
 		printf "\nIncluding ChIPseq samples\n"
 		all_samples+=("${uniq_chip_mark_list[*]}")
@@ -1989,7 +1989,6 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 					ymaxi=$(grep "${mark}" combined/matrix/temp_values_profile_${matrix}_${TEtype}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
 					num=$(grep "${mark}" combined/matrix/temp_values_profile_${matrix}_${TEtype}_${analysisname}.txt | wc -l)
 					test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
-					printf "Got there! ymini: ${ymini}\nymaxi: ${ymaxi}\nnum: ${num}\ntest: ${test}\n"
 					if [[ ${test} == "yes" ]]; then
 						ymini=("0")
 						ymaxi=("0.01")
@@ -1999,7 +1998,6 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 						ymins+=("${ymini}")
 						ymaxs+=("${ymaxi}")
 					done
-					printf "Got there too! ymins: ${ymins[*]}\nymaxs: ${ymaxs[*]}\n"
 				done
 
 				mins2=()
@@ -2008,8 +2006,8 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 				ymaxs2=()
 				for sample in ${all_labels[@]}
 				do
-					mini=$(grep ${sample} combined/matrix/temp_values_${matrix}_${TEtype}_${analysisname}.txt | awk '{print $5}')
-					maxi=$(grep ${sample} combined/matrix/temp_values_${matrix}_${TEtype}_${analysisname}.txt | awk '{print $6}')
+					mini=$(grep "${sample}" combined/matrix/temp_values_${matrix}_${TEtype}_${analysisname}.txt | awk '{print $5}')
+					maxi=$(grep "${sample}" combined/matrix/temp_values_${matrix}_${TEtype}_${analysisname}.txt | awk '{print $6}')
 					test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
 					printf "Got there 3! mini: ${mini}\nmaxi: ${maxi}\ntest: ${test}\n"
 					if [[ ${test} == "yes" ]]; then
@@ -2019,10 +2017,9 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 						mins2+=("${mini}")
 						maxs2+=("${maxi}")
 					fi
-					ymini=$(grep ${sample} combined/matrix/temp_values_profile_${matrix}_${TEtype}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
-					ymaxi=$(grep ${sample} combined/matrix/temp_values_profile_${matrix}_${TEtype}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
+					ymini=$(grep "${sample}" combined/matrix/temp_values_profile_${matrix}_${TEtype}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
+					ymaxi=$(grep "${sample}" combined/matrix/temp_values_profile_${matrix}_${TEtype}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
 					test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
-					printf "Got there 4! ymini: ${ymini}\nymaxi: ${ymaxi}\ntest: ${test}\n"
 					if [[ ${test} == "yes" ]]; then
 						ymins2+=("0")
 						ymaxs2+=("0.01")
