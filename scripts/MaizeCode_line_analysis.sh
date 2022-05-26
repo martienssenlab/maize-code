@@ -1912,6 +1912,7 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 				fi
 			done
 		done
+		printf "uniq_chip_mark_list: ${uniq_chip_mark_list[*]}\nchip_sample_list: ${chip_sample_list[*]}\nsorted_labels: ${sorted_labels[*]}\nsorted_marks: ${sorted_marks[*]}\n"
 		for strand in plus minus
 		do
 			case "${strand}" in
@@ -1949,6 +1950,7 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 			all_samples+=("shRNA")
 			all_labels+=("${shrna_sample_list[*]}")
 		fi
+		printf "all_samples: ${all_samples[*]}\nall_labels: ${all_labels[*]}\n"
 		for matrix in TE_regions TE_tss
 		do
 			mat="empty"
