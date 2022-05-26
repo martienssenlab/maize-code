@@ -1970,12 +1970,18 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 				maxs=()
 				ymins=()
 				ymaxs=()
+				printf "Got there1\n"
 				for mark in ${all_samples[@]}
 				do
+					printf "getting scales for ${mark}\n"
 					mini=$(grep "${mark}" combined/matrix/temp_values_${matrix}_${TEtype}_${analysisname}.txt | awk 'BEGIN {m=999999} {a=$5; if (a<m) m=a;} END {print m}')
+					printf "mini: ${mini}\n"
 					maxi=$(grep "${mark}" combined/matrix/temp_values_${matrix}_${TEtype}_${analysisname}.txt | awk 'BEGIN {m=-999999} {a=$6; if (a>m) m=a;} END {print m}')
+					printf "maxi: ${maxi}\n"
 					num=$(grep "${mark}" combined/matrix/temp_values_${matrix}_${TEtype}_${analysisname}.txt | wc -l)
+					printf "num: ${num}\n"
 					test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+					printf "test: ${test}\n"
 					if [[ ${test} == "yes" ]]; then
 						mini=("0")
 						maxi=("0.005")
@@ -2002,6 +2008,8 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 
 				mins2=()
 				maxs2=()
+				ymins2=()
+				ymaxs2=()
 				for sample in ${all_labels[@]}
 				do
 					mini=$(grep ${sample} combined/matrix/temp_values_${matrix}_${TEtype}_${analysisname}.txt | awk '{print $5}')
@@ -2014,11 +2022,6 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 						mins2+=("${mini}")
 						maxs2+=("${maxi}")
 					fi
-				done
-				ymins2=()
-				ymaxs2=()
-				for sample in ${all_labels[@]}
-				do
 					ymini=$(grep ${sample} combined/matrix/temp_values_profile_${matrix}_${TEtype}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
 					ymaxi=$(grep ${sample} combined/matrix/temp_values_profile_${matrix}_${TEtype}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
 					test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
