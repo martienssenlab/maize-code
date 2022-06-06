@@ -69,7 +69,7 @@ plot<-upset(inputable, sampleCols, name="shRNA clusters",
       base_annotations = list(
         'Shared shRNA clusters'=intersection_size(
           counts=FALSE, mapping=aes(fill=Label))
-	  + scale_fill_manual(values = pal) +
+	  + scale_fill_manual(values = pal)
       ),
       set_sizes = (upset_set_size() + ylab("Total shRNA clusters") +
         theme(axis.text.x = element_text(angle = 45))),
