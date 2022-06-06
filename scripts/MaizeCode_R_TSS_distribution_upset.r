@@ -14,8 +14,9 @@ args = commandArgs(trailingOnly=TRUE)
 analysisname<-args[1]
 TELabels<-c(unlist(strsplit(args[2],",")))
 AllLabels<-c(TELabels,"Intergenic","Terminator","Gene_body","Promoter")
-pal<-rev(wes_palette("Cavalcanti1", length(TELabels)-1, type = "continuous"))
-pal<-c(pal, wes_palette("Royal1", 4))
+col<-rev(wes_palette("Cavalcanti1", length(TELabels), type = "continuous"))
+col<-c(col, wes_palette("Royal1", 4))
+pal<-setNames(col, AllLabels)
 
 ### For distribution plot
 table<-read.delim(args[3], header = TRUE)
@@ -27,7 +28,7 @@ table$Labelcombined<-as.factor(table$Labelcombined)
 plot1<-ggplot(table, aes(Tissue, fill=Label)) +
   geom_bar(stat="count", position="stack", show.legend = F) +
   labs(title="", x="",y="Number of RAMPAGE peaks") +
-  scale_fill_discrete(type = pal) +
+  scale_fill_manual(values = pal) +
   theme(panel.grid=element_blank(),
         panel.grid.major.y = element_line(colour="grey"),
         axis.ticks=element_blank(),
@@ -37,7 +38,7 @@ plot1<-ggplot(table, aes(Tissue, fill=Label)) +
 plot2<-ggplot(table, aes(Tissue, fill=Label)) +
   geom_bar(stat="count", position="fill", show.legend = T) +
   labs(title="", x="",y="Percentage of RAMPAGE peaks", fill="Genomic feature") +
-  scale_fill_discrete(type = pal) +
+  scale_fill_manual(values = pal) +
   theme(panel.grid=element_blank(),
         panel.grid.major.y = element_line(colour="grey"),
         axis.ticks=element_blank(),
@@ -67,7 +68,7 @@ plot<-upset(inputable, sampleCols, name="RAMPAGE Peaks",
 	base_annotations = list(
        		 'Shared TSS'=intersection_size(
         	  counts=FALSE, mapping=aes(fill=Label))
-		+ scale_fill_discrete(type = pal)
+		+ scale_fill_manual(values = pal)
 	),
 	set_sizes = (upset_set_size() + ylab("Total RAMPAGE Peaks") +
 	        theme(axis.text.x = element_text(angle = 45))),
