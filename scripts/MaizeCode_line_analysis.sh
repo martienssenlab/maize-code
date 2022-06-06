@@ -1599,10 +1599,15 @@ if [ -s /grid/martienssen/data_norepl/dropbox/maizecode/TEs/${ref}_TEs.gff3.gz ]
 	tefilebed="combined/TSS/${ref}_all_tes.bed"
 	rm -f combined/tracks/temp*.bg
 	awk '{print $4}' combined/TSS/${ref}_all_tes.bed | sort -u > combined/TSS/${ref}_TE_types.txt
-	TEtypestring=""
+	i=0
 	while read TEtype
 	do
-		TEtypestring="${TEtypestring},${TEtype}"
+		if [[ ${i} -eq 0 ]]; then
+			TEtypestring="${TEtype}"
+		else
+			TEtypestring="${TEtypestring},${TEtype}"
+		fi
+		i=$((i+1))
 	done < combined/TSS/${ref}_TE_types.txt
 fi
 
