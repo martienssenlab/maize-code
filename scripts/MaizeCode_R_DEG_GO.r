@@ -136,7 +136,7 @@ getGO<-function(ont, name, sampletable) {
 	}
   }
   pdf(paste0("combined/plots/topGO_",name,"_",ont,"_treemap.pdf"), width=8, height=8)
-  treemapPlot(reducedTerms, size = "score")
+  treemapPlot(reducedTerms, size = "score", force.print.labels = TRUE)
   dev.off()
 }
 
