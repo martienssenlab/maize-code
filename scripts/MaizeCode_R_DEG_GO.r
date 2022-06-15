@@ -169,7 +169,7 @@ for (i in 1:(length(tissues)-1)) {
 	allDEG<-c(allDEG,DEGtable$GID)
 	
 	updeg<-filter(DEGtable, DEG=="UP")
-	myInterestedGenes<-unique(unlist(updeg$GeneID))
+	myInterestedGenes<-unique(unlist(updeg$GID))
 	geneList<-factor(as.integer(allGenes %in% myInterestedGenes))
 	names(geneList)<-allGenes
 	samplename<-paste0("UP_in_",sample1,"_vs_",sample2)
@@ -178,7 +178,7 @@ for (i in 1:(length(tissues)-1)) {
 		getGO(ont, samplename, updeg)
 	} 
 	downdeg<-filter(DEGtable, DEG=="DOWN")
-	myInterestedGenes<-unique(unlist(downdeg$GeneID))
+	myInterestedGenes<-unique(unlist(downdeg$GID))
 	geneList<-factor(as.integer(allGenes %in% myInterestedGenes))
 	names(geneList)<-allGenes
 	samplename<-paste0("DOWN_in_",sample1,"_vs_",sample2)
