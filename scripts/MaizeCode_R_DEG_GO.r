@@ -116,7 +116,7 @@ getGO<-function(ont, name, sampletable) {
 	  write.table(tab2,paste0(db,"/topGO_",name,"_",ont,"_GOs.txt"),sep="\t",row.names=FALSE,col.names=TRUE,quote=FALSE)
   }
   if (nrow(tab3) > 0) {
-	  write.table(tab2,paste0(db,"/topGO_",name,"_",ont,"_GIDs.txt"),sep="\t",row.names=FALSE,col.names=TRUE,quote=FALSE)
+	  write.table(tab3,paste0(db,"/topGO_",name,"_",ont,"_GIDs.txt"),sep="\t",row.names=FALSE,col.names=TRUE,quote=FALSE)
   }	
   
   scores<-setNames(-log10(as.numeric(tab$classicFisher)), tab$GO.ID)
@@ -128,11 +128,11 @@ getGO<-function(ont, name, sampletable) {
   	simMatrix<-calculateSimMatrix(tab$GO.ID,
                                 orgdb="org.Zmays.eg.db",
                                 ont=ont,
-                                method="Wang")
+                                method="Rel")
 	if ( nrow(simMatrix) > 0 ) {
   	reducedTerms<-reduceSimMatrix(simMatrix,
   	                              scores,
-  	                              threshold = 0.5,
+  	                              threshold = 0.7,
   	                              orgdb="org.Zmays.eg.db")
 	}
   }
