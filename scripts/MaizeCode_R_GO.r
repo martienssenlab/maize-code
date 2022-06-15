@@ -83,10 +83,12 @@ getGO<-function(ont, name) {
                                 orgdb="org.Zmays.eg.db",
                                 ont=ont,
                                 method="Wang")
+	if ( nrow(simMatrix) > 0 ) {
   	reducedTerms<-reduceSimMatrix(simMatrix,
   	                              scores,
   	                              threshold = 0.5,
   	                              orgdb="org.Zmays.eg.db")
+	}
   }
   pdf(paste0("combined/plots/topGO_",name,"_",ont,"_treemap.pdf"), width=8, height=8)
   treemapPlot(reducedTerms, size = "score")
