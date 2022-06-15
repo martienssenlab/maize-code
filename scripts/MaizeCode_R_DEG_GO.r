@@ -83,7 +83,7 @@ create.DEG.table<-function(sample1, sample2, y) {
   table
 }
 
-getGO<-function(ont, name) {
+getGO<-function(ont, name, sampletable) {
   GOdata<-new("topGOdata", 
               ontology = ont, 
               allGenes = geneList,
@@ -103,7 +103,7 @@ getGO<-function(ont, name) {
   genesInTerms2<-map(genesInTerms, ~ intersect(.x, myInterestedGenes) %>% paste(collapse = ","))
   tab2<-tab %>% 
 	left_join(tibble(GO.ID = names(genesInTerms2), genes = genesInTerms2) %>% 
-	tidyr::unnest(genes), by = "GO.ID")
+	unnest(genes), by = "GO.ID")
   tab3<-tab %>%
 	  rename(GO=GO.ID) %>%
 	  merge(geneid2GO, by="GO") %>%
@@ -175,7 +175,7 @@ for (i in 1:(length(tissues)-1)) {
 	samplename<-paste0("UP_in_",sample1,"_vs_",sample2)
 	for ( ont in c("BP","MF") ) {
 		print(paste0("plotting ",ont," for ",samplename))
-		getGO(ont, samplename)
+		getGO(ont, samplename, updeg)
 	} 
 	downdeg<-filter(DEGtable, DEG=="DOWN")
 	myInterestedGenes<-unique(unlist(downdeg$GeneID))
@@ -184,7 +184,7 @@ for (i in 1:(length(tissues)-1)) {
 	samplename<-paste0("DOWN_in_",sample1,"_vs_",sample2)
 	for ( ont in c("BP","MF") ) {
 		print(paste0("plotting ",ont," for ",samplename))
-		getGO(ont, samplename)
+		getGO(ont, samplename, downdeg)
 	}
   }
 }
