@@ -83,47 +83,59 @@ create.DEG.table<-function(sample1, sample2, y) {
   table
 }
 
-getGO<-function(ont, genelist, sampletable, name) {
+getGO<-function(ont, name) {
   GOdata<-new("topGOdata", 
               ontology = ont, 
-              allGenes = genelist,
+              allGenes = geneList,
               annot = annFUN.gene2GO, 
               gene2GO = gene2GO)
   resultFisher<-runTest(GOdata, algorithm = "weight01", statistic = "fisher")
-  nodenb<-min(1000, length(resultFisher@score))
-  summary<-GenTable(GOdata, classicFisher = resultFisher, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = nodenb, numChar=1000)
+  resultFisherSummary <- summary(attributes(resultFisher)$score <= 0.01)
+  nSigTerms<-0
+  if (length(resultFisherSummary) == 3) {
+  	nSigTerms<-as.integer(resultFisherSummary[[3]])
+  }
+  summary<-GenTable(GOdata, classicFisher = resultFisher, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = nSigTerms, numChar=1000)
   tab<-summary %>%
-	mutate(classicFisher = as.numeric(classicFisher)) %>%
-	filter(classicFisher < 0.01) 
-  tab2<-tab %>%
-	rename(GO=GO.ID) %>%
-	merge(geneid2GO, by="GO") %>%
-	rename(GeneID=GID) %>%
-	merge(sampletable, by="GeneID") %>%
-	select(Chr, Start, Stop, GeneID, GO, Term) %>%
-	arrange(GO) %>%
-	unique()
-  if (nrow(tab2) > 0) {
-	write.table(tab2,paste0(db,"/topGO_",name,"_",ont,"_GIDs.txt"),sep="\t",row.names=FALSE,col.names=TRUE,quote=FALSE)
-  }  
-  return(tab)
-}
-
-plotGOs<-function(TopGoResults, ont, name) {
-  simMatrix<-calculateSimMatrix(TopGoResults$GO.ID,
+	mutate(classicFisher = classicFisher %>% str_replace(pattern= "< *1e-30", replacement = "1e-30") %>% as.numeric())
+  sigTerms<-tab$GO.ID
+  genesInTerms<-genesInTerm(GOdata, sigTerms)
+  genesInTerms2<-map(genesInTerms, ~ intersect(.x, myInterestedGenes) %>% paste(collapse = ","))
+  tab2<-tab %>% 
+	left_join(tibble(GO.ID = names(genesInTerms2), genes = genesInTerms2) %>% 
+	tidyr::unnest(genes), by = "GO.ID")
+  tab3<-tab %>%
+	  rename(GO=GO.ID) %>%
+	  merge(geneid2GO, by="GO") %>%
+	  merge(sampletable, by="GID") %>%
+	  select(Chr, Start, Stop, GID, GO, Term) %>%
+	  arrange(GO) %>%
+	  unique()
+  if (nrow(tab2) > 1) {
+	  write.table(tab2,paste0(db,"/topGO_",name,"_",ont,"_GOs.txt"),sep="\t",row.names=FALSE,col.names=TRUE,quote=FALSE)
+  }
+  if (nrow(tab3) > 0) {
+	  write.table(tab2,paste0(db,"/topGO_",name,"_",ont,"_GIDs.txt"),sep="\t",row.names=FALSE,col.names=TRUE,quote=FALSE)
+  }	
+  
+  scores<-setNames(-log10(as.numeric(tab$classicFisher)), tab$GO.ID)
+  reducedTerms <- tab2 %>%
+          rename("go" = "GO.ID", "term" = "Term") %>%
+          mutate(parentTerm = term, score = scores)
+  
+  if ( nrow(tab) > 1 ) {
+  	simMatrix<-calculateSimMatrix(tab$GO.ID,
                                 orgdb="org.Zmays.eg.db",
                                 ont=ont,
                                 method="Wang")
-  if ( nrow(simMatrix) > 1 ) {
-  	scores<-setNames(-log10(as.numeric(TopGoResults$classicFisher)), TopGoResults$GO.ID)
   	reducedTerms<-reduceSimMatrix(simMatrix,
-        	                        scores,
-        	                        threshold = 0.7,
-        	                        orgdb="org.Zmays.eg.db")
-  	pdf(paste0("combined/plots/topGO_",name,"_",ont,"_treemap.pdf"), width=8, height=8)
-  	treemapPlot(reducedTerms, size = "score")
-  	dev.off()
+  	                              scores,
+  	                              threshold = 0.5,
+  	                              orgdb="org.Zmays.eg.db")
   }
+  pdf(paste0("combined/plots/topGO_",name,"_",ont,"_treemap.pdf"), width=8, height=8)
+  treemapPlot(reducedTerms, size = "score")
+  dev.off()
 }
 
 filtered$GID<-row.names(filtered)
@@ -161,10 +173,7 @@ for (i in 1:(length(tissues)-1)) {
 	samplename<-paste0("UP_in_",sample1,"_vs_",sample2)
 	for ( ont in c("BP","MF") ) {
 		print(paste0("plotting ",ont," for ",samplename))
-		TopGOresults<-getGO(ont, geneList, updeg, samplename)
-		if ( nrow(TopGOresults) > 0 ) {
-			plotGOs(TopGOresults, ont, samplename)
-		}
+		getGO(ont, samplename)
 	} 
 	downdeg<-filter(DEGtable, DEG=="DOWN")
 	myInterestedGenes<-unique(unlist(downdeg$GeneID))
@@ -173,10 +182,7 @@ for (i in 1:(length(tissues)-1)) {
 	samplename<-paste0("DOWN_in_",sample1,"_vs_",sample2)
 	for ( ont in c("BP","MF") ) {
 		print(paste0("plotting ",ont," for ",samplename))
-		TopGOresults<-getGO(ont, geneList, downdeg, samplename)
-		if ( nrow(TopGOresults) > 1 ) {
-			plotGOs(TopGOresults, ont, samplename)
-		}
+		getGO(ont, samplename)
 	}
   }
 }
