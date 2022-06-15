@@ -97,6 +97,7 @@ getGO<-function(ont, name, sampletable) {
   }
   summary<-GenTable(GOdata, classicFisher = resultFisher, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = nSigTerms, numChar=1000)
   tab<-summary %>%
+	rename_with(.cols = starts_with("apply"), .fn = ~ return("classicFisher")) %>%
 	mutate(classicFisher = classicFisher %>% str_replace(pattern= "< *1e-30", replacement = "1e-30") %>% as.numeric())
   sigTerms<-tab$GO.ID
   genesInTerms<-genesInTerm(GOdata, sigTerms)
