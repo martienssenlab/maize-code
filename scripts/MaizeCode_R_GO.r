@@ -6,6 +6,7 @@ library(rrvgo)
 library(dplyr)
 library(topGO)
 library(purrr)
+library(stringr)
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -44,46 +45,55 @@ getGO<-function(ont, name) {
               annot = annFUN.gene2GO, 
               gene2GO = gene2GO)
   resultFisher<-runTest(GOdata, algorithm = "weight01", statistic = "fisher")
-  nodenb<-min(1000, length(resultFisher@score))
-  summary<-GenTable(GOdata, classicFisher = resultFisher, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = nodenb, numChar=1000)
+  resultFisherSummary <- summary(attributes(resultFisher)$score <= 0.01)
+  nSigTerms<-0
+  if (length(resultFisherSummary) == 3) {
+  	nSigTerms<-as.integer(resultFisherSummary[[3]])
+  }
+  summary<-GenTable(GOdata, classicFisher = resultFisher, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = nSigTerms, numChar=1000)
   tab<-summary %>%
-  	mutate(classicFisher = as.numeric(classicFisher)) %>%
-  	filter(classicFisher < 0.01) 
-  tab2<-tab %>%
+	mutate(classicFisher = classicFisher %>% str_replace(pattern= "< *1e-30", replacement = "1e-30") %>% as.numeric())
+  sigTerms<-tab$GO.ID
+  genesInTerms<-genesInTerm(GOdata, sigTerms)
+  genesInTerms2<-map(genesInTerms, ~ intersect(.x, myInterestedGenes) %>% paste(collapse = ","))
+  tab2<-tab %>% 
+	left_join(tibble(GO.ID = names(genesInTerms2), genes = genesInTerms2) %>% 
+	tidyr::unnest(genes), by = "GO.ID")
+  tab3<-tab %>%
 	  rename(GO=GO.ID) %>%
 	  merge(geneid2GO, by="GO") %>%
 	  merge(sampletable, by="GID") %>%
 	  select(Chr, Start, Stop, GID, GO, Term) %>%
 	  arrange(GO) %>%
 	  unique()
-  if (nrow(tab2) > 0) {
+  if (nrow(tab2) > 1) {
+	  write.table(tab2,paste0(db,"/topGO_",name,"_",ont,"_GOs.txt"),sep="\t",row.names=FALSE,col.names=TRUE,quote=FALSE)
+  }
+  if (nrow(tab3) > 0) {
 	  write.table(tab2,paste0(db,"/topGO_",name,"_",ont,"_GIDs.txt"),sep="\t",row.names=FALSE,col.names=TRUE,quote=FALSE)
-  }  
-  return(tab)
-}
-
-plotGOs<-function(TopGoResults, ont, name) {
-  simMatrix<-calculateSimMatrix(TopGoResults$GO.ID,
+  }	
+  
+  scores<-setNames(-log10(as.numeric(tab$classicFisher)), tab$GO.ID)
+  reducedTerms <- tab2 %>%
+          rename("go" = "GO.ID", "term" = "Term") %>%
+          mutate(parentTerm = term, score = scores)
+  
+  if ( nrow(tab) > 1 ) {
+  	simMatrix<-calculateSimMatrix(tab$GO.ID,
                                 orgdb="org.Zmays.eg.db",
                                 ont=ont,
                                 method="Wang")
-  if ( nrow(simMatrix) > 1 ) {
-  	scores<-setNames(-log10(as.numeric(TopGoResults$classicFisher)), TopGoResults$GO.ID)
   	reducedTerms<-reduceSimMatrix(simMatrix,
   	                              scores,
   	                              threshold = 0.5,
   	                              orgdb="org.Zmays.eg.db")
-  	pdf(paste0("combined/plots/topGO_",name,"_",ont,"_treemap.pdf"), width=8, height=8)
-  	treemapPlot(reducedTerms, size = "score")
-  	dev.off()
   }
+  pdf(paste0("combined/plots/topGO_",name,"_",ont,"_treemap.pdf"), width=8, height=8)
+  treemapPlot(reducedTerms, size = "score")
+  dev.off()
 }
 
 for ( ont in c("BP","MF") ) {
   print(paste0("Getting ",ont," for ",samplename))
-  TopGOresults<-getGO(ont, samplename)
-  if ( nrow(TopGOresults) > 1 ) {
-	  print(paste0("plotting ",ont," for ",samplename))
-	  plotGOs(TopGOresults, ont, samplename)
-    }
+  getGO(ont, samplename)
 }
