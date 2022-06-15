@@ -163,10 +163,10 @@ for (i in 1:(length(tissues)-1)) {
 	write.table(FCtable,paste0("combined/DEG/FC_",analysisname,"_",sample1,"_vs_",sample2,".txt"),sep="\t",row.names=FALSE,col.names=TRUE,quote=FALSE)
 	DEGtable<-create.DEG.table(sample1,sample2,y)
 	DEGtable<-merge(ref_genes,DEGtable,by=c("GeneID")) %>%
-		select(Chr,Start,Stop,GeneID,logFC,Strand,logCPM,PValue,FDR,Sample,DEG) %>%
+		select(Chr,Start,Stop,GID=GeneID,logFC,Strand,logCPM,PValue,FDR,Sample,DEG) %>%
 		arrange(DEG,Chr,Start)
 	write.table(DEGtable,paste0("combined/DEG/DEG_",analysisname,"_",sample1,"_vs_",sample2,".txt"),sep="\t",row.names=FALSE,col.names=TRUE,quote=FALSE)
-	allDEG<-c(allDEG,DEGtable$GeneID)
+	allDEG<-c(allDEG,DEGtable$GID)
 	
 	updeg<-filter(DEGtable, DEG=="UP")
 	myInterestedGenes<-unique(unlist(updeg$GeneID))
