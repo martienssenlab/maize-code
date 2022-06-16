@@ -83,8 +83,8 @@ getGO<-function(ont, name) {
   	simMatrix<-calculateSimMatrix(tab$GO.ID,
                                 orgdb="org.Zmays.eg.db",
                                 ont=ont,
-                                method="Wang")
-	if (! is.null(simMatrix) && nrow(simMatrix) > 0 ) {
+                                method="Rel")
+	if (! is.null(nrow(simMatrix))) {
   	reducedTerms<-reduceSimMatrix(simMatrix,
   	                              scores,
   	                              threshold = 0.7,
