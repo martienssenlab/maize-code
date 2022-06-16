@@ -124,12 +124,12 @@ getGO<-function(ont, name, sampletable) {
           rename("go" = "GO.ID", "term" = "Term") %>%
           mutate(parentTerm = term, score = scores)
   
-  if (! is.null(tab) && nrow(tab) > 1 ) {
+  if (nrow(tab) > 1 ) {
   	simMatrix<-calculateSimMatrix(tab$GO.ID,
                                 orgdb="org.Zmays.eg.db",
                                 ont=ont,
                                 method="Rel")
-	if (! is.null(simMatrix) && nrow(simMatrix) > 0 ) {
+	if (! is.null(simMatrix)) {
   	reducedTerms<-reduceSimMatrix(simMatrix,
   	                              scores,
   	                              threshold = 0.7,
