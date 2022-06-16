@@ -84,7 +84,7 @@ getGO<-function(ont, name) {
                                 orgdb="org.Zmays.eg.db",
                                 ont=ont,
                                 method="Rel")
-	if (! is.null(simMatrix)) {
+	if (! is.null(simMatrix) && nrow(simMatrix) > 0 ) {
   	reducedTerms<-reduceSimMatrix(simMatrix,
   	                              scores,
   	                              threshold = 0.7,
