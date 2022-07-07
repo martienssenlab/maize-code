@@ -428,7 +428,7 @@ if [ ${#chip_sample_list[@]} -ge 1 ]; then
 	for sample in ${chip_sample_list[@]}
 	do
 		case "${sample}" in
-			*H3K4me1*|*H3K27me1*|*H3K27me2*|*H3K27me3*|*H3K9me1*|*H3K9me2*|*H3K9me3*|*H4K20me1*|*H4K20me2*|*DDM1*) export peaktype="broad";;
+			*H3K4me1*|*H3K27me1*|*H3K27me2*|*H3K27me3*|*H3K9me1*|*H3K9me2*|*H3K9me3*|*H4K20me1*|*H4K20me2*|*H4K20me3*|*DDM1*) export peaktype="broad";;
 			*H3K27ac*|*H3K4me3*) export peaktype="narrow";;
 		esac
 		awk -v OFS="\t" -v s=${sample} '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {print $1,$2,$3,s}' ChIP/peaks/selected_peaks_${sample}.${peaktype}Peak | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_${analysisname}.bed
@@ -1977,6 +1977,7 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 					maxi=$(grep "${mark}" combined/matrix/temp_values_${matrix}_${TEtype}_${analysisname}.txt | awk 'BEGIN {m=-999999} {a=$6; if (a>m) m=a;} END {print m}')
 					num=$(grep "${mark}" combined/matrix/temp_values_${matrix}_${TEtype}_${analysisname}.txt | wc -l)
 					test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+					printf "worked1\n"
 					if [[ ${test} == "yes" ]]; then
 						mini=("0")
 						maxi=("0.005")
@@ -1990,6 +1991,7 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 					ymaxi=$(grep "${mark}" combined/matrix/temp_values_profile_${matrix}_${TEtype}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
 					num=$(grep "${mark}" combined/matrix/temp_values_profile_${matrix}_${TEtype}_${analysisname}.txt | wc -l)
 					test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+					printf "worked2\n"
 					if [[ ${test} == "yes" ]]; then
 						ymini=("0")
 						ymaxi=("0.01")
@@ -2010,6 +2012,7 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 					mini=$(grep "${sample}" combined/matrix/temp_values_${matrix}_${TEtype}_${analysisname}.txt | awk '{print $5}')
 					maxi=$(grep "${sample}" combined/matrix/temp_values_${matrix}_${TEtype}_${analysisname}.txt | awk '{print $6}')
 					test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+					printf "worked3\n"
 					if [[ ${test} == "yes" ]]; then
 						mins2+=("0")
 						maxs2+=("0.005")
@@ -2020,6 +2023,7 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 					ymini=$(grep "${sample}" combined/matrix/temp_values_profile_${matrix}_${TEtype}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
 					ymaxi=$(grep "${sample}" combined/matrix/temp_values_profile_${matrix}_${TEtype}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
 					test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+					printf "worked4\n"
 					if [[ ${test} == "yes" ]]; then
 						ymins2+=("0")
 						ymaxs2+=("0.01")
