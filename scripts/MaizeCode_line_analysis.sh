@@ -1897,6 +1897,8 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 		regionlabel=$(cat combined/TSS/${ref}_${TEtype}_${analysisname}_plus.bed combined/TSS/${ref}_${TEtype}_${analysisname}_minus.bed | wc -l combined/TSS/${ref}_all_tes.bed | awk -v n=${TEtype} '{print n"("$1")"}')
 
 		#### Reordering the samples by ChIPseq mark
+		sorted_labels=()
+		sorted_marks=()
 		for mark in ${uniq_chip_mark_list[@]}
 		do
 			for sample in ${chip_sample_list[@]}
@@ -1977,7 +1979,6 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 					maxi=$(grep "${mark}" combined/matrix/temp_values_${matrix}_${TEtype}_${analysisname}.txt | awk 'BEGIN {m=-999999} {a=$6; if (a>m) m=a;} END {print m}')
 					num=$(grep "${mark}" combined/matrix/temp_values_${matrix}_${TEtype}_${analysisname}.txt | wc -l)
 					test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
-					printf "worked1\n"
 					if [[ ${test} == "yes" ]]; then
 						mini=("0")
 						maxi=("0.005")
@@ -1991,7 +1992,6 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 					ymaxi=$(grep "${mark}" combined/matrix/temp_values_profile_${matrix}_${TEtype}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
 					num=$(grep "${mark}" combined/matrix/temp_values_profile_${matrix}_${TEtype}_${analysisname}.txt | wc -l)
 					test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
-					printf "worked2\n"
 					if [[ ${test} == "yes" ]]; then
 						ymini=("0")
 						ymaxi=("0.01")
