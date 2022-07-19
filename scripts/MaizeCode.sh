@@ -58,13 +58,12 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts "f:p:r:sctzxh" opt; do
+while getopts "f:p:sctzxh" opt; do
 	case $opt in
 		h) 	printf "${usage}\n"
 			exit 0;;
 		f) 	export samplefile=${OPTARG};;
 		p)	export pathtoref=${OPTARG};;
-		r)	export region=${OPTARG};;
 		s)	printf "\nOption not to perform analysis selected\n"
 			export keepgoing="STOP";;
 		c)	printf "\nOption not to perform combined analysis selected\n"
@@ -91,9 +90,6 @@ if [ ! ${pathtoref} ]; then
 	printf "${usage}\n"
 	exit 1
 fi
-
-printf "region = ${region}\n"
-exit
 
 #############################################################################################
 ########################################### PART1 ###########################################
