@@ -1585,12 +1585,12 @@ rm -f combined/tracks/temp*.bg
 
 tefilebw=""
 tefilebed=""
-if [ -s /grid/martienssen/home/jcahn/nlsas/Genomes/Arabidopsis/Col_CEN/${ref}_TEs.gff3.gz ]; then
+if [ -s /grid/martienssen/home/jcahn/nlsas/Genomes/Arabidopsis/Repeats/${ref}_TEs.gff3.gz ]; then
 	if [ ! -d combined/TSS ]; then
 		mkdir combined/TSS
 	fi	
 	if [ ! -s combined/TSS/${ref}_all_tes.bed ]; then
-		zcat /grid/martienssen/home/jcahn/nlsas/Genomes/Arabidopsis/Col_CEN/${ref}_TEs.gff3.gz | awk -v OFS="\t" '$1 !~ /^#/ {print $1,$4-1,$5,$3,".",$7}' | bedtools sort -g ${ref_dir}/chrom.sizes > combined/TSS/${ref}_all_tes.bed
+		zcat /grid/martienssen/home/jcahn/nlsas/Genomes/Arabidopsis/Repeats/${ref}_TEs.gff3.gz | awk -v OFS="\t" '$1 !~ /^#/ {print $1,$4-1,$5,$3,".",$7}' | bedtools sort -g ${ref_dir}/chrom.sizes > combined/TSS/${ref}_all_tes.bed
 	fi
 	awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$2,$3,"1"}' combined/TSS/${ref}_all_tes.bed | bedtools sort -g ${ref_dir}/chrom.sizes > combined/tracks/temp_${ref}_all_tes.bg
 	bedtools merge -i combined/tracks/temp_${ref}_all_tes.bg -o max -c 4 | LC_COLLATE=C sort -k1,1 -k2,2n > combined/tracks/temp2_${ref}_all_tes.bg
@@ -1889,7 +1889,153 @@ fi
 #########################################################################################
 
 if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
-	#### Computing the stranded matrix
+	#### Computing the matrix on all TEs
+	awk '$6=="+"' combined/TSS/${ref}_all_tes.bed > combined/TSS/${ref}_TEs_${analysisname}_plus.bed
+	awk '$6=="-"' combined/TSS/${ref}_all_tes.bed > combined/TSS/${ref}_TEs_${analysisname}_minus.bed
+	regionlabel=$(wc -l combined/TSS/${ref}_all_tes.bed | awk '{print TEs"("$1")"}')
+
+	#### Reordering the samples by ChIPseq mark
+	sorted_labels=()
+	sorted_marks=()
+	for mark in ${uniq_chip_mark_list[@]}
+	do
+		for sample in ${chip_sample_list[@]}
+		do
+			if [[ ${sample} =~ ${mark} ]]; then
+				sorted_labels+=("${sample}")
+			fi
+		done
+		for bw in ${chip_bw_list[@]}
+		do
+			if [[ ${bw} =~ ${mark} ]]; then
+				sorted_marks+=("${bw}")
+			fi
+		done
+	done
+	printf "uniq_chip_mark_list: ${uniq_chip_mark_list[*]}\nchip_sample_list: ${chip_sample_list[*]}\nsorted_labels: ${sorted_labels[*]}\nsorted_marks: ${sorted_marks[*]}\n"
+	for strand in plus minus
+	do
+		case "${strand}" in
+			plus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_plus[@]} ${rampage_bw_list_plus[@]} ${shrna_bw_list_plus[@]}";;
+			minus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]} ${shrna_bw_list_minus[@]}";;
+		esac
+		nb=$(wc -l combined/TSS/${ref}_TEs_${analysisname}_${strand}.bed | awk '{print $1}')
+		if [[ ${nb} -gt 0 ]]; then
+			printf "\nComputing scale-regions ${strand} strand matrix for all TEs from ${analysisname}\n"
+			computeMatrix scale-regions -q --missingDataAsZero --skipZeros -R combined/TSS/${ref}_TEs_${analysisname}_${strand}.bed -S ${bw_list} -bs 100 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/temp_TE_regions_TEs_${analysisname}_${strand}.gz
+			printf "\nComputing reference-point on TSS ${strand} strand matrix for all TEs from ${analysisname}\n"
+			computeMatrix reference-point --referencePoint "TSS" -q --missingDataAsZero --skipZeros -R combined/TSS/${ref}_TEs_${analysisname}_${strand}.bed -S ${bw_list} -bs 100 -b 2000 -a 8000 -p ${threads} -o combined/matrix/temp_TE_tss_TEs_${analysisname}_${strand}.gz
+		fi
+	done
+	#### Merging stranded matrix, extracting scales and plotting heatmaps
+	all_samples=()
+	all_labels=()
+	if [ ${#sorted_marks[@]} -gt 0 ]; then
+		printf "\nIncluding ChIPseq samples\n"
+		all_samples+=("${uniq_chip_mark_list[*]}")
+		all_labels+=("${sorted_labels[*]}")
+	fi
+	if [ ${#rnaseq_bw_list_plus[@]} -gt 0 ]; then
+		printf "\nIncluding RNAseq samples\n"
+		all_samples+=("RNAseq")
+		all_labels+=("${rnaseq_sample_list[*]}")
+	fi
+	if [ ${#rampage_bw_list_plus[@]} -gt 0 ]; then
+		printf "\nIncluding RAMPAGE samples\n"
+		all_samples+=("RAMPAGE")
+		all_labels+=("${rampage_sample_list[*]}")
+	fi
+	if [ ${#shrna_bw_list_plus[@]} -gt 0 ]; then
+		printf "\nIncluding shRNA samples\n"
+		all_samples+=("shRNA")
+		all_labels+=("${shrna_sample_list[*]}")
+	fi
+	for matrix in TE_regions TE_tss
+	do
+		mat="empty"
+		if [[ -s combined/matrix/temp_${matrix}_TEs_${analysisname}_plus.gz ]] && [[ -s combined/matrix/temp_${matrix}_TEs_${analysisname}_minus.gz ]]; then
+			printf "\nMerging stranded matrices aligned by ${matrix} all TEs of ${analysisname}\n"
+			computeMatrixOperations rbind -m combined/matrix/temp_${matrix}_TEs_${analysisname}_plus.gz combined/matrix/temp_${matrix}_TEs_${analysisname}_minus.gz -o combined/matrix/${matrix}_TEs_${analysisname}.gz
+			mat="combined/matrix/${matrix}_TEs_${analysisname}.gz"
+		elif [[ -s combined/matrix/temp_${matrix}_TEs_${analysisname}_plus.gz ]]; then
+			mat="combined/matrix/temp_${matrix}_TEs_${analysisname}_plus.gz"
+		elif [[ -s combined/matrix/temp_${matrix}_TEs_${analysisname}_minus.gz ]]; then
+			mat="combined/matrix/temp_${matrix}_TEs_${analysisname}_minus.gz"
+		fi
+		if [[ ${mat} != "empty" ]]; then	
+			printf "\nGetting scales for ${matrix} all TEs matrix of ${analysisname}\n"
+			computeMatrixOperations dataRange -m ${mat} > combined/matrix/temp_values_${matrix}_TEs_${analysisname}.txt
+			plotProfile -m ${mat} -out combined/plots/temp_${matrix}_TEs_${analysisname}_profile.pdf --samplesLabel ${all_labels[@]} --averageType mean --outFileNameData combined/matrix/temp_values_profile_${matrix}_TEs_${analysisname}.txt
+			rm -f combined/plots/temp_${matrix}_TEs_${analysisname}_profile.pdf
+			mins=()
+			maxs=()
+			ymins=()
+			ymaxs=()
+			for mark in ${all_samples[@]}
+			do
+				mini=$(grep "${mark}" combined/matrix/temp_values_${matrix}_TEs_${analysisname}.txt | awk 'BEGIN {m=999999} {a=$5; if (a<m) m=a;} END {print m}')
+				maxi=$(grep "${mark}" combined/matrix/temp_values_${matrix}_TEs_${analysisname}.txt | awk 'BEGIN {m=-999999} {a=$6; if (a>m) m=a;} END {print m}')
+				num=$(grep "${mark}" combined/matrix/temp_values_${matrix}_TEs_${analysisname}.txt | wc -l)
+				test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+				if [[ ${test} == "yes" ]]; then
+					mini=("0")
+					maxi=("0.005")
+				fi
+				for i in $(seq 1 ${num})
+				do
+					mins+=("${mini}")
+					maxs+=("${maxi}")
+				done		
+				ymini=$(grep "${mark}" combined/matrix/temp_values_profile_${matrix}_TEs_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
+				ymaxi=$(grep "${mark}" combined/matrix/temp_values_profile_${matrix}_TEs_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
+				num=$(grep "${mark}" combined/matrix/temp_values_profile_${matrix}_TEs_${analysisname}.txt | wc -l)
+				test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+				if [[ ${test} == "yes" ]]; then
+					ymini=("0")
+					ymaxi=("0.01")
+				fi
+				for i in $(seq 1 ${num})
+				do
+					ymins+=("${ymini}")
+					ymaxs+=("${ymaxi}")
+				done
+			done
+
+			mins2=()
+			maxs2=()
+			ymins2=()
+			ymaxs2=()
+			for sample in ${all_labels[@]}
+			do
+				mini=$(grep "${sample}" combined/matrix/temp_values_${matrix}_TEs_${analysisname}.txt | awk '{print $5}')
+				maxi=$(grep "${sample}" combined/matrix/temp_values_${matrix}_TEs_${analysisname}.txt | awk '{print $6}')
+				test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+				if [[ ${test} == "yes" ]]; then
+					mins2+=("0")
+					maxs2+=("0.005")
+				else
+					mins2+=("${mini}")
+					maxs2+=("${maxi}")
+				fi
+				ymini=$(grep "${sample}" combined/matrix/temp_values_profile_${matrix}_TEs_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
+				ymaxi=$(grep "${sample}" combined/matrix/temp_values_profile_${matrix}_TEs_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
+				test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+				if [[ ${test} == "yes" ]]; then
+					ymins2+=("0")
+					ymaxs2+=("0.01")
+				else
+					ymins2+=("${ymini}")
+					ymaxs2+=("${ymaxi}")
+				fi
+			done
+			printf "\nPlotting heatmap for ${matrix} all TEs matrix of ${analysisname} scaling by mark\n"
+			plotHeatmap -m ${mat} -out combined/plots/${analysisname}_heatmap_${matrix}_TEs.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --regionsLabel ${regionlabel} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
+			printf "\nPlotting heatmap for ${matrix} all TEs matrix of ${analysisname} scaling by sample\n"
+			plotHeatmap -m ${mat} -out combined/plots/${analysisname}_heatmap_${matrix}_TEs_v2.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --regionsLabel ${regionlabel} --colorMap 'seismic' --zMin ${mins2[@]} --zMax ${maxs2[@]} --yMin ${ymins2[@]} --yMax ${ymaxs2[@]} --interpolationMethod 'bilinear'
+		fi
+	done
+	
+	# Computing the matrix on each family
 	while read TEtype
 	do
 		awk -v t=${TEtype} '$4==t && $6=="+"' combined/TSS/${ref}_all_tes.bed > combined/TSS/${ref}_${TEtype}_${analysisname}_plus.bed
@@ -2012,7 +2158,6 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 					mini=$(grep "${sample}" combined/matrix/temp_values_${matrix}_${TEtype}_${analysisname}.txt | awk '{print $5}')
 					maxi=$(grep "${sample}" combined/matrix/temp_values_${matrix}_${TEtype}_${analysisname}.txt | awk '{print $6}')
 					test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
-					printf "worked3\n"
 					if [[ ${test} == "yes" ]]; then
 						mins2+=("0")
 						maxs2+=("0.005")
@@ -2023,7 +2168,6 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 					ymini=$(grep "${sample}" combined/matrix/temp_values_profile_${matrix}_${TEtype}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
 					ymaxi=$(grep "${sample}" combined/matrix/temp_values_profile_${matrix}_${TEtype}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
 					test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
-					printf "worked4\n"
 					if [[ ${test} == "yes" ]]; then
 						ymins2+=("0")
 						ymaxs2+=("0.01")
