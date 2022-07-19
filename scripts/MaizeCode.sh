@@ -58,7 +58,7 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts "f:p:rsctzxh" opt; do
+while getopts "f:p:r:sctzxh" opt; do
 	case $opt in
 		h) 	printf "${usage}\n"
 			exit 0;;
