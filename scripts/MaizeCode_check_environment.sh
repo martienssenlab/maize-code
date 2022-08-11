@@ -14,7 +14,7 @@ usage="
 ##### sh MaizeCode_check_environment.sh -p path to genome reference -r ref -d datatype
 ##### 	-p: path to the folder containing all the different genome references (e.g. ~/data/Genomes/Zea_mays)
 ##### 	-r: genome reference to use (e.g. B73_v4) 
-#####	-d: type of data [ ChIP | RNA | TF | shRNA ]
+#####	-d: type of data [ ChIP | RNA | TF | shRNA | mC ]
 ##### 	-h: help, returns usage
 #####
 ##### The reference genome folder should contain a single fasta file (.fa or .fasta), a single GFF file (.gff [or .gff*]) and a single GTF file (can be gzipped)
@@ -25,7 +25,7 @@ usage="
 #####
 ##### This script check if the indexes and other files need to be created and creates them if they do
 #####
-##### Requirements: pigz, samtools, Bowtie2 for ChIP data, STAR for RNA data
+##### Requirements: pigz, samtools, Bowtie2 for ChIP data, STAR for RNA data, bismark for mC data
 "
 
 set -e -o pipefail
@@ -177,6 +177,15 @@ elif [[ ${datatype} == "TF" ]]; then
 	if [[ ${ref} == "B73_v4" ]] && [ ! -s ${datatype}/tracks/B73_v4_masked_regions.bed ]; then
 		printf "\nCopying bed files of masked regions to filter peaks\n"
 		cp /grid/martienssen/data_norepl/dropbox/maizecode/Repeat_Masker/B73_v4_masked_regions.bed ${datatype}/tracks/
+	fi
+elif [[ ${datatype} == "mC" ]]; then
+	if [ ! -s ${datatype}/reports/summary_mapping_stats.txt ]; then
+		printf "Line\tSample\tTotal_Cytosines\tPercentage_uncovered\tPercentage_covered\tPercentage_covered_min3reads\tAverage_coverage_all\tAverage_coverage_covered\tNon_conversion_rate(Pt)\n" > ${datatype}/reports/summary_mapping_stats.txt
+	fi
+	if [ ! -d ${ref_dir}/Bisulfite_Genome ]; then
+		printf "\nBuilding index...\n"
+		bismark_genome_preparation --bowtie2 --genomic_composition ${ref_dir}
+		printf "\nBuilding index finished!\n"
 	fi
 elif [[ ${datatype} == "shRNA" ]]; then
 	if ls ${ref_dir}/*.bt2* 1> /dev/null 2>&1; then
