@@ -22,10 +22,10 @@ usage="
 ##### 	-h: help, returns usage
 #####
 ##### The samplefile should be a tab-delimited text file with 8 columns:
-##### col #1: Type of data [ RNAseq | RAMPAGE | ChIP | TF_*] (shRNA in development). All options are case-sensitive. For TF_*, the star should be replaced by the name of the TF, e.g. TF_TB1.
+##### col #1: Type of data [ RNAseq | RAMPAGE | shRNA | ChIP | TF_* | mC ]. All options are case-sensitive. For TF_*, the star should be replaced by the name of the TF, e.g. TF_TB1.
 ##### col #2: Line (e.g. B73)
 ##### col #3: Tissue (e.g endosperm) 
-##### col #4: Sample (e.g. 'H3K4me3' or 'Input' for ChIP, 'IP' or 'Input' for TF CHIPseq, shRNA, RNAseq or RAMPAGE for RNA (same as data type).
+##### col #4: Sample (e.g. 'H3K4me3' or 'Input' for ChIP, 'IP' or 'Input' for TF CHIPseq, shRNA, RNAseq or RAMPAGE for RNA (same as data type), same as datatype for mC (i.e mC).
 ##### col #5: Replicate ID [ Rep1 | Rep2 ] (can be more for RNA samples, not for ChIP/TF where it can only be 1 or 2).
 ##### col #6: SequencingID (e.g. S01). Unique identifier for the name of the sample in the raw sequencing folder which path is given in the next column. If downloading from SRA, put the SRR ID here.
 ##### col #7: Path to the fastq files (e.g. /seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846). If downloading from SRA, put 'SRA'.
@@ -120,6 +120,7 @@ do
 		RNAseq) env="RNA";;
 		RAMPAGE) env="RNA";;
 		shRNA) env="shRNA";;
+		mC)	env="mC";;
 		TF_*) env="TF";;
 		*) env="unknown";;
 	esac
@@ -250,6 +251,9 @@ do
 		shRNA) 	env="shRNA"
 			shortname=${line}_${tissue}_${sample}
 			name=${line}_${tissue}_${sample}_${rep};;
+		mC)	env="mC"
+			shortname=""
+			name="";;
 		TF_*) 	env="TF"
 			tmp=${data##TF_}
 			shortname=${line}_${tmp}_${sample}
