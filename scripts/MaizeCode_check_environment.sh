@@ -180,7 +180,7 @@ elif [[ ${datatype} == "TF" ]]; then
 	fi
 elif [[ ${datatype} == "mC" ]]; then
 	if [ ! -s ${datatype}/reports/summary_mapping_stats.txt ]; then
-		printf "Line\tSample\tTotal_Cytosines\tPercentage_uncovered\tPercentage_covered\tPercentage_covered_min3reads\tAverage_coverage_all\tAverage_coverage_covered\tNon_conversion_rate(Pt)\n" > ${datatype}/reports/summary_mapping_stats.txt
+		printf "Line\tSample\tTotal_Cytosines\tPercentage_uncovered\tPercentage_covered\tPercentage_covered_min3reads\tAverage_coverage_all\tAverage_coverage_covered\tNon_conversion_rate\n" > ${datatype}/reports/summary_mapping_stats.txt
 	fi
 	if [ ! -d ${ref_dir}/Bisulfite_Genome ]; then
 		printf "\nBuilding index...\n"
