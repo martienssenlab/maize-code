@@ -120,7 +120,7 @@ do
 		RNAseq) env="RNA";;
 		RAMPAGE) env="RNA";;
 		shRNA) env="shRNA";;
-		mC)	env="mC";;
+		mC_*)	env="${data}";;
 		TF_*) env="TF";;
 		*) env="unknown";;
 	esac
