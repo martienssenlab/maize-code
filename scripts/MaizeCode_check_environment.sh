@@ -179,6 +179,9 @@ elif [[ ${datatype} == "TF" ]]; then
 		cp /grid/martienssen/data_norepl/dropbox/maizecode/Repeat_Masker/B73_v4_masked_regions.bed ${datatype}/tracks/
 	fi
 elif [[ ${datatype} == "mC" ]]; then
+	if [ ! -d ${datatype}/methylcall ]; then
+		mkdir ${datatype}/methylcall
+	fi
 	if [ ! -s ${datatype}/reports/summary_mapping_stats.txt ]; then
 		printf "Line\tTissue\tRep\tTotal_reads\tAll_mapped_reads\tUniquely_mapped_reads\tPercentage_covered\tPercentage_covered_min3reads\tAverage_coverage_all\tAverage_coverage_covered\tNon_conversion_rate(Pt/Lambda)\n" > ${datatype}/reports/summary_mapping_stats.txt
 	fi
