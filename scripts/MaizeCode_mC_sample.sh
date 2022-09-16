@@ -74,17 +74,16 @@ export ref=${ref_dir##*/}
 
 name=${line}_${tissue}_mC_${rep}
 
-if [[ ${met} == "Pico" ]]; then
-	param1="-u 10 -U 10 -q 10 -m 20"
-	param2="--non_directional --maxins 1000"
-	param3=""
-else
-	param1="-m 20"
-	param2="--maxins 1000 --maxins 1000" 
-	param3="--ignore_r2 2"
-fi
-
 if [[ ${paired} == "PE" ]]; then
+	if [[ ${met} == "Pico" ]]; then
+		param1="-u 10 -U 10 -q 10 -m 20"
+		param2="--non_directional --maxins 1000"
+		param3=""
+	else
+		param1="-m 20"
+		param2="--maxins 1000" 
+		param3="--ignore_r2 2"
+	fi
 	if [[ ${step} == "download" ]]; then
 		if [[ ${path} == "SRA" ]]; then
 			printf "\nUsing fasterq-dump for ${name} (${sampleID})\n"
@@ -119,7 +118,7 @@ if [[ ${paired} == "PE" ]]; then
 		fastqc -o reports/ fastq/trimmed_${name}_R1.fastq.gz
 		fastqc -o reports/ fastq/trimmed_${name}_R2.fastq.gz
 	fi
-	#### Processing with DNA methylation analysis with Bismark
+	#### Proceeding with DNA methylation analysis with Bismark
 	R1="fastq/trimmed_${name}_R1.fastq.gz"
 	R2="fastq/trimmed_${name}_R2.fastq.gz"
 	shortR1="trimmed_${name}_R1"
@@ -154,6 +153,13 @@ if [[ ${paired} == "PE" ]]; then
 	done
 	rm -f methylcall/*${name}*bedGraph*
 elif [[ ${paired} == "SE" ]]; then
+	if [[ ${met} == "Pico" ]]; then
+		param1="-u 10 -q 10 -m 20"
+		param2="--non_directional"
+	else
+		param1="-m 20"
+		param2=""
+	fi
 	if [[ ${step} == "download" ]]; then
 		if [[ ${path} == "SRA" ]]; then
 			printf "\nUsing fasterq-dump for ${name} (${sampleID})\n"
@@ -176,17 +182,43 @@ elif [[ ${paired} == "SE" ]]; then
 		#### Trimming illumina adapters with Cutadapt
 		printf "\nTrimming Illumina adapters for ${name} with cutadapt version:\n"
 		cutadapt --version
-		cutadapt -j ${threads} -q 10 -m 20 -a AGATCGGAAGAGCACACGTCTGAAC -o fastq/trimmed_${name}.fastq.gz fastq/${name}.fastq.gz |& tee reports/trimming_${name}.txt
+		cutadapt -j ${threads} ${param1} -a AGATCGGAAGAGCACACGTCTGAAC -o fastq/trimmed_${name}.fastq.gz fastq/${name}.fastq.gz |& tee reports/trimming_${name}.txt
 		#### Removing untrimmed fastq
 		rm -f fastq/${name}.fastq.gz
 		#### FastQC on trimmed data
 		printf "\nRunning fastQC on trimmed files for ${name}\n"
 		fastqc -o reports/ fastq/trimmed_${name}.fastq.gz
 	fi
-	#### Aligning reads to reference genome with Bowtie2
-	printf "\nMaping ${name} to ${ref} with bowtie2 version:\n"
-	bowtie2 --version
-	bowtie2 -p ${threads} --end-to-end --met-file reports/bt2_${name}.txt -x $ref_dir/$ref -U fastq/trimmed_${name}.fastq.gz -S mapped/${name}.sam |& tee reports/mapping_${name}.txt
+	#### Proceeding with DNA methylation analysis with Bismark
+	printf "\nAligning ${name} with bismark_bowtie2\n"
+	bismark --genome ${ref_dir} ${param2} --local --multicore ${limthreads} --temp_dir=${TMPDIR} -o mapped/${name} --gzip --nucleotide_coverage fastq/trimmed_${sample}.fastq.gz |& tee reports/alignment_bismark_${name}.txt
+	printf "\nDeduplicating ${name} with bismark\n"
+	deduplicate_bismark -s --output_dir mapped/${name}/ -o ${name} --bam mapped/${name}/trimmed_${name}_bismark_bt2.bam |& tee reports/deduplication_bismark_${name}.txt
+	printf "\nCalling mC for ${name}"
+	bismark_methylation_extractor -s --comprehensive -o methylcall/ --gzip --multicore ${limthreads} --buffer_size 10G --cytosine_report --CX --genome_folder ${ref_dir} mapped/${name}/${name}.deduplicated.bam
+	rm -f methylcall/C*context_${name}*
+	rm -f methylcall/${name}*bismark.cov*
+	printf "\nMaking final html report for ${name}\n"
+	bismark2report -o final_report_${name}.html --dir reports/ --alignment_report mapped/${name}/trimmed_${name}_bismark_bt2_SE_report.txt --dedup_report mapped/${name}/trimmed_${name}_bismark_bt2.deduplication_report.txt --splitting_report methylcall/${name}.deduplicated_splitting_report.txt --mbias_report methylcall/${name}.deduplicated.M-bias.txt --nucleotide_report mapped/${name}/trimmed_${name}_bismark_bt2.nucleotide_stats.txt
+ 	printf "\nCalculting coverage stats for ${name}\n"
+	# tot=$(cat reports/alignment_bismark_${name}.txt | grep "Sequence pairs analysed in total:" | awk -v FS="\t" 'END {print $2}')
+	# map=$(cat reports/alignment_bismark_${name}.txt | grep "Number of paired-end alignments with a unique best hit:" | awk -v FS="\t" 'END {print $2}')
+  	# uniq=$(cat reports/deduplication_bismark_${name}.txt | grep "Total count of deduplicated leftover sequences:" | awk -v FS="\t" 'END {print $2}')
+  	# if grep -E -q "J02459.1_48502" ${ref_dir}/chrom.sizes; then
+    	#	zcat methylcall/${name}.deduplicated.CX_report.txt.gz | awk -v OFS="\t" -v l=${line} -v t=${tissue} -v r=${rep} -v z=${tot} -v y=${map} -v x=${uniq} '{a+=1; b=$4+$5; g+=b; if ($1=="J02459.1_48502") {m+=$4; n+=b;}; if (b>0) {c+=1; d+=b;} else f+=1; if (b>2) e+=1} END {print l,t,r,z,y,x,c/a*100,e/a*100,g/a,d/c,m/n*100}' >> reports/summary_mapping_stats.txt
+  	# elif grep -E -q "Pt|ChrC|chrc" ${ref_dir}/chrom.sizes; then
+  	#	zcat methylcall/${name}.deduplicated.CX_report.txt.gz | awk -v OFS="\t" -v l=${line} -v t=${tissue} -v r=${rep} -v z=${tot} -v y=${map} -v x=${uniq} '{a+=1; b=$4+$5; g+=b; if ($1 == "Pt" || $1 == "ChrC" || $1 == "chrC") {m+=$4; n+=b;}; if (b>0) {c+=1; d+=b;} else f+=1; if (b>2) e+=1} END {print l,t,r,z,y,x,c/a*100,e/a*100,g/a,d/c,m/n*100}' >> reports/summary_mapping_stats.txt
+  	# else
+    	#	zcat methylcall/${name}.deduplicated.CX_report.txt.gz | awk -v OFS="\t" -v l=${line} -v t=${tissue} -v r=${rep} -v z=${tot} -v y=${map} -v x=${uniq} '{a+=1; b=$4+$5; g+=b; if (b>0) {c+=1; d+=b;} else f+=1; if (b>2) e+=1} END {print l,t,r,z,y,x,c/a*100,e/a*100,g/a,d/c,"NA"}' >> reports/summary_mapping_stats.txt
+  	# fi
+	zcat methylcall/${name}.deduplicated.CX_report.txt.gz | awk -v OFS="\t" -v s=${name} '($4+$5)>0 {a=$4+$5; if ($6=="CHH") print $1,$2-1,$2,$4/a*100 > "methylcall/"s"_CHH.bedGraph"; else if ($6=="CHG") print $1,$2-1,$2,$4/a*100 > "methylcall/"s"_CHG.bedGraph"; else print $1,$2-1,$2,$4/a*100 > "methylcall/"s"_CG.bedGraph"}'
+	for context in CG CHG CHH
+	do
+		printf "\nMaking bigwig files of ${context} context for ${name}\n"
+		LC_COLLATE=C sort -k1,1 -k2,2n methylcall/${name}_${context}.bedGraph > methylcall/sorted_${name}_${context}.bedGraph
+		bedGraphToBigWig methylcall/sorted_${name}_${context}.bedGraph ${ref_dir}/chrom.sizes methylcall/${name}_${context}.bw
+	done
+	rm -f methylcall/*${name}*bedGraph*
 else
 	printf "\nData format missing: paired-end (PE) or single-end (SE)?\n"
 	exit 1
