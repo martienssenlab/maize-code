@@ -120,7 +120,7 @@ do
 		RNAseq) env="RNA";;
 		RAMPAGE) env="RNA";;
 		shRNA) env="shRNA";;
-		mC_*)	env="${data}";;
+		mC)	env="mC";;
 		TF_*) env="TF";;
 		*) env="unknown";;
 	esac
@@ -231,7 +231,7 @@ sample_list=()
 pids=()
 while read data line tissue sample rep sampleID path paired ref
 do
-	ref_dir=${pathtoref}/${ref}
+	ref_dir="${pathtoref}/${ref}"
 	if [[ "${data}" == "ChIP_"* ]] && [[ "${sample}" == "Input" ]]; then
 		tmp=${data#ChIP_}
 		add="_${tmp}"
@@ -240,24 +240,24 @@ do
 	fi
 	case "${data}" in
 		ChIP*) 	env="ChIP"
-			shortname=${line}_${tissue}_${sample}
-			name=${line}_${tissue}_${sample}_${rep}${add};;
+			shortname="${line}_${tissue}_${sample}"
+			name="${line}_${tissue}_${sample}_${rep}${add}";;
 		RNAseq) env="RNA"
-			shortname=${line}_${tissue}_${sample}
-			name=${line}_${tissue}_${sample}_${rep};;
+			shortname="${line}_${tissue}_${sample}"
+			name="${line}_${tissue}_${sample}_${rep}";;
 		RAMPAGE) 	env="RNA"
-				shortname=${line}_${tissue}_${sample}
-				name=${line}_${tissue}_${sample}_${rep};;
+				shortname="${line}_${tissue}_${sample}"
+				name="${line}_${tissue}_${sample}_${rep}";;
 		shRNA) 	env="shRNA"
-			shortname=${line}_${tissue}_${sample}
-			name=${line}_${tissue}_${sample}_${rep};;
+			shortname="${line}_${tissue}_${sample}"
+			name="${line}_${tissue}_${sample}_${rep}";;
 		mC)	env="mC"
-			shortname=""
-			name="";;
+			shortname="${line}_${tissue}_${sample}"
+			name="${line}_${tissue}_${sample}_${rep}";;
 		TF_*) 	env="TF"
 			tmp=${data##TF_}
-			shortname=${line}_${tmp}_${sample}
-			name=${line}_${tmp}_${sample}_${rep};;
+			shortname="${line}_${tmp}_${sample}"
+			name="${line}_${tmp}_${sample}_${rep}";;
 	esac
 	check=${env}/chkpts/${name}_${ref}
 	ref_list+=("${ref}")
