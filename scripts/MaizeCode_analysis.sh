@@ -103,6 +103,9 @@ fi
 if [ -e TF/temp_${samplename}_TF.txt ]; then
 	rm -f TF/temp_${samplename}_TF.txt
 fi
+if [ -e mC/temp_${samplename}_mC.txt ]; then
+	rm -f mC/temp_${samplename}_mC.txt
+fi
 if [ -e combined/temp_${samplename}_ChIP.txt ]; then
 	rm -f combined/temp_reports_${samplename}_ChIP.txt
 fi
@@ -114,6 +117,9 @@ if [ -e combined/temp_${samplename}_shRNA.txt ]; then
 fi
 if [ -e combined/temp_${samplename}_TF.txt ]; then
 	rm -f combined/temp_reports_${samplename}_TF.txt
+fi
+if [ -e combined/temp_${samplename}_mC.txt ]; then
+	rm -f combined/temp_reports_${samplename}_mC.txt
 fi
 
 #### Check if there are new samples to analyze individually
@@ -139,6 +145,9 @@ do
 		shRNA) datatype="shRNA"
 			tmpname="${tissue}"
 			name=${line}_${tissue}_${sample};;
+		mC)	datatype="mC"
+			tmpname="${tissue}"
+			name=${line}_${tissue}_mC;;
 		TF_*) datatype="TF"
 			tmpname=${data##TF_}
 			name=${line}_${tmpname};;
@@ -174,6 +183,13 @@ do
 		new_tf_sample+=("${name}")
 		new_tf_chk+=("${line}_${tmpname}")
 		printf "${line}\t${tmpname}\t${sample}\t${paired}\t${ref_dir}\n" >> ${datatype}/temp_${samplename}_${datatype}.txt
+	elif [[ "${datatype}" == "mC" ]]; then
+		if [ ! -d ./mC/methylcall ]; then
+			mkdir ./mC/methylcall
+		fi
+		datatype_list+=("${datatype}")
+		new_mc_sample+=("${name}")
+		printf "${line}\t${tmpname}\t${sample}\t${paired}\t${ref_dir}\n" >> ${datatype}/temp_${samplename}_${datatype}.txt	
 	elif [[ "${datatype}" == "shRNA" ]]; then
 		datatype_list+=("${datatype}")
 		new_shrna_sample+=("${name}")
@@ -190,7 +206,7 @@ done < ${samplefile}
 #### If there are new samples, run the ChIP and/or RNA pipeline on the new samples of the same type
 
 test_new=1
-if [ ${#new_chip_sample[@]} -eq 0 ] && [ ${#new_rna_sample[@]} -eq 0 ] && [ ${#new_tf_sample[@]} -eq 0 ] && [ ${#new_shrna_sample[@]} -eq 0 ]; then
+if [ ${#new_chip_sample[@]} -eq 0 ] && [ ${#new_rna_sample[@]} -eq 0 ] && [ ${#new_tf_sample[@]} -eq 0 ] && [ ${#new_mc_sample[@]} -eq 0 ] && [ ${#new_shrna_sample[@]} -eq 0 ]; then
 	printf "\nAll samples in samplefile already analyzed individually\n"
 	test_new=0
 fi
@@ -237,6 +253,15 @@ if [[ "${test_new}" == 1 ]]; then
 					printf "\nProblem during the processing of TF sample ${tfsample}!\nCheck log: TF/logs/${samplename}.log and TF/logs/analysis_${tfsample}_*.log\n"
 				else 
 					printf "\nTF analysis for ${tfsample} processed succesfully\n"
+				fi
+			done
+		elif [[ "${datatype}" == "mC" ]]; then
+			for mcsample in ${new_mc_sample[@]}
+			do
+				if [ ! -e ${datatype}/chkpts/analysis_${mcsample} ]; then
+					printf "\nProblem during the processing of mC sample ${mcsample}!\nCheck log: mC/logs/${samplename}.log and mC/logs/analysis_${mcsample}_*.log\n"
+				else 
+					printf "\nmC analysis for ${mcsample} processed succesfully\n"
 				fi
 			done
 		elif [[ "${datatype}" == "shRNA" ]]; then
