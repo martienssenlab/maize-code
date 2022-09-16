@@ -22,15 +22,17 @@ usage="
 ##### 	-h: help, returns usage
 #####
 ##### The samplefile should be a tab-delimited text file with 8 columns:
-##### col #1: Type of data [ RNAseq | RAMPAGE | shRNA | ChIP | TF_* | mC ]. All options are case-sensitive. For TF_*, the star should be replaced by the name of the TF, e.g. TF_TB1.
+##### col #1: Type of data [ RNAseq | RAMPAGE | shRNA | ChIP(_*) | TF_* | mC ]. All options are case-sensitive. For TF_*, the star should be replaced by the name of the TF, e.g. TF_TB1.
 ##### col #2: Line (e.g. B73)
 ##### col #3: Tissue (e.g endosperm) 
-##### col #4: Sample (e.g. 'H3K4me3' or 'Input' for ChIP, 'IP' or 'Input' for TF CHIPseq, shRNA, RNAseq or RAMPAGE for RNA (same as data type), same as datatype for mC (i.e mC).
+##### col #4: Sample (e.g. 'H3K4me3' or 'Input' for ChIP, 'IP' or 'Input' for TF CHIPseq, shRNA, RNAseq or RAMPAGE for RNA (same as data type), kit used for mC [ mC | Pico | EM ].
 ##### col #5: Replicate ID [ Rep1 | Rep2 ] (can be more for RNA samples, not for ChIP/TF where it can only be 1 or 2).
 ##### col #6: SequencingID (e.g. S01). Unique identifier for the name of the sample in the raw sequencing folder which path is given in the next column. If downloading from SRA, put the SRR ID here.
 ##### col #7: Path to the fastq files (e.g. /seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846). If downloading from SRA, put 'SRA'.
 ##### col #8: If data is paired-end or single-end [ PE | SE ]. 
 ##### col #9: Name of the genome reference to map (e.g. B73_v4). Each genome reference should have a unique folder that contains a single fasta file, gff3 file and gtf file (can all be gzipped).
+##### For ChIP data, you can add a single identifier after underscore (e.g. "ChIP_A" or "ChIP_run3") to tell which Input to use with each IP
+##### For mC data, if you used pico kit for library preparation, you should use Pico in sample name. Also, if you used EMseq with lambda and pUC internal controls, you can use EM.
 ##### The gff3 files should have 'gene' in column 3 and exons should be linked by 'Parent' in column 9
 ##### The fasta and gff3 files should have the same chromosome names (i.e. 1 2 3... and 1 2 3... or Chr1 Chr2 Chr3... and Chr1 Chr2 Chr3...)
 ##### For cleaner naming purposes, use '_samplefile.txt' as suffix
@@ -108,13 +110,6 @@ datat_ref_list=()
 new_env=0
 while read data line tissue sample rep sampleID path paired ref
 do
-	if [[ "${data}" == "ChIP_"* ]] && [[ "${sample}" == "Input" ]]; then
-		tmp=${data#ChIP_}
-		add="_${tmp}"
-	else
-		add=""
-	fi
-	name=${line}_${tissue}_${sample}_${rep}${add}
 	case "${data}" in
 		ChIP*) 	env="ChIP";;
 		RNAseq) env="RNA";;
@@ -252,8 +247,8 @@ do
 			shortname="${line}_${tissue}_${sample}"
 			name="${line}_${tissue}_${sample}_${rep}";;
 		mC)	env="mC"
-			shortname="${line}_${tissue}_${sample}"
-			name="${line}_${tissue}_${sample}_${rep}";;
+			shortname="${line}_${tissue}_mC"
+			name="${line}_${tissue}_mC_${rep}";;
 		TF_*) 	env="TF"
 			tmp=${data##TF_}
 			shortname="${line}_${tmp}_${sample}"
@@ -342,11 +337,16 @@ do
 		shRNA) env="shRNA"
 			stat="plot2"
 			name="${line}_${tissue}_${sample}_${rep}";;
+		mC)	env="mC"
+			stat="plot3";;
+			name="${line}_${tissue}_mC_${rep}";;
 	esac
 	if [[ ${stat} == "plot1" ]]; then
 		awk -v a=${line} -v b=${name} -v c=${sample} -v d=${rep} -v e=${ref}${add} '$1==a && $2==b && $3==c && $4==d && $5==e' ${env}/reports/summary_mapping_stats.txt >> combined/reports/temp_mapping_stats_${samplename}.txt
 	elif [[ ${stat} == "plot2" ]]; then
 		cat shRNA/reports/sizes_*${name}* >> combined/reports/temp2_mapping_stats_${samplename}.txt
+	elif [[ ${stat} == "plot3" ]]; then
+		cat mC/reports/summary_mapping_stats.txt >> combined/reports/temp3_mapping_stats_${samplename}.txt
 	fi
 done < ${samplefile}
 
