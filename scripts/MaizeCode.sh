@@ -403,6 +403,8 @@ do
 		printf "TF/tracks/${ref}_all_genes.bed\n" >> all_genes.txt
 	elif [ -s shRNA/tracks/${ref}_all_genes.bed ]; then
 		printf "shRNA/tracks/${ref}_all_genes.bed\n" >> all_genes.txt
+	elif [ -s mC/tracks/${ref}_all_genes.bed ]; then
+		printf "mC/tracks/${ref}_all_genes.bed\n" >> all_genes.txt
 	else
 		printf "Problem: no region file found for ${ref}!\n"
 		exit 1
