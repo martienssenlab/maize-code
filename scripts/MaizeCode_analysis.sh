@@ -154,7 +154,9 @@ do
 	esac
 	printf "${line}\t${tmpname}\t${sample}\t${paired}\t${ref_dir}\n" >> combined/temp_reports_${samplename}_${datatype}.txt
 	if [ -e ${datatype}/chkpts/analysis_${name} ]; then
-		printf "\nSingle sample analysis for ${name} already done!\n"	
+		printf "\nSingle sample analysis for ${name} already done!\n"
+	elif [[ "${datatype}" == "mC" ]]; then
+		printf "\nNo further analysis to be performed for mC samples\n"
 	elif [[ "${datatype}" == "ChIP" ]]; then
 		if [ ! -d ./ChIP/peaks ]; then
 			mkdir ./ChIP/peaks
@@ -182,13 +184,6 @@ do
 		datatype_list+=("${datatype}")
 		new_tf_sample+=("${name}")
 		new_tf_chk+=("${line}_${tmpname}")
-		printf "${line}\t${tmpname}\t${sample}\t${paired}\t${ref_dir}\n" >> ${datatype}/temp_${samplename}_${datatype}.txt
-	elif [[ "${datatype}" == "mC" ]]; then
-		if [ ! -d ./mC/methylcall ]; then
-			mkdir ./mC/methylcall
-		fi
-		datatype_list+=("${datatype}")
-		new_mc_sample+=("${name}")
 		printf "${line}\t${tmpname}\t${sample}\t${paired}\t${ref_dir}\n" >> ${datatype}/temp_${samplename}_${datatype}.txt	
 	elif [[ "${datatype}" == "shRNA" ]]; then
 		datatype_list+=("${datatype}")
@@ -253,15 +248,6 @@ if [[ "${test_new}" == 1 ]]; then
 					printf "\nProblem during the processing of TF sample ${tfsample}!\nCheck log: TF/logs/${samplename}.log and TF/logs/analysis_${tfsample}_*.log\n"
 				else 
 					printf "\nTF analysis for ${tfsample} processed succesfully\n"
-				fi
-			done
-		elif [[ "${datatype}" == "mC" ]]; then
-			for mcsample in ${new_mc_sample[@]}
-			do
-				if [ ! -e ${datatype}/chkpts/analysis_${mcsample} ]; then
-					printf "\nProblem during the processing of mC sample ${mcsample}!\nCheck log: mC/logs/${samplename}.log and mC/logs/analysis_${mcsample}_*.log\n"
-				else 
-					printf "\nmC analysis for ${mcsample} processed succesfully\n"
 				fi
 			done
 		elif [[ "${datatype}" == "shRNA" ]]; then
