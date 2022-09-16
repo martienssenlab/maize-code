@@ -38,7 +38,6 @@ printf "\n"
 
 export threads=$NSLOTS
 export limthreads=$((threads/3))
-export minthreads=$((threads - 1))
 
 if [ $# -eq 0 ]; then
 	printf "${usage}\n"
@@ -76,8 +75,8 @@ export ref=${ref_dir##*/}
 name=${line}_${tissue}_mC_${rep}
 
 if [[ ${met} == "Pico" ]]; then
-  param1="-u 10 -U 10 -q 10 -m 20"
-  param2="--non_directional --maxins 1000"
+	param1="-u 10 -U 10 -q 10 -m 20"
+	param2="--non_directional --maxins 1000"
 	param3=""
 else
 	param1="-m 20"
@@ -86,7 +85,7 @@ else
 fi
 
 if [[ ${paired} == "PE" ]]; then
-  if [[ ${step} == "download" ]]; then
+	if [[ ${step} == "download" ]]; then
 		if [[ ${path} == "SRA" ]]; then
 			printf "\nUsing fasterq-dump for ${name} (${sampleID})\n"
 			fasterq-dump -e ${threads} --outdir ./fastq ${sampleID}
@@ -112,7 +111,7 @@ if [[ ${paired} == "PE" ]]; then
 		#### Trimming illumina adapters with Cutadapt
 		printf "\nTrimming Illumina adapters for ${name} with cutadapt version:\n"
 		cutadapt --version
-    cutadapt -j ${threads} ${param1} -a AGATCGGAAGAGCACACGTCTGAAC -A AGATCGGAAGAGCGTCGTGTAGGGA -o fastq/trimmed_${name}_R1.fastq.gz -p fastq/trimmed_${name}_R2.fastq.gz fastq/${name}_R1.fastq.gz fastq/${name}_R2.fastq.gz |& tee reports/trimming_${name}.txt
+   		cutadapt -j ${threads} ${param1} -a AGATCGGAAGAGCACACGTCTGAAC -A AGATCGGAAGAGCGTCGTGTAGGGA -o fastq/trimmed_${name}_R1.fastq.gz -p fastq/trimmed_${name}_R2.fastq.gz fastq/${name}_R1.fastq.gz fastq/${name}_R2.fastq.gz |& tee reports/trimming_${name}.txt
 		#### Removing untrimmed fastq
 		rm -f fastq/${name}_R*.fastq.gz
 		#### FastQC on trimmed data
@@ -135,17 +134,25 @@ if [[ ${paired} == "PE" ]]; then
 	rm -f methylcall/${name}*bismark.cov*
 	printf "\nMaking final html report for ${name}\n"
 	bismark2report -o final_report_${name}.html --dir reports/ --alignment_report mapped/${name}/trimmed_${name}_R1_bismark_bt2_PE_report.txt --dedup_report mapped/${name}/trimmed_${name}_R1_bismark_bt2_pe.deduplication_report.txt --splitting_report methylcall/${name}.deduplicated_splitting_report.txt --mbias_report methylcall/${name}.deduplicated.M-bias.txt --nucleotide_report mapped/${name}/trimmed_${name}_R1_bismark_bt2_pe.nucleotide_stats.txt
-  printf "\nCalculting coverage stats for ${name}\n"
+ 	printf "\nCalculting coverage stats for ${name}\n"
 	tot=$(cat reports/alignment_bismark_${name}.txt | grep "Sequence pairs analysed in total:" | awk -v FS="\t" 'END {print $2}')
 	map=$(cat reports/alignment_bismark_${name}.txt | grep "Number of paired-end alignments with a unique best hit:" | awk -v FS="\t" 'END {print $2}')
-  uniq=$(cat reports/deduplication_bismark_${name}.txt | grep "Total count of deduplicated leftover sequences:" | awk -v FS="\t" 'END {print $2}')
-  if grep -E -q "J02459.1_48502" ${ref_dir}/chrom.sizes; then
-    zcat methylcall/${name}.deduplicated.CX_report.txt.gz | awk -v OFS="\t" -v l=${line} -v t=${tissue} -v r=${rep} -v z=${tot} -v y=${map} -v x=${uniq} '{a+=1; b=$4+$5; g+=b; if ($1=="J02459.1_48502") {m+=$4; n+=b;}; if (b>0) {c+=1; d+=b;} else f+=1; if (b>2) e+=1} END {print l,t,r,z,y,x,c/a*100,e/a*100,g/a,d/c,m/n*100}' >> reports/summary_mapping_stats.txt
-  elif grep -E -q "Pt|ChrC|chrc" ${ref_dir}/chrom.sizes; then
-    zcat methylcall/${name}.deduplicated.CX_report.txt.gz | awk -v OFS="\t" -v l=${line} -v t=${tissue} -v r=${rep} -v z=${tot} -v y=${map} -v x=${uniq} '{a+=1; b=$4+$5; g+=b; if ($1 == "Pt" || $1 == "ChrC" || $1 == "chrC") {m+=$4; n+=b;}; if (b>0) {c+=1; d+=b;} else f+=1; if (b>2) e+=1} END {print l,t,r,z,y,x,c/a*100,e/a*100,g/a,d/c,m/n*100}' >> reports/summary_mapping_stats.txt
-  else
-    zcat methylcall/${name}.deduplicated.CX_report.txt.gz | awk -v OFS="\t" -v l=${line} -v t=${tissue} -v r=${rep} -v z=${tot} -v y=${map} -v x=${uniq} '{a+=1; b=$4+$5; g+=b; if (b>0) {c+=1; d+=b;} else f+=1; if (b>2) e+=1} END {print l,t,r,z,y,x,c/a*100,e/a*100,g/a,d/c,"NA"}' >> reports/summary_mapping_stats.txt
-  fi
+  	uniq=$(cat reports/deduplication_bismark_${name}.txt | grep "Total count of deduplicated leftover sequences:" | awk -v FS="\t" 'END {print $2}')
+  	if grep -E -q "J02459.1_48502" ${ref_dir}/chrom.sizes; then
+    		zcat methylcall/${name}.deduplicated.CX_report.txt.gz | awk -v OFS="\t" -v l=${line} -v t=${tissue} -v r=${rep} -v z=${tot} -v y=${map} -v x=${uniq} '{a+=1; b=$4+$5; g+=b; if ($1=="J02459.1_48502") {m+=$4; n+=b;}; if (b>0) {c+=1; d+=b;} else f+=1; if (b>2) e+=1} END {print l,t,r,z,y,x,c/a*100,e/a*100,g/a,d/c,m/n*100}' >> reports/summary_mapping_stats.txt
+  	elif grep -E -q "Pt|ChrC|chrc" ${ref_dir}/chrom.sizes; then
+  		zcat methylcall/${name}.deduplicated.CX_report.txt.gz | awk -v OFS="\t" -v l=${line} -v t=${tissue} -v r=${rep} -v z=${tot} -v y=${map} -v x=${uniq} '{a+=1; b=$4+$5; g+=b; if ($1 == "Pt" || $1 == "ChrC" || $1 == "chrC") {m+=$4; n+=b;}; if (b>0) {c+=1; d+=b;} else f+=1; if (b>2) e+=1} END {print l,t,r,z,y,x,c/a*100,e/a*100,g/a,d/c,m/n*100}' >> reports/summary_mapping_stats.txt
+  	else
+    		zcat methylcall/${name}.deduplicated.CX_report.txt.gz | awk -v OFS="\t" -v l=${line} -v t=${tissue} -v r=${rep} -v z=${tot} -v y=${map} -v x=${uniq} '{a+=1; b=$4+$5; g+=b; if (b>0) {c+=1; d+=b;} else f+=1; if (b>2) e+=1} END {print l,t,r,z,y,x,c/a*100,e/a*100,g/a,d/c,"NA"}' >> reports/summary_mapping_stats.txt
+  	fi
+	zcat methylcall/${name}.deduplicated.CX_report.txt.gz | awk -v OFS="\t" -v s=${name} '($4+$5)>0 {a=$4+$5; if ($6=="CHH") print $1,$2-1,$2,$4/a*100 > "methylcall/"s"_CHH.bedGraph"; else if ($6=="CHG") print $1,$2-1,$2,$4/a*100 > "methylcall/"s"_CHG.bedGraph"; else print $1,$2-1,$2,$4/a*100 > "methylcall/"s"_CG.bedGraph"}'
+	for context in CG CHG CHH
+	do
+		printf "\nMaking bigwig files of ${context} context for ${name}\n"
+		LC_COLLATE=C sort -k1,1 -k2,2n methylcall/${name}_${context}.bedGraph > methylcall/sorted_${name}_${context}.bedGraph
+		bedGraphToBigWig methylcall/sorted_${name}_${context}.bedGraph ${ref_dir}/chrom.sizes methylcall/${name}_${context}.bw
+	done
+	rm -f methylcall/*${name}*bedGraph*
 elif [[ ${paired} == "SE" ]]; then
 	if [[ ${step} == "download" ]]; then
 		if [[ ${path} == "SRA" ]]; then
