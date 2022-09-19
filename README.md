@@ -128,6 +128,8 @@ All files can be gzipped (.gz extension).
 | TF_TB1 | B73 | leaf | IP | Rep1 | SRRxxxxxx | SRA | PE | B73_v4 |
 | TF_TB1 | B73 | leaf | Input | Rep1 | SRRxxxxxx | SRA | PE | B73_v4 |
 | shRNA | NC350 | cn | shRNA | Rep1 | cn | /home/maize-code/shRNA/fastqs | SE | NC350_NAM |
+| mC | B73 | roots | mC | Rep1 | SRRxxxxxxx | SRA | PE | B73_NAM |
+| mC | B73 | roots | Pico | Rep1 | SRRxxxxxxx | SRA | PE | B73_NAM |
 6) Submit the `scripts/MaizeCode.sh` script, giving as argument `-f <samplefile.txt>` the samplefile of your choice and `-p <path>` the path to your folder that contains the different genome directories, i.e. the `genomes` folder mentioned above:\
 `qsub scripts/MaizeCode.sh -f example_samplefile.txt -r /path/to/genomes`
 7) By default, it will proceed with the analysis. `-s` can be set so that it does not proceed with the analysis at all or `-c` can be set if only single sample analysis should be performed but no combined analysis per line or between lines.
