@@ -136,7 +136,7 @@ if [[ ${paired} == "PE" ]]; then
  	printf "\nCalculting coverage stats for ${name}\n"
 	tot=$(cat reports/alignment_bismark_${name}.txt | grep "Sequence pairs analysed in total:" | awk -v FS="\t" 'END {print $2}')
 	map=$(cat reports/alignment_bismark_${name}.txt | grep "Number of paired-end alignments with a unique best hit:" | awk -v FS="\t" 'END {print $2}')
-  	uniq=$(cat reports/deduplication_bismark_${name}.txt | grep "Total count of deduplicated leftover sequences:" | awk -v FS="\t" 'END {print $2}')
+  	uniq=$(cat reports/deduplication_bismark_${name}.txt | grep "Total count of deduplicated leftover sequences:" | awk -v FS=":" 'END {print $2}' | awk '{print $1}')
   	if grep -E -q "J02459.1_48502" ${ref_dir}/chrom.sizes; then
     		zcat methylcall/${name}.deduplicated.CX_report.txt.gz | awk -v OFS="\t" -v l=${line} -v t=${tissue} -v r=${rep} -v z=${tot} -v y=${map} -v x=${uniq} '{a+=1; b=$4+$5; g+=b; if ($1=="J02459.1_48502") {m+=$4; n+=b;}; if (b>0) {c+=1; d+=b;} else f+=1; if (b>2) e+=1} END {print l,t,r,z,y,x,c/a*100,e/a*100,g/a,d/c,m/n*100}' >> reports/summary_mapping_stats.txt
   	elif grep -E -q "Pt|ChrC|chrc" ${ref_dir}/chrom.sizes; then
