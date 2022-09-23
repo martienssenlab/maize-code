@@ -814,7 +814,7 @@ if [[ "${total}" != "TEST" ]]; then
 		plotHeatmap -m combined/matrix/all_genes_${matrix}_${analysisname}.gz -out combined/plots/all_genes_${analysisname}_heatmap_${matrix}_v2.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --regionsLabel ${regionlabel} --colorMap 'seismic' --zMin ${mins2[@]} --zMax ${maxs2[@]} --yMin ${ymins2[@]} --yMax ${ymaxs2[@]} --interpolationMethod 'bilinear'
 	done
 	
-	if [ ${#mc_bw_list_plus[@]} -gt 0 ]; then
+	if [ ${#mc_sample_list[@]} -gt 0 ]; then
 		#### Reordering the samples by mC sequence context
 		mins=()
 		max=()
@@ -849,9 +849,9 @@ if [[ "${total}" != "TEST" ]]; then
 			printf "\nComputing mC matrices aligned by sorted TSS of ${analysisname}\n"
 			computeMatrix reference-point --referencePoint "TSS" -q -R combined/matrix/sorted_tss_${analysisname}.txt -S ${sorted_mccontext} -bs 50 -b 2000 -a 8000 -p ${threads} --sortRegions keep -o combined/matrix/temp_mC_tss_${analysisname}.gz
 			printf "\nPlotting heatmap for regions matrix of ${analysisname}\n"
-			plotHeatmap -m combined/matrix/temp_mC_regions_${analysisname}.gz -out combined/plots/all_genes_${analysisname}_heatmap_regions_mC.pdf --sortRegions keep --samplesLabel ${sorted_mclabels[@]} --regionsLabel ${regionlabel} --colorMap 'Oranges' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${mins[@]} --yMax ${maxs[@]} --interpolationMethod 'nearest'
+			plotHeatmap -m combined/matrix/temp_mC_regions_${analysisname}.gz -out combined/plots/all_genes_${analysisname}_heatmap_regions_mC.pdf --sortRegions keep --samplesLabel ${sorted_mclabels[@]} --regionsLabel ${regionlabel} --colorMap 'Oranges' --missingDataColor 'grey' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${mins[@]} --yMax ${maxs[@]} --interpolationMethod 'nearest'
 			printf "\nPlotting heatmap for tss matrix of ${analysisname}\n"
-			plotHeatmap -m combined/matrix/temp_mC_tss_${analysisname}.gz -out combined/plots/all_genes_${analysisname}_heatmap_tss_mC.pdf --sortRegions keep --samplesLabel ${sorted_mclabels[@]} --regionsLabel ${regionlabel} --colorMap 'Oranges' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${mins[@]} --yMax ${maxs[@]} --interpolationMethod 'nearest'
+			plotHeatmap -m combined/matrix/temp_mC_tss_${analysisname}.gz -out combined/plots/all_genes_${analysisname}_heatmap_tss_mC.pdf --sortRegions keep --samplesLabel ${sorted_mclabels[@]} --regionsLabel ${regionlabel} --colorMap 'Oranges' --missingDataColor 'grey' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${mins[@]} --yMax ${maxs[@]} --interpolationMethod 'nearest'
 			rm -f combined/matrix/temp_mC_*_${analysisname}.gz
 		else
 			printf "\nComputing mC matrices aligned by regions of ${analysisname}\n"
