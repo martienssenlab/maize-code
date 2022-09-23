@@ -111,6 +111,9 @@ chip_bw_list=()
 tf_sample_list=()
 tf_tissue_list=()
 tf_bw_list=()
+mc_sample_list=()
+mc_tissue_list=()
+mc_bw_list=()
 rna_type_list=()
 rnaseq_sample_list=()
 rnaseq_tissue_list=()
@@ -136,6 +139,8 @@ do
 			name=${line}_${tissue}_${sample};;
 		shRNA) datatype="shRNA"
 			name=${line}_${tissue}_${sample};;
+		mC) datatype="mC"
+			name=${line}_${tissue}_mC;;
 		TF_*) datatype="TF"
 			name=${data##TF_};;
 	esac
@@ -148,13 +153,19 @@ do
 	if [[ ! "${line_list[@]}" =~ "${line}" ]]; then
 		line_list+=("${line}")
 	fi
-	if [[ "${datatype}" == "ChIP"* ]]; then
+	if [[ "${datatype}" == "ChIP" ]]; then
 		if [ -e ${datatype}/tracks/${name}_merged.bw ]; then
 			chip_bw_list+=("${datatype}/tracks/${name}_merged.bw")
+			chip_sample_list+=("${name}")
 		else
-			chip_bw_list+=("${datatype}/tracks/${name}_Rep1.bw")
+			for i in {1..5}
+			do
+				if [ -e ${datatype}/tracks/${name}_Rep${i}.bw ]; then
+					chip_bw_list+=("${datatype}/tracks/${name}_Rep${i}.bw")
+					chip_sample_list+=("${name}_rep${i}")
+				fi
+			done
 		fi
-		chip_sample_list+=("${name}")
 		chip_tissue_list+=("${tissue}")
 		chip_mark_list+=("${sample}")
 	elif [[ "${datatype}" == "RNA" ]]; then
@@ -178,6 +189,15 @@ do
 		shrna_tissue_list+=("${tissue}")
 		shrna_bw_list_plus+=("${datatype}/tracks/${name}_merged_plus.bw")
 		shrna_bw_list_minus+=("${datatype}/tracks/${name}_merged_minus.bw")
+	elif [[ "${datatype}" == "mC" ]]; then
+		for i in {1..5}
+		do
+			if [ -e ${datatype}/tracks/${name}_Rep${i}.bw ]; then
+				mc_bw_list+=("${datatype}/tracks/${name}_Rep${i}.bw")
+				mc_sample_list+=("${name}_rep${i}")
+			fi
+		done
+		mc_tissue_list+=("${tissue}")
 	elif [[ "${datatype}" == "TF" ]]; then
 		tf_sample_list+=("${name}")
 		tf_tissue_list+=("${tissue}")
@@ -644,7 +664,7 @@ if [[ "${total}" == "NO" ]]; then
 	exit 0
 fi
 
-total_sample_number=$((${#chip_sample_list[@]} + ${#rnaseq_sample_list[@]} + ${#rampage_sample_list[@]} + ${#shrna_sample_list[@]}))
+total_sample_number=$((${#chip_sample_list[@]} + ${#rnaseq_sample_list[@]} + ${#rampage_sample_list[@]} + ${#shrna_sample_list[@]} + ${#mc_sample_list[@]}))
 if [ ${total_sample_number} -lt 2 ]; then
 	printf "\nNot enough samples for deeptools analysis for ${analysisname}\nAnalysis is thus finished!\n"
 	touch combined/chkpts/analysis_${analysisname}
@@ -687,8 +707,8 @@ if [[ "${total}" != "TEST" ]]; then
 	for strand in plus minus
 	do
 		case "${strand}" in
-			plus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_plus[@]} ${rampage_bw_list_plus[@]} ${shrna_bw_list_plus[@]}";;
-			minus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]} ${shrna_bw_list_minus[@]}";;
+			plus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_plus[@]} ${rampage_bw_list_plus[@]} ${shrna_bw_list_plus[@]} ${mc_bw_list[@]}";;
+			minus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]} ${shrna_bw_list_minus[@]}" ${mc_bw_list[@]}";;
 		esac
 		printf "\nComputing scale-regions ${strand} strand matrix for ${analysisname}\n"
 		computeMatrix scale-regions -q --missingDataAsZero --skipZeros -R combined/matrix/temp_regions_${regionname}_${strand}.bed -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/temp_all_genes_regions_${analysisname}_${strand}.gz
@@ -719,6 +739,11 @@ if [[ "${total}" != "TEST" ]]; then
 		printf "\nIncluding shRNA samples\n"
 		all_samples+=("shRNA")
 		all_labels+=("${shrna_sample_list[*]}")
+	fi
+	if [ ${#mc_bw_list_plus[@]} -gt 0 ]; then
+		printf "\nIncluding mC samples\n"
+		all_samples+=("mC")
+		all_labels+=("${mc_sample_list[*]}")
 	fi
 	for matrix in regions tss
 	do
