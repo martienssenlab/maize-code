@@ -192,9 +192,9 @@ do
 	elif [[ "${datatype}" == "mC" ]]; then
 		for i in {1..5}
 		do
-			if [ -e ${datatype}/tracks/${name}_Rep${i}.bw ]; then
-				mc_bw_list+=("${datatype}/tracks/${name}_Rep${i}.bw")
-				mc_sample_list+=("${name}_rep${i}")
+			if [ -e ${datatype}/tracks/${name}_Rep${i}_CG.bw ]; then
+				mc_bw_list+=("${datatype}/tracks/${name}_Rep${i}_CG.bw" "${datatype}/tracks/${name}_Rep${i}_CHG.bw" "${datatype}/tracks/${name}_Rep${i}_CHH.bw")
+				mc_sample_list+=("${name}_rep${i}_CG" "${name}_rep${i}_CHG" "${name}_rep${i}_CHH")
 			fi
 		done
 		mc_tissue_list+=("${tissue}")
@@ -702,13 +702,29 @@ if [[ "${total}" != "TEST" ]]; then
 			fi
 		done
 	done
+	#### Reordering the samples by mC sequence context
+	for context in CG CHG CHH
+	do
+		for sample in ${mc_sample_list[@]}
+		do
+			if [[ ${sample} =~ ${context} ]]; then
+				sorted_mclabels+=("${sample}")
+			fi
+		done
+		for bw in ${mc_bw_list[@]}
+		do
+			if [[ ${bw} =~ ${context} ]]; then
+				sorted_mccontext+=("${bw}")
+			fi
+		done
+	done
 
 	#### Computing the stranded matrix
 	for strand in plus minus
 	do
 		case "${strand}" in
-			plus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_plus[@]} ${rampage_bw_list_plus[@]} ${shrna_bw_list_plus[@]} ${mc_bw_list[@]}";;
-			minus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]} ${shrna_bw_list_minus[@]}" ${mc_bw_list[@]}";;
+			plus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_plus[@]} ${rampage_bw_list_plus[@]} ${shrna_bw_list_plus[@]} ${sorted_mccontext[@]}";;
+			minus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]} ${shrna_bw_list_minus[@]}" ${sorted_mccontext[@]}";;
 		esac
 		printf "\nComputing scale-regions ${strand} strand matrix for ${analysisname}\n"
 		computeMatrix scale-regions -q --missingDataAsZero --skipZeros -R combined/matrix/temp_regions_${regionname}_${strand}.bed -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/temp_all_genes_regions_${analysisname}_${strand}.gz
@@ -740,10 +756,10 @@ if [[ "${total}" != "TEST" ]]; then
 		all_samples+=("shRNA")
 		all_labels+=("${shrna_sample_list[*]}")
 	fi
-	if [ ${#mc_bw_list_plus[@]} -gt 0 ]; then
+	if [ ${#sorted_mccontext[@]} -gt 0 ]; then
 		printf "\nIncluding mC samples\n"
-		all_samples+=("mC")
-		all_labels+=("${mc_sample_list[*]}")
+		all_samples+=("mCG mCHG mCHH")
+		all_labels+=("${sorted_mclabels[*]}")
 	fi
 	for matrix in regions tss
 	do
