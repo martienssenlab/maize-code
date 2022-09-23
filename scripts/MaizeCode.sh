@@ -313,6 +313,10 @@ if [ -e combined/reports/temp2_mapping_stats_${samplename}.txt ]; then
 	rm -f combined/reports/temp2_mapping_stats_${samplename}.txt
 fi
 
+if [ -e combined/reports/temp3_mapping_stats_${samplename}.txt ]; then
+	rm -f combined/reports/temp3_mapping_stats_${samplename}.txt
+fi
+
 while read data line tissue sample rep sampleID path paired ref
 do
 	if [[ "${data}" == "ChIP_"* ]] && [[ "${sample}" == "Input" ]]; then
