@@ -149,7 +149,7 @@ if [[ ${paired} == "PE" ]]; then
 	do
 		printf "\nMaking bigwig files of ${context} context for ${name}\n"
 		LC_COLLATE=C sort -k1,1 -k2,2n methylcall/${name}_${context}.bedGraph > methylcall/sorted_${name}_${context}.bedGraph
-		bedGraphToBigWig methylcall/sorted_${name}_${context}.bedGraph ${ref_dir}/chrom.sizes methylcall/${name}_${context}.bw
+		bedGraphToBigWig methylcall/sorted_${name}_${context}.bedGraph ${ref_dir}/chrom.sizes tracks/${name}_${context}.bw
 	done
 	rm -f methylcall/*${name}*bedGraph*
 elif [[ ${paired} == "SE" ]]; then
