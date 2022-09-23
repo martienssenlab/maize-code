@@ -775,68 +775,81 @@ if [[ "${total}" != "TEST" ]]; then
 		ymaxs=()
 		for mark in ${all_samples[@]}
 		do
-			mini=$(grep "${mark}" combined/matrix/temp_values_${matrix}_${analysisname}.txt | awk 'BEGIN {m=999999} {a=$5; if (a<m) m=a;} END {print m}')
-			maxi=$(grep "${mark}" combined/matrix/temp_values_${matrix}_${analysisname}.txt | awk 'BEGIN {m=-999999} {a=$6; if (a>m) m=a;} END {print m}')
-			num=$(grep "${mark}" combined/matrix/temp_values_${matrix}_${analysisname}.txt | wc -l)
-			test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
-			if [[ ${test} == "yes" ]]; then
-				mini=("0")
-				maxi=("0.005")
+			if [[ ${mark} == "CG" ]]; then
+				mini="0"
+				maxi="100"
+				ymini="0"
+				ymaxi="100"
+			elif [[ ${mark} == "CHG" ]]; then
+				mini="0"
+				maxi="80"
+				ymini="0"
+				ymaxi="80"
+			elif [[ ${mark} == "CHH" ]]; then
+				mini="0"
+				maxi="10"
+				ymini="0"
+				ymaxi="10"
+			else
+				mini=$(grep "${mark}" combined/matrix/temp_values_${matrix}_${analysisname}.txt | awk 'BEGIN {m=999999} {a=$5; if (a<m) m=a;} END {print m}')
+				maxi=$(grep "${mark}" combined/matrix/temp_values_${matrix}_${analysisname}.txt | awk 'BEGIN {m=-999999} {a=$6; if (a>m) m=a;} END {print m}')			
+				test1=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+				if [[ ${test1} == "yes" ]]; then
+					mini="0"
+					maxi="0.005"
+				fi
+				ymini=$(grep "${mark}" combined/matrix/temp_values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
+				ymaxi=$(grep "${mark}" combined/matrix/temp_values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
+				test2=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+				if [[ ${test2} == "yes" ]]; then
+					ymini=("0")
+					ymaxi=("0.01")
+				fi
 			fi
+			num=$(grep "${mark}" combined/matrix/temp_values_${matrix}_${analysisname}.txt | wc -l)
 			for i in $(seq 1 ${num})
 			do
 				mins+=("${mini}")
 				maxs+=("${maxi}")
-			done		
-			ymini=$(grep "${mark}" combined/matrix/temp_values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
-			ymaxi=$(grep "${mark}" combined/matrix/temp_values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
-			num=$(grep "${mark}" combined/matrix/temp_values_profile_${matrix}_${analysisname}.txt | wc -l)
-			test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
-			if [[ ${test} == "yes" ]]; then
-				ymini=("0")
-				ymaxi=("0.01")
-			fi
-			for i in $(seq 1 ${num})
-			do
 				ymins+=("${ymini}")
 				ymaxs+=("${ymaxi}")
-			done
+			done		
 		done
 	
-		mins2=()
-		maxs2=()
-		for sample in ${all_labels[@]}
-		do
-			mini=$(grep ${sample} combined/matrix/temp_values_${matrix}_${analysisname}.txt | awk '{print $5}')
-			maxi=$(grep ${sample} combined/matrix/temp_values_${matrix}_${analysisname}.txt | awk '{print $6}')
-			test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
-			if [[ ${test} == "yes" ]]; then
-				mins2+=("0")
-				maxs2+=("0.005")
-			else
-				mins2+=("${mini}")
-				maxs2+=("${maxi}")
-			fi
-		done
-		ymins2=()
-		ymaxs2=()
-		for sample in ${all_labels[@]}
-		do
-			ymini=$(grep ${sample} combined/matrix/temp_values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
-			ymaxi=$(grep ${sample} combined/matrix/temp_values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
-			test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
-			if [[ ${test} == "yes" ]]; then
-				ymins2+=("0")
-				ymaxs2+=("0.01")
-			else
-				ymins2+=("${ymini}")
-				ymaxs2+=("${ymaxi}")
-			fi
-		done
+#		mins2=()
+#		maxs2=()
+#		for sample in ${all_labels[@]}
+#		do
+#			mini=$(grep ${sample} combined/matrix/temp_values_${matrix}_${analysisname}.txt | awk '{print $5}')
+#			maxi=$(grep ${sample} combined/matrix/temp_values_${matrix}_${analysisname}.txt | awk '{print $6}')
+#			test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+#			if [[ ${test} == "yes" ]]; then
+#				mins2+=("0")
+#				maxs2+=("0.005")
+#			else
+#				mins2+=("${mini}")
+#				maxs2+=("${maxi}")
+#			fi
+#		done
+#		ymins2=()
+#		ymaxs2=()
+#		for sample in ${all_labels[@]}
+#		do
+#			ymini=$(grep ${sample} combined/matrix/temp_values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
+#			ymaxi=$(grep ${sample} combined/matrix/temp_values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
+#			test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+#			if [[ ${test} == "yes" ]]; then
+#				ymins2+=("0")
+#				ymaxs2+=("0.01")
+#			else
+#				ymins2+=("${ymini}")
+#				ymaxs2+=("${ymaxi}")
+#			fi
+#		done
 		printf "\nPlotting heatmap for ${matrix} matrix of ${analysisname} scaling by mark\n"
 		plotHeatmap -m combined/matrix/all_genes_${matrix}_${analysisname}.gz -out combined/plots/all_genes_${analysisname}_heatmap_${matrix}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --regionsLabel ${regionlabel} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
-		printf "\nPlotting heatmap for ${matrix} matrix of ${analysisname} scaling by sample\n"
-		plotHeatmap -m combined/matrix/all_genes_${matrix}_${analysisname}.gz -out combined/plots/all_genes_${analysisname}_heatmap_${matrix}_v2.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --regionsLabel ${regionlabel} --colorMap 'seismic' --zMin ${mins2[@]} --zMax ${maxs2[@]} --yMin ${ymins2[@]} --yMax ${ymaxs2[@]} --interpolationMethod 'bilinear'
+#		printf "\nPlotting heatmap for ${matrix} matrix of ${analysisname} scaling by sample\n"
+#		plotHeatmap -m combined/matrix/all_genes_${matrix}_${analysisname}.gz -out combined/plots/all_genes_${analysisname}_heatmap_${matrix}_v2.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --regionsLabel ${regionlabel} --colorMap 'seismic' --zMin ${mins2[@]} --zMax ${maxs2[@]} --yMin ${ymins2[@]} --yMax ${ymaxs2[@]} --interpolationMethod 'bilinear'
 	done
 	rm -f combined/matrix/temp*${analysisname}*
 fi
