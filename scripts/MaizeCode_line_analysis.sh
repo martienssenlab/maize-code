@@ -724,7 +724,7 @@ if [[ "${total}" != "TEST" ]]; then
 	do
 		case "${strand}" in
 			plus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_plus[@]} ${rampage_bw_list_plus[@]} ${shrna_bw_list_plus[@]} ${sorted_mccontext[@]}";;
-			minus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]} ${shrna_bw_list_minus[@]}" ${sorted_mccontext[@]}";;
+			minus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]} ${shrna_bw_list_minus[@]} ${sorted_mccontext[@]}";;
 		esac
 		printf "\nComputing scale-regions ${strand} strand matrix for ${analysisname}\n"
 		computeMatrix scale-regions -q --missingDataAsZero --skipZeros -R combined/matrix/temp_regions_${regionname}_${strand}.bed -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/temp_all_genes_regions_${analysisname}_${strand}.gz
@@ -758,7 +758,7 @@ if [[ "${total}" != "TEST" ]]; then
 	fi
 	if [ ${#sorted_mccontext[@]} -gt 0 ]; then
 		printf "\nIncluding mC samples\n"
-		all_samples+=("mCG mCHG mCHH")
+		all_samples+=("CG" "CHG" "CHH")
 		all_labels+=("${sorted_mclabels[*]}")
 	fi
 	for matrix in regions tss
