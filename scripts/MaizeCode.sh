@@ -338,7 +338,7 @@ do
 			stat="plot2"
 			name="${line}_${tissue}_${sample}_${rep}";;
 		mC)	env="mC"
-			stat="plot3";;
+			stat="plot3"
 			name="${line}_${tissue}_mC_${rep}";;
 	esac
 	if [[ ${stat} == "plot1" ]]; then
