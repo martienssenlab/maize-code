@@ -865,6 +865,7 @@ if [[ "${total}" != "TEST" ]]; then
 			rm -f combined/matrix/temp_mC_*_${analysisname}.gz
 		fi
 	rm -f combined/matrix/temp*${analysisname}*
+	fi
 fi
 
 #########################################################################################
