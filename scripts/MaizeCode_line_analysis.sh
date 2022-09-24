@@ -682,6 +682,7 @@ fi
 uniq_chip_mark_list=($(printf "%s\n" "${chip_mark_list[@]}" | sort -u))
 
 if [[ "${total}" != "TEST" ]]; then
+	regionlabel=$(wc -l ${regionfile} | awk -v n=${regionname} '{print n"("$1")"}')
 	if [ ${partial_sample_number} -gt 2 ]; then
 		#### Splitting the region file by strand
 		awk -v OFS="\t" '$6=="+"' ${regionfile} > combined/matrix/temp_regions_${regionname}_plus.bed
