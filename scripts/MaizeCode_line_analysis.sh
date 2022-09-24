@@ -838,7 +838,7 @@ if [[ "${total}" != "TEST" ]]; then
 				if [[ ${sample} =~ ${context} ]]; then
 					sorted_mclabels+=("${sample}")
 					mins+=("${mini}")
-					mins+=("${maxi}")
+					maxs+=("${maxi}")
 				fi
 			done
 			for bw in ${mc_bw_list[@]}
