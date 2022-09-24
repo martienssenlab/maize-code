@@ -665,6 +665,7 @@ if [[ "${total}" == "NO" ]]; then
 fi
 
 total_sample_number=$((${#chip_sample_list[@]} + ${#rnaseq_sample_list[@]} + ${#rampage_sample_list[@]} + ${#shrna_sample_list[@]} + ${#mc_sample_list[@]}))
+partial_sample_number=$((${#chip_sample_list[@]} + ${#rnaseq_sample_list[@]} + ${#rampage_sample_list[@]} + ${#shrna_sample_list[@]})
 if [ ${total_sample_number} -lt 2 ]; then
 	printf "\nNot enough samples for deeptools analysis for ${analysisname}\nAnalysis is thus finished!\n"
 	touch combined/chkpts/analysis_${analysisname}
@@ -681,139 +682,140 @@ fi
 uniq_chip_mark_list=($(printf "%s\n" "${chip_mark_list[@]}" | sort -u))
 
 if [[ "${total}" != "TEST" ]]; then
-	#### Splitting the region file by strand
-	awk -v OFS="\t" '$6=="+"' ${regionfile} > combined/matrix/temp_regions_${regionname}_plus.bed
-	awk -v OFS="\t" '$6=="-"' ${regionfile} > combined/matrix/temp_regions_${regionname}_minus.bed
-	regionlabel=$(wc -l ${regionfile} | awk -v n=${regionname} '{print n"("$1")"}')
+	if [ ${partial_sample_number} -gt 2 ]; then
+		#### Splitting the region file by strand
+		awk -v OFS="\t" '$6=="+"' ${regionfile} > combined/matrix/temp_regions_${regionname}_plus.bed
+		awk -v OFS="\t" '$6=="-"' ${regionfile} > combined/matrix/temp_regions_${regionname}_minus.bed
+		regionlabel=$(wc -l ${regionfile} | awk -v n=${regionname} '{print n"("$1")"}')
 
-	#### Reordering the samples by ChIPseq mark
-	for mark in ${uniq_chip_mark_list[@]}
-	do
-		for sample in ${chip_sample_list[@]}
+		#### Reordering the samples by ChIPseq mark
+		for mark in ${uniq_chip_mark_list[@]}
 		do
-			if [[ ${sample} =~ ${mark} ]]; then
-				sorted_labels+=("${sample}")
-			fi
-		done
-		for bw in ${chip_bw_list[@]}
-		do
-			if [[ ${bw} =~ ${mark} ]]; then
-				sorted_marks+=("${bw}")
-			fi
-		done
-	done
-
-	#### Computing the stranded matrix
-	for strand in plus minus
-	do
-		case "${strand}" in
-			plus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_plus[@]} ${rampage_bw_list_plus[@]} ${shrna_bw_list_plus[@]}";;
-			minus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]} ${shrna_bw_list_minus[@]}";;
-		esac
-		printf "\nComputing scale-regions ${strand} strand matrix for ${analysisname}\n"
-		computeMatrix scale-regions -q --missingDataAsZero --skipZeros -R combined/matrix/temp_regions_${regionname}_${strand}.bed -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/temp_all_genes_regions_${analysisname}_${strand}.gz
-		printf "\nComputing reference-point on TSS ${strand} strand matrix for ${analysisname}\n"
-		computeMatrix reference-point --referencePoint "TSS" -q --missingDataAsZero --skipZeros -R combined/matrix/temp_regions_${regionname}_${strand}.bed -S ${bw_list} -bs 50 -b 2000 -a 8000 -p ${threads} -o combined/matrix/temp_all_genes_tss_${analysisname}_${strand}.gz
-	done
-	rm -f combined/matrix/temp_regions_${regionname}_*.bed
-
-	#### Merging stranded matrix, extracting scales and plotting heatmaps
-	all_samples=()
-	all_lables=()
-	if [ ${#sorted_marks[@]} -gt 0 ]; then
-		printf "\nIncluding ChIPseq samples\n"
-		all_samples+=("${uniq_chip_mark_list[*]}")
-		all_labels+=("${sorted_labels[*]}")
-	fi
-	if [ ${#rnaseq_bw_list_plus[@]} -gt 0 ]; then
-		printf "\nIncluding RNAseq samples\n"
-		all_samples+=("RNAseq")
-		all_labels+=("${rnaseq_sample_list[*]}")
-	fi
-	if [ ${#rampage_bw_list_plus[@]} -gt 0 ]; then
-		printf "\nIncluding RAMPAGE samples\n"
-		all_samples+=("RAMPAGE")
-		all_labels+=("${rampage_sample_list[*]}")
-	fi
-	if [ ${#shrna_bw_list_plus[@]} -gt 0 ]; then
-		printf "\nIncluding shRNA samples\n"
-		all_samples+=("shRNA")
-		all_labels+=("${shrna_sample_list[*]}")
-	fi
-	for matrix in regions tss
-	do
-		printf "\nMerging stranded matrices aligned by ${matrix} of ${analysisname}\n"
-		computeMatrixOperations rbind -m combined/matrix/temp_all_genes_${matrix}_${analysisname}_plus.gz combined/matrix/temp_all_genes_${matrix}_${analysisname}_minus.gz -o combined/matrix/all_genes_${matrix}_${analysisname}.gz
-		printf "\nGetting scales for ${matrix} matrix of ${analysisname}\n"
-		computeMatrixOperations dataRange -m combined/matrix/all_genes_${matrix}_${analysisname}.gz > combined/matrix/temp_values_${matrix}_${analysisname}.txt
-		plotProfile -m combined/matrix/all_genes_${matrix}_${analysisname}.gz -out combined/plots/temp_${matrix}_${analysisname}_profile.pdf --samplesLabel ${all_labels[@]} --averageType mean --outFileNameData combined/matrix/temp_values_profile_${matrix}_${analysisname}.txt
-		rm -f combined/plots/temp_${matrix}_${analysisname}_profile.pdf
-		mins=()
-		maxs=()
-		ymins=()
-		ymaxs=()
-		for mark in ${all_samples[@]}
-		do
-			mini=$(grep "${mark}" combined/matrix/temp_values_${matrix}_${analysisname}.txt | awk 'BEGIN {m=999999} {a=$5; if (a<m) m=a;} END {print m}')
-			maxi=$(grep "${mark}" combined/matrix/temp_values_${matrix}_${analysisname}.txt | awk 'BEGIN {m=-999999} {a=$6; if (a>m) m=a;} END {print m}')			
-			test1=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
-			if [[ ${test1} == "yes" ]]; then
-				mini="0"
-				maxi="0.005"
-			fi
-			ymini=$(grep "${mark}" combined/matrix/temp_values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
-			ymaxi=$(grep "${mark}" combined/matrix/temp_values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
-			test2=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
-			if [[ ${test2} == "yes" ]]; then
-				ymini=("0")
-				ymaxi=("0.01")
-			fi
-			num=$(grep "${mark}" combined/matrix/temp_values_${matrix}_${analysisname}.txt | wc -l)
-			for i in $(seq 1 ${num})
+			for sample in ${chip_sample_list[@]}
 			do
-				mins+=("${mini}")
-				maxs+=("${maxi}")
-				ymins+=("${ymini}")
-				ymaxs+=("${ymaxi}")
-			done		
+				if [[ ${sample} =~ ${mark} ]]; then
+					sorted_labels+=("${sample}")
+				fi
+			done
+			for bw in ${chip_bw_list[@]}
+			do
+				if [[ ${bw} =~ ${mark} ]]; then
+					sorted_marks+=("${bw}")
+				fi
+			done
 		done
-	
-		mins2=()
-		maxs2=()
-		for sample in ${all_labels[@]}
+
+		#### Computing the stranded matrix
+		for strand in plus minus
 		do
-			mini=$(grep ${sample} combined/matrix/temp_values_${matrix}_${analysisname}.txt | awk '{print $5}')
-			maxi=$(grep ${sample} combined/matrix/temp_values_${matrix}_${analysisname}.txt | awk '{print $6}')
-			test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
-			if [[ ${test} == "yes" ]]; then
-				mins2+=("0")
-				maxs2+=("0.005")
-			else
-				mins2+=("${mini}")
-				maxs2+=("${maxi}")
-			fi
+			case "${strand}" in
+				plus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_plus[@]} ${rampage_bw_list_plus[@]} ${shrna_bw_list_plus[@]}";;
+				minus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]} ${shrna_bw_list_minus[@]}";;
+			esac
+			printf "\nComputing scale-regions ${strand} strand matrix for ${analysisname}\n"
+			computeMatrix scale-regions -q --missingDataAsZero --skipZeros -R combined/matrix/temp_regions_${regionname}_${strand}.bed -S ${bw_list} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/temp_all_genes_regions_${analysisname}_${strand}.gz
+			printf "\nComputing reference-point on TSS ${strand} strand matrix for ${analysisname}\n"
+			computeMatrix reference-point --referencePoint "TSS" -q --missingDataAsZero --skipZeros -R combined/matrix/temp_regions_${regionname}_${strand}.bed -S ${bw_list} -bs 50 -b 2000 -a 8000 -p ${threads} -o combined/matrix/temp_all_genes_tss_${analysisname}_${strand}.gz
 		done
-		ymins2=()
-		ymaxs2=()
-		for sample in ${all_labels[@]}
+		rm -f combined/matrix/temp_regions_${regionname}_*.bed
+
+		#### Merging stranded matrix, extracting scales and plotting heatmaps
+		all_samples=()
+		all_lables=()
+		if [ ${#sorted_marks[@]} -gt 0 ]; then
+			printf "\nIncluding ChIPseq samples\n"
+			all_samples+=("${uniq_chip_mark_list[*]}")
+			all_labels+=("${sorted_labels[*]}")
+		fi
+		if [ ${#rnaseq_bw_list_plus[@]} -gt 0 ]; then
+			printf "\nIncluding RNAseq samples\n"
+			all_samples+=("RNAseq")
+			all_labels+=("${rnaseq_sample_list[*]}")
+		fi
+		if [ ${#rampage_bw_list_plus[@]} -gt 0 ]; then
+			printf "\nIncluding RAMPAGE samples\n"
+			all_samples+=("RAMPAGE")
+			all_labels+=("${rampage_sample_list[*]}")
+		fi
+		if [ ${#shrna_bw_list_plus[@]} -gt 0 ]; then
+			printf "\nIncluding shRNA samples\n"
+			all_samples+=("shRNA")
+			all_labels+=("${shrna_sample_list[*]}")
+		fi
+		for matrix in regions tss
 		do
-			ymini=$(grep ${sample} combined/matrix/temp_values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
-			ymaxi=$(grep ${sample} combined/matrix/temp_values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
-			test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
-			if [[ ${test} == "yes" ]]; then
-				ymins2+=("0")
-				ymaxs2+=("0.01")
-			else
-				ymins2+=("${ymini}")
-				ymaxs2+=("${ymaxi}")
-			fi
-		done
-		printf "\nPlotting heatmap for ${matrix} matrix of ${analysisname} scaling by mark\n"
-		plotHeatmap -m combined/matrix/all_genes_${matrix}_${analysisname}.gz -out combined/plots/all_genes_${analysisname}_heatmap_${matrix}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --regionsLabel ${regionlabel} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear' --outFileSortedRegions combined/matrix/sorted_${matrix}_${analysisname}.txt
-		printf "\nPlotting heatmap for ${matrix} matrix of ${analysisname} scaling by sample\n"
-		plotHeatmap -m combined/matrix/all_genes_${matrix}_${analysisname}.gz -out combined/plots/all_genes_${analysisname}_heatmap_${matrix}_v2.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --regionsLabel ${regionlabel} --colorMap 'seismic' --zMin ${mins2[@]} --zMax ${maxs2[@]} --yMin ${ymins2[@]} --yMax ${ymaxs2[@]} --interpolationMethod 'bilinear'
-	done
+			printf "\nMerging stranded matrices aligned by ${matrix} of ${analysisname}\n"
+			computeMatrixOperations rbind -m combined/matrix/temp_all_genes_${matrix}_${analysisname}_plus.gz combined/matrix/temp_all_genes_${matrix}_${analysisname}_minus.gz -o combined/matrix/all_genes_${matrix}_${analysisname}.gz
+			printf "\nGetting scales for ${matrix} matrix of ${analysisname}\n"
+			computeMatrixOperations dataRange -m combined/matrix/all_genes_${matrix}_${analysisname}.gz > combined/matrix/temp_values_${matrix}_${analysisname}.txt
+			plotProfile -m combined/matrix/all_genes_${matrix}_${analysisname}.gz -out combined/plots/temp_${matrix}_${analysisname}_profile.pdf --samplesLabel ${all_labels[@]} --averageType mean --outFileNameData combined/matrix/temp_values_profile_${matrix}_${analysisname}.txt
+			rm -f combined/plots/temp_${matrix}_${analysisname}_profile.pdf
+			mins=()
+			maxs=()
+			ymins=()
+			ymaxs=()
+			for mark in ${all_samples[@]}
+			do
+				mini=$(grep "${mark}" combined/matrix/temp_values_${matrix}_${analysisname}.txt | awk 'BEGIN {m=999999} {a=$5; if (a<m) m=a;} END {print m}')
+				maxi=$(grep "${mark}" combined/matrix/temp_values_${matrix}_${analysisname}.txt | awk 'BEGIN {m=-999999} {a=$6; if (a>m) m=a;} END {print m}')			
+				test1=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+				if [[ ${test1} == "yes" ]]; then
+					mini="0"
+					maxi="0.005"
+				fi
+				ymini=$(grep "${mark}" combined/matrix/temp_values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
+				ymaxi=$(grep "${mark}" combined/matrix/temp_values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
+				test2=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+				if [[ ${test2} == "yes" ]]; then
+					ymini=("0")
+					ymaxi=("0.01")
+				fi
+				num=$(grep "${mark}" combined/matrix/temp_values_${matrix}_${analysisname}.txt | wc -l)
+				for i in $(seq 1 ${num})
+				do
+					mins+=("${mini}")
+					maxs+=("${maxi}")
+					ymins+=("${ymini}")
+					ymaxs+=("${ymaxi}")
+				done		
+			done
 	
+			mins2=()
+			maxs2=()
+			for sample in ${all_labels[@]}
+			do
+				mini=$(grep ${sample} combined/matrix/temp_values_${matrix}_${analysisname}.txt | awk '{print $5}')
+				maxi=$(grep ${sample} combined/matrix/temp_values_${matrix}_${analysisname}.txt | awk '{print $6}')
+				test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+				if [[ ${test} == "yes" ]]; then
+					mins2+=("0")
+					maxs2+=("0.005")
+				else
+					mins2+=("${mini}")
+					maxs2+=("${maxi}")
+				fi
+			done
+			ymins2=()
+			ymaxs2=()
+			for sample in ${all_labels[@]}
+			do
+				ymini=$(grep ${sample} combined/matrix/temp_values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
+				ymaxi=$(grep ${sample} combined/matrix/temp_values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
+				test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+				if [[ ${test} == "yes" ]]; then
+					ymins2+=("0")
+					ymaxs2+=("0.01")
+				else
+					ymins2+=("${ymini}")
+					ymaxs2+=("${ymaxi}")
+				fi
+			done
+			printf "\nPlotting heatmap for ${matrix} matrix of ${analysisname} scaling by mark\n"
+			plotHeatmap -m combined/matrix/all_genes_${matrix}_${analysisname}.gz -out combined/plots/all_genes_${analysisname}_heatmap_${matrix}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --regionsLabel ${regionlabel} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear' --outFileSortedRegions combined/matrix/sorted_${matrix}_${analysisname}.txt
+			printf "\nPlotting heatmap for ${matrix} matrix of ${analysisname} scaling by sample\n"
+			plotHeatmap -m combined/matrix/all_genes_${matrix}_${analysisname}.gz -out combined/plots/all_genes_${analysisname}_heatmap_${matrix}_v2.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --regionsLabel ${regionlabel} --colorMap 'seismic' --zMin ${mins2[@]} --zMax ${maxs2[@]} --yMin ${ymins2[@]} --yMax ${ymaxs2[@]} --interpolationMethod 'bilinear'
+		done
+	fi
 	if [ ${#mc_sample_list[@]} -gt 0 ]; then
 		#### Reordering the samples by mC sequence context
 		mins=()
@@ -836,7 +838,6 @@ if [[ "${total}" != "TEST" ]]; then
 					sorted_mclabels+=("${sample}")
 					mins+=("${mini}")
 					mins+=("${maxi}")
-					printf "${sample}\n"
 				fi
 			done
 			for bw in ${mc_bw_list[@]}
