@@ -346,7 +346,7 @@ do
 			name="${line}_${tissue}_mC_${rep}";;
 	esac
 	if [[ ${stat} == "plot1" ]]; then
-		awk -v a=${line} -v b=${name} -v c=${sample} -v d=${rep} -v e=${ref}${add} '$1==a && $2==b && $3==c && $4==d && $5==e' ${env}/reports/summary_mapping_stats.txt >> combined/reports/temp_mapping_stats_${samplename}.txt
+		awk -v a=${line} -v b=${name} -v c=${sample} -v d=${rep}${add} -v e=${ref} '$1==a && $2==b && $3==c && $4==d && $5==e' ${env}/reports/summary_mapping_stats.txt >> combined/reports/temp_mapping_stats_${samplename}.txt
 	elif [[ ${stat} == "plot2" ]]; then
 		cat shRNA/reports/sizes_*${name}* >> combined/reports/temp2_mapping_stats_${samplename}.txt
 	elif [[ ${stat} == "plot3" ]]; then
