@@ -124,6 +124,7 @@ fi
 
 #### Check if there are new samples to analyze individually
 new_chip_sample=()
+new_mc_sample=()
 new_rna_sample=()
 new_tf_sample=()
 new_tf_chk=()
@@ -156,7 +157,9 @@ do
 	if [ -e ${datatype}/chkpts/analysis_${name} ]; then
 		printf "\nSingle sample analysis for ${name} already done!\n"
 	elif [[ "${datatype}" == "mC" ]]; then
-		printf "\nNo further analysis to be performed for mC samples\n"
+		datatype_list+=("${datatype}")
+		new_mc_sample+=("${name}")
+		printf "${data}\t${line}\t${tmpname}\t${sample}\t${paired}\t${ref_dir}\n" >> ${datatype}/temp_${samplename}_${datatype}.txt
 	elif [[ "${datatype}" == "ChIP" ]]; then
 		if [ ! -d ./ChIP/peaks ]; then
 			mkdir ./ChIP/peaks
@@ -255,6 +258,15 @@ if [[ "${test_new}" == 1 ]]; then
 			do
 				if [ ! -e ${datatype}/chkpts/analysis_${shrnasample} ]; then
 					printf "\nProblem during the processing of shRNA sample ${shrnasample}!\nCheck log: shRNA/logs/${samplename}.log and shRNA/logs/analysis_${shrnasample}.log\n"
+				else 
+					printf "\nshRNA analysis for ${shrnasample} processed succesfully\n"
+				fi
+			done
+		elif [[ "${datatype}" == "mC" ]]; then
+			for mcsample in ${new_mc_sample[@]}
+			do
+				if [ ! -e ${datatype}/chkpts/analysis_${mcsample} ]; then
+					printf "\nProblem during the processing of mC sample ${mcsample}!\nCheck log: mC/logs/${samplename}.log and mC/logs/analysis_${mcsample}.log\n"
 				else 
 					printf "\nshRNA analysis for ${shrnasample} processed succesfully\n"
 				fi
