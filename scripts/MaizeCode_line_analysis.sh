@@ -11,10 +11,11 @@
 usage="
 ##### Script for Maize code inbred line data analysis, used by script MaizeCode_analyis.sh if -s was not set and region file exists
 #####
-##### sh MaiCode_line_analysis.sh -f samplefile -r regionfile [-t] [-z] [-x]
+##### sh MaiCode_line_analysis.sh -f samplefile -r regionfile -m markofinterest [-t] [-z] [-x]
 #####	-f: samplefile containing the samples to compare and in 5 tab-delimited columns:
 ##### 		Line, Tissue, Sample, PE or SE, Reference genome directory
 ##### 	-r: bedfile containing the regions that are to be ploted over
+#####	-m: histone mark to focus on for the analysis (H3K27ac by default)
 #####	-t: If set, partial analysis will be performed (no heatmap with deeptools)
 #####	-z: If set, partial analysis will be performed for testing
 #####	-x: If set, heatmaps on repeats will be performed (can take a very long time)
@@ -57,12 +58,13 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts ":f:r:tzxh" opt; do
+while getopts ":f:r:mtzxh" opt; do
 	case ${opt} in
 		h) 	printf "${usage}\n"
 			exit 0;;
 		f) 	export samplefile=${OPTARG};;
 		r)	export regionfile=${OPTARG};;
+		m)	export markofinterest=${OPTARG};;
 		t)	printf "\nPartial analysis to be performed (no heatmaps)\n" 
 			export total="NO";;
 		z)	printf "\nPartial analysis to be performed for testing\n" 
@@ -86,6 +88,14 @@ if [ ! ${regionfile} ]; then
 	printf "${usage}\n"
 	exit 1
 fi
+
+if [ ! ${markofinterest} ]; then
+	printf "No mark of interest chosen, defaulting to H3K27ac\n"
+	export markofinterest="H3K27ac"
+else
+	printf "${markofinterest} chosen as the mark of interest\n"
+fi
+
 
 #############################################################################################
 ########################################### PART1 ###########################################
@@ -464,13 +474,13 @@ fi
 
 #############################################################################################
 ########################################### PART4 ###########################################
-################## Overlapping TF peaks (w/ or w/o H4K20me1) - Upset plot  ###################
+########### Overlapping TF peaks (w/ or w/o the mark of interest) - Upset plot  #############
 #############################################################################################
 
-#### To make a single file containing all H4K20me1 peaks of the same analysis or in the same line if possible
+#### To make a single file containing all peaks of the mark of interest of the same analysis or in the same line if possible
 
-if [ -s combined/peaks/tmp_peaks_H4K20me1_${analysisname}.bed ]; then
-	rm -f combined/peaks/tmp_peaks_H4K20me1_${analysisname}.bed
+if [ -s combined/peaks/tmp_peaks_${markofinterest}_${analysisname}.bed ]; then
+	rm -f combined/peaks/tmp_peaks_${markofinterest}_${analysisname}.bed
 fi
 
 k27file="no"
@@ -478,40 +488,40 @@ insamplefile="no"
 if [ ${#chip_sample_list[@]} -ge 1 ]; then	
 	for sample in ${chip_sample_list[@]}
 	do
-		if [[ "${sample}" == *H4K20me1* ]]; then
+		if [[ "${sample}" == *${markofinterest}* ]]; then
 			insamplefile="yes"
-			awk -v OFS="\t" -v s=${sample} '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$2,$3,s}' ChIP/peaks/selected_peaks_${sample}.broadPeak | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_H4K20me1_${analysisname}.bed
+			awk -v OFS="\t" -v s=${sample} '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$2,$3,s}' ChIP/peaks/selected_peaks_${sample}.broadPeak | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_${markofinterest}_${analysisname}.bed
 		fi
 	done
 	if [[ "${insamplefile}" == "yes" ]]; then
 		printf "\nPreparing merged H3K27ac peaks from files in ${analysisname}\n"
-		sort -k1,1 -k2,2n combined/peaks/tmp_peaks_H4K20me1_${analysisname}.bed > combined/peaks/tmp2_peaks_H4K20me1_${analysisname}.bed
-		bedtools merge -i combined/peaks/tmp2_peaks_H4K20me1_${analysisname}.bed | sort -k1,1 -k2,2n > combined/peaks/merged_peaks_H4K20me1_${analysisname}.bed
-		rm -f combined/peaks/tmp*_peaks_H4K20me1_${analysisname}.bed
+		sort -k1,1 -k2,2n combined/peaks/tmp_peaks_${markofinterest}_${analysisname}.bed > combined/peaks/tmp2_peaks_${markofinterest}_${analysisname}.bed
+		bedtools merge -i combined/peaks/tmp2_peaks_${markofinterest}_${analysisname}.bed | sort -k1,1 -k2,2n > combined/peaks/merged_peaks_${markofinterest}_${analysisname}.bed
+		rm -f combined/peaks/tmp*_peaks_${markofinterest}_${analysisname}.bed
 		k27file="yes"
 	fi
 fi
 nfile=0
 prev_tissues=()
-for file in ChIP/peaks/selected_peaks_${line}_*_H4K20me1.narrowPeak
+for file in ChIP/peaks/selected_peaks_${line}_*_${markofinterest}.*Peak
 do
 	if [ -e "${file}" ]; then
 		tmp1=${file##*/selected_peaks_${line}_}
-		tissue=${tmp1%%_H4K20me1.broadPeak}
-		awk -v OFS="\t" -v t=${tissue} '{print $1,$2,$3,t}' ${file} | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_H4K20me1_${analysisname}.bed
+		tissue=${tmp1%%_${markofinterest}.*Peak}
+		awk -v OFS="\t" -v t=${tissue} '{print $1,$2,$3,t}' ${file} | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_${markofinterest}_${analysisname}.bed
 		nfile=$((nfile+1))
 		prev_tissues+=("${tissue}")
 	fi
 done
 if [[ "${insamplefile}" == "no" ]] && [ ${nfile} -gt 0 ]; then
-	printf "\nPreparing merged H4K20me1 peaks from previously analyzed files, containing the following tissue(s):\n${prev_tissues[*]}"
-	sort -k1,1 -k2,2n combined/peaks/tmp_peaks_H4K20me1_${analysisname}.bed > combined/peaks/tmp2_peaks_H4K20me1_${analysisname}.bed
-	bedtools merge -i combined/peaks/tmp2_peaks_H4K20me1_${analysisname}.bed | sort -k1,1 -k2,2n > combined/peaks/merged_peaks_H4K20me1_${analysisname}.bed
-	rm -f combined/peaks/tmp*_peaks_H4K20me1_${analysisname}.bed
+	printf "\nPreparing merged ${markofinterest} peaks from previously analyzed files, containing the following tissue(s):\n${prev_tissues[*]}"
+	sort -k1,1 -k2,2n combined/peaks/tmp_peaks_${markofinterest}_${analysisname}.bed > combined/peaks/tmp2_peaks_${markofinterest}_${analysisname}.bed
+	bedtools merge -i combined/peaks/tmp2_peaks_${markofinterest}_${analysisname}.bed | sort -k1,1 -k2,2n > combined/peaks/merged_peaks_${markofinterest}_${analysisname}.bed
+	rm -f combined/peaks/tmp*_peaks_${markofinterest}_${analysisname}.bed
 	k27file="yes"
 fi
 
-#### To make a single file containing all TF peaks of the same analysis with or without H3K27ac peaks
+#### To make a single file containing all TF peaks of the same analysis with or without the mark of interest peaks
 
 if [ ${#tf_sample_list[@]} -ge 1 ]; then
 	printf "\nPreparing merged TF peaks file for ${analysisname}\n"
@@ -519,10 +529,10 @@ if [ ${#tf_sample_list[@]} -ge 1 ]; then
 		rm -f combined/peaks/tmp_peaks_${analysisname}.bed
 	fi
 	if [[ "${k27file}" == "yes" ]]; then
-		for sample in ${tf_sample_list[@]} H4K20me1
+		for sample in ${tf_sample_list[@]} ${markofinterest}
 		do
 			case "${sample}" in
-				H4K20me1)	file="combined/peaks/merged_peaks_H4K20me1_${analysisname}.bed";;
+				${markofinterest})	file="combined/peaks/merged_peaks_${markofinterest}_${analysisname}.bed";;
 				*)	file="TF/peaks/idr_${line}_${sample}.narrowPeak";;
 			esac
 			awk -v OFS="\t" -v s=${sample} '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {print $1,$2,$3,s}' ${file} | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_${analysisname}.bed
@@ -546,7 +556,7 @@ if [ ${#tf_sample_list[@]} -ge 1 ]; then
 	#### To create a matrix of peak presence in each sample
 	printf "\nCreating matrix file for ${analysisname}\n"
 	if [[ "${k27file}" == "yes" ]]; then	
-		for sample in ${tf_sample_list[@]} H4K20me1
+		for sample in ${tf_sample_list[@]} ${markofinterest}
 		do
 			printf "${sample}\n" > combined/peaks/temp_col_${analysisname}_${sample}.txt
 			awk -v OFS="\t" -v s=${sample} '{if ($0 ~ s) print "1"; else print "0"}' combined/peaks/TF_peaks_${analysisname}.bed >> combined/peaks/temp_col_${analysisname}_${sample}.txt
