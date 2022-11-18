@@ -11,9 +11,10 @@
 usage="
 ##### Main script for Maize code data analysis
 ##### 
-##### sh MaizeCode.sh -f <samplefile> -p <path to genome reference> [-s] [-c] [-t] [-h] [-z] [-x]
+##### sh MaizeCode.sh -f <samplefile> -p <path to genome reference> [-m markofinterest] [-s] [-c] [-t] [-h] [-z] [-x]
 ##### 	-f: samplefile
 ##### 	-p: path to the folder containing all the different genome references (e.g. ~/data/Genomes/Zea_mays)
+#####	-m: histone mark to focus on for the analysis (H3K27ac by default, does not matter if not set)
 #####	-s: if set, the whole analysis does not proceed (default=not set, keep going with the analysis over all the samples in the samplefile)
 #####	-c: if set, only single samples analysis proceeds, not grouped analysis per line (default=not set, keep going with the complete analysis)
 #####	-t: if set, only partial grouped analysis per line, no heatmaps with deeptools (default=not set, keep going with the complete analysis)
@@ -58,12 +59,13 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts "f:p:sctzxh" opt; do
+while getopts "f:p:msctzxh" opt; do
 	case $opt in
 		h) 	printf "${usage}\n"
 			exit 0;;
 		f) 	export samplefile=${OPTARG};;
 		p)	export pathtoref=${OPTARG};;
+		m)	export markofinterest=${OPTARG};;
 		s)	printf "\nOption not to perform analysis selected\n"
 			export keepgoing="STOP";;
 		c)	printf "\nOption not to perform combined analysis selected\n"
@@ -89,6 +91,13 @@ if [ ! ${pathtoref} ]; then
 	printf "Path to reference genome folders missing!\n"
 	printf "${usage}\n"
 	exit 1
+fi
+
+if [ ! ${markofinterest} ]; then
+	printf "No mark of interest chosen, defaulting to H3K27ac\n"
+	export markofinterest="H3K27ac"
+else
+	printf "${markofinterest} chosen as the mark of interest\n"
 fi
 
 #############################################################################################
@@ -409,27 +418,27 @@ pids=()
 
 if [[ "$wholeanalysis" == "STOP" ]]; then
 	printf "\nPerforming only the single sample analysis\n"
-	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -s &
+	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -m ${markofinterest} -s &
 	analysisname="${samplename}_no_region"
 	check="combined/chkpts/${analysisname}"
 elif [[ "$total" == "NO" ]]; then
 	printf "\nPerforming partial analysis on all genes\n"
-	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -t &
+	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -m ${markofinterest} -t &
 	analysisname="${samplename}_on_all_genes"
 	check="combined/chkpts/${analysisname}"
 elif [[ "$total" == "TEST" ]] && [[ "$repeats" == "YES" ]]; then
 	printf "\nPerforming testing analysis on all genes\n"
-	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -z -x &
+	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -m ${markofinterest} -z -x &
 	analysisname="${samplename}_on_all_genes"
 	check="combined/chkpts/${analysisname}"
 elif [[ "$repeats" == "YES" ]]; then
 	printf "\nPerforming testing analysis on all genes\n"
-	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -x &
+	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -m ${markofinterest} -x &
 	analysisname="${samplename}_on_all_genes"
 	check="combined/chkpts/${analysisname}"
 else
 	printf "\nPerforming complete analysis on all genes\n"
-	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt &
+	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -m ${markofinterest} &
 	analysisname="${samplename}_on_all_genes"
 	check="combined/chkpts/${analysisname}"
 fi	
