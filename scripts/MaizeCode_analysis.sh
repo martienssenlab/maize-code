@@ -11,12 +11,13 @@
 usage="
 ##### Script for Maize code data analysis
 #####
-##### sh MaiCode_analysis.sh -f samplefile [-r regionfile] [-s] [-t] [-z] [-x]
+##### sh MaiCode_analysis.sh -f samplefile [-r regionfile] [-m markofinterest] [-s] [-t] [-z] [-x]
 #####	-f: samplefile containing the samples to compare and in 6 tab-delimited columns:
 ##### 		Data, Line, Tissue, Sample, PE or SE, Reference genome directory
 ##### 	-r: textfile containing the name of region files that are to be plotted over (bed files)
 ##### 		It is safest to use a full paths.
 #####		If no region file is given, the analysis will behave as if -s was set.
+#####	-m: histone mark to focus on for the analysis (H3K27ac by default)
 #####	-s: If set, the script does not progress into the line data analysis, only single sample analysis will be performed
 #####	-t: If set, partial analysis will be performed (no heatmap with deeptools)
 #####	-z: If set, partial analysis will be performed for testing
@@ -44,10 +45,11 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts ":f:r:stzxh" opt; do
+while getopts ":f:r:mstzxh" opt; do
 	case $opt in
 		f) 	export samplefile=${OPTARG};;
 		r)	export regionfile=${OPTARG};;
+		m)	export markofinterest=${OPTARG};;
 		s)	printf "\nOption not to perform combined analysis selected\n"
 			export keepgoing="STOP";;
 		t)	printf "\nOption to perform partial combined analysis selected\n"
@@ -73,6 +75,13 @@ fi
 if [ ! ${regionfile} ]; then
 	printf "Regionfile is missing.\nAnalysis will be stopped without deeper analysis\nIf that was not intended, check usage.\n"
 	keepgoing="STOP"
+fi
+
+if [ ! ${markofinterest} ]; then
+	printf "No mark of interest chosen, defaulting to H3K27ac\n"
+	export markofinterest="H3K27ac"
+else
+	printf "${markofinterest} chosen as the mark of interest\n"
 fi
 
 #############################################################################################
@@ -392,13 +401,13 @@ do
 	region_list+=("${regioniname}")
 	printf "\nLaunching line analysis script for samplefile ${samplename} on regionfile ${regioniname}\n"
 	if [[ "${total}" == "NO" ]]; then
-		qsub -sync y -N ${ref}_analysis -o combined/logs/analysis_${samplename}_on_${regioniname}_${ref}.log ${mc_dir}/MaizeCode_line_analysis.sh -f combined/${samplename}_analysis_samplefile.temp_${ref}.txt -r ${regioni} -t &
+		qsub -sync y -N ${ref}_analysis -o combined/logs/analysis_${samplename}_on_${regioniname}_${ref}.log ${mc_dir}/MaizeCode_line_analysis.sh -f combined/${samplename}_analysis_samplefile.temp_${ref}.txt -r ${regioni} -m ${markofinterest} -t &
 	elif [[ "${total}" == "TEST" ]] && [[ "${repeats}" == "YES" ]]; then
-		qsub -sync y -N ${ref}_analysis -o combined/logs/analysis_${samplename}_on_${regioniname}_${ref}.log ${mc_dir}/MaizeCode_line_analysis.sh -f combined/${samplename}_analysis_samplefile.temp_${ref}.txt -r ${regioni} -z -x &
+		qsub -sync y -N ${ref}_analysis -o combined/logs/analysis_${samplename}_on_${regioniname}_${ref}.log ${mc_dir}/MaizeCode_line_analysis.sh -f combined/${samplename}_analysis_samplefile.temp_${ref}.txt -r ${regioni} -m ${markofinterest} -z -x &
 	elif [[ "${repeats}" == "YES" ]]; then
-		qsub -sync y -N ${ref}_analysis -o combined/logs/analysis_${samplename}_on_${regioniname}_${ref}.log ${mc_dir}/MaizeCode_line_analysis.sh -f combined/${samplename}_analysis_samplefile.temp_${ref}.txt -r ${regioni} -x &
+		qsub -sync y -N ${ref}_analysis -o combined/logs/analysis_${samplename}_on_${regioniname}_${ref}.log ${mc_dir}/MaizeCode_line_analysis.sh -f combined/${samplename}_analysis_samplefile.temp_${ref}.txt -r ${regioni} -m ${markofinterest} -x &
 	else
-		qsub -sync y -N ${ref}_analysis -o combined/logs/analysis_${samplename}_on_${regioniname}_${ref}.log ${mc_dir}/MaizeCode_line_analysis.sh -f combined/${samplename}_analysis_samplefile.temp_${ref}.txt -r ${regioni} &
+		qsub -sync y -N ${ref}_analysis -o combined/logs/analysis_${samplename}_on_${regioniname}_${ref}.log ${mc_dir}/MaizeCode_line_analysis.sh -f combined/${samplename}_analysis_samplefile.temp_${ref}.txt -r ${regioni} -m ${markofinterest} &
 	fi
 	pids+=("$!")
 done
