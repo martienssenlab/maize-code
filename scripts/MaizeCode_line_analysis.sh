@@ -1595,12 +1595,12 @@ rm -f combined/tracks/temp*.bg
 
 tefilebw=""
 tefilebed=""
-if [ -s /grid/martienssen/home/jcahn/nlsas/Genomes/Arabidopsis/Repeats/${ref}_TEs.gff3.gz ]; then
+if [ -s /grid/martienssen/data/dropbox/maizecode/TEs/${ref}_TEs.gff3.gz ]; then
 	if [ ! -d combined/TSS ]; then
 		mkdir combined/TSS
 	fi	
 	if [ ! -s combined/TSS/${ref}_all_tes.bed ]; then
-		zcat /grid/martienssen/home/jcahn/nlsas/Genomes/Arabidopsis/Repeats/${ref}_TEs.gff3.gz | awk -v OFS="\t" '$1 !~ /^#/ {print $1,$4-1,$5,$3,".",$7}' | bedtools sort -g ${ref_dir}/chrom.sizes > combined/TSS/${ref}_all_tes.bed
+		zcat /grid/martienssen/data/dropbox/maizecode/TEs/${ref}_TEs.gff3.gz | awk -v OFS="\t" '$1 !~ /^#/ {print $1,$4-1,$5,$3,".",$7}' | bedtools sort -g ${ref_dir}/chrom.sizes > combined/TSS/${ref}_all_tes.bed
 	fi
 	awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$2,$3,"1"}' combined/TSS/${ref}_all_tes.bed | bedtools sort -g ${ref_dir}/chrom.sizes > combined/tracks/temp_${ref}_all_tes.bg
 	bedtools merge -i combined/tracks/temp_${ref}_all_tes.bg -o max -c 4 | LC_COLLATE=C sort -k1,1 -k2,2n > combined/tracks/temp2_${ref}_all_tes.bg
