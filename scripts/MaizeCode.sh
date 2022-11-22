@@ -11,7 +11,7 @@
 usage="
 ##### Main script for Maize code data analysis
 ##### 
-##### sh MaizeCode.sh -f <samplefile> -p <path to genome reference> [-m markofinterest] [-s] [-c] [-t] [-h] [-z] [-x]
+##### sh MaizeCode.sh -f <samplefile> -p <path to genome reference> [-m markofinterest] [-s] [-c] [-t] [-z] [-x] [-a] [-h]
 ##### 	-f: samplefile
 ##### 	-p: path to the folder containing all the different genome references (e.g. ~/data/Genomes/Zea_mays)
 #####	-m: histone mark to focus on for the analysis (H3K27ac by default, does not matter if not set)
@@ -20,10 +20,13 @@ usage="
 #####	-t: if set, only partial grouped analysis per line, no heatmaps with deeptools (default=not set, keep going with the complete analysis)
 #####	-z: if set, only partial analysis per line for testing (default=not set, keep going with the complete analysis)
 #####	-x: if set, heatmaps on TEs will be performed for each line (default=not set, will not do the TE analysis because it takes a very long time)
+#####	-A: if set, parameters for Arabidopsis roject will be used (mapping with -k 150 and not filtering duplicates)
 ##### 	-h: help, returns usage
 #####
 ##### The samplefile should be a tab-delimited text file with 8 columns:
-##### col #1: Type of data [ RNAseq | RAMPAGE | ChIP | TF_*] (shRNA in development). All options are case-sensitive. For TF_*, the star should be replaced by the name of the TF, e.g. TF_TB1.
+##### col #1: Type of data [ RNAseq | RAMPAGE | ChIP(_*) | TF_* | shRNA ]. All options are case-sensitive. 
+#####	For TF_*, the star should be replaced by the name of the TF, e.g. TF_TB1.
+#####	For ChIP_*, the star can be replaced by a unique identifier to differentiate the Inputs to be used (e.g. ChIP_A H3K27ac will be compared to ChIP_A Input).
 ##### col #2: Line (e.g. B73)
 ##### col #3: Tissue (e.g endosperm) 
 ##### col #4: Sample (e.g. 'H3K4me3' or 'Input' for ChIP, 'IP' or 'Input' for TF CHIPseq, shRNA, RNAseq or RAMPAGE for RNA (same as data type).
@@ -32,6 +35,7 @@ usage="
 ##### col #7: Path to the fastq files (e.g. /seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846). If downloading from SRA, put 'SRA'.
 ##### col #8: If data is paired-end or single-end [ PE | SE ]. 
 ##### col #9: Name of the genome reference to map (e.g. B73_v4). Each genome reference should have a unique folder that contains a single fasta file, gff3 file and gtf file (can all be gzipped).
+##### col #10: Extra mapping parameters, otherwise default settings will be used.
 ##### The gff3 files should have 'gene' in column 3 and exons should be linked by 'Parent' in column 9
 ##### The fasta and gff3 files should have the same chromosome names (i.e. 1 2 3... and 1 2 3... or Chr1 Chr2 Chr3... and Chr1 Chr2 Chr3...)
 ##### For cleaner naming purposes, use '_samplefile.txt' as suffix
@@ -59,13 +63,14 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts "f:p:msctzxh" opt; do
+while getopts "f:p:amsctzxh" opt; do
 	case $opt in
 		h) 	printf "${usage}\n"
 			exit 0;;
 		f) 	export samplefile=${OPTARG};;
 		p)	export pathtoref=${OPTARG};;
 		m)	export markofinterest=${OPTARG};;
+		a)	export mapparam=${OPTARG};;
 		s)	printf "\nOption not to perform analysis selected\n"
 			export keepgoing="STOP";;
 		c)	printf "\nOption not to perform combined analysis selected\n"
@@ -98,6 +103,13 @@ if [ ! ${markofinterest} ]; then
 	export markofinterest="H3K27ac"
 else
 	printf "${markofinterest} chosen as the mark of interest\n"
+fi
+
+if [ ! ${mapparam} ] || [[ ${mapparam} != "Colcen" ]]; then
+	printf "No or unknown mapping parameters selected, defaulting to maize\n"
+	export mapparam="default"
+else
+	printf "${mapparam} chosen as the mark of interest\n"
 fi
 
 #############################################################################################
@@ -285,7 +297,7 @@ do
 		fi
 		printf "\nRunning ${env} mapping script for ${name} on ${ref} genome\n"
 		cd ${env}
-		qsub -sync y -N ${name} -o logs/${name}.log ${mc_dir}/MaizeCode_${env}_sample.sh -x ${data} -d ${ref_dir} -l ${line} -t ${tissue} -m ${sample} -r ${rep} -i ${sampleID} -f ${path} -p ${paired} -s ${step} &
+		qsub -sync y -N ${name} -o logs/${name}.log ${mc_dir}/MaizeCode_${env}_sample.sh -x ${data} -d ${ref_dir} -l ${line} -t ${tissue} -m ${sample} -r ${rep} -i ${sampleID} -f ${path} -p ${paired} -s ${step} -a ${mapparam} &
 		pids+=("$!")
 		cd ..
 	fi
@@ -416,29 +428,29 @@ done
 
 pids=()
 
-if [[ "$wholeanalysis" == "STOP" ]]; then
+if [[ "${wholeanalysis}" == "STOP" ]]; then
 	printf "\nPerforming only the single sample analysis\n"
-	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -m ${markofinterest} -s &
+	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -m ${markofinterest} -a ${mapparam} -s &
 	analysisname="${samplename}_no_region"
 	check="combined/chkpts/${analysisname}"
-elif [[ "$total" == "NO" ]]; then
+elif [[ "${total}" == "NO" ]]; then
 	printf "\nPerforming partial analysis on all genes\n"
-	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -m ${markofinterest} -t &
+	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -m ${markofinterest} -a ${mapparam} -t &
 	analysisname="${samplename}_on_all_genes"
 	check="combined/chkpts/${analysisname}"
-elif [[ "$total" == "TEST" ]] && [[ "$repeats" == "YES" ]]; then
+elif [[ "${total}" == "TEST" ]] && [[ "${repeats}" == "YES" ]]; then
 	printf "\nPerforming testing analysis on all genes\n"
-	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -m ${markofinterest} -z -x &
+	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -m ${markofinterest} -a ${mapparam} -z -x &
 	analysisname="${samplename}_on_all_genes"
 	check="combined/chkpts/${analysisname}"
-elif [[ "$repeats" == "YES" ]]; then
+elif [[ "${repeats}" == "YES" ]]; then
 	printf "\nPerforming testing analysis on all genes\n"
-	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -m ${markofinterest} -x &
+	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -m ${markofinterest} -a ${mapparam} -x &
 	analysisname="${samplename}_on_all_genes"
 	check="combined/chkpts/${analysisname}"
 else
 	printf "\nPerforming complete analysis on all genes\n"
-	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -m ${markofinterest} &
+	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -m ${markofinterest} -a ${mapparam} &
 	analysisname="${samplename}_on_all_genes"
 	check="combined/chkpts/${analysisname}"
 fi	
