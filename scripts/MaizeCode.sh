@@ -62,16 +62,16 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts "f:p:masctzxh" opt; do
+while getopts "f:p:amsctzxh" opt; do
 	case $opt in
 		h) 	printf "${usage}\n"
 			exit 0;;
 		f) 	export samplefile=${OPTARG};;
 		p)	export pathtoref=${OPTARG};;
-		m)	export markofinterest=${OPTARG}
-			printf "\nMark of interest: ${markofinterest}\n";;
 		a)	export mapparam=${OPTARG}
 			printf "\nOption for mapping: ${mapparam}\n";;
+		m)	export markofinterest=${OPTARG}
+			printf "\nMark of interest: ${markofinterest}\n";;
 		s)	printf "\nOption not to perform analysis selected\n"
 			export keepgoing="STOP";;
 		c)	printf "\nOption not to perform combined analysis selected\n"
