@@ -39,7 +39,7 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts "f:ah" opt; do
+while getopts ":f:a:h" opt; do
 	case $opt in
 		h) 	printf "$usage\n"
 			exit 0;;
@@ -57,11 +57,15 @@ if [ ! $samplefile ]; then
 	exit 1
 fi
 
-if [ ! ${mapparam} ] || [[ ${mapparam} != "Colcen" ]]; then
-	printf "No or unknown mapping parameters selected, defaulting to maize\n"
+if [ ! ${mapparam} ]; then
+	printf "No mapping option selected, using default\n"
 	export mapparam="default"
+elif [[ "${mapparam}" == "default" ]] || [[ "${mapparam}" == "Colcen" ]]; then
+	printf "${mapparam} chosen as the mapping option\n"
 else
-	printf "${mapparam} chosen as the mark of interest\n"
+	printf "Unknown mapping option selected\n"
+	printf "${usage}\n"
+	exit 1
 fi
 
 if [ ! -s reports/summary_ChIP_peaks.txt ]; then
