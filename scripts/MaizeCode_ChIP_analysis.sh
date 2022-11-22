@@ -11,9 +11,10 @@
 usage="
 ##### Script for Maize code Histone ChIP data analysis, used by script MaizeCode_analysis.sh for ChIP data
 #####
-##### sh MaiCode_ChIP_analysis.sh -f samplefile [-h]
+##### sh MaiCode_ChIP_analysis.sh -f samplefile [-a mappingoption] [-h]
 #####	-f: samplefile containing the samples to compare and the reference directory in 6 tab-delimited columns:
 ##### 		Data, Line, Tissue, Mark, PE or SE, Reference directory
+#####	-a: mapping option [ default | ColCen ] (Colcen: -k 150 and not filtering duplicates)
 ##### 	-h: help, returns usage
 ##### 
 ##### It merges the two replicate files, and creates pseudo-replicates by splitting the merged bam file into 2 halves
@@ -38,11 +39,12 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts ":f:h" opt; do
+while getopts "f:ah" opt; do
 	case $opt in
 		h) 	printf "$usage\n"
 			exit 0;;
 		f) 	export samplefile=${OPTARG};;
+		a)	export mapparam=${OPTARG};;
 		*)	printf "$usage\n"
 			exit 1;;
 	esac
@@ -53,6 +55,13 @@ if [ ! $samplefile ]; then
 	printf "Samplefile missing!\n"
 	printf "$usage\n"
 	exit 1
+fi
+
+if [ ! ${mapparam} ] || [[ ${mapparam} != "Colcen" ]]; then
+	printf "No or unknown mapping parameters selected, defaulting to maize\n"
+	export mapparam="default"
+else
+	printf "${mapparam} chosen as the mark of interest\n"
 fi
 
 if [ ! -s reports/summary_ChIP_peaks.txt ]; then
