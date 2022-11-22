@@ -11,7 +11,7 @@
 usage="
 ##### Script for Maize code data analysis
 #####
-##### sh MaiCode_analysis.sh -f samplefile [-r regionfile] [-m markofinterest] [-s] [-t] [-z] [-x]
+##### sh MaiCode_analysis.sh -f samplefile -r regionfile -m markofinterest -a mapparam [-s] [-t] [-z] [-x]
 #####	-f: samplefile containing the samples to compare and in 6 tab-delimited columns:
 ##### 		Data, Line, Tissue, Sample, PE or SE, Reference genome directory
 ##### 	-r: textfile containing the name of region files that are to be plotted over (bed files)
@@ -45,11 +45,12 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts ":f:r:mstzxh" opt; do
+while getopts "f:r:mastzxh" opt; do
 	case $opt in
 		f) 	export samplefile=${OPTARG};;
 		r)	export regionfile=${OPTARG};;
 		m)	export markofinterest=${OPTARG};;
+		a)	export mapparam=${OPTARG};;
 		s)	printf "\nOption not to perform combined analysis selected\n"
 			export keepgoing="STOP";;
 		t)	printf "\nOption to perform partial combined analysis selected\n"
@@ -82,6 +83,13 @@ if [ ! ${markofinterest} ]; then
 	export markofinterest="H3K27ac"
 else
 	printf "${markofinterest} chosen as the mark of interest\n"
+fi
+
+if [ ! ${mapparam} ] || [[ ${mapparam} != "Colcen" ]]; then
+	printf "No or unknown mapping parameters selected, defaulting to maize\n"
+	export mapparam="default"
+else
+	printf "${mapparam} chosen as the mark of interest\n"
 fi
 
 #############################################################################################
@@ -211,7 +219,7 @@ if [[ "${test_new}" == 1 ]]; then
 	do
 		printf "\nRunning ${datatype} analysis script\n"
 		cd ${datatype}
-		qsub -sync y -N ${datatype} -o logs/${samplename}.log ${mc_dir}/MaizeCode_${datatype}_analysis.sh -f temp_${samplename}_${datatype}.txt &
+		qsub -sync y -N ${datatype} -o logs/${samplename}.log ${mc_dir}/MaizeCode_${datatype}_analysis.sh -f temp_${samplename}_${datatype}.txt -a ${mapparam} &
 		pids+=("$!")
 		cd ..
 	done
