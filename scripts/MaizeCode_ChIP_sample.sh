@@ -11,7 +11,7 @@
 usage="
 ##### Script for Maize code Histone ChIP data analysis, used by script MaizeCode.sh for ChIP samples
 #####
-##### sh MaizeCode_ChIP_sample.sh -x datatype -d reference directory -l inbred line -t tissue -m histone mark -r replicate ID -i sample ID -f path to sample -p paired -s step
+##### sh MaizeCode_ChIP_sample.sh -x datatype -d reference directory -l inbred line -t tissue -m histone mark -r replicate ID -i sample ID -f path to sample -p paired -s step -a mappingoption
 ##### 	-x: type of data (should be 'ChIP' or 'ChIP_*' where * is a index marking which input to use when several inputs are present)
 ##### 	-d: folder containing the reference directory (e.g. ~/data/Genomes/Zea_mays/B73_v4)
 ##### 	-l: inbred line (e.g. B73)
@@ -22,7 +22,7 @@ usage="
 #####	-f: path to original folder or SRA
 ##### 	-p: if data is paired-end (PE) or single-end (SE) [ PE | SE ]
 #####	-s: status of the raw data [ download | trim | done ] 'download' if sample needs to be copied/downloaded, 'trim' if only trimming has to be performed, 'done' if trimming has already been performed
-#####	-a: what parameters to use for mapping [ default | Colcen ]
+#####	-a: what option to use for mapping [ default | Colcen ]
 ##### 	-h: help, returns usage
 #####
 ##### It downloads or copies the files, runs fastQC, trims adapters with cutadapt, aligns with bowtie2,
