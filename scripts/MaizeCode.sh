@@ -11,16 +11,16 @@
 usage="
 ##### Main script for Maize code data analysis
 ##### 
-##### sh MaizeCode.sh -f <samplefile> -p <path to genome reference> [-m markofinterest] [-s] [-c] [-t] [-z] [-x] [-a] [-h]
+##### sh MaizeCode.sh -f <samplefile> -p <path to genome reference> [-m markofinterest] [-a] [-s] [-c] [-t] [-z] [-x] [-h]
 ##### 	-f: samplefile
 ##### 	-p: path to the folder containing all the different genome references (e.g. ~/data/Genomes/Zea_mays)
 #####	-m: histone mark to focus on for the analysis (H3K27ac by default, does not matter if not set)
+#####	-a: mapping parameters [ default | ColCen ] (Colcen: -k 150 and not filtering duplicates)
 #####	-s: if set, the whole analysis does not proceed (default=not set, keep going with the analysis over all the samples in the samplefile)
 #####	-c: if set, only single samples analysis proceeds, not grouped analysis per line (default=not set, keep going with the complete analysis)
 #####	-t: if set, only partial grouped analysis per line, no heatmaps with deeptools (default=not set, keep going with the complete analysis)
 #####	-z: if set, only partial analysis per line for testing (default=not set, keep going with the complete analysis)
 #####	-x: if set, heatmaps on TEs will be performed for each line (default=not set, will not do the TE analysis because it takes a very long time)
-#####	-A: if set, parameters for Arabidopsis roject will be used (mapping with -k 150 and not filtering duplicates)
 ##### 	-h: help, returns usage
 #####
 ##### The samplefile should be a tab-delimited text file with 8 columns:
@@ -35,7 +35,6 @@ usage="
 ##### col #7: Path to the fastq files (e.g. /seq/Illumina_runs/NextSeqData/NextSeqOutput/190913_NB501555_0636_AH5HG7BGXC/Data/Intensities/BaseCalls/304846). If downloading from SRA, put 'SRA'.
 ##### col #8: If data is paired-end or single-end [ PE | SE ]. 
 ##### col #9: Name of the genome reference to map (e.g. B73_v4). Each genome reference should have a unique folder that contains a single fasta file, gff3 file and gtf file (can all be gzipped).
-##### col #10: Extra mapping parameters, otherwise default settings will be used.
 ##### The gff3 files should have 'gene' in column 3 and exons should be linked by 'Parent' in column 9
 ##### The fasta and gff3 files should have the same chromosome names (i.e. 1 2 3... and 1 2 3... or Chr1 Chr2 Chr3... and Chr1 Chr2 Chr3...)
 ##### For cleaner naming purposes, use '_samplefile.txt' as suffix
@@ -63,7 +62,7 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts "f:p:amsctzxh" opt; do
+while getopts "f:p:masctzxh" opt; do
 	case $opt in
 		h) 	printf "${usage}\n"
 			exit 0;;
