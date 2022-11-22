@@ -112,8 +112,9 @@ if [ ! ${mapparam} ] | [[ "${mapparam}" != "default" ]] | [[ "${mapparam}" != "C
 elif [[ "${mapparam}" == "default" ]] || [[ "${mapparam}" == "Colcen" ]]; then
 	printf "${mapparam} chosen as the mapping option\n"
 else
-	printf "Unknown mapping option selected, using default\n"
-	export mapparam="default"
+	printf "Unknown mapping option selected\n"
+	printf "${usage}\n"
+	exit 1
 fi
 
 #############################################################################################
