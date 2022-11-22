@@ -62,16 +62,16 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts ":f:p:a:m:sctzxh" opt; do
+while getopts ":f:p:m:a:sctzxh" opt; do
 	case $opt in
 		h) 	printf "${usage}\n"
 			exit 0;;
 		f) 	export samplefile=${OPTARG};;
 		p)	export pathtoref=${OPTARG};;
-		a)	export mapparam=${OPTARG}
-			printf "\nOption for mapping: ${mapparam}\n";;
 		m)	export markofinterest=${OPTARG}
 			printf "\nMark of interest: ${markofinterest}\n";;
+		a)	export mapparam=${OPTARG}
+			printf "\nOption for mapping: ${mapparam}\n";;
 		s)	printf "\nOption not to perform analysis selected\n"
 			export keepgoing="STOP";;
 		c)	printf "\nOption not to perform combined analysis selected\n"
@@ -106,11 +106,14 @@ else
 	printf "${markofinterest} chosen as the mark of interest\n"
 fi
 
-if [ ! ${mapparam} ] || [[ "${mapparam}" != "default" ]] || [[ "${mapparam}" != "Colcen" ]]; then
-	printf "No or unknown mapping parameters selected, defaulting to maize\n"
+if [ ! ${mapparam} ] | [[ "${mapparam}" != "default" ]] | [[ "${mapparam}" != "Colcen" ]]; then
+	printf "No mapping option selected, using default\n"
 	export mapparam="default"
-else
+elif [[ "${mapparam}" == "default" ]] || [[ "${mapparam}" == "Colcen" ]]; then
 	printf "${mapparam} chosen as the mapping option\n"
+else
+	printf "Unknown mapping option selected, using default\n"
+	export mapparam="default"
 fi
 
 #############################################################################################
