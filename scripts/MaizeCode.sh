@@ -68,8 +68,10 @@ while getopts "f:p:masctzxh" opt; do
 			exit 0;;
 		f) 	export samplefile=${OPTARG};;
 		p)	export pathtoref=${OPTARG};;
-		m)	export markofinterest=${OPTARG};;
-		a)	export mapparam=${OPTARG};;
+		m)	export markofinterest=${OPTARG}
+			printf "\nMark of interest: ${markofinterest}\n";;
+		a)	export mapparam=${OPTARG}
+			printf "\nOption for mapping: ${mapparam}\n";;
 		s)	printf "\nOption not to perform analysis selected\n"
 			export keepgoing="STOP";;
 		c)	printf "\nOption not to perform combined analysis selected\n"
