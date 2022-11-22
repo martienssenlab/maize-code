@@ -104,7 +104,7 @@ else
 	printf "${markofinterest} chosen as the mark of interest\n"
 fi
 
-if [ ! ${mapparam} ] | [[ "${mapparam}" != "default" ]] | [[ "${mapparam}" != "Colcen" ]]; then
+if [ ! ${mapparam} ]; then
 	printf "No mapping option selected, using default\n"
 	export mapparam="default"
 elif [[ "${mapparam}" == "default" ]] || [[ "${mapparam}" == "Colcen" ]]; then
