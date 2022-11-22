@@ -45,7 +45,7 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts "f:r:mastzxh" opt; do
+while getopts ":f:r:m:a:stzxh" opt; do
 	case $opt in
 		f) 	export samplefile=${OPTARG};;
 		r)	export regionfile=${OPTARG};;
@@ -85,11 +85,15 @@ else
 	printf "${markofinterest} chosen as the mark of interest\n"
 fi
 
-if [ ! ${mapparam} ] || [[ ${mapparam} != "default" ]] || [[ ${mapparam} != "Colcen" ]]; then
-	printf "No or unknown mapping parameters selected, defaulting to maize\n"
+if [ ! ${mapparam} ]; then
+	printf "No mapping option selected, using default\n"
 	export mapparam="default"
-else
+elif [[ "${mapparam}" == "default" ]] || [[ "${mapparam}" == "Colcen" ]]; then
 	printf "${mapparam} chosen as the mapping option\n"
+else
+	printf "Unknown mapping option selected\n"
+	printf "${usage}\n"
+	exit 1
 fi
 
 #############################################################################################
