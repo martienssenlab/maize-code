@@ -11,7 +11,7 @@
 usage="
 ##### Script for Maize code data analysis
 #####
-##### sh MaiCode_analysis.sh -f samplefile -r regionfile -m markofinterest -a mapparam [-s] [-t] [-z] [-x]
+##### sh MaiCode_analysis.sh -f samplefile -r regionfile [-m markofinterest] [-a mapparam ] [-s] [-t] [-z] [-x]
 #####	-f: samplefile containing the samples to compare and in 6 tab-delimited columns:
 ##### 		Data, Line, Tissue, Sample, PE or SE, Reference genome directory
 ##### 	-r: textfile containing the name of region files that are to be plotted over (bed files)
@@ -85,11 +85,11 @@ else
 	printf "${markofinterest} chosen as the mark of interest\n"
 fi
 
-if [ ! ${mapparam} ] || [[ ${mapparam} != "Colcen" ]]; then
+if [ ! ${mapparam} ] || [[ ${mapparam} != "default" ]] || [[ ${mapparam} != "Colcen" ]]; then
 	printf "No or unknown mapping parameters selected, defaulting to maize\n"
 	export mapparam="default"
 else
-	printf "${mapparam} chosen as the mark of interest\n"
+	printf "${mapparam} chosen as the mapping option\n"
 fi
 
 #############################################################################################
