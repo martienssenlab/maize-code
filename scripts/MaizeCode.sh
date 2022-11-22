@@ -104,11 +104,11 @@ else
 	printf "${markofinterest} chosen as the mark of interest\n"
 fi
 
-if [ ! ${mapparam} ] || [[ ${mapparam} != "Colcen" ]]; then
+if [ ! ${mapparam} ] || [[ ${mapparam} != "default" ]] || [[ ${mapparam} != "Colcen" ]]; then
 	printf "No or unknown mapping parameters selected, defaulting to maize\n"
 	export mapparam="default"
 else
-	printf "${mapparam} chosen as the mark of interest\n"
+	printf "${mapparam} chosen as the mapping option\n"
 fi
 
 #############################################################################################
