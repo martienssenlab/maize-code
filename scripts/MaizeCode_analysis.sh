@@ -109,7 +109,7 @@ if [[ "${keepgoing}" == "STOP" ]]; then
 else
 	tmp2=${regionfile##*/}
 	regionname=${tmp2%.*}
-	analysisname="${samplename}_on_${regionname}"
+	analysisname="${samplename}_on_${regionname}_for_${markofinterest}"
 fi
 
 if [ -e ChIP/temp_${samplename}_ChIP.txt ]; then
