@@ -58,7 +58,7 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts ":f:r:mtzxh" opt; do
+while getopts ":f:r:m:tzxh" opt; do
 	case ${opt} in
 		h) 	printf "${usage}\n"
 			exit 0;;
@@ -106,7 +106,7 @@ tmp1=${samplefile##*/}
 samplename=${tmp1%_analysis*}
 tmp2=${regionfile##*/}
 regionname=${tmp2%%.*}
-analysisname=${samplename}_on_${regionname}
+analysisname=${samplename}_on_${regionname}_for_${markofinterest}
 
 printf "\nStarting analysis: ${analysisname}\n"
 
@@ -483,7 +483,7 @@ if [ -s combined/peaks/tmp_peaks_${markofinterest}_${analysisname}.bed ]; then
 	rm -f combined/peaks/tmp_peaks_${markofinterest}_${analysisname}.bed
 fi
 
-k27file="no"
+moifile="no"
 insamplefile="no"
 if [ ${#chip_sample_list[@]} -ge 1 ]; then	
 	for sample in ${chip_sample_list[@]}
@@ -494,11 +494,11 @@ if [ ${#chip_sample_list[@]} -ge 1 ]; then
 		fi
 	done
 	if [[ "${insamplefile}" == "yes" ]]; then
-		printf "\nPreparing merged H3K27ac peaks from files in ${analysisname}\n"
+		printf "\nPreparing merged peaks of the mark of interest from files in ${analysisname}\n"
 		sort -k1,1 -k2,2n combined/peaks/tmp_peaks_${markofinterest}_${analysisname}.bed > combined/peaks/tmp2_peaks_${markofinterest}_${analysisname}.bed
 		bedtools merge -i combined/peaks/tmp2_peaks_${markofinterest}_${analysisname}.bed | sort -k1,1 -k2,2n > combined/peaks/merged_peaks_${markofinterest}_${analysisname}.bed
 		rm -f combined/peaks/tmp*_peaks_${markofinterest}_${analysisname}.bed
-		k27file="yes"
+		moifile="yes"
 	fi
 fi
 nfile=0
@@ -518,7 +518,7 @@ if [[ "${insamplefile}" == "no" ]] && [ ${nfile} -gt 0 ]; then
 	sort -k1,1 -k2,2n combined/peaks/tmp_peaks_${markofinterest}_${analysisname}.bed > combined/peaks/tmp2_peaks_${markofinterest}_${analysisname}.bed
 	bedtools merge -i combined/peaks/tmp2_peaks_${markofinterest}_${analysisname}.bed | sort -k1,1 -k2,2n > combined/peaks/merged_peaks_${markofinterest}_${analysisname}.bed
 	rm -f combined/peaks/tmp*_peaks_${markofinterest}_${analysisname}.bed
-	k27file="yes"
+	moifile="yes"
 fi
 
 #### To make a single file containing all TF peaks of the same analysis with or without the mark of interest peaks
@@ -528,7 +528,7 @@ if [ ${#tf_sample_list[@]} -ge 1 ]; then
 	if [ -s combined/peaks/tmp_peaks_${analysisname}.bed ]; then
 		rm -f combined/peaks/tmp_peaks_${analysisname}.bed
 	fi
-	if [[ "${k27file}" == "yes" ]]; then
+	if [[ "${moifile}" == "yes" ]]; then
 		for sample in ${tf_sample_list[@]} ${markofinterest}
 		do
 			case "${sample}" in
@@ -555,7 +555,7 @@ if [ ${#tf_sample_list[@]} -ge 1 ]; then
 	rm -f combined/peaks/tmp*_peaks_${analysisname}.bed
 	#### To create a matrix of peak presence in each sample
 	printf "\nCreating matrix file for ${analysisname}\n"
-	if [[ "${k27file}" == "yes" ]]; then	
+	if [[ "${moifile}" == "yes" ]]; then	
 		for sample in ${tf_sample_list[@]} ${markofinterest}
 		do
 			printf "${sample}\n" > combined/peaks/temp_col_${analysisname}_${sample}.txt
@@ -575,7 +575,7 @@ if [ ${#tf_sample_list[@]} -ge 1 ]; then
 	#### To make an Upset plot highlighting peaks in gene bodies
 	printf "\nCreating Upset plot for ${analysisname} with R version:\n"
 	R --version
-	Rscript --vanilla ${mc_dir}/MaizeCode_R_Upset_TF.r ${k27file} ${analysisname} combined/peaks/matrix_upset_TF_${analysisname}.txt
+	Rscript --vanilla ${mc_dir}/MaizeCode_R_Upset_TF.r ${moifile} ${analysisname} ${markofinterest} combined/peaks/matrix_upset_TF_${analysisname}.txt
 fi
 
 #############################################################################################
@@ -1128,14 +1128,14 @@ done
 
 #########################################################################################
 ####################################### PART11 ##########################################
-############ Making heatmaps on distal H3K27ac peaks split by ChIP enrichment  ##########
+### Making heatmaps on distal peaks of the mark of interest split by ChIP enrichment  ###
 #########################################################################################
 
-#### To make heatmap and profile with deeptools for each tissue based on grouped H3K27ac levels at distal elements (>2kb)
+#### To make heatmap and profile with deeptools for each tissue based on grouped mark of interest levels at distal elements (>2kb)
 
 uniq_chip_tissue_list=($(printf "%s\n" "${chip_tissue_list[@]}" | sort -u))
 
-h3k27actissues=()
+moitissues=()
 createfile="no"
 enhancerfile="no"
 for tissue in ${uniq_chip_tissue_list[@]}
@@ -1143,12 +1143,12 @@ do
 	tissue_labels=()
 	tissue_bw_plus=()
 	tissue_bw_minus=()
-	test_k27ac="no"
+	test_moi="no"
 	for sample in ${chip_sample_list[@]}
 	do
-		if [[ "${sample}" =~ "${tissue}_H3K27ac" ]]; then
-			h3k27actissues+=("${tissue}")
-			test_k27ac="yes"
+		if [[ "${sample}" =~ "${tissue}_${markofinterest}" ]]; then
+			moitissues+=("${tissue}")
+			test_moi="yes"
 		fi
 		if [[ ${sample} =~ ${tissue} ]]; then
 			tissue_labels+=("${sample}")
@@ -1216,11 +1216,11 @@ do
 		fi
 	done
 	
-	if [[ ${test_k27ac} == "yes" ]] && [[ ${#tissue_bw_plus[@]} -ge 2 ]]; then
-		printf "\nMaking heatmaps of distal enhancers (H3K27ac peak >2kb from TSS) in ${tissue}\n"
+	if [[ ${test_moi} == "yes" ]] && [[ ${#tissue_bw_plus[@]} -ge 2 ]]; then
+		printf "\nMaking heatmaps of distal "enhancers" (mark of interest peak >2kb from TSS) in ${tissue}\n"
 		printf "\nGetting bed file of distal enhancers for ${tissue}\n"
 		enhancerfile="yes"
-		bedtools sort -g ${ref_dir}/chrom.sizes -i ChIP/peaks/best_peaks_${line}_${tissue}_H3K27ac.bed | awk '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/)'> combined/peaks/temp_${analysisname}_${tissue}.bed
+		bedtools sort -g ${ref_dir}/chrom.sizes -i ChIP/peaks/best_peaks_${line}_${tissue}_${markofinterest}.bed | awk '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/)'> combined/peaks/temp_${analysisname}_${tissue}.bed
 		if [ -s combined/DEG/sorted_expression_${analysisname}_${tissue}.bed ]; then
 			bedtools sort -g ${ref_dir}/chrom.sizes -i combined/DEG/sorted_expression_${analysisname}_${tissue}.bed > combined/peaks/temp_${analysisname}_${tissue}_expression.bed
 			bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{if ($17>= 2000 && $16=="+") print $1,$2+$10,$12,$4,$5,$16,$14,$15; else if ($17<= -2000 && $16=="-") print $1,$13,$2+$10,$4,$5,$16,$14,$15}' | sort -k5,5nr > combined/peaks/distal_${analysisname}_${tissue}.bed
@@ -1355,7 +1355,7 @@ fi
 
 if [[ "${enhancerfile}" == "yes" ]]; then
 	printf "Line\tTissue\tEnhancer\tCount\n" > combined/peaks/summary_enhancers_${analysisname}.txt
-	for tissue in ${h3k27actissues[@]}
+	for tissue in ${moiactissues[@]}
 	do
 		for type in genic promoter terminator distal_upstream distal_downstream 
 		do
@@ -1368,22 +1368,22 @@ rm -f combined/peaks/temp*${analysisname}*
 
 #########################################################################################
 ####################################### PART12 ##########################################
-############ Making scatter plots of RNA expression on distal H3K27ac peaks #############
+##### Making scatter plots of RNA expression on distal peaks of the mark of interest ####
 #########################################################################################
 
-#### To make scatter plots with R for each tissue based on RNAseq/RAMPAGE/shRNA and quality of H3K27ac distal peaks
+#### To make scatter plots with R for each tissue based on RNAseq/RAMPAGE/shRNA and quality of peaks of the mark of interest
 
-for tissue in ${h3k27actissues[@]}
+for tissue in ${moitissues[@]}
 do
 	header="Chr\tStart\tStop\tPeakID"
-	awk -v OFS="\t" '{print $1,$2,$3,$4}' ChIP/peaks/best_peaks_${line}_${tissue}_H3K27ac.bed > combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt
+	awk -v OFS="\t" '{print $1,$2,$3,$4}' ChIP/peaks/best_peaks_${line}_${tissue}_${markofinterest}.bed > combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt
 	rnaseq=0
 	rampage=0
 	shrna=0
 	for bw in ${rnaseq_bw_list_plus[*]}
 	do					
 		if [[ ${bw} =~ ${tissue} ]]; then
-			printf "\nGetting RNAseq plus strand coverage on H3K27ac peaks for ${tissue}\n"
+			printf "\nGetting RNAseq plus strand coverage on peaks of the mark of interest for ${tissue}\n"
 			bigWigToBedGraph ${bw} combined/peaks/temp_RNAseq_plus_${analysisname}_${line}.bedGraph
 			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_RNAseq_plus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=1000*($5/($3-$2)); print a}' > combined/peaks/col_B_${analysisname}_${line}_${tissue}.txt
 			rm -f combined/peaks/temp_RNAseq_plus_${analysisname}_${line}.bedGraph
@@ -1394,7 +1394,7 @@ do
 	for bw in ${rnaseq_bw_list_minus[*]}
 	do					
 		if [[ ${bw} =~ ${tissue} ]]; then
-			printf "\nGetting RNAseq minus strand coverage on H3K27ac peaks for ${tissue}\n"
+			printf "\nGetting RNAseq minus strand coverage on peaks of the mark of interest for ${tissue}\n"
 			bigWigToBedGraph ${bw} combined/peaks/temp_RNAseq_minus_${analysisname}_${line}.bedGraph
 			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_RNAseq_minus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=1000*($5/($3-$2)); print a}' > combined/peaks/col_C_${analysisname}_${line}_${tissue}.txt
 			rm -f combined/peaks/temp_RNAseq_minus_${analysisname}_${line}.bedGraph
@@ -1404,7 +1404,7 @@ do
 	for bw in ${rampage_bw_list_plus[*]}
 	do					
 		if [[ ${bw} =~ ${tissue} ]]; then
-			printf "\nGetting RAMPAGE plus strand coverage on H3K27ac peaks for ${tissue}\n"
+			printf "\nGetting RAMPAGE plus strand coverage on peaks of the mark of interest for ${tissue}\n"
 			bigWigToBedGraph ${bw} combined/peaks/temp_RAMPAGE_plus_${analysisname}_${line}.bedGraph
 			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_RAMPAGE_plus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=1000*($5/($3-$2)); print a}' > combined/peaks/col_D_${analysisname}_${line}_${tissue}.txt
 			rm -f combined/peaks/temp_RAMPAGE_plus_${analysisname}_${line}.bedGraph
@@ -1415,7 +1415,7 @@ do
 	for bw in ${rampage_bw_list_minus[*]}
 	do					
 		if [[ ${bw} =~ ${tissue} ]]; then
-			printf "\nGetting RAMPAGE minus strand coverage on H3K27ac peaks for ${tissue}\n"
+			printf "\nGetting RAMPAGE minus strand coverage on peaks of the mark of interest for ${tissue}\n"
 			bigWigToBedGraph ${bw} combined/peaks/temp_RAMPAGE_minus_${analysisname}_${line}.bedGraph
 			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_RAMPAGE_minus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=1000*($5/($3-$2)); print a}' > combined/peaks/col_E_${analysisname}_${line}_${tissue}.txt
 			rm -f combined/peaks/temp_RAMPAGE_minus_${analysisname}_${line}.bedGraph
@@ -1425,7 +1425,7 @@ do
 	for bw in ${shrna_bw_list_plus[*]}
 	do					
 		if [[ ${bw} =~ ${tissue} ]]; then
-			printf "\nGetting shRNA plus strand coverage on H3K27ac peaks for ${tissue}\n"
+			printf "\nGetting shRNA plus strand coverage on peaks of the mark of interest for ${tissue}\n"
 			bigWigToBedGraph ${bw} combined/peaks/temp_shRNA_plus_${analysisname}_${line}.bedGraph
 			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_shRNA_plus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=1000*($5/($3-$2)); print a}' > combined/peaks/col_F_${analysisname}_${line}_${tissue}.txt
 			rm -f combined/peaks/temp_shrna_plus_${analysisname}_${line}.bedGraph
@@ -1436,15 +1436,15 @@ do
 	for bw in ${shrna_bw_list_minus[*]}
 	do					
 		if [[ ${bw} =~ ${tissue} ]]; then
-			printf "\nGetting shRNA minus strand coverage on H3K27ac peaks for ${tissue}\n"
+			printf "\nGetting shRNA minus strand coverage on peaks of the mark of interest for ${tissue}\n"
 			bigWigToBedGraph ${bw} combined/peaks/temp_shRNA_minus_${analysisname}_${line}.bedGraph
 			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_shRNA_minus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=1000*($5/($3-$2)); print a}' > combined/peaks/col_G_${analysisname}_${line}_${tissue}.txt
 			rm -f combined/peaks/temp_shRNA_minus_${analysisname}_${line}.bedGraph
 			header="${header}\tshRNA_minus"
 		fi
 	done	
-	printf "${header}\n" > combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt
-	paste combined/peaks/col_*_${analysisname}_${line}_${tissue}.txt >> combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt
+	printf "${header}\n" > combined/peaks/${markofinterest}_peaks_expression_${line}_${tissue}_${analysisname}.txt
+	paste combined/peaks/col_*_${analysisname}_${line}_${tissue}.txt >> combined/peaks/${markofinterest}_peaks_expression_${line}_${tissue}_${analysisname}.txt
 	rm -f combined/peaks/col_*_${analysisname}_${line}_${tissue}.txt
 	plot="No"
 	if [[ ${rnaseq} == 1 ]] && [[ ${rampage} == 1 ]] && [[ ${shrna} == 1 ]]; then
@@ -1473,7 +1473,7 @@ do
 		#### To plot correlation between RNA expression datasets at distal peaks
 		printf "\nCreating scatter plot for ${analysisname} ${tissue} with R version:\n"
 		R --version
-		Rscript --vanilla ${mc_dir}/MaizeCode_R_scatter_distal_peaks.r ${analysisname} ${tissue} ${line} ${included_samples} combined/peaks/all_grouped_distal_peaks_${analysisname}.txt combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt
+		Rscript --vanilla ${mc_dir}/MaizeCode_R_scatter_distal_peaks.r ${analysisname} ${markofinterest} ${tissue} ${line} ${included_samples} combined/peaks/all_grouped_distal_peaks_${analysisname}.txt combined/peaks/${markofinterest}_peaks_expression_${line}_${tissue}_${analysisname}.txt
 	fi
 done
 
@@ -1487,15 +1487,15 @@ rampage="No"
 shrna="No"
 deg="No"
 tf="No"
-for tissue in ${h3k27actissues[@]}
+for tissue in ${moitissues[@]}
 do
-	if [ $(grep "RNAseq" combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt | wc -l) -gt 0 ]; then
+	if [ $(grep "RNAseq" combined/peaks/${markofinterest}_peaks_expression_${line}_${tissue}_${analysisname}.txt | wc -l) -gt 0 ]; then
 		rnaseq="Yes"
 	fi
-	if [ $(grep "RAMPAGE" combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt | wc -l) -gt 0 ]; then
+	if [ $(grep "RAMPAGE" combined/peaks/${markofinterest}_peaks_expression_${line}_${tissue}_${analysisname}.txt | wc -l) -gt 0 ]; then
 		rampage="Yes"
 	fi
-	if [ $(grep "shRNA" combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt | wc -l) -gt 0 ]; then
+	if [ $(grep "shRNA" combined/peaks/${markofinterest}_peaks_expression_${line}_${tissue}_${analysisname}.txt | wc -l) -gt 0 ]; then
 		shrna="Yes"
 	fi
 	if [ -s combined/peaks/all_${line}_${tissue}_${analysisname}_DEG_GID.txt ]; then
@@ -1516,22 +1516,22 @@ do
 			header="Chr\tStart\tStop\tPeakID\tQuality\tstrand\tGID"
 			rowi="${chr}\t${start}\t${stop}\t${peakID}\t${quality}\t${strand}\t${GID}"
 			if [[ ${rnaseq} == "Yes" ]]; then	
-				RNAseq_plus=$(awk -v p=${peakID} '$4 == p {print $5}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
-				RNAseq_minus=$(awk -v p=${peakID} '$4 == p {print $6}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
+				RNAseq_plus=$(awk -v p=${peakID} '$4 == p {print $5}' combined/peaks/${markofinterest}_peaks_expression_${line}_${tissue}_${analysisname}.txt)
+				RNAseq_minus=$(awk -v p=${peakID} '$4 == p {print $6}' combined/peaks/${markofinterest}_peaks_expression_${line}_${tissue}_${analysisname}.txt)
 				rowi="${rowi}\t${expression}\t${RNAseq_plus}\t${RNAseq_minus}"
 				header="${header}\texpression\tRNAseq_plus\tRNAseq_minus"
 				colnb=$((colnb+3))
 			fi
 			if [[ ${rampage} == "Yes" ]]; then
-				RAMPAGE_plus=$(awk -v p=${peakID} '$4 == p {print $7}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
-				RAMPAGE_minus=$(awk -v p=${peakID} '$4 == p {print $8}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
+				RAMPAGE_plus=$(awk -v p=${peakID} '$4 == p {print $7}' combined/peaks/${markofinterest}_peaks_expression_${line}_${tissue}_${analysisname}.txt)
+				RAMPAGE_minus=$(awk -v p=${peakID} '$4 == p {print $8}' combined/peaks/${markofinterest}_peaks_expression_${line}_${tissue}_${analysisname}.txt)
 				header="${header}\tRAMPAGE_plus\tRAMPAGE_minus"
 				rowi="${rowi}\t${RAMPAGE_plus}\t${RAMPAGE_minus}"
 				colnb=$((colnb+2))
 			fi
 			if [[ ${shrna} == "Yes" ]]; then
-				shRNA_plus=$(awk -v p=${peakID} '$4 == p {print $9}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
-				shRNA_minus=$(awk -v p=${peakID} '$4 == p {print $10}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
+				shRNA_plus=$(awk -v p=${peakID} '$4 == p {print $9}' combined/peaks/${markofinterest}_peaks_expression_${line}_${tissue}_${analysisname}.txt)
+				shRNA_minus=$(awk -v p=${peakID} '$4 == p {print $10}' combined/peaks/${markofinterest}_peaks_expression_${line}_${tissue}_${analysisname}.txt)
 				header="${header}\tshRNA_plus\tshRNA_minus"
 				rowi="${rowi}\t${shRNA_plus}\t${shRNA_minus}"
 				colnb=$((colnb+2))
@@ -1621,7 +1621,7 @@ if [ -s /grid/martienssen/data/dropbox/maizecode/TEs/${ref}_TEs.gff3.gz ]; then
 	done < combined/TSS/${ref}_TE_types.txt
 fi
 
-for tissue in ${h3k27actissues[@]}
+for tissue in ${moitissues[@]}
 do
 	tissue_labels=()
 	tissue_bw_plus=()
