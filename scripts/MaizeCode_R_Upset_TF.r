@@ -8,15 +8,16 @@ library(stringr)
 
 args = commandArgs(trailingOnly=TRUE)
 
-h3k27file<-args[1]
+moifile<-args[1]
 samplename<-args[2]
+moi<-args[3]
 
-if ( h3k27file == "yes" ) {
+if ( moifile == "yes" ) {
 	
- inputable<-read.delim(args[3], header = TRUE) %>%
+ inputable<-read.delim(args[4], header = TRUE) %>%
   	mutate(Distance=Distance+1) %>%
   	rowwise() %>%
-  	mutate(marked=ifelse(H3K27ac==1, "Yes", "No"))
+  	mutate(marked=ifelse(moi==1, "Yes", "No"))
 
  inputable$Group<-factor(inputable$Group, levels=c("Distal_downstream","Terminator","Gene_body","Promoter","Distal_upstream"))
  set1<-colnames(inputable)
@@ -24,12 +25,12 @@ if ( h3k27file == "yes" ) {
 
  colmarks<-c("Yes"="#EE616E", "No"="#2e2e2e")
 	
- combosK27ac <- map(seq(1:length(sampleCols)), ~ combn(sampleCols, ., FUN = c, simplify = FALSE)) %>% 
+ combosmoi <- map(seq(1:length(sampleCols)), ~ combn(sampleCols, ., FUN = c, simplify = FALSE)) %>% 
 	unlist(recursive = FALSE)
 
- combosK27ac<-combosK27ac[str_detect(combosK27ac,pattern="H3K27ac")]
+ combosmoi<-combosmoi[str_detect(combosmoi,pattern=moi)]
 
- queriesK27ac <- map(combosK27ac, ~ upset_query(intersect = .x, color = "#EE616E", 
+ queriesmoi <- map(combosmoi, ~ upset_query(intersect = .x, color = "#EE616E", 
                              fill = "#EE616E", only_components = c('intersections_matrix')))
 
  plot<-upset(inputable, sampleCols, name="Peaks", 
@@ -50,7 +51,7 @@ if ( h3k27file == "yes" ) {
             scale_y_continuous(trans = "log10",
                                labels=scales::label_number_si(accuracy = 1, unit = "bp")) +
 			scale_fill_manual(values=colmarks) + guides(fill = FALSE))),
-	  queries = queriesK27ac,
+	  queries = queriesmoi,
       set_sizes = (upset_set_size() + ylab("Total peaks") +
         theme(axis.text.x = element_text(angle = 45))),
       matrix = (intersection_matrix(geom = geom_point(shape = "circle",size = 3),
@@ -85,7 +86,7 @@ if ( h3k27file == "yes" ) {
 )
 } else {
 
-inputable<-read.delim(args[3], header = TRUE) %>%
+inputable<-read.delim(args[4], header = TRUE) %>%
  	 mutate(Distance=Distance+1)
 
  inputable$Group<-factor(inputable$Group, levels=c("Distal_downstream","Terminator","Gene_body","Promoter","Distal_upstream"))

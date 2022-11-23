@@ -7,13 +7,14 @@ library(ggplot2)
 args = commandArgs(trailingOnly=TRUE)
 
 analysisname<-args[1]
-tissue<-args[2]
-line<-args[3]
-included_samples<-args[4]
+markofinterest<-args[2]
+tissue<-args[3]
+line<-args[4]
+included_samples<-args[5]
 
-table1<-read.delim(args[5], header = FALSE, col.names = c("Tissue","PeakID","PeakQuality","GID","RPKM","Group"))
+table1<-read.delim(args[6], header = FALSE, col.names = c("Tissue","PeakID","PeakQuality","GID","RPKM","Group"))
 table1$Group<-factor(table1$Group, levels=c("Top20%","20-40%","40-60%","60-80%","Bottom20%"))
-table2<-read.delim(args[6], header = TRUE)
+table2<-read.delim(args[7], header = TRUE)
 tableTOT<-merge(table1,table2, by="PeakID") %>%
     select(-Chr,Start,Stop)
     
@@ -36,7 +37,7 @@ if ( grepl( "RNAseq", included_samples, fixed = TRUE) ) {
       labels=scales::label_number_si(accuracy = 1)) +
     scale_x_continuous(trans="log10",
       labels=scales::label_number_si(accuracy = 1)) +
-    labs(title=paste("RNAseq signal at H3K27ac peaks in",line,tissue),
+    labs(title=paste("RNAseq signal at",markofinterest,"peaks in",line,tissue),
          xaxis="Peak quality (log)",
          yaxis="RNAseq signal (log)",
          color="Is RNAseq signal on both strands?") +
@@ -72,7 +73,7 @@ if ( grepl( "RAMPAGE", included_samples, fixed = TRUE) ) {
       labels=scales::label_number_si(accuracy = 0.1)) +
     scale_x_continuous(trans="log10",
       labels=scales::label_number_si(accuracy = 1)) +
-    labs(title=paste("RAMPAGE signal at H3K27ac peaks in",line,tissue),
+    labs(title=paste("RAMPAGE signal at",markofinterest,"peaks in",line,tissue),
          xaxis="Peak quality (log)",
          yaxis="RAMPAGE signal (log)",
          color="Is RAMPAGE signal on both strands?") +
@@ -108,7 +109,7 @@ if ( grepl( "shRNA", included_samples, fixed = TRUE) ) {
       labels=scales::label_number_si(accuracy = 1)) +
     scale_x_continuous(trans="log10",
       labels=scales::label_number_si(accuracy = 1)) +
-    labs(title=paste("shRNA signal at H3K27ac peaks in",line,tissue),
+    labs(title=paste("shRNA signal at",markofinterest,"peaks in",line,tissue),
          xaxis="Peak quality (log)",
          yaxis="shRNA signal (log)",
          color="Is shRNA signal on both strands?") +
@@ -135,7 +136,7 @@ if ( grepl( "RNAseq", included_samples, fixed = TRUE) && grepl( "RAMPAGE", inclu
                      labels=scales::label_number_si(accuracy = 0.1)) +
   scale_x_continuous(trans="log10",
                      labels=scales::label_number_si(accuracy = 1)) +
-  labs(title=paste("RAMPAGE vs RNAseq signal at H3K27ac peaks in",line,tissue),
+  labs(title=paste("RAMPAGE vs RNAseq signal at",markofinterest,"peaks in",line,tissue),
        xaxis="RNAseq signal (log)",
        yaxis="RAMPAGE signal (log)",
        color="Peak Quality",
@@ -164,7 +165,7 @@ if ( grepl( "RNAseq", included_samples, fixed = TRUE) && grepl( "shRNA", include
                      labels=scales::label_number_si(accuracy = 1)) +
   scale_x_continuous(trans = "log10",
                      labels=scales::label_number_si(accuracy = 0.1)) +
-  labs(title=paste("shRNA vs RNAseq signal at H3K27ac peaks in",line,tissue),
+  labs(title=paste("shRNA vs RNAseq signal at",markofinterest,"peaks in",line,tissue),
        xaxis="RNAseq signal (log)",
        yaxis="shRNA signal (log)",
        color="Peak Quality",
@@ -193,7 +194,7 @@ if ( grepl( "RAMPAGE", included_samples, fixed = TRUE) && grepl( "shRNA", includ
                      labels=scales::label_number_si(accuracy = 1)) +
   scale_x_continuous(trans="log10",
                      labels=scales::label_number_si(accuracy = 0.1)) +
-  labs(title=paste("shRNA vs RAMPAGE signal at H3K27ac peaks in",line,tissue),
+  labs(title=paste("shRNA vs RAMPAGE signal at",markofinterest,"peaks in",line,tissue),
        xaxis="RAMPAGE signal (log)",
        yaxis="shRNA signal (log)",
        color="Peak Quality",

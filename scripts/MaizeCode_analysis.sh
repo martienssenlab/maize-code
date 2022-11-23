@@ -11,12 +11,13 @@
 usage="
 ##### Script for Maize code data analysis
 #####
-##### sh MaiCode_analysis.sh -f samplefile [-r regionfile] [-s] [-t] [-z] [-x]
+##### sh MaiCode_analysis.sh -f samplefile -r regionfile [-m markofinterest] [-a mapparam ] [-s] [-t] [-z] [-x]
 #####	-f: samplefile containing the samples to compare and in 6 tab-delimited columns:
 ##### 		Data, Line, Tissue, Sample, PE or SE, Reference genome directory
 ##### 	-r: textfile containing the name of region files that are to be plotted over (bed files)
 ##### 		It is safest to use a full paths.
 #####		If no region file is given, the analysis will behave as if -s was set.
+#####	-m: histone mark to focus on for the analysis (H3K27ac by default)
 #####	-s: If set, the script does not progress into the line data analysis, only single sample analysis will be performed
 #####	-t: If set, partial analysis will be performed (no heatmap with deeptools)
 #####	-z: If set, partial analysis will be performed for testing
@@ -44,10 +45,12 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts ":f:r:stzxh" opt; do
+while getopts ":f:r:m:a:stzxh" opt; do
 	case $opt in
 		f) 	export samplefile=${OPTARG};;
 		r)	export regionfile=${OPTARG};;
+		m)	export markofinterest=${OPTARG};;
+		a)	export mapparam=${OPTARG};;
 		s)	printf "\nOption not to perform combined analysis selected\n"
 			export keepgoing="STOP";;
 		t)	printf "\nOption to perform partial combined analysis selected\n"
@@ -75,6 +78,24 @@ if [ ! ${regionfile} ]; then
 	keepgoing="STOP"
 fi
 
+if [ ! ${markofinterest} ]; then
+	printf "No mark of interest chosen, defaulting to H3K27ac\n"
+	export markofinterest="H3K27ac"
+else
+	printf "${markofinterest} chosen as the mark of interest\n"
+fi
+
+if [ ! ${mapparam} ]; then
+	printf "No mapping option selected, using default\n"
+	export mapparam="default"
+elif [[ "${mapparam}" == "default" ]] || [[ "${mapparam}" == "Colcen" ]]; then
+	printf "${mapparam} chosen as the mapping option\n"
+else
+	printf "Unknown mapping option selected\n"
+	printf "${usage}\n"
+	exit 1
+fi
+
 #############################################################################################
 ########################################### PART1 ###########################################
 ######################## Send each sample to specific analysis type #########################
@@ -88,7 +109,7 @@ if [[ "${keepgoing}" == "STOP" ]]; then
 else
 	tmp2=${regionfile##*/}
 	regionname=${tmp2%.*}
-	analysisname="${samplename}_on_${regionname}"
+	analysisname="${samplename}_on_${regionname}_for_${markofinterest}"
 fi
 
 if [ -e ChIP/temp_${samplename}_ChIP.txt ]; then
@@ -216,7 +237,7 @@ if [[ "${test_new}" == 1 ]]; then
 	do
 		printf "\nRunning ${datatype} analysis script\n"
 		cd ${datatype}
-		qsub -sync y -N ${datatype} -o logs/${samplename}.log ${mc_dir}/MaizeCode_${datatype}_analysis.sh -f temp_${samplename}_${datatype}.txt &
+		qsub -sync y -N ${datatype} -o logs/${samplename}.log ${mc_dir}/MaizeCode_${datatype}_analysis.sh -f temp_${samplename}_${datatype}.txt -a ${mapparam} &
 		pids+=("$!")
 		cd ..
 	done
@@ -415,13 +436,13 @@ do
 	region_list+=("${regioniname}")
 	printf "\nLaunching line analysis script for samplefile ${samplename} on regionfile ${regioniname}\n"
 	if [[ "${total}" == "NO" ]]; then
-		qsub -sync y -N ${ref}_analysis -o combined/logs/analysis_${samplename}_on_${regioniname}_${ref}.log ${mc_dir}/MaizeCode_line_analysis.sh -f combined/${samplename}_analysis_samplefile.temp_${ref}.txt -r ${regioni} -t &
+		qsub -sync y -N ${ref}_analysis -o combined/logs/analysis_${samplename}_on_${regioniname}_${ref}.log ${mc_dir}/MaizeCode_line_analysis.sh -f combined/${samplename}_analysis_samplefile.temp_${ref}.txt -r ${regioni} -m ${markofinterest} -t &
 	elif [[ "${total}" == "TEST" ]] && [[ "${repeats}" == "YES" ]]; then
-		qsub -sync y -N ${ref}_analysis -o combined/logs/analysis_${samplename}_on_${regioniname}_${ref}.log ${mc_dir}/MaizeCode_line_analysis.sh -f combined/${samplename}_analysis_samplefile.temp_${ref}.txt -r ${regioni} -z -x &
+		qsub -sync y -N ${ref}_analysis -o combined/logs/analysis_${samplename}_on_${regioniname}_${ref}.log ${mc_dir}/MaizeCode_line_analysis.sh -f combined/${samplename}_analysis_samplefile.temp_${ref}.txt -r ${regioni} -m ${markofinterest} -z -x &
 	elif [[ "${repeats}" == "YES" ]]; then
-		qsub -sync y -N ${ref}_analysis -o combined/logs/analysis_${samplename}_on_${regioniname}_${ref}.log ${mc_dir}/MaizeCode_line_analysis.sh -f combined/${samplename}_analysis_samplefile.temp_${ref}.txt -r ${regioni} -x &
+		qsub -sync y -N ${ref}_analysis -o combined/logs/analysis_${samplename}_on_${regioniname}_${ref}.log ${mc_dir}/MaizeCode_line_analysis.sh -f combined/${samplename}_analysis_samplefile.temp_${ref}.txt -r ${regioni} -m ${markofinterest} -x &
 	else
-		qsub -sync y -N ${ref}_analysis -o combined/logs/analysis_${samplename}_on_${regioniname}_${ref}.log ${mc_dir}/MaizeCode_line_analysis.sh -f combined/${samplename}_analysis_samplefile.temp_${ref}.txt -r ${regioni} &
+		qsub -sync y -N ${ref}_analysis -o combined/logs/analysis_${samplename}_on_${regioniname}_${ref}.log ${mc_dir}/MaizeCode_line_analysis.sh -f combined/${samplename}_analysis_samplefile.temp_${ref}.txt -r ${regioni} -m ${markofinterest} &
 	fi
 	pids+=("$!")
 done

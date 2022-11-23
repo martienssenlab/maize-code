@@ -11,9 +11,10 @@
 usage="
 ##### Script for Maize code Histone ChIP data analysis, used by script MaizeCode_analysis.sh for ChIP data
 #####
-##### sh MaiCode_ChIP_analysis.sh -f samplefile [-h]
+##### sh MaiCode_ChIP_analysis.sh -f samplefile [-a mappingoption] [-h]
 #####	-f: samplefile containing the samples to compare and the reference directory in 6 tab-delimited columns:
 ##### 		Data, Line, Tissue, Mark, PE or SE, Reference directory
+#####	-a: mapping option [ default | ColCen ] (Colcen: -k 150 and not filtering duplicates)
 ##### 	-h: help, returns usage
 ##### 
 ##### It merges the two replicate files, and creates pseudo-replicates by splitting the merged bam file into 2 halves
@@ -38,11 +39,12 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts ":f:h" opt; do
+while getopts ":f:a:h" opt; do
 	case $opt in
 		h) 	printf "$usage\n"
 			exit 0;;
 		f) 	export samplefile=${OPTARG};;
+		a)	export mapparam=${OPTARG};;
 		*)	printf "$usage\n"
 			exit 1;;
 	esac
@@ -52,6 +54,17 @@ shift $((OPTIND - 1))
 if [ ! $samplefile ]; then
 	printf "Samplefile missing!\n"
 	printf "$usage\n"
+	exit 1
+fi
+
+if [ ! ${mapparam} ]; then
+	printf "No mapping option selected, using default\n"
+	export mapparam="default"
+elif [[ "${mapparam}" == "default" ]] || [[ "${mapparam}" == "Colcen" ]]; then
+	printf "${mapparam} chosen as the mapping option\n"
+else
+	printf "Unknown mapping option selected\n"
+	printf "${usage}\n"
 	exit 1
 fi
 
@@ -140,8 +153,8 @@ do
 		fi
 		#### To call either broad or narrow peaks if not already exisiting
 		case "${mark}" in
-			H3K4me1|H3K27me1|H3K27me2|H3K27me3|H3K9me1|H3K9me2|H3K9me3) export peaktype="broad";;
-			H3K27ac|H3K4me3) export peaktype="narrow";;
+			H3K4me1|H3K27me1|H3K27me2|H3K27me3|H3K9me1|H3K9me2|H3K9me3|H4K20me1|H4K20me2|H4K20me3|DDM1|H3.3) export peaktype="broad";;
+			H3K27ac|H3K4me3|H3K9ac|H4K16ac|H3K23ac) export peaktype="narrow";;
 		esac
 		if [[ "${samplerep}" == "two" ]]; then
 			listfiletypes=("merged" "Rep1" "Rep2" "pseudo1" "pseudo2")

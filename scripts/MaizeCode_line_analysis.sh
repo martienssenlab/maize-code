@@ -11,10 +11,11 @@
 usage="
 ##### Script for Maize code inbred line data analysis, used by script MaizeCode_analyis.sh if -s was not set and region file exists
 #####
-##### sh MaiCode_line_analysis.sh -f samplefile -r regionfile [-t] [-z] [-x]
+##### sh MaiCode_line_analysis.sh -f samplefile -r regionfile [-m markofinterest] [-t] [-z] [-x]
 #####	-f: samplefile containing the samples to compare and in 5 tab-delimited columns:
 ##### 		Line, Tissue, Sample, PE or SE, Reference genome directory
 ##### 	-r: bedfile containing the regions that are to be ploted over
+#####	-m: histone mark to focus on for the analysis (H3K27ac by default)
 #####	-t: If set, partial analysis will be performed (no heatmap with deeptools)
 #####	-z: If set, partial analysis will be performed for testing
 #####	-x: If set, heatmaps on repeats will be performed (can take a very long time)
@@ -57,12 +58,13 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts ":f:r:tzxh" opt; do
+while getopts ":f:r:m:tzxh" opt; do
 	case ${opt} in
 		h) 	printf "${usage}\n"
 			exit 0;;
 		f) 	export samplefile=${OPTARG};;
 		r)	export regionfile=${OPTARG};;
+		m)	export markofinterest=${OPTARG};;
 		t)	printf "\nPartial analysis to be performed (no heatmaps)\n" 
 			export total="NO";;
 		z)	printf "\nPartial analysis to be performed for testing\n" 
@@ -87,6 +89,14 @@ if [ ! ${regionfile} ]; then
 	exit 1
 fi
 
+if [ ! ${markofinterest} ]; then
+	printf "No mark of interest chosen, defaulting to H3K27ac\n"
+	export markofinterest="H3K27ac"
+else
+	printf "${markofinterest} chosen as the mark of interest\n"
+fi
+
+
 #############################################################################################
 ########################################### PART1 ###########################################
 ############################## Prepare the ChIP and RNA samples #############################
@@ -96,7 +106,7 @@ tmp1=${samplefile##*/}
 samplename=${tmp1%_analysis*}
 tmp2=${regionfile##*/}
 regionname=${tmp2%%.*}
-analysisname=${samplename}_on_${regionname}
+analysisname=${samplename}_on_${regionname}_for_${markofinterest}
 
 printf "\nStarting analysis: ${analysisname}\n"
 
@@ -448,8 +458,8 @@ if [ ${#chip_sample_list[@]} -ge 1 ]; then
 	for sample in ${chip_sample_list[@]}
 	do
 		case "${sample}" in
-			*H3K4me1*|*H3K27me1*|*H3K27me2*|*H3K27me3*|*H3K9me1*|*H3K9me2*|*H3K9me3*) export peaktype="broad";;
-			*H3K27ac*|*H3K4me3*) export peaktype="narrow";;
+			*H3K4me1*|*H3K27me1*|*H3K27me2*|*H3K27me3*|*H3K9me1*|*H3K9me2*|*H3K9me3*|*H4K20me1*|*H4K20me2*|*H4K20me3*|*DDM1*|*H3.3*) export peaktype="broad";;
+			*H3K27ac*|*H3K4me3*|*H3K9ac*|*H3K23ac*|*H4K16ac*) export peaktype="narrow";;
 		esac
 		awk -v OFS="\t" -v s=${sample} '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {print $1,$2,$3,s}' ChIP/peaks/selected_peaks_${sample}.${peaktype}Peak | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_${analysisname}.bed
 	done
@@ -484,65 +494,65 @@ fi
 
 #############################################################################################
 ########################################### PART4 ###########################################
-################## Overlapping TF peaks (w/ or w/o H3K27ac) - Upset plot  ###################
+########### Overlapping TF peaks (w/ or w/o the mark of interest) - Upset plot  #############
 #############################################################################################
 
-#### To make a single file containing all H3K27ac peaks of the same analysis or in the same line if possible
+#### To make a single file containing all peaks of the mark of interest of the same analysis or in the same line if possible
 
-if [ -s combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed ]; then
-	rm -f combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed
+if [ -s combined/peaks/tmp_peaks_${markofinterest}_${analysisname}.bed ]; then
+	rm -f combined/peaks/tmp_peaks_${markofinterest}_${analysisname}.bed
 fi
 
-k27file="no"
+moifile="no"
 insamplefile="no"
 if [ ${#chip_sample_list[@]} -ge 1 ]; then	
 	for sample in ${chip_sample_list[@]}
 	do
-		if [[ "${sample}" == *H3K27ac* ]]; then
+		if [[ "${sample}" == *${markofinterest}* ]]; then
 			insamplefile="yes"
-			awk -v OFS="\t" -v s=${sample} '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$2,$3,s}' ChIP/peaks/selected_peaks_${sample}.narrowPeak | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed
+			awk -v OFS="\t" -v s=${sample} '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$2,$3,s}' ChIP/peaks/selected_peaks_${sample}.broadPeak | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_${markofinterest}_${analysisname}.bed
 		fi
 	done
 	if [[ "${insamplefile}" == "yes" ]]; then
-		printf "\nPreparing merged H3K27ac peaks from files in ${analysisname}\n"
-		sort -k1,1 -k2,2n combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed > combined/peaks/tmp2_peaks_H3K27ac_${analysisname}.bed
-		bedtools merge -i combined/peaks/tmp2_peaks_H3K27ac_${analysisname}.bed | sort -k1,1 -k2,2n > combined/peaks/merged_peaks_H3K27ac_${analysisname}.bed
-		rm -f combined/peaks/tmp*_peaks_H3K27ac_${analysisname}.bed
-		k27file="yes"
+		printf "\nPreparing merged peaks of the mark of interest from files in ${analysisname}\n"
+		sort -k1,1 -k2,2n combined/peaks/tmp_peaks_${markofinterest}_${analysisname}.bed > combined/peaks/tmp2_peaks_${markofinterest}_${analysisname}.bed
+		bedtools merge -i combined/peaks/tmp2_peaks_${markofinterest}_${analysisname}.bed | sort -k1,1 -k2,2n > combined/peaks/merged_peaks_${markofinterest}_${analysisname}.bed
+		rm -f combined/peaks/tmp*_peaks_${markofinterest}_${analysisname}.bed
+		moifile="yes"
 	fi
 fi
 nfile=0
 prev_tissues=()
-for file in ChIP/peaks/selected_peaks_${line}_*_H3K27ac.narrowPeak
+for file in ChIP/peaks/selected_peaks_${line}_*_${markofinterest}.*Peak
 do
 	if [ -e "${file}" ]; then
 		tmp1=${file##*/selected_peaks_${line}_}
-		tissue=${tmp1%%_H3K27ac.narrowPeak}
-		awk -v OFS="\t" -v t=${tissue} '{print $1,$2,$3,t}' ${file} | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed
+		tissue=${tmp1%%_${markofinterest}.*Peak}
+		awk -v OFS="\t" -v t=${tissue} '{print $1,$2,$3,t}' ${file} | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_${markofinterest}_${analysisname}.bed
 		nfile=$((nfile+1))
 		prev_tissues+=("${tissue}")
 	fi
 done
 if [[ "${insamplefile}" == "no" ]] && [ ${nfile} -gt 0 ]; then
-	printf "\nPreparing merged H3K27ac peaks from previously analyzed files, containing the following tissue(s):\n${prev_tissues[*]}"
-	sort -k1,1 -k2,2n combined/peaks/tmp_peaks_H3K27ac_${analysisname}.bed > combined/peaks/tmp2_peaks_H3K27ac_${analysisname}.bed
-	bedtools merge -i combined/peaks/tmp2_peaks_H3K27ac_${analysisname}.bed | sort -k1,1 -k2,2n > combined/peaks/merged_peaks_H3K27ac_${analysisname}.bed
-	rm -f combined/peaks/tmp*_peaks_H3K27ac_${analysisname}.bed
-	k27file="yes"
+	printf "\nPreparing merged ${markofinterest} peaks from previously analyzed files, containing the following tissue(s):\n${prev_tissues[*]}"
+	sort -k1,1 -k2,2n combined/peaks/tmp_peaks_${markofinterest}_${analysisname}.bed > combined/peaks/tmp2_peaks_${markofinterest}_${analysisname}.bed
+	bedtools merge -i combined/peaks/tmp2_peaks_${markofinterest}_${analysisname}.bed | sort -k1,1 -k2,2n > combined/peaks/merged_peaks_${markofinterest}_${analysisname}.bed
+	rm -f combined/peaks/tmp*_peaks_${markofinterest}_${analysisname}.bed
+	moifile="yes"
 fi
 
-#### To make a single file containing all TF peaks of the same analysis with or without H3K27ac peaks
+#### To make a single file containing all TF peaks of the same analysis with or without the mark of interest peaks
 
 if [ ${#tf_sample_list[@]} -ge 1 ]; then
 	printf "\nPreparing merged TF peaks file for ${analysisname}\n"
 	if [ -s combined/peaks/tmp_peaks_${analysisname}.bed ]; then
 		rm -f combined/peaks/tmp_peaks_${analysisname}.bed
 	fi
-	if [[ "${k27file}" == "yes" ]]; then
-		for sample in ${tf_sample_list[@]} H3K27ac
+	if [[ "${moifile}" == "yes" ]]; then
+		for sample in ${tf_sample_list[@]} ${markofinterest}
 		do
 			case "${sample}" in
-				H3K27ac)	file="combined/peaks/merged_peaks_H3K27ac_${analysisname}.bed";;
+				${markofinterest})	file="combined/peaks/merged_peaks_${markofinterest}_${analysisname}.bed";;
 				*)	file="TF/peaks/idr_${line}_${sample}.narrowPeak";;
 			esac
 			awk -v OFS="\t" -v s=${sample} '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/ ) {print $1,$2,$3,s}' ${file} | sort -k1,1 -k2,2n -u >> combined/peaks/tmp_peaks_${analysisname}.bed
@@ -565,8 +575,8 @@ if [ ${#tf_sample_list[@]} -ge 1 ]; then
 	rm -f combined/peaks/tmp*_peaks_${analysisname}.bed
 	#### To create a matrix of peak presence in each sample
 	printf "\nCreating matrix file for ${analysisname}\n"
-	if [[ "${k27file}" == "yes" ]]; then	
-		for sample in ${tf_sample_list[@]} H3K27ac
+	if [[ "${moifile}" == "yes" ]]; then	
+		for sample in ${tf_sample_list[@]} ${markofinterest}
 		do
 			printf "${sample}\n" > combined/peaks/temp_col_${analysisname}_${sample}.txt
 			awk -v OFS="\t" -v s=${sample} '{if ($0 ~ s) print "1"; else print "0"}' combined/peaks/TF_peaks_${analysisname}.bed >> combined/peaks/temp_col_${analysisname}_${sample}.txt
@@ -585,7 +595,7 @@ if [ ${#tf_sample_list[@]} -ge 1 ]; then
 	#### To make an Upset plot highlighting peaks in gene bodies
 	printf "\nCreating Upset plot for ${analysisname} with R version:\n"
 	R --version
-	Rscript --vanilla ${mc_dir}/MaizeCode_R_Upset_TF.r ${k27file} ${analysisname} combined/peaks/matrix_upset_TF_${analysisname}.txt
+	Rscript --vanilla ${mc_dir}/MaizeCode_R_Upset_TF.r ${moifile} ${analysisname} ${markofinterest} combined/peaks/matrix_upset_TF_${analysisname}.txt
 fi
 
 #############################################################################################
@@ -720,30 +730,42 @@ if [[ "${total}" != "TEST" ]]; then
 		done
 		rm -f combined/matrix/temp_regions_${regionname}_*.bed
 
-		#### Merging stranded matrix, extracting scales and plotting heatmaps
-		all_samples=()
-		all_lables=()
-		if [ ${#sorted_marks[@]} -gt 0 ]; then
-			printf "\nIncluding ChIPseq samples\n"
-			all_samples+=("${uniq_chip_mark_list[*]}")
-			all_labels+=("${sorted_labels[*]}")
-		fi
-		if [ ${#rnaseq_bw_list_plus[@]} -gt 0 ]; then
-			printf "\nIncluding RNAseq samples\n"
-			all_samples+=("RNAseq")
-			all_labels+=("${rnaseq_sample_list[*]}")
-		fi
-		if [ ${#rampage_bw_list_plus[@]} -gt 0 ]; then
-			printf "\nIncluding RAMPAGE samples\n"
-			all_samples+=("RAMPAGE")
-			all_labels+=("${rampage_sample_list[*]}")
-		fi
-		if [ ${#shrna_bw_list_plus[@]} -gt 0 ]; then
-			printf "\nIncluding shRNA samples\n"
-			all_samples+=("shRNA")
-			all_labels+=("${shrna_sample_list[*]}")
-		fi
-		for matrix in regions tss
+	#### Merging stranded matrix, extracting scales and plotting heatmaps
+	all_samples=()
+	all_labels=()
+	if [ ${#sorted_marks[@]} -gt 0 ]; then
+		printf "\nIncluding ChIPseq samples\n"
+		all_samples+=("${uniq_chip_mark_list[*]}")
+		all_labels+=("${sorted_labels[*]}")
+	fi
+	if [ ${#rnaseq_bw_list_plus[@]} -gt 0 ]; then
+		printf "\nIncluding RNAseq samples\n"
+		all_samples+=("RNAseq")
+		all_labels+=("${rnaseq_sample_list[*]}")
+	fi
+	if [ ${#rampage_bw_list_plus[@]} -gt 0 ]; then
+		printf "\nIncluding RAMPAGE samples\n"
+		all_samples+=("RAMPAGE")
+		all_labels+=("${rampage_sample_list[*]}")
+	fi
+	if [ ${#shrna_bw_list_plus[@]} -gt 0 ]; then
+		printf "\nIncluding shRNA samples\n"
+		all_samples+=("shRNA")
+		all_labels+=("${shrna_sample_list[*]}")
+	fi
+	for matrix in regions tss
+	do
+		printf "\nMerging stranded matrices aligned by ${matrix} of ${analysisname}\n"
+		computeMatrixOperations rbind -m combined/matrix/temp_all_genes_${matrix}_${analysisname}_plus.gz combined/matrix/temp_all_genes_${matrix}_${analysisname}_minus.gz -o combined/matrix/all_genes_${matrix}_${analysisname}.gz
+		printf "\nGetting scales for ${matrix} matrix of ${analysisname}\n"
+		computeMatrixOperations dataRange -m combined/matrix/all_genes_${matrix}_${analysisname}.gz > combined/matrix/temp_values_${matrix}_${analysisname}.txt
+		plotProfile -m combined/matrix/all_genes_${matrix}_${analysisname}.gz -out combined/plots/temp_${matrix}_${analysisname}_profile.pdf --samplesLabel ${all_labels[@]} --averageType mean --outFileNameData combined/matrix/temp_values_profile_${matrix}_${analysisname}.txt
+		rm -f combined/plots/temp_${matrix}_${analysisname}_profile.pdf
+		mins=()
+		maxs=()
+		ymins=()
+		ymaxs=()
+		for mark in ${all_samples[@]}
 		do
 			printf "\nMerging stranded matrices aligned by ${matrix} of ${analysisname}\n"
 			computeMatrixOperations rbind -m combined/matrix/temp_all_genes_${matrix}_${analysisname}_plus.gz combined/matrix/temp_all_genes_${matrix}_${analysisname}_minus.gz -o combined/matrix/all_genes_${matrix}_${analysisname}.gz
@@ -1191,14 +1213,14 @@ done
 
 #########################################################################################
 ####################################### PART11 ##########################################
-############ Making heatmaps on distal H3K27ac peaks split by ChIP enrichment  ##########
+### Making heatmaps on distal peaks of the mark of interest split by ChIP enrichment  ###
 #########################################################################################
 
-#### To make heatmap and profile with deeptools for each tissue based on grouped H3K27ac levels at distal elements (>2kb)
+#### To make heatmap and profile with deeptools for each tissue based on grouped mark of interest levels at distal elements (>2kb)
 
 uniq_chip_tissue_list=($(printf "%s\n" "${chip_tissue_list[@]}" | sort -u))
 
-h3k27actissues=()
+moitissues=()
 createfile="no"
 enhancerfile="no"
 for tissue in ${uniq_chip_tissue_list[@]}
@@ -1206,12 +1228,12 @@ do
 	tissue_labels=()
 	tissue_bw_plus=()
 	tissue_bw_minus=()
-	test_k27ac="no"
+	test_moi="no"
 	for sample in ${chip_sample_list[@]}
 	do
-		if [[ "${sample}" =~ "${tissue}_H3K27ac" ]]; then
-			h3k27actissues+=("${tissue}")
-			test_k27ac="yes"
+		if [[ "${sample}" =~ "${tissue}_${markofinterest}" ]]; then
+			moitissues+=("${tissue}")
+			test_moi="yes"
 		fi
 		if [[ ${sample} =~ ${tissue} ]]; then
 			tissue_labels+=("${sample}")
@@ -1279,11 +1301,11 @@ do
 		fi
 	done
 	
-	if [[ ${test_k27ac} == "yes" ]] && [[ ${#tissue_bw_plus[@]} -ge 2 ]]; then
-		printf "\nMaking heatmaps of distal enhancers (H3K27ac peak >2kb from TSS) in ${tissue}\n"
+	if [[ ${test_moi} == "yes" ]] && [[ ${#tissue_bw_plus[@]} -ge 2 ]]; then
+		printf "\nMaking heatmaps of distal "enhancers" (mark of interest peak >2kb from TSS) in ${tissue}\n"
 		printf "\nGetting bed file of distal enhancers for ${tissue}\n"
 		enhancerfile="yes"
-		bedtools sort -g ${ref_dir}/chrom.sizes -i ChIP/peaks/best_peaks_${line}_${tissue}_H3K27ac.bed | awk '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/)'> combined/peaks/temp_${analysisname}_${tissue}.bed
+		bedtools sort -g ${ref_dir}/chrom.sizes -i ChIP/peaks/best_peaks_${line}_${tissue}_${markofinterest}.bed | awk '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/)'> combined/peaks/temp_${analysisname}_${tissue}.bed
 		if [ -s combined/DEG/sorted_expression_${analysisname}_${tissue}.bed ]; then
 			bedtools sort -g ${ref_dir}/chrom.sizes -i combined/DEG/sorted_expression_${analysisname}_${tissue}.bed > combined/peaks/temp_${analysisname}_${tissue}_expression.bed
 			bedtools closest -a combined/peaks/temp_${analysisname}_${tissue}.bed -b combined/peaks/temp_${analysisname}_${tissue}_expression.bed -D ref -t first -g ${ref_dir}/chrom.sizes | awk -v OFS="\t" '{if ($17>= 2000 && $16=="+") print $1,$2+$10,$12,$4,$5,$16,$14,$15; else if ($17<= -2000 && $16=="-") print $1,$13,$2+$10,$4,$5,$16,$14,$15}' | sort -k5,5nr > combined/peaks/distal_${analysisname}_${tissue}.bed
@@ -1418,7 +1440,7 @@ fi
 
 if [[ "${enhancerfile}" == "yes" ]]; then
 	printf "Line\tTissue\tEnhancer\tCount\n" > combined/peaks/summary_enhancers_${analysisname}.txt
-	for tissue in ${h3k27actissues[@]}
+	for tissue in ${moiactissues[@]}
 	do
 		for type in genic promoter terminator distal_upstream distal_downstream 
 		do
@@ -1431,22 +1453,22 @@ rm -f combined/peaks/temp*${analysisname}*
 
 #########################################################################################
 ####################################### PART12 ##########################################
-############ Making scatter plots of RNA expression on distal H3K27ac peaks #############
+##### Making scatter plots of RNA expression on distal peaks of the mark of interest ####
 #########################################################################################
 
-#### To make scatter plots with R for each tissue based on RNAseq/RAMPAGE/shRNA and quality of H3K27ac distal peaks
+#### To make scatter plots with R for each tissue based on RNAseq/RAMPAGE/shRNA and quality of peaks of the mark of interest
 
-for tissue in ${h3k27actissues[@]}
+for tissue in ${moitissues[@]}
 do
 	header="Chr\tStart\tStop\tPeakID"
-	awk -v OFS="\t" '{print $1,$2,$3,$4}' ChIP/peaks/best_peaks_${line}_${tissue}_H3K27ac.bed > combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt
+	awk -v OFS="\t" '{print $1,$2,$3,$4}' ChIP/peaks/best_peaks_${line}_${tissue}_${markofinterest}.bed > combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt
 	rnaseq=0
 	rampage=0
 	shrna=0
 	for bw in ${rnaseq_bw_list_plus[*]}
 	do					
 		if [[ ${bw} =~ ${tissue} ]]; then
-			printf "\nGetting RNAseq plus strand coverage on H3K27ac peaks for ${tissue}\n"
+			printf "\nGetting RNAseq plus strand coverage on peaks of the mark of interest for ${tissue}\n"
 			bigWigToBedGraph ${bw} combined/peaks/temp_RNAseq_plus_${analysisname}_${line}.bedGraph
 			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_RNAseq_plus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=1000*($5/($3-$2)); print a}' > combined/peaks/col_B_${analysisname}_${line}_${tissue}.txt
 			rm -f combined/peaks/temp_RNAseq_plus_${analysisname}_${line}.bedGraph
@@ -1457,7 +1479,7 @@ do
 	for bw in ${rnaseq_bw_list_minus[*]}
 	do					
 		if [[ ${bw} =~ ${tissue} ]]; then
-			printf "\nGetting RNAseq minus strand coverage on H3K27ac peaks for ${tissue}\n"
+			printf "\nGetting RNAseq minus strand coverage on peaks of the mark of interest for ${tissue}\n"
 			bigWigToBedGraph ${bw} combined/peaks/temp_RNAseq_minus_${analysisname}_${line}.bedGraph
 			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_RNAseq_minus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=1000*($5/($3-$2)); print a}' > combined/peaks/col_C_${analysisname}_${line}_${tissue}.txt
 			rm -f combined/peaks/temp_RNAseq_minus_${analysisname}_${line}.bedGraph
@@ -1467,7 +1489,7 @@ do
 	for bw in ${rampage_bw_list_plus[*]}
 	do					
 		if [[ ${bw} =~ ${tissue} ]]; then
-			printf "\nGetting RAMPAGE plus strand coverage on H3K27ac peaks for ${tissue}\n"
+			printf "\nGetting RAMPAGE plus strand coverage on peaks of the mark of interest for ${tissue}\n"
 			bigWigToBedGraph ${bw} combined/peaks/temp_RAMPAGE_plus_${analysisname}_${line}.bedGraph
 			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_RAMPAGE_plus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=1000*($5/($3-$2)); print a}' > combined/peaks/col_D_${analysisname}_${line}_${tissue}.txt
 			rm -f combined/peaks/temp_RAMPAGE_plus_${analysisname}_${line}.bedGraph
@@ -1478,7 +1500,7 @@ do
 	for bw in ${rampage_bw_list_minus[*]}
 	do					
 		if [[ ${bw} =~ ${tissue} ]]; then
-			printf "\nGetting RAMPAGE minus strand coverage on H3K27ac peaks for ${tissue}\n"
+			printf "\nGetting RAMPAGE minus strand coverage on peaks of the mark of interest for ${tissue}\n"
 			bigWigToBedGraph ${bw} combined/peaks/temp_RAMPAGE_minus_${analysisname}_${line}.bedGraph
 			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_RAMPAGE_minus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=1000*($5/($3-$2)); print a}' > combined/peaks/col_E_${analysisname}_${line}_${tissue}.txt
 			rm -f combined/peaks/temp_RAMPAGE_minus_${analysisname}_${line}.bedGraph
@@ -1488,7 +1510,7 @@ do
 	for bw in ${shrna_bw_list_plus[*]}
 	do					
 		if [[ ${bw} =~ ${tissue} ]]; then
-			printf "\nGetting shRNA plus strand coverage on H3K27ac peaks for ${tissue}\n"
+			printf "\nGetting shRNA plus strand coverage on peaks of the mark of interest for ${tissue}\n"
 			bigWigToBedGraph ${bw} combined/peaks/temp_shRNA_plus_${analysisname}_${line}.bedGraph
 			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_shRNA_plus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=1000*($5/($3-$2)); print a}' > combined/peaks/col_F_${analysisname}_${line}_${tissue}.txt
 			rm -f combined/peaks/temp_shrna_plus_${analysisname}_${line}.bedGraph
@@ -1499,15 +1521,15 @@ do
 	for bw in ${shrna_bw_list_minus[*]}
 	do					
 		if [[ ${bw} =~ ${tissue} ]]; then
-			printf "\nGetting shRNA minus strand coverage on H3K27ac peaks for ${tissue}\n"
+			printf "\nGetting shRNA minus strand coverage on peaks of the mark of interest for ${tissue}\n"
 			bigWigToBedGraph ${bw} combined/peaks/temp_shRNA_minus_${analysisname}_${line}.bedGraph
 			bedtools intersect -a combined/peaks/col_A_${analysisname}_${line}_${tissue}.txt -b combined/peaks/temp_shRNA_minus_${analysisname}_${line}.bedGraph -wao | awk -v OFS="\t" '{if ($8 == ".") $5=0; else $5=$8*$9; print $1,$2,$3,$4,$5}' | bedtools merge -i stdin -o distinct,sum -c 4,5 | awk -v OFS="\t" '{a=1000*($5/($3-$2)); print a}' > combined/peaks/col_G_${analysisname}_${line}_${tissue}.txt
 			rm -f combined/peaks/temp_shRNA_minus_${analysisname}_${line}.bedGraph
 			header="${header}\tshRNA_minus"
 		fi
 	done	
-	printf "${header}\n" > combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt
-	paste combined/peaks/col_*_${analysisname}_${line}_${tissue}.txt >> combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt
+	printf "${header}\n" > combined/peaks/${markofinterest}_peaks_expression_${line}_${tissue}_${analysisname}.txt
+	paste combined/peaks/col_*_${analysisname}_${line}_${tissue}.txt >> combined/peaks/${markofinterest}_peaks_expression_${line}_${tissue}_${analysisname}.txt
 	rm -f combined/peaks/col_*_${analysisname}_${line}_${tissue}.txt
 	plot="No"
 	if [[ ${rnaseq} == 1 ]] && [[ ${rampage} == 1 ]] && [[ ${shrna} == 1 ]]; then
@@ -1536,7 +1558,7 @@ do
 		#### To plot correlation between RNA expression datasets at distal peaks
 		printf "\nCreating scatter plot for ${analysisname} ${tissue} with R version:\n"
 		R --version
-		Rscript --vanilla ${mc_dir}/MaizeCode_R_scatter_distal_peaks.r ${analysisname} ${tissue} ${line} ${included_samples} combined/peaks/all_grouped_distal_peaks_${analysisname}.txt combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt
+		Rscript --vanilla ${mc_dir}/MaizeCode_R_scatter_distal_peaks.r ${analysisname} ${markofinterest} ${tissue} ${line} ${included_samples} combined/peaks/all_grouped_distal_peaks_${analysisname}.txt combined/peaks/${markofinterest}_peaks_expression_${line}_${tissue}_${analysisname}.txt
 	fi
 done
 
@@ -1550,15 +1572,15 @@ rampage="No"
 shrna="No"
 deg="No"
 tf="No"
-for tissue in ${h3k27actissues[@]}
+for tissue in ${moitissues[@]}
 do
-	if [ $(grep "RNAseq" combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt | wc -l) -gt 0 ]; then
+	if [ $(grep "RNAseq" combined/peaks/${markofinterest}_peaks_expression_${line}_${tissue}_${analysisname}.txt | wc -l) -gt 0 ]; then
 		rnaseq="Yes"
 	fi
-	if [ $(grep "RAMPAGE" combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt | wc -l) -gt 0 ]; then
+	if [ $(grep "RAMPAGE" combined/peaks/${markofinterest}_peaks_expression_${line}_${tissue}_${analysisname}.txt | wc -l) -gt 0 ]; then
 		rampage="Yes"
 	fi
-	if [ $(grep "shRNA" combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt | wc -l) -gt 0 ]; then
+	if [ $(grep "shRNA" combined/peaks/${markofinterest}_peaks_expression_${line}_${tissue}_${analysisname}.txt | wc -l) -gt 0 ]; then
 		shrna="Yes"
 	fi
 	if [ -s combined/peaks/all_${line}_${tissue}_${analysisname}_DEG_GID.txt ]; then
@@ -1579,22 +1601,22 @@ do
 			header="Chr\tStart\tStop\tPeakID\tQuality\tstrand\tGID"
 			rowi="${chr}\t${start}\t${stop}\t${peakID}\t${quality}\t${strand}\t${GID}"
 			if [[ ${rnaseq} == "Yes" ]]; then	
-				RNAseq_plus=$(awk -v p=${peakID} '$4 == p {print $5}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
-				RNAseq_minus=$(awk -v p=${peakID} '$4 == p {print $6}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
+				RNAseq_plus=$(awk -v p=${peakID} '$4 == p {print $5}' combined/peaks/${markofinterest}_peaks_expression_${line}_${tissue}_${analysisname}.txt)
+				RNAseq_minus=$(awk -v p=${peakID} '$4 == p {print $6}' combined/peaks/${markofinterest}_peaks_expression_${line}_${tissue}_${analysisname}.txt)
 				rowi="${rowi}\t${expression}\t${RNAseq_plus}\t${RNAseq_minus}"
 				header="${header}\texpression\tRNAseq_plus\tRNAseq_minus"
 				colnb=$((colnb+3))
 			fi
 			if [[ ${rampage} == "Yes" ]]; then
-				RAMPAGE_plus=$(awk -v p=${peakID} '$4 == p {print $7}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
-				RAMPAGE_minus=$(awk -v p=${peakID} '$4 == p {print $8}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
+				RAMPAGE_plus=$(awk -v p=${peakID} '$4 == p {print $7}' combined/peaks/${markofinterest}_peaks_expression_${line}_${tissue}_${analysisname}.txt)
+				RAMPAGE_minus=$(awk -v p=${peakID} '$4 == p {print $8}' combined/peaks/${markofinterest}_peaks_expression_${line}_${tissue}_${analysisname}.txt)
 				header="${header}\tRAMPAGE_plus\tRAMPAGE_minus"
 				rowi="${rowi}\t${RAMPAGE_plus}\t${RAMPAGE_minus}"
 				colnb=$((colnb+2))
 			fi
 			if [[ ${shrna} == "Yes" ]]; then
-				shRNA_plus=$(awk -v p=${peakID} '$4 == p {print $9}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
-				shRNA_minus=$(awk -v p=${peakID} '$4 == p {print $10}' combined/peaks/H3K27ac_peaks_expression_${line}_${tissue}_${analysisname}.txt)
+				shRNA_plus=$(awk -v p=${peakID} '$4 == p {print $9}' combined/peaks/${markofinterest}_peaks_expression_${line}_${tissue}_${analysisname}.txt)
+				shRNA_minus=$(awk -v p=${peakID} '$4 == p {print $10}' combined/peaks/${markofinterest}_peaks_expression_${line}_${tissue}_${analysisname}.txt)
 				header="${header}\tshRNA_plus\tshRNA_minus"
 				rowi="${rowi}\t${shRNA_plus}\t${shRNA_minus}"
 				colnb=$((colnb+2))
@@ -1658,12 +1680,12 @@ rm -f combined/tracks/temp*.bg
 
 tefilebw=""
 tefilebed=""
-if [ -s /grid/martienssen/data_norepl/dropbox/maizecode/TEs/${ref}_TEs.gff3.gz ]; then
+if [ -s /grid/martienssen/data/dropbox/maizecode/TEs/${ref}_TEs.gff3.gz ]; then
 	if [ ! -d combined/TSS ]; then
 		mkdir combined/TSS
 	fi	
 	if [ ! -s combined/TSS/${ref}_all_tes.bed ]; then
-		zcat /grid/martienssen/data_norepl/dropbox/maizecode/TEs/${ref}_TEs.gff3.gz | awk -v OFS="\t" '$1 !~ /^#/ {print $1,$4-1,$5,$3,".",$7}' | bedtools sort -g ${ref_dir}/chrom.sizes > combined/TSS/${ref}_all_tes.bed
+		zcat /grid/martienssen/data/dropbox/maizecode/TEs/${ref}_TEs.gff3.gz | awk -v OFS="\t" '$1 !~ /^#/ {print $1,$4-1,$5,$3,".",$7}' | bedtools sort -g ${ref_dir}/chrom.sizes > combined/TSS/${ref}_all_tes.bed
 	fi
 	awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$2,$3,"1"}' combined/TSS/${ref}_all_tes.bed | bedtools sort -g ${ref_dir}/chrom.sizes > combined/tracks/temp_${ref}_all_tes.bg
 	bedtools merge -i combined/tracks/temp_${ref}_all_tes.bg -o max -c 4 | LC_COLLATE=C sort -k1,1 -k2,2n > combined/tracks/temp2_${ref}_all_tes.bg
@@ -1684,7 +1706,7 @@ if [ -s /grid/martienssen/data_norepl/dropbox/maizecode/TEs/${ref}_TEs.gff3.gz ]
 	done < combined/TSS/${ref}_TE_types.txt
 fi
 
-for tissue in ${h3k27actissues[@]}
+for tissue in ${moitissues[@]}
 do
 	tissue_labels=()
 	tissue_bw_plus=()
@@ -1966,21 +1988,184 @@ fi
 ########################## Making heatmaps on all TEs ###################################
 #########################################################################################
 
-rnaseqsamples=${#rnaseq_bw_list_plus[@]}
-rampagesamples=${#rampage_bw_list_plus[@]}
-shrnasamples=${#shrna_bw_list_plus[@]}
-totsamples=$((rnaseqsamples+rampagesamples+shrnasamples))
-if [[ ${tefilebw} != "" ]] && [ ${totsamples} -gt 0 ] && [[ "${repeats}" == "YES" ]]; then
-	#### Computing the stranded matrix
+if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
+	#### Computing the matrix on all TEs
+	awk '$6=="+"' combined/TSS/${ref}_all_tes.bed > combined/TSS/${ref}_TEs_${analysisname}_plus.bed
+	awk '$6=="-"' combined/TSS/${ref}_all_tes.bed > combined/TSS/${ref}_TEs_${analysisname}_minus.bed
+	regionlabel=$(wc -l combined/TSS/${ref}_all_tes.bed | awk '{print TEs"("$1")"}')
+
+	#### Reordering the samples by ChIPseq mark
+	sorted_labels=()
+	sorted_marks=()
+	for mark in ${uniq_chip_mark_list[@]}
+	do
+		for sample in ${chip_sample_list[@]}
+		do
+			if [[ ${sample} =~ ${mark} ]]; then
+				sorted_labels+=("${sample}")
+			fi
+		done
+		for bw in ${chip_bw_list[@]}
+		do
+			if [[ ${bw} =~ ${mark} ]]; then
+				sorted_marks+=("${bw}")
+			fi
+		done
+	done
+	printf "uniq_chip_mark_list: ${uniq_chip_mark_list[*]}\nchip_sample_list: ${chip_sample_list[*]}\nsorted_labels: ${sorted_labels[*]}\nsorted_marks: ${sorted_marks[*]}\n"
+	for strand in plus minus
+	do
+		case "${strand}" in
+			plus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_plus[@]} ${rampage_bw_list_plus[@]} ${shrna_bw_list_plus[@]}";;
+			minus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]} ${shrna_bw_list_minus[@]}";;
+		esac
+		nb=$(wc -l combined/TSS/${ref}_TEs_${analysisname}_${strand}.bed | awk '{print $1}')
+		if [[ ${nb} -gt 0 ]]; then
+			printf "\nComputing scale-regions ${strand} strand matrix for all TEs from ${analysisname}\n"
+			computeMatrix scale-regions -q --missingDataAsZero --skipZeros -R combined/TSS/${ref}_TEs_${analysisname}_${strand}.bed -S ${bw_list} -bs 100 -b 2000 -a 2000 -m 5000 -p ${threads} -o combined/matrix/temp_TE_regions_TEs_${analysisname}_${strand}.gz
+			printf "\nComputing reference-point on TSS ${strand} strand matrix for all TEs from ${analysisname}\n"
+			computeMatrix reference-point --referencePoint "TSS" -q --missingDataAsZero --skipZeros -R combined/TSS/${ref}_TEs_${analysisname}_${strand}.bed -S ${bw_list} -bs 100 -b 2000 -a 8000 -p ${threads} -o combined/matrix/temp_TE_tss_TEs_${analysisname}_${strand}.gz
+		fi
+	done
+	#### Merging stranded matrix, extracting scales and plotting heatmaps
+	all_samples=()
+	all_labels=()
+	if [ ${#sorted_marks[@]} -gt 0 ]; then
+		printf "\nIncluding ChIPseq samples\n"
+		all_samples+=("${uniq_chip_mark_list[*]}")
+		all_labels+=("${sorted_labels[*]}")
+	fi
+	if [ ${#rnaseq_bw_list_plus[@]} -gt 0 ]; then
+		printf "\nIncluding RNAseq samples\n"
+		all_samples+=("RNAseq")
+		all_labels+=("${rnaseq_sample_list[*]}")
+	fi
+	if [ ${#rampage_bw_list_plus[@]} -gt 0 ]; then
+		printf "\nIncluding RAMPAGE samples\n"
+		all_samples+=("RAMPAGE")
+		all_labels+=("${rampage_sample_list[*]}")
+	fi
+	if [ ${#shrna_bw_list_plus[@]} -gt 0 ]; then
+		printf "\nIncluding shRNA samples\n"
+		all_samples+=("shRNA")
+		all_labels+=("${shrna_sample_list[*]}")
+	fi
+	for matrix in TE_regions TE_tss
+	do
+		mat="empty"
+		if [[ -s combined/matrix/temp_${matrix}_TEs_${analysisname}_plus.gz ]] && [[ -s combined/matrix/temp_${matrix}_TEs_${analysisname}_minus.gz ]]; then
+			printf "\nMerging stranded matrices aligned by ${matrix} all TEs of ${analysisname}\n"
+			computeMatrixOperations rbind -m combined/matrix/temp_${matrix}_TEs_${analysisname}_plus.gz combined/matrix/temp_${matrix}_TEs_${analysisname}_minus.gz -o combined/matrix/${matrix}_TEs_${analysisname}.gz
+			mat="combined/matrix/${matrix}_TEs_${analysisname}.gz"
+		elif [[ -s combined/matrix/temp_${matrix}_TEs_${analysisname}_plus.gz ]]; then
+			mat="combined/matrix/temp_${matrix}_TEs_${analysisname}_plus.gz"
+		elif [[ -s combined/matrix/temp_${matrix}_TEs_${analysisname}_minus.gz ]]; then
+			mat="combined/matrix/temp_${matrix}_TEs_${analysisname}_minus.gz"
+		fi
+		if [[ ${mat} != "empty" ]]; then	
+			printf "\nGetting scales for ${matrix} all TEs matrix of ${analysisname}\n"
+			computeMatrixOperations dataRange -m ${mat} > combined/matrix/temp_values_${matrix}_TEs_${analysisname}.txt
+			plotProfile -m ${mat} -out combined/plots/temp_${matrix}_TEs_${analysisname}_profile.pdf --samplesLabel ${all_labels[@]} --averageType mean --outFileNameData combined/matrix/temp_values_profile_${matrix}_TEs_${analysisname}.txt
+			rm -f combined/plots/temp_${matrix}_TEs_${analysisname}_profile.pdf
+			mins=()
+			maxs=()
+			ymins=()
+			ymaxs=()
+			for mark in ${all_samples[@]}
+			do
+				mini=$(grep "${mark}" combined/matrix/temp_values_${matrix}_TEs_${analysisname}.txt | awk 'BEGIN {m=999999} {a=$5; if (a<m) m=a;} END {print m}')
+				maxi=$(grep "${mark}" combined/matrix/temp_values_${matrix}_TEs_${analysisname}.txt | awk 'BEGIN {m=-999999} {a=$6; if (a>m) m=a;} END {print m}')
+				num=$(grep "${mark}" combined/matrix/temp_values_${matrix}_TEs_${analysisname}.txt | wc -l)
+				test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+				if [[ ${test} == "yes" ]]; then
+					mini=("0")
+					maxi=("0.005")
+				fi
+				for i in $(seq 1 ${num})
+				do
+					mins+=("${mini}")
+					maxs+=("${maxi}")
+				done		
+				ymini=$(grep "${mark}" combined/matrix/temp_values_profile_${matrix}_TEs_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
+				ymaxi=$(grep "${mark}" combined/matrix/temp_values_profile_${matrix}_TEs_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
+				num=$(grep "${mark}" combined/matrix/temp_values_profile_${matrix}_TEs_${analysisname}.txt | wc -l)
+				test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+				if [[ ${test} == "yes" ]]; then
+					ymini=("0")
+					ymaxi=("0.01")
+				fi
+				for i in $(seq 1 ${num})
+				do
+					ymins+=("${ymini}")
+					ymaxs+=("${ymaxi}")
+				done
+			done
+
+			mins2=()
+			maxs2=()
+			ymins2=()
+			ymaxs2=()
+			for sample in ${all_labels[@]}
+			do
+				mini=$(grep "${sample}" combined/matrix/temp_values_${matrix}_TEs_${analysisname}.txt | awk '{print $5}')
+				maxi=$(grep "${sample}" combined/matrix/temp_values_${matrix}_TEs_${analysisname}.txt | awk '{print $6}')
+				test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+				if [[ ${test} == "yes" ]]; then
+					mins2+=("0")
+					maxs2+=("0.005")
+				else
+					mins2+=("${mini}")
+					maxs2+=("${maxi}")
+				fi
+				ymini=$(grep "${sample}" combined/matrix/temp_values_profile_${matrix}_TEs_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
+				ymaxi=$(grep "${sample}" combined/matrix/temp_values_profile_${matrix}_TEs_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
+				test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
+				if [[ ${test} == "yes" ]]; then
+					ymins2+=("0")
+					ymaxs2+=("0.01")
+				else
+					ymins2+=("${ymini}")
+					ymaxs2+=("${ymaxi}")
+				fi
+			done
+			printf "\nPlotting heatmap for ${matrix} all TEs matrix of ${analysisname} scaling by mark\n"
+			plotHeatmap -m ${mat} -out combined/plots/${analysisname}_heatmap_${matrix}_TEs.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --regionsLabel ${regionlabel} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
+			printf "\nPlotting heatmap for ${matrix} all TEs matrix of ${analysisname} scaling by sample\n"
+			plotHeatmap -m ${mat} -out combined/plots/${analysisname}_heatmap_${matrix}_TEs_v2.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --regionsLabel ${regionlabel} --colorMap 'seismic' --zMin ${mins2[@]} --zMax ${maxs2[@]} --yMin ${ymins2[@]} --yMax ${ymaxs2[@]} --interpolationMethod 'bilinear'
+		fi
+	done
+	
+	# Computing the matrix on each family
 	while read TEtype
 	do
 		awk -v t=${TEtype} '$4==t && $6=="+"' combined/TSS/${ref}_all_tes.bed > combined/TSS/${ref}_${TEtype}_${analysisname}_plus.bed
 		awk -v t=${TEtype} '$4==t && $6=="-"' combined/TSS/${ref}_all_tes.bed > combined/TSS/${ref}_${TEtype}_${analysisname}_minus.bed
+		regionlabel=$(cat combined/TSS/${ref}_${TEtype}_${analysisname}_plus.bed combined/TSS/${ref}_${TEtype}_${analysisname}_minus.bed | wc -l | awk -v n=${TEtype} '{print n"("$1")"}')
+
+		#### Reordering the samples by ChIPseq mark
+		sorted_labels=()
+		sorted_marks=()
+		for mark in ${uniq_chip_mark_list[@]}
+		do
+			for sample in ${chip_sample_list[@]}
+			do
+				if [[ ${sample} =~ ${mark} ]]; then
+					sorted_labels+=("${sample}")
+				fi
+			done
+			for bw in ${chip_bw_list[@]}
+			do
+				if [[ ${bw} =~ ${mark} ]]; then
+					sorted_marks+=("${bw}")
+				fi
+			done
+		done
+		printf "uniq_chip_mark_list: ${uniq_chip_mark_list[*]}\nchip_sample_list: ${chip_sample_list[*]}\nsorted_labels: ${sorted_labels[*]}\nsorted_marks: ${sorted_marks[*]}\n"
 		for strand in plus minus
 		do
 			case "${strand}" in
-				plus) 	bw_list="${rnaseq_bw_list_plus[@]} ${rampage_bw_list_plus[@]} ${shrna_bw_list_plus[@]}";;
-				minus) 	bw_list="${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]} ${shrna_bw_list_minus[@]}";;
+				plus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_plus[@]} ${rampage_bw_list_plus[@]} ${shrna_bw_list_plus[@]}";;
+				minus) 	bw_list="${sorted_marks[@]} ${rnaseq_bw_list_minus[@]} ${rampage_bw_list_minus[@]} ${shrna_bw_list_minus[@]}";;
 			esac
 			nb=$(wc -l combined/TSS/${ref}_${TEtype}_${analysisname}_${strand}.bed | awk '{print $1}')
 			if [[ ${nb} -gt 0 ]]; then
@@ -1993,6 +2178,11 @@ if [[ ${tefilebw} != "" ]] && [ ${totsamples} -gt 0 ] && [[ "${repeats}" == "YES
 		#### Merging stranded matrix, extracting scales and plotting heatmaps
 		all_samples=()
 		all_labels=()
+		if [ ${#sorted_marks[@]} -gt 0 ]; then
+			printf "\nIncluding ChIPseq samples\n"
+			all_samples+=("${uniq_chip_mark_list[*]}")
+			all_labels+=("${sorted_labels[*]}")
+		fi
 		if [ ${#rnaseq_bw_list_plus[@]} -gt 0 ]; then
 			printf "\nIncluding RNAseq samples\n"
 			all_samples+=("RNAseq")
@@ -2011,14 +2201,14 @@ if [[ ${tefilebw} != "" ]] && [ ${totsamples} -gt 0 ] && [[ "${repeats}" == "YES
 		for matrix in TE_regions TE_tss
 		do
 			mat="empty"
-			if [[ -s combined/matrix/${matrix}_${TEtype}_${analysisname}_plus.gz ]] && [[ -s combined/matrix/${matrix}_${TEtype}_${analysisname}_minus.gz ]]; then
+			if [[ -s combined/matrix/temp_${matrix}_${TEtype}_${analysisname}_plus.gz ]] && [[ -s combined/matrix/temp_${matrix}_${TEtype}_${analysisname}_minus.gz ]]; then
 				printf "\nMerging stranded matrices aligned by ${matrix} ${TEtype} of ${analysisname}\n"
-				computeMatrixOperations rbind -m combined/matrix/${matrix}_${TEtype}_${analysisname}_plus.gz combined/matrix/${matrix}_${TEtype}_${analysisname}_minus.gz -o combined/matrix/${matrix}_${TEtype}_${analysisname}.gz
+				computeMatrixOperations rbind -m combined/matrix/temp_${matrix}_${TEtype}_${analysisname}_plus.gz combined/matrix/temp_${matrix}_${TEtype}_${analysisname}_minus.gz -o combined/matrix/${matrix}_${TEtype}_${analysisname}.gz
 				mat="combined/matrix/${matrix}_${TEtype}_${analysisname}.gz"
-			elif [[ -s combined/matrix/${matrix}_${TEtype}_${analysisname}_plus.gz ]]; then
-				mat="combined/matrix/${matrix}_${TEtype}_${analysisname}_plus.gz"
-			elif [[ -s combined/matrix/${matrix}_${TEtype}_${analysisname}_minus.gz ]]; then
-				mat="combined/matrix/${matrix}_${TEtype}_${analysisname}_minus.gz"
+			elif [[ -s combined/matrix/temp_${matrix}_${TEtype}_${analysisname}_plus.gz ]]; then
+				mat="combined/matrix/temp_${matrix}_${TEtype}_${analysisname}_plus.gz"
+			elif [[ -s combined/matrix/temp_${matrix}_${TEtype}_${analysisname}_minus.gz ]]; then
+				mat="combined/matrix/temp_${matrix}_${TEtype}_${analysisname}_minus.gz"
 			fi
 			if [[ ${mat} != "empty" ]]; then	
 				printf "\nGetting scales for ${matrix} ${TEtype} matrix of ${analysisname}\n"
@@ -2061,10 +2251,12 @@ if [[ ${tefilebw} != "" ]] && [ ${totsamples} -gt 0 ] && [[ "${repeats}" == "YES
 
 				mins2=()
 				maxs2=()
+				ymins2=()
+				ymaxs2=()
 				for sample in ${all_labels[@]}
 				do
-					mini=$(grep ${sample} combined/matrix/temp_values_${matrix}_${TEtype}_${analysisname}.txt | awk '{print $5}')
-					maxi=$(grep ${sample} combined/matrix/temp_values_${matrix}_${TEtype}_${analysisname}.txt | awk '{print $6}')
+					mini=$(grep "${sample}" combined/matrix/temp_values_${matrix}_${TEtype}_${analysisname}.txt | awk '{print $5}')
+					maxi=$(grep "${sample}" combined/matrix/temp_values_${matrix}_${TEtype}_${analysisname}.txt | awk '{print $6}')
 					test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
 					if [[ ${test} == "yes" ]]; then
 						mins2+=("0")
@@ -2073,13 +2265,8 @@ if [[ ${tefilebw} != "" ]] && [ ${totsamples} -gt 0 ] && [[ "${repeats}" == "YES
 						mins2+=("${mini}")
 						maxs2+=("${maxi}")
 					fi
-				done
-				ymins2=()
-				ymaxs2=()
-				for sample in ${all_labels[@]}
-				do
-					ymini=$(grep ${sample} combined/matrix/temp_values_profile_${matrix}_${TEtype}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
-					ymaxi=$(grep ${sample} combined/matrix/temp_values_profile_${matrix}_${TEtype}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
+					ymini=$(grep "${sample}" combined/matrix/temp_values_profile_${matrix}_${TEtype}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
+					ymaxi=$(grep "${sample}" combined/matrix/temp_values_profile_${matrix}_${TEtype}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
 					test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
 					if [[ ${test} == "yes" ]]; then
 						ymins2+=("0")
@@ -2090,9 +2277,9 @@ if [[ ${tefilebw} != "" ]] && [ ${totsamples} -gt 0 ] && [[ "${repeats}" == "YES
 					fi
 				done
 				printf "\nPlotting heatmap for ${matrix} ${TEtype} matrix of ${analysisname} scaling by mark\n"
-				plotHeatmap -m ${mat} -out combined/plots/${analysisname}_heatmap_${matrix}_${TEtype}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
+				plotHeatmap -m ${mat} -out combined/plots/${analysisname}_heatmap_${matrix}_${TEtype}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --regionsLabel ${regionlabel} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
 				printf "\nPlotting heatmap for ${matrix} ${TEtype} matrix of ${analysisname} scaling by sample\n"
-				plotHeatmap -m ${mat} -out combined/plots/${analysisname}_heatmap_${matrix}_${TEtype}_v2.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --colorMap 'seismic' --zMin ${mins2[@]} --zMax ${maxs2[@]} --yMin ${ymins2[@]} --yMax ${ymaxs2[@]} --interpolationMethod 'bilinear'
+				plotHeatmap -m ${mat} -out combined/plots/${analysisname}_heatmap_${matrix}_${TEtype}_v2.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --regionsLabel ${regionlabel} --colorMap 'seismic' --zMin ${mins2[@]} --zMax ${maxs2[@]} --yMin ${ymins2[@]} --yMax ${ymaxs2[@]} --interpolationMethod 'bilinear'
 			fi
 		done
 	done < combined/TSS/${ref}_TE_types.txt
