@@ -34,11 +34,12 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts ":f:h" opt; do
+while getopts ":f:a:h" opt; do
 	case $opt in
 		h) 	printf "$usage\n"
 			exit 0;;
 		f) 	export samplefile=${OPTARG};;
+		a)	export mapparam=${OPTARG};;
 		*)	printf "$usage\n"
 			exit 1;;
 	esac
@@ -48,6 +49,17 @@ shift $((OPTIND - 1))
 if [ ! $samplefile ]; then
 	printf "Samplefile missing!\n"
 	printf "$usage\n"
+	exit 1
+fi
+
+if [ ! ${mapparam} ]; then
+	printf "No mapping option selected, using default\n"
+	export mapparam="default"
+elif [[ "${mapparam}" == "default" ]] || [[ "${mapparam}" == "Colcen" ]]; then
+	printf "${mapparam} chosen as the mapping option\n"
+else
+	printf "Unknown mapping option selected\n"
+	printf "${usage}\n"
 	exit 1
 fi
 
