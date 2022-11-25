@@ -1590,7 +1590,7 @@ do
 	if [ -s combined/peaks/TF_peaks_${analysisname}.bed ]; then
 		tf="Yes"
 	fi
-	if [[ ${rnaseq}=="Yes" ]] || [[ ${rampage}=="Yes" ]] || [[ ${shrna}=="Yes" ]] || [[ ${deg}=="Yes" ]] || [[ ${tf}=="Yes" ]]; then
+	if [[ "${rnaseq}" == "Yes" || "${rampage}" == "Yes" || "${shrna}" == "Yes" || "${deg}" == "Yes" || "${tf}" == "Yes" ]]; then
 		for type in distal_upstream distal_downstream promoter terminator genic
 		do
 			printf "Gathering all available RNA (${rnaseq}), RAMPAGE (${rampage}), shRNA (${shrna}), DEG (${deg}) and TF (${tf}) data for ${type} enhancers of ${line} ${tissue}\n"
