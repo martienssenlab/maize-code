@@ -106,7 +106,6 @@ tmp1=${samplefile##*/}
 samplename=${tmp1%_analysis*}
 tmp2=${regionfile##*/}
 regionname=${tmp2%%.*}
-if [[ 
 analysisname=${samplename}_on_${regionname}_for_${markofinterest}
 
 printf "\nStarting analysis: ${analysisname}\n"
@@ -677,7 +676,7 @@ fi
 
 total_sample_number=$((${#chip_sample_list[@]} + ${#rnaseq_sample_list[@]} + ${#rampage_sample_list[@]} + ${#shrna_sample_list[@]} + ${#mc_sample_list[@]}))
 partial_sample_number=$((${#chip_sample_list[@]} + ${#rnaseq_sample_list[@]} + ${#rampage_sample_list[@]} + ${#shrna_sample_list[@]}))
-if [ ${total_sample_number} -lt 2 ]; then
+if [ ${total_sample_number} -lt 1 ]; then
 	printf "\nNot enough samples for deeptools analysis for ${analysisname}\nAnalysis is thus finished!\n"
 	touch combined/chkpts/analysis_${analysisname}
 	exit 0
@@ -694,7 +693,7 @@ uniq_chip_mark_list=($(printf "%s\n" "${chip_mark_list[@]}" | sort -u))
 
 if [[ "${total}" != "TEST" ]]; then
 	regionlabel=$(wc -l ${regionfile} | awk -v n=${regionname} '{print n"("$1")"}')
-	if [ ${partial_sample_number} -gt 2 ]; then
+	if [ ${partial_sample_number} -gt 1 ]; then
 		#### Splitting the region file by strand
 		awk -v OFS="\t" '$6=="+"' ${regionfile} > combined/matrix/temp_regions_${regionname}_plus.bed
 		awk -v OFS="\t" '$6=="-"' ${regionfile} > combined/matrix/temp_regions_${regionname}_minus.bed
