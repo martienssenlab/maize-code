@@ -106,6 +106,7 @@ tmp1=${samplefile##*/}
 samplename=${tmp1%_analysis*}
 tmp2=${regionfile##*/}
 regionname=${tmp2%%.*}
+if [[ 
 analysisname=${samplename}_on_${regionname}_for_${markofinterest}
 
 printf "\nStarting analysis: ${analysisname}\n"
