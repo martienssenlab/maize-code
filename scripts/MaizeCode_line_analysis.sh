@@ -1996,10 +1996,18 @@ fi
 #########################################################################################
 
 if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
+	tesortedfiles=()
+	tefiles=()
+	outnames=()
+	teregionlabel=()
+	
 	#### Computing the matrix on all TEs
 	awk '$6=="+"' combined/TSS/${ref}_all_tes.bed > combined/TSS/${ref}_TEs_${analysisname}_plus.bed
 	awk '$6=="-"' combined/TSS/${ref}_all_tes.bed > combined/TSS/${ref}_TEs_${analysisname}_minus.bed
-	regionlabel=$(wc -l combined/TSS/${ref}_all_tes.bed | awk '{print TEs"("$1")"}')
+	tefiles+=("combined/TSS/${ref}_all_tes.bed")
+	outnames+=("${analysisname}_heatmap_${matrix}_mC")
+	regionlabel=$(wc -l combined/TSS/${ref}_all_tes.bed | awk '{print TEs"("$1")"}')	
+	teregionlabel+=("${regionlabel}")
 
 	#### Reordering the samples by ChIPseq mark
 	sorted_labels=()
@@ -2136,9 +2144,12 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 				fi
 			done
 			printf "\nPlotting heatmap for ${matrix} all TEs matrix of ${analysisname} scaling by mark\n"
-			plotHeatmap -m ${mat} -out combined/plots/${analysisname}_heatmap_${matrix}_TEs.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --regionsLabel ${regionlabel} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
+			plotHeatmap -m ${mat} -out combined/plots/${analysisname}_heatmap_${matrix}_TEs.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --regionsLabel ${regionlabel} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear' --outFileSortedRegions combined/matrix/sorted_TEs_${matrix}_${analysisname}.txt
 			printf "\nPlotting heatmap for ${matrix} all TEs matrix of ${analysisname} scaling by sample\n"
 			plotHeatmap -m ${mat} -out combined/plots/${analysisname}_heatmap_${matrix}_TEs_v2.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --regionsLabel ${regionlabel} --colorMap 'seismic' --zMin ${mins2[@]} --zMax ${maxs2[@]} --yMin ${ymins2[@]} --yMax ${ymaxs2[@]} --interpolationMethod 'bilinear'
+			if [[ "${matrix}" ~ "regions" ]]; then
+				tesortedfiles+=("combined/matrix/sorted_TEs_${matrix}_${analysisname}.txt")
+			fi
 		fi
 	done
 	
@@ -2148,6 +2159,10 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 		awk -v t=${TEtype} '$4==t && $6=="+"' combined/TSS/${ref}_all_tes.bed > combined/TSS/${ref}_${TEtype}_${analysisname}_plus.bed
 		awk -v t=${TEtype} '$4==t && $6=="-"' combined/TSS/${ref}_all_tes.bed > combined/TSS/${ref}_${TEtype}_${analysisname}_minus.bed
 		regionlabel=$(cat combined/TSS/${ref}_${TEtype}_${analysisname}_plus.bed combined/TSS/${ref}_${TEtype}_${analysisname}_minus.bed | wc -l | awk -v n=${TEtype} '{print n"("$1")"}')
+		awk -v t=${TEtype} '$4==t' combined/TSS/${ref}_all_tes.bed > combined/TSS/${ref}_${TEtype}.bed
+		tefiles+=("combined/TSS/${ref}_${TEtype}.bed")
+		outnames+=("${analysisname}_heatmap_${TEtype}_mC")
+		teregionlabel+=("${regionlabel}")
 
 		#### Reordering the samples by ChIPseq mark
 		sorted_labels=()
@@ -2284,13 +2299,64 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 					fi
 				done
 				printf "\nPlotting heatmap for ${matrix} ${TEtype} matrix of ${analysisname} scaling by mark\n"
-				plotHeatmap -m ${mat} -out combined/plots/${analysisname}_heatmap_${matrix}_${TEtype}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --regionsLabel ${regionlabel} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear'
+				plotHeatmap -m ${mat} -out combined/plots/${analysisname}_heatmap_${matrix}_${TEtype}.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --regionsLabel ${regionlabel} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear' --outFileSortedRegions combined/matrix/sorted_TEs_${TEtype}_${matrix}_${analysisname}.txt
 				printf "\nPlotting heatmap for ${matrix} ${TEtype} matrix of ${analysisname} scaling by sample\n"
 				plotHeatmap -m ${mat} -out combined/plots/${analysisname}_heatmap_${matrix}_${TEtype}_v2.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --regionsLabel ${regionlabel} --colorMap 'seismic' --zMin ${mins2[@]} --zMax ${maxs2[@]} --yMin ${ymins2[@]} --yMax ${ymaxs2[@]} --interpolationMethod 'bilinear'
+				
+				if [[ "${matrix}" == "TE_regions" ]]; then
+					tesortedfiles+=("combined/matrix/sorted_TEs_${TEtype}_${matrix}_${analysisname}.txt")
+				fi
 			fi
 		done
 	done < combined/TSS/${ref}_TE_types.txt
 	rm -f combined/matrix/temp*${analysisname}*
+	
+	if [ ${#mc_sample_list[@]} -gt 0 ]; then
+		#### Reordering the samples by mC sequence context
+		mins=()
+		max=()
+		sorted_mclabels=()
+		sorted_mccontext=()
+		for context in CG CHG CHH
+		do
+			for sample in ${mc_sample_list[@]}
+			do
+				if [[ ${sample} =~ ${context} ]]; then
+					sorted_mclabels+=("${sample}")
+				fi
+			done
+			for bw in ${mc_bw_list[@]}
+			do
+				if [[ ${bw} =~ ${context} ]]; then
+					sorted_mccontext+=("${bw}")
+				fi
+			done
+		done
+		if [ ${#tesortedfiles[@]} -gt 0 ]; then
+			i=0
+			for tefile in ${tesortedfiles[*]}
+			do
+				printf "\nComputing mC matrices aligned by sorted regions of ${analysisname}\n"
+				computeMatrix scale-regions -q -R ${tefile} -S ${sorted_mccontext[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} --sortRegions keep -o combined/matrix/temp_${outnames[i]}.gz
+				printf "\nPlotting heatmap for regions matrix of ${analysisname}\n"
+				plotHeatmap -m combined/matrix/temp_${outnames[i]}.gz -out combined/plots/${outnames[i]}.pdf --sortRegions keep --samplesLabel ${sorted_mclabels[@]} --regionsLabel ${teregionlabel[i]} --colorMap 'Oranges' --missingDataColor 'grey' --interpolationMethod 'nearest'
+				rm -f combined/matrix/temp_${outnames[i]}.gz
+				i=$((i+1))
+			done
+		else
+			i=0
+			for tefile in ${tefiles[*]}
+			do
+				printf "\nComputing mC matrices aligned by sorted regions of ${analysisname}\n"
+				computeMatrix scale-regions -q -R ${tefile} -S ${sorted_mccontext[@]} -bs 50 -b 2000 -a 2000 -m 5000 -p ${threads} --sortRegions keep -o combined/matrix/temp_${outnames[i]}.gz
+				printf "\nPlotting heatmap for regions matrix of ${analysisname}\n"
+				plotHeatmap -m combined/matrix/temp_${outnames[i]}.gz -out combined/plots/${outnames[i]}.pdf --sortRegions keep --samplesLabel ${sorted_mclabels[@]} --regionsLabel ${teregionlabel[i]} --colorMap 'Oranges' --missingDataColor 'grey' --interpolationMethod 'nearest'
+				rm -f combined/matrix/temp_${outnames[i]}.gz
+				i=$((i+1))
+			done
+		fi
+	rm -f combined/matrix/temp*${analysisname}*
+	fi
 fi
 
 ####################
