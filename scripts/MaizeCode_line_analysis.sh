@@ -2147,7 +2147,7 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 			plotHeatmap -m ${mat} -out combined/plots/${analysisname}_heatmap_${matrix}_TEs.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --regionsLabel ${regionlabel} --colorMap 'seismic' --zMin ${mins[@]} --zMax ${maxs[@]} --yMin ${ymins[@]} --yMax ${ymaxs[@]} --interpolationMethod 'bilinear' --outFileSortedRegions combined/matrix/sorted_TEs_${matrix}_${analysisname}.txt
 			printf "\nPlotting heatmap for ${matrix} all TEs matrix of ${analysisname} scaling by sample\n"
 			plotHeatmap -m ${mat} -out combined/plots/${analysisname}_heatmap_${matrix}_TEs_v2.pdf --sortRegions descend --sortUsing mean --samplesLabel ${all_labels[@]} --regionsLabel ${regionlabel} --colorMap 'seismic' --zMin ${mins2[@]} --zMax ${maxs2[@]} --yMin ${ymins2[@]} --yMax ${ymaxs2[@]} --interpolationMethod 'bilinear'
-			if [[ "${matrix}" ~ "regions" ]]; then
+			if [[ ${matrix} == "TE_regions" ]]; then
 				tesortedfiles+=("combined/matrix/sorted_TEs_${matrix}_${analysisname}.txt")
 			fi
 		fi
