@@ -165,7 +165,7 @@ elif [[ ${paired} == "SE" ]]; then
 	elif [[ ${mapparam} == "Colcen" ]]; then
 		printf "\nMaping ${name} to ${ref} with ${mapparam} parameters\n"
 		bowtie2 --version
-		bowtie2 -p ${threads} -k 150 --end-to-end --met-file reports/bt2_${name}.txt -x $ref_dir/$ref -U fastq/trimmed_${name}.fastq.gz -S mapped/${name}.sam |& tee reports/mapping_${name}.txt
+		bowtie2 -p ${threads} --very-sensitive --no-mixed --no-discordant --k 100 --end-to-end --met-file reports/bt2_${name}.txt -x $ref_dir/$ref -U fastq/trimmed_${name}.fastq.gz -S mapped/${name}.sam |& tee reports/mapping_${name}.txt
 	fi
 else
 	printf "\nData format missing: paired-end (PE) or single-end (SE)?\n"
@@ -178,11 +178,7 @@ samtools --version
 samtools fixmate -@ ${threads} -m mapped/${name}.sam mapped/temp1_${name}.bam
 rm -f mapped/${name}.sam
 samtools sort -@ ${threads} -o mapped/temp2_${name}.bam mapped/temp1_${name}.bam
-if [[ ${mapparam} == "default" ]]; then
-	samtools markdup -r -s -f reports/markdup_${name}.txt -@ ${threads} mapped/temp2_${name}.bam mapped/${name}.bam
-elif [[ ${mapparam} == "Colcen" ]]; then
-	samtools markdup -s -f reports/markdup_${name}.txt -@ ${threads} mapped/temp2_${name}.bam mapped/${name}.bam
-fi
+samtools markdup -r -s -S -f reports/markdup_${name}.txt -@ ${threads} mapped/temp2_${name}.bam mapped/${name}.bam
 samtools index -@ ${threads} mapped/${name}.bam
 printf "\nGetting some stats\n"
 samtools flagstat -@ ${threads} mapped/${name}.bam > reports/flagstat_${name}.txt
