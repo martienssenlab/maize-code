@@ -109,7 +109,8 @@ fi
 if [ ! ${mapparam} ]; then
 	printf "No mapping option selected, using default\n"
 	export mapparam="default"
-elif [[ "${mapparam}" == "default" ]] || [[ "${mapparam}" == "Colcen" ]]; then
+elif [[ "${mapparam,,}" == "default" ]] || [[ "${mapparam,,}" == "colcen" ]]; then
+	mapparam=${mapparam,,}
 	printf "${mapparam} chosen as the mapping option\n"
 else
 	printf "Unknown mapping option selected\n"
