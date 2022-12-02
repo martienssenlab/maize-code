@@ -122,10 +122,10 @@ if [[ ${paired} == "PE" ]]; then
 		printf "\nMaping ${name} to ${ref} with ${mapparam} parameters\n"
 		bowtie2 --version
 		bowtie2 -p ${threads} --end-to-end --maxins 1500 --met-file reports/bt2_${name}.txt -x $ref_dir/$ref -1 fastq/trimmed_${name}_R1.fastq.gz -2 fastq/trimmed_${name}_R2.fastq.gz -S mapped/${name}.sam |& tee reports/mapping_${name}.txt
-	elif [[ ${mapparam} == "Colcen" ]]; then
+	elif [[ ${mapparam} == "colcen" ]]; then
 		printf "\nMaping ${name} to ${ref} with ${mapparam} parameters\n"
 		bowtie2 --version
-		bowtie2 -p ${threads} -k 150 --end-to-end --maxins 1500 --met-file reports/bt2_${name}.txt -x $ref_dir/$ref -1 fastq/trimmed_${name}_R1.fastq.gz -2 fastq/trimmed_${name}_R2.fastq.gz -S mapped/${name}.sam |& tee reports/mapping_${name}.txt
+		bowtie2 -p ${threads} --very-sensitive --no-mixed --no-discordant --k 100 --end-to-end --met-file reports/bt2_${name}.txt -x $ref_dir/$ref -1 fastq/trimmed_${name}_R1.fastq.gz -2 fastq/trimmed_${name}_R2.fastq.gz -S mapped/${name}.sam |& tee reports/mapping_${name}.txt
 	fi
 elif [[ ${paired} == "SE" ]]; then
 	if [[ ${step} == "download" ]]; then
