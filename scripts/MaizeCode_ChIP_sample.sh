@@ -162,7 +162,7 @@ elif [[ ${paired} == "SE" ]]; then
 		printf "\nMaping ${name} to ${ref} with ${mapparam} parameters\n"
 		bowtie2 --version
 		bowtie2 -p ${threads} --end-to-end --met-file reports/bt2_${name}.txt -x $ref_dir/$ref -U fastq/trimmed_${name}.fastq.gz -S mapped/${name}.sam |& tee reports/mapping_${name}.txt
-	elif [[ ${mapparam} == "Colcen" ]]; then
+	elif [[ ${mapparam} == "colcen" ]]; then
 		printf "\nMaping ${name} to ${ref} with ${mapparam} parameters\n"
 		bowtie2 --version
 		bowtie2 -p ${threads} --very-sensitive --no-mixed --no-discordant --k 100 --end-to-end --met-file reports/bt2_${name}.txt -x $ref_dir/$ref -U fastq/trimmed_${name}.fastq.gz -S mapped/${name}.sam |& tee reports/mapping_${name}.txt
@@ -173,7 +173,7 @@ else
 fi
 
 #### Removing low quality reads and duplicates, sorting, converting to bam and indexing file with samtools
-printf "\nRemoving low quality reads, seocndary alignements and duplicates, sorting and indexing file with samtools version:\n"
+printf "\nRemoving low quality reads, secondary alignements and duplicates, sorting and indexing file with samtools version:\n"
 samtools --version
 samtools view -@ ${threads} -b -h -q 10 -F 256 -o mapped/temp1_${name}.bam mapped/${name}.sam
 samtools fixmate -@ ${threads} -m mapped/temp1_${name}.bam mapped/temp2_${name}.bam
