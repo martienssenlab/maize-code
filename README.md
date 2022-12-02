@@ -8,13 +8,13 @@
 
 
 1) Clone the git repository anywhere you want, for example in a new folder called projects\
-`git clone https://github.com/eernst/maize-code.git ./projects/maize-code`\
+`git clone https://github.com/eernst/maize-code.git ./maize-code`\
 or to clone a specific branch 'devel'\
-`git clone --branch devel https://github.com/eernst/maize-code.git ./projects/maize-code`\
+`git clone --branch devel https://github.com/eernst/maize-code.git ./maize-code`\
 You will be prompted to input your GitHub username and password.\
 If you only want to update the scripts, use `git pull`. If you want to update from a specific branch 'devel' `git pull origin devel`.
 2) cd into the maize-code folder that has been created, so following the same example\
-`cd ./projects/maize-code/`
+`cd ./maize-code/`
 3) Check that the following required packages are installed and in your $PATH (the versions noted here are working for sure, no guarantees for different versions). Recommended installation using conda, except kentUtils that need to be installed form source
 ```
 For all types of data:
