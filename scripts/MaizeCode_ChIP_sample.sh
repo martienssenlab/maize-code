@@ -172,13 +172,14 @@ else
 	exit 1
 fi
 
-#### Removing duplicates, sorting, converting to bam and indexing file with samtools
-printf "\nRemoving duplicates, sorting and indexing file with samtools version:\n"
+#### Removing low quality reads and duplicates, sorting, converting to bam and indexing file with samtools
+printf "\nRemoving low quality reads, seocndary alignements and duplicates, sorting and indexing file with samtools version:\n"
 samtools --version
-samtools fixmate -@ ${threads} -m mapped/${name}.sam mapped/temp1_${name}.bam
+samtools view -@ ${threads} -b -h -q 10 -F 256 -o mapped/temp1_${name}.bam mapped/${name}.sam
+samtools fixmate -@ ${threads} -m mapped/temp1_${name}.bam mapped/temp2_${name}.bam
 rm -f mapped/${name}.sam
-samtools sort -@ ${threads} -o mapped/temp2_${name}.bam mapped/temp1_${name}.bam
-samtools markdup -r -s -S -f reports/markdup_${name}.txt -@ ${threads} mapped/temp2_${name}.bam mapped/${name}.bam
+samtools sort -@ ${threads} -o mapped/temp3_${name}.bam mapped/temp2_${name}.bam
+samtools markdup -r -s -f reports/markdup_${name}.txt -@ ${threads} mapped/temp3_${name}.bam mapped/${name}.bam
 samtools index -@ ${threads} mapped/${name}.bam
 printf "\nGetting some stats\n"
 samtools flagstat -@ ${threads} mapped/${name}.bam > reports/flagstat_${name}.txt
