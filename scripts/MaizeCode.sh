@@ -15,7 +15,7 @@ usage="
 ##### 	-f: samplefile
 ##### 	-p: path to the folder containing all the different genome references (e.g. ~/data/Genomes/Zea_mays)
 #####	-m: histone mark to focus on for the analysis (H3K27ac by default, does not matter if not set)
-#####	-a: mapping option [ default | ColCen ] (Colcen: -k 150 and not filtering duplicates)
+#####	-a: mapping option [ default | Colcen ] (Colcen: -k 150 and not filtering duplicates)
 #####	-s: if set, the whole analysis does not proceed (default=not set, keep going with the analysis over all the samples in the samplefile)
 #####	-c: if set, only single samples analysis proceeds, not grouped analysis per line (default=not set, keep going with the complete analysis)
 #####	-t: if set, only partial grouped analysis per line, no heatmaps with deeptools (default=not set, keep going with the complete analysis)
