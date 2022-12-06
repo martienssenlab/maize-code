@@ -16,7 +16,7 @@ usage="
 ##### 	-d: folder containing the reference directory (e.g. ~/data/Genomes/Zea_mays/B73_v4)
 ##### 	-l: inbred line (e.g. B73)
 ##### 	-t: tissue (e.g. endosperm)
-##### 	-m: Library method [ Pico | mC ] If it is not one of these options, it defaults to mC
+##### 	-m: Library method [ Pico | EMseq | mC ] If it is not one of these options, it defaults to mC
 ##### 	-r: replicate ID (e.g. Rep1)
 #####	-i: sample ID (name in original folder or SRR number)
 #####	-f: path to original folder or SRA
