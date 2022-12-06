@@ -82,7 +82,7 @@ if [[ ${paired} == "PE" ]]; then
 		param2="--non_directional --maxins 1000"
 		param3=""
 	elif [[ ${met} == "EMseq" ]]; then
-		param1="-u 10,10 -U 10,10 -q 10 -m 20"
+		param1="-u 10 -U 10 -q 10 -m 20"
 		param2="--maxins 1000"
 		param3=""
 	else
