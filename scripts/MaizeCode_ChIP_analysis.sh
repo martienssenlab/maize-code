@@ -297,7 +297,8 @@ do
 			bedtools intersect -a peaks/${name}_Rep1_peaks.${peaktype}Peak -b peaks/temp_${name}_selected.bed -u > peaks/selected_peaks_${name}.${peaktype}Peak
 		fi
 		printf "Getting best peak for $name\n"
-		sort -k1,1 -k2,2n -k5nr peaks/selected_peaks_${name}.${peaktype}Peak | awk -v OFS="\t" '{print $1";"$2";"$3,$4,$5,$6,$7,$8,$9,$10}' | awk 'BEGIN {a=0} {b=$1; if (b!=a) print $0; a=$1}' | awk -F"[;\t]" -v OFS="\t" '{print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10}' | bedtools sort -g ${ref_dir}/chrom.sizes > peaks/best_peaks_${name}.bed
+		## Note: If broadpeak, an additional "summit" column will be added for potential downstream processes, which only represent the middle of the peak, not its summit.
+		sort -k1,1 -k2,2n -k5nr peaks/selected_peaks_${name}.${peaktype}Peak | awk -v OFS="\t" '{print $1";"$2";"$3,$4,$5,$6,$7,$8,$9,$10}' | awk 'BEGIN {a=0} {b=$1; if (b!=a) print $0; a=$1}' | awk -F"[;\t]" -v OFS="\t" -v t=${peaktype} '{if (t=="broad") $10=int(($3-$2)/2); print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10}' | bedtools sort -g ${ref_dir}/chrom.sizes > peaks/best_peaks_${name}.bed
 		
 		#### To get some peaks stats for each mark
 		printf "\nCalculating peak stats for ${name} in ${peaktype} peaks\n"
