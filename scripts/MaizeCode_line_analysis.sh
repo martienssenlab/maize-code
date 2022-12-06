@@ -200,13 +200,18 @@ do
 		shrna_bw_list_plus+=("${datatype}/tracks/${name}_merged_plus.bw")
 		shrna_bw_list_minus+=("${datatype}/tracks/${name}_merged_minus.bw")
 	elif [[ "${datatype}" == "mC" ]]; then
-		for i in {1..5}
-		do
-			if [ -e ${datatype}/tracks/${name}_Rep${i}_CG.bw ]; then
-				mc_bw_list+=("${datatype}/tracks/${name}_Rep${i}_CG.bw" "${datatype}/tracks/${name}_Rep${i}_CHG.bw" "${datatype}/tracks/${name}_Rep${i}_CHH.bw")
-				mc_sample_list+=("${name}_rep${i}_CG" "${name}_rep${i}_CHG" "${name}_rep${i}_CHH")
-			fi
-		done
+		if [ -e ${datatype}/tracks/${name}_CG.bw ]; then
+			mc_bw_list+=("${datatype}/tracks/${name}_CG.bw" "${datatype}/tracks/${name}_CHG.bw" "${datatype}/tracks/${name}_CHH.bw")
+			mc_sample_list+=("${name}_CG" "${name}_CHG" "${name}_CHH")
+		else
+			for i in {1..5}
+			do
+				if [ -e ${datatype}/tracks/${name}_Rep${i}_CG.bw ]; then
+					mc_bw_list+=("${datatype}/tracks/${name}_Rep${i}_CG.bw" "${datatype}/tracks/${name}_Rep${i}_CHG.bw" "${datatype}/tracks/${name}_Rep${i}_CHH.bw")
+					mc_sample_list+=("${name}_rep${i}_CG" "${name}_rep${i}_CHG" "${name}_rep${i}_CHH")
+				fi
+			done
+		fi
 		mc_tissue_list+=("${tissue}")
 	elif [[ "${datatype}" == "TF" ]]; then
 		tf_sample_list+=("${name}")
