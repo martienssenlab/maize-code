@@ -175,7 +175,11 @@ fi
 #### Removing low quality reads and duplicates, sorting, converting to bam and indexing file with samtools
 printf "\nRemoving low quality reads, secondary alignements and duplicates, sorting and indexing file with samtools version:\n"
 samtools --version
-samtools view -@ ${threads} -b -h -q 10 -F 256 -o mapped/temp1_${name}.bam mapped/${name}.sam
+if [[ ${mapparam} == "default" ]]; then
+	samtools view -@ ${threads} -b -h -q 10 -F 256 -o mapped/temp1_${name}.bam mapped/${name}.sam
+elif [[ ${mapparam} == "colcen" ]]; then
+	samtools view -@ ${threads} -b -h -F 256 -o mapped/temp1_${name}.bam mapped/${name}.sam
+fi
 samtools fixmate -@ ${threads} -m mapped/temp1_${name}.bam mapped/temp2_${name}.bam
 rm -f mapped/${name}.sam
 samtools sort -@ ${threads} -o mapped/temp3_${name}.bam mapped/temp2_${name}.bam
