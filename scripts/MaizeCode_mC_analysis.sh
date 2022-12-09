@@ -11,9 +11,10 @@
 usage="
 ##### Script for Maize code DNA methylation data analysis, used by script MaizeCode_analysis.sh for mC data
 #####
-##### sh MaiCode_mC_analysis.sh -f samplefile [-h]
+##### sh MaiCode_mC_analysis.sh -f samplefile [-a mappingoption ] [-h]
 #####	-f: samplefile containing the samples to compare and the reference directory in 6 tab-delimited columns:
 ##### 		Data, Line, Tissue, Mark, PE or SE, Reference directory
+#####	-a: mapping option [ default | colcen ]
 ##### 	-h: help, returns usage
 ##### 
 ##### It merges the two replicate files (weighted average), and creates bigwig files
@@ -75,8 +76,8 @@ do
 	export tissue
 	export mark
 	export ref_dir
-	export name=${line}_${tissue}_${mark}
-	printf "\nStarting single ChIP sample analysis for $name\n"
+	export name=${line}_${tissue}_mC
+	printf "\nStarting mC sample analysis for ${name}\n"
 	qsub -N ${name} -V -cwd -sync y -pe threads 12 -l m_mem_free=2G -l tmp_free=4G -j y -o logs/analysis_${name}.log <<-'EOF1' &
 		#!/bin/bash
 		set -e -o pipefail		
