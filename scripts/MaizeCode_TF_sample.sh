@@ -11,17 +11,18 @@
 usage="
 ##### Script for Maize code TF ChIP data analysis, used by script MaizeCode.sh for TF samples
 #####
-##### sh MaizeCode_TF_sample.sh -x TF_name -d reference directory -l inbred line -t tissue -m TF ChIP -r replicate ID -i sample ID -f path to sample -p paired -s step
+##### sh MaizeCode_TF_sample.sh -x TF_name -d reference directory -l inbred line -t tissue -m TF ChIP -r replicate ID -i sample ID -f path to sample -p paired -s step -a mappingoption
 ##### 	-x: TF name (e.g. TF_TB1 for TB1 ChIP seq)
 ##### 	-d: folder containing the reference directory (e.g. ~/data/Genomes/Zea_mays/B73_v4)
 ##### 	-l: inbred line (e.g. B73)
 ##### 	-t: tissue (e.g. endosperm)
 ##### 	-m: TF ChIP [ IP | Input ]
 ##### 	-r: replicate ID (e.g. Rep1)
-#####	  -i: sample ID (name in original folder or SRR number)
-#####	  -f: path to original folder or SRA
+#####	-i: sample ID (name in original folder or SRR number)
+#####	-f: path to original folder or SRA
 ##### 	-p: if data is paired-end (PE) or single-end (SE) [ PE | SE ]
-#####	  -s: status of the raw data [ download | trim | done ] 'download' if sample needs to be copied/downloaded, 'trim' if only trimming has to be performed, 'done' if trimming has already been performed
+#####	-s: status of the raw data [ download | trim | done ] 'download' if sample needs to be copied/downloaded, 'trim' if only trimming has to be performed, 'done' if trimming has already been performed
+#####	-a: what option to use for mapping [ default | colcen ]
 ##### 	-h: help, returns usage
 #####
 ##### It downloads or copies the files, runs fastQC, trims adapters with cutadapt, aligns with bowtie2,
@@ -43,7 +44,7 @@ if [ $# -eq 0 ]; then
   exit 1
 fi
 
-while getopts "x:d:l:t:m:r:i:f:p:s:h" opt; do
+while getopts "x:d:l:t:m:r:i:f:p:s:a:h" opt; do
   case $opt in
 	  h) 	printf "$usage\n"
 			  exit 0;;
@@ -57,13 +58,14 @@ while getopts "x:d:l:t:m:r:i:f:p:s:h" opt; do
 		f)	export path=${OPTARG};;
 		p)	export paired=${OPTARG};;
 		s)	export step=${OPTARG};;
+		a)	export mapparam=${OPTARG};;
 		*)	printf "$usage\n"
 			  exit 1;;
   esac
 done
 shift $((OPTIND - 1))
 
-if [ ! $data ] || [ ! $ref_dir ] || [ ! $line ] || [ ! $tissue ] || [ ! $chip ] || [ ! $rep ] || [ ! $sampleID ] || [ ! $path ] || [ ! $paired ] || [ ! $step ]; then
+if [ ! $data ] || [ ! $ref_dir ] || [ ! $line ] || [ ! $tissue ] || [ ! $chip ] || [ ! $rep ] || [ ! $sampleID ] || [ ! $path ] || [ ! $paired ] || [ ! $step ] || [ ! ${mapparam} ]; then
   printf "Missing arguments!\n"
 	printf "$usage\n"
 	exit 1
