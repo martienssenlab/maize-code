@@ -14,7 +14,7 @@ usage="
 ##### sh MaiCode_TF_analysis.sh -f samplefile [-a mappingoption] [-h]
 #####	-f: samplefile containing the samples to compare and the reference directory in 6 tab-delimited columns:
 ##### 		Line, TF, ChIP, PE or SE, Reference directory
-#####	-a: mapping option [ default | colcen ]
+#####	-a: mapping option [ default | colcen | colcenall ]
 ##### 	-h: help, returns usage
 ##### 
 ##### It merges the two replicate files, and creates pseudo-replicates by splitting the merged bam file into 2 halves
