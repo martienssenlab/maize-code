@@ -22,7 +22,7 @@ usage="
 #####	-f: path to original folder or SRA
 ##### 	-p: if data is paired-end (PE) or single-end (SE) [ PE | SE ]
 #####	-s: status of the raw data [ download | trim | done ] 'download' if sample needs to be copied/downloaded, 'trim' if only trimming has to be performed, 'done' if trimming has already been performed
-#####	-a: what option to use for mapping [ default | colcen ]
+#####	-a: what option to use for mapping [ default | colcen | colcenall ]
 ##### 	-h: help, returns usage
 #####
 ##### It downloads or copies the files, runs fastQC, trims adapters with cutadapt, aligns with bowtie2,
@@ -65,9 +65,20 @@ while getopts "x:d:l:t:m:r:i:f:p:s:a:h" opt; do
 done
 shift $((OPTIND - 1))
 
-if [ ! $data ] || [ ! $ref_dir ] || [ ! $line ] || [ ! $tissue ] || [ ! $chip ] || [ ! $rep ] || [ ! $sampleID ] || [ ! $path ] || [ ! $paired ] || [ ! $step ] || [ ! ${mapparam} ]; then
+if [ ! $data ] || [ ! $ref_dir ] || [ ! $line ] || [ ! $tissue ] || [ ! $chip ] || [ ! $rep ] || [ ! $sampleID ] || [ ! $path ] || [ ! $paired ] || [ ! $step ]; then
   printf "Missing arguments!\n"
 	printf "$usage\n"
+	exit 1
+fi
+
+if [ ! ${mapparam} ]; then
+	printf "No mapping option selected, using default\n"
+	export mapparam="default"
+elif [[ "${mapparam}" == "default" ]] || [[ "${mapparam}" == "colcen" ]] || [[ "${mapparam}" == "colcenall" ]]; then
+	printf "${mapparam} chosen as the mapping option\n"
+else
+	printf "Unknown mapping option selected\n"
+	printf "${usage}\n"
 	exit 1
 fi
 
@@ -113,9 +124,15 @@ if [[ $paired == "PE" ]]; then
 	fi
 	#### Aligning reads to reference genome with Bowtie2
 	#### maxins 1500 used after seeing that average insert size from first round of mapping was ~500bp (for most B73 marks) but ~900bp for Inputs
-	printf "\nMaping $name to $ref\n"
-	bowtie2 --version
-	bowtie2 -p $threads --end-to-end --maxins 1500 --met-file reports/bt2_${name}.txt -x $ref_dir/$ref -1 fastq/trimmed_${name}_R1.fastq.gz -2 fastq/trimmed_${name}_R2.fastq.gz -S mapped/${name}.sam |& tee reports/mapping_${name}.txt
+	if [[ ${mapparam} == "default" ]]; then
+		printf "\nMaping ${name} to ${ref} with ${mapparam} parameters\n"
+		bowtie2 --version
+		bowtie2 -p ${threads} --end-to-end --maxins 1500 --met-file reports/bt2_${name}.txt -x $ref_dir/$ref -1 fastq/trimmed_${name}_R1.fastq.gz -2 fastq/trimmed_${name}_R2.fastq.gz -S mapped/${name}.sam |& tee reports/mapping_${name}.txt
+	elif [[ ${mapparam} == "colcen" || ${mapparam} == "colcenall" ]]; then
+		printf "\nMaping ${name} to ${ref} with ${mapparam} parameters\n"
+		bowtie2 --version
+		bowtie2 -p ${threads} --very-sensitive --no-mixed --no-discordant --k 100 --end-to-end --met-file reports/bt2_${name}.txt -x $ref_dir/$ref -1 fastq/trimmed_${name}_R1.fastq.gz -2 fastq/trimmed_${name}_R2.fastq.gz -S mapped/${name}.sam |& tee reports/mapping_${name}.txt
+	fi
 elif [[ $paired == "SE" ]]; then
 	if [[ $step == "download" ]]; then
 		if [[ $path == "SRA" ]]; then
@@ -147,9 +164,15 @@ elif [[ $paired == "SE" ]]; then
 		fastqc -o reports/ fastq/trimmed_${name}.fastq.gz
 	fi
 	#### Aligning reads to reference genome with Bowtie2
-	printf "\nMaping $name to $ref with bowtie2 version:\n"
-	bowtie2 --version
-	bowtie2 -p $threads --end-to-end --met-file reports/bt2_${name}.txt -x $ref_dir/$ref -U fastq/trimmed_${name}.fastq.gz -S mapped/${name}.sam |& tee reports/mapping_${name}.txt
+	if [[ ${mapparam} == "default" ]]; then
+		printf "\nMaping ${name} to ${ref} with ${mapparam} parameters\n"
+		bowtie2 --version
+		bowtie2 -p ${threads} --end-to-end --met-file reports/bt2_${name}.txt -x $ref_dir/$ref -U fastq/trimmed_${name}.fastq.gz -S mapped/${name}.sam |& tee reports/mapping_${name}.txt
+	elif [[ ${mapparam} == "colcen" || ${mapparam} == "colcenall" ]]; then
+		printf "\nMaping ${name} to ${ref} with ${mapparam} parameters\n"
+		bowtie2 --version
+		bowtie2 -p ${threads} --very-sensitive --no-mixed --no-discordant --k 100 --end-to-end --met-file reports/bt2_${name}.txt -x $ref_dir/$ref -U fastq/trimmed_${name}.fastq.gz -S mapped/${name}.sam |& tee reports/mapping_${name}.txt
+	fi
 else
 	printf "\nData format missing: paired-end (PE) or single-end (SE)?\n"
 	exit 1
@@ -158,18 +181,22 @@ fi
 #### Removing duplicates, sorting, converting to bam and indexing file with samtools
 printf "\nRemoving low mapping quality reads (MapQ>=10), duplicates, sorting and indexing file with samtools version:\n"
 samtools --version
-samtools view -@ $threads -q 10 -S -b mapped/${name}.sam > mapped/temp0_${name}.bam
+if [[ ${mapparam} == "default" || ${mapparam} == "colcen" ]]; then
+	samtools view -@ ${threads} -b -h -q 10 -F 256 -o mapped/temp1_${name}.bam mapped/${name}.sam
+elif [[ ${mapparam} == "colcenall" ]]; then
+	samtools view -@ ${threads} -b -h -F 256 -o mapped/temp1_${name}.bam mapped/${name}.sam
+fi
 rm -f mapped/${name}.sam
-samtools fixmate -@ $threads -m mapped/temp0_${name}.bam mapped/temp1_${name}.bam
-samtools sort -@ $threads -o mapped/temp2_${name}.bam mapped/temp1_${name}.bam
-samtools markdup -r -s -f reports/markdup_${name}.txt -@ $threads mapped/temp2_${name}.bam mapped/${name}.bam
-samtools index -@ $threads mapped/${name}.bam
+samtools fixmate -@ ${threads} -m mapped/temp1_${name}.bam mapped/temp2_${name}.bam
+samtools sort -@ ${threads} -o mapped/temp3_${name}.bam mapped/temp2_${name}.bam
+samtools markdup -r -s -f reports/markdup_${name}.txt -@ ${threads} mapped/temp3_${name}.bam mapped/${name}.bam
+samtools index -@ ${threads} mapped/${name}.bam
 printf "\nGetting some stats\n"
-samtools flagstat -@ $threads mapped/${name}.bam > reports/flagstat_${name}.txt
+samtools flagstat -@ ${threads} mapped/${name}.bam > reports/flagstat_${name}.txt
 rm -f mapped/temp*_${name}.bam
 #### Summary stats
 printf "\nMaking mapping statistics summary\n"
-if [[ $paired == "PE" ]]; then
+if [[ ${paired} == "PE" ]]; then
 	tot=$(grep "Total read pairs processed:" reports/trimming_${name}.txt | awk '{print $NF}' | sed 's/,//g')
 	filt=$(grep "reads" reports/mapping_${name}.txt | awk '{print $1}')
 	multi=$(grep "aligned concordantly >1 times" reports/mapping_${name}.txt | awk '{print $1}')
