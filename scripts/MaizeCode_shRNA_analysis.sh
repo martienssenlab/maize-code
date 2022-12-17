@@ -11,9 +11,10 @@
 usage="
 ##### Script for Maize code shRNA data analysis, used by script MaizeCode_analysis.sh for shRNA data
 #####
-##### sh MaiCode_shRNA_analysis.sh -f samplefile [-h]
+##### sh MaiCode_shRNA_analysis.sh -f samplefile [-a mappingoption] [-h]
 #####	-f: samplefile containing the samples to compare and in 5 tab-delimited columns:
 ##### 		Line, Tissue, Mark, PE or SE, Reference genome directory
+#####	-a: mapping option [ default | colcen | colcenall ]
 ##### 	-h: help, returns usage
 ##### 
 ##### It merges the two replicate files (filtered for sizes from 15 to 32 nt), maps it again with ShortStack and creates stranded bigwig files for each sample
@@ -34,11 +35,12 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts ":f:sh" opt; do
+while getopts ":f:a:h" opt; do
 	case ${opt} in
 		h) 	printf "${usage}\n"
 			exit 0;;
 		f) 	export samplefile=${OPTARG};;
+		a)	export mapparam=${OPTARG};;
 		*)	printf "${usage}\n"
 			exit 1;;
 	esac
