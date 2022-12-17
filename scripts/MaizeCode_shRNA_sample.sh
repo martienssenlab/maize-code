@@ -11,17 +11,18 @@
 usage="
 ##### Script for Maize code shRNA data analysis, used by script MaizeCode.sh for shRNA samples
 #####
-##### sh MaizeCode_shRNA_sample.sh -x datatype -d reference directory -l inbred line -t tissue -m shRNA -r replicate ID -i sample ID -f path to sample -p paired -s step
+##### sh MaizeCode_shRNA_sample.sh -x datatype -d reference directory -l inbred line -t tissue -m shRNA -r replicate ID -i sample ID -f path to sample -p paired -s step -a mappingoption
 ##### 	-x: type of data (not used here yet mandatory, should be 'shRNA')
 ##### 	-d: folder containing the reference directory (e.g. ~/data/Genomes/Zea_mays/B73_v4)
 ##### 	-l: inbred line (e.g. B73)
 ##### 	-t: tissue (e.g. endosperm)
 ##### 	-m: sample name (should only be 'shRNA' for now at least)
 ##### 	-r: replicate ID (e.g. Rep1)
-#####	  -i: sample ID (name in original folder or SRR number)
-#####	  -f: path to original folder or SRA
+#####	-i: sample ID (name in original folder or SRR number)
+#####	-f: path to original folder or SRA
 ##### 	-p: if data is paired-end (PE) or single-end (SE) [ PE | SE ]
-#####	  -s: status of the raw data [ download | trim | done ] 'download' if sample needs to be copied/downloaded, 'trim' if only trimming has to be performed, 'done' if trimming has already been performed
+#####	-s: status of the raw data [ download | trim | done ] 'download' if sample needs to be copied/downloaded, 'trim' if only trimming has to be performed, 'done' if trimming has already been performed
+#####	-a: what option to use for mapping [ default | colcen | colcenall ]
 ##### 	-h: help, returns usage
 #####
 ##### It downloads or copies the files, runs fastQC, trims adapters with cutadapt, aligns to structural RNA with bowtie2 to filter them out,
@@ -43,7 +44,7 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts "x:d:l:t:m:r:i:f:p:s:h" opt; do
+while getopts "x:d:l:t:m:r:i:f:p:s:a:h" opt; do
 	case ${opt} in
 		h) 	printf "${usage}\n"
 			exit 0;;
@@ -57,6 +58,7 @@ while getopts "x:d:l:t:m:r:i:f:p:s:h" opt; do
 		f)	export path=${OPTARG};;
 		p)	export paired=${OPTARG};;
 		s)	export step=${OPTARG};;
+		a)	export mapparam=${OPTARG};;
 		*)	printf "${usage}\n"
 			exit 1;;
 	esac
