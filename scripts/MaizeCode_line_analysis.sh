@@ -172,7 +172,7 @@ do
 			do
 				if [ -e ${datatype}/tracks/${name}_Rep${i}.bw ]; then
 					chip_bw_list+=("${datatype}/tracks/${name}_Rep${i}.bw")
-					chip_sample_list+=("${name}_rep${i}")
+					chip_sample_list+=("${name}")
 				fi
 			done
 		fi
