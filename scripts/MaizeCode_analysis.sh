@@ -432,7 +432,7 @@ do
 	regioni=$(cat combined/${regionname}.temp_${ref}.txt)
 	tmp3=${regioni##*/}
 	regioniname=${tmp3%%.*}
-	check_list+=("combined/chkpts/analysis_${samplename}_on_${regioniname}")
+	check_list+=("combined/chkpts/analysis_${samplename}_on_${regioniname}_for_${markofinterest}")
 	region_list+=("${regioniname}")
 	printf "\nLaunching line analysis script for samplefile ${samplename} on regionfile ${regioniname}\n"
 	if [[ "${total}" == "NO" ]]; then
@@ -454,9 +454,9 @@ i=0
 for check in ${check_list[@]}
 do
 	if [ ! -e ${check} ]; then
-		printf "\nProblem during the line analysis of ${ref_list[i]} on ${region_list[i]}!\nCheck log: combined/logs/analysis_${samplename}_on_${region_list[i]}.log\n"
+		printf "\nProblem during the line analysis of ${ref_list[i]} on ${region_list[i]}!\nCheck log: combined/logs/analysis_${samplename}_on_${region_list[i]}_for_${markofinterest}.log\n"
 	else 
-		printf "\nLine analysis of ${ref_list[i]} on ${region_list[i]} processed succesfully\n"
+		printf "\nLine analysis of ${ref_list[i]} on ${region_list[i]} for ${markofinterest} processed succesfully\n"
 		rm -f combined/${samplename}_analysis_samplefile.temp_${ref_list[i]}.txt
 		rm -f combined/${regionname}.temp_${ref_list[i]}.txt
 	fi
