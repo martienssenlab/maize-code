@@ -250,7 +250,7 @@ do
 					if [ ! -s tracks/${name}_${filetype}.bw ]; then
 						printf "\nMaking bigwig files for $namefiletype with deeptools version:\n"
 						deeptools --version
-						bamCompare -b1 ${namefiletype} -b2 ${inputfiletype} -o tracks/${name}_${filetype}.bw -p $threads --binSize 1 --scaleFactorsMethod "None" --normalizeUsing CPM
+						bamCompare -b1 ${namefiletype} -b2 ${inputfiletype} -o tracks/${name}_${filetype}.bw -p $threads --binSize 1 --scaleFactorsMethod "None" --normalizeUsing CPM --extendReads 300
 					else
 						printf "\nBigwig file for $namefiletype already exists\n"
 					fi
