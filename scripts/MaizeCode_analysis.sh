@@ -18,6 +18,7 @@ usage="
 ##### 		It is safest to use a full paths.
 #####		If no region file is given, the analysis will behave as if -s was set.
 #####	-m: histone mark to focus on for the analysis (H3K27ac by default)
+#####	-a: mapping option [ default | colcen | all | colcenall ] (colcen: very sensitive, -k 100; all: no MAPQ>10) 
 #####	-s: If set, the script does not progress into the line data analysis, only single sample analysis will be performed
 #####	-t: If set, partial analysis will be performed (no heatmap with deeptools)
 #####	-z: If set, partial analysis will be performed for testing
@@ -88,7 +89,7 @@ fi
 if [ ! ${mapparam} ]; then
 	printf "No mapping option selected, using default\n"
 	export mapparam="default"
-elif [[ "${mapparam}" == "default" ]] || [[ "${mapparam}" == "colcen" ]] || [[ "${mapparam}" == "colcenall" ]]; then
+elif [[ "${mapparam}" == "default" || "${mapparam}" == "colcen" || "${mapparam}" == "colcenall" || "${mapparam}" == "all" ]]; then
 	printf "${mapparam} chosen as the mapping option\n"
 else
 	printf "Unknown mapping option selected\n"
