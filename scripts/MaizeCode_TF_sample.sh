@@ -22,7 +22,7 @@ usage="
 #####	-f: path to original folder or SRA
 ##### 	-p: if data is paired-end (PE) or single-end (SE) [ PE | SE ]
 #####	-s: status of the raw data [ download | trim | done ] 'download' if sample needs to be copied/downloaded, 'trim' if only trimming has to be performed, 'done' if trimming has already been performed
-#####	-a: what option to use for mapping [ default | colcen | colcenall ]
+#####	-a: what option to use for mapping [ default | all | colcen | colcenall ] (colcen: very-sensitive, -k 100; all: no MAPQ>10)
 ##### 	-h: help, returns usage
 #####
 ##### It downloads or copies the files, runs fastQC, trims adapters with cutadapt, aligns with bowtie2,
@@ -74,7 +74,7 @@ fi
 if [ ! ${mapparam} ]; then
 	printf "No mapping option selected, using default\n"
 	export mapparam="default"
-elif [[ "${mapparam}" == "default" ]] || [[ "${mapparam}" == "colcen" ]] || [[ "${mapparam}" == "colcenall" ]]; then
+elif [[ "${mapparam}" == "default" || "${mapparam}" == "colcen" || "${mapparam}" == "colcenall" || "${mapparam}" == "all" ]]; then
 	printf "${mapparam} chosen as the mapping option\n"
 else
 	printf "Unknown mapping option selected\n"
@@ -124,7 +124,7 @@ if [[ $paired == "PE" ]]; then
 	fi
 	#### Aligning reads to reference genome with Bowtie2
 	#### maxins 1500 used after seeing that average insert size from first round of mapping was ~500bp (for most B73 marks) but ~900bp for Inputs
-	if [[ ${mapparam} == "default" ]]; then
+	if [[ ${mapparam} == "default" || ${mapparam} == "all" ]]; then
 		printf "\nMaping ${name} to ${ref} with ${mapparam} parameters\n"
 		bowtie2 --version
 		bowtie2 -p ${threads} --end-to-end --maxins 1500 --met-file reports/bt2_${name}.txt -x $ref_dir/$ref -1 fastq/trimmed_${name}_R1.fastq.gz -2 fastq/trimmed_${name}_R2.fastq.gz -S mapped/${name}.sam |& tee reports/mapping_${name}.txt
@@ -164,7 +164,7 @@ elif [[ $paired == "SE" ]]; then
 		fastqc -o reports/ fastq/trimmed_${name}.fastq.gz
 	fi
 	#### Aligning reads to reference genome with Bowtie2
-	if [[ ${mapparam} == "default" ]]; then
+	if [[ ${mapparam} == "default" || ${mapparam} == "all" ]]; then
 		printf "\nMaping ${name} to ${ref} with ${mapparam} parameters\n"
 		bowtie2 --version
 		bowtie2 -p ${threads} --end-to-end --met-file reports/bt2_${name}.txt -x $ref_dir/$ref -U fastq/trimmed_${name}.fastq.gz -S mapped/${name}.sam |& tee reports/mapping_${name}.txt
@@ -183,7 +183,7 @@ printf "\nRemoving low mapping quality reads (MapQ>=10), duplicates, sorting and
 samtools --version
 if [[ ${mapparam} == "default" || ${mapparam} == "colcen" ]]; then
 	samtools view -@ ${threads} -b -h -q 10 -F 256 -o mapped/temp1_${name}.bam mapped/${name}.sam
-elif [[ ${mapparam} == "colcenall" ]]; then
+elif [[ ${mapparam} == "colcenall" || ${mapparam} == "all" ]]; then
 	samtools view -@ ${threads} -b -h -F 256 -o mapped/temp1_${name}.bam mapped/${name}.sam
 fi
 rm -f mapped/${name}.sam
