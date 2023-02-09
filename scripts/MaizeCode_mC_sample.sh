@@ -22,7 +22,7 @@ usage="
 #####	-f: path to original folder or SRA
 ##### 	-p: if data is paired-end (PE) or single-end (SE) [ PE | SE ]
 #####	-s: status of the raw data [ download | trim | done ] 'download' if sample needs to be copied/downloaded, 'trim' if only trimming has to be performed, 'done' if trimming has already been performed
-#####	-a: what option to use for mapping [ default | Colcen ]
+#####	-a: what option to use for mapping [ default | all | colcen | colcenall ] (colcen: very-sensitive, -k 100; all: no MAPQ>10)
 ##### 	-h: help, returns usage
 #####
 ##### It downloads or copies the files, runs fastQC, trims adapters with cutadapt, aligns, deduplicate and extract methylation with bismark and get some mapping stats
@@ -68,6 +68,17 @@ shift $((OPTIND - 1))
 
 if [ ! ${data} ] || [ ! ${ref_dir} ] || [ ! ${line} ] || [ ! ${tissue} ] || [ ! ${met} ] || [ ! ${rep} ] || [ ! ${sampleID} ] || [ ! ${path} ] || [ ! ${paired} ] || [ ! ${step} ] || [ ! ${mapparam} ]; then
 	printf "Missing arguments!\n"
+	printf "${usage}\n"
+	exit 1
+fi
+
+if [ ! ${mapparam} ]; then
+	printf "No mapping option selected, using default\n"
+	export mapparam="default"
+elif [[ "${mapparam}" == "default" || "${mapparam}" == "colcen" || "${mapparam}" == "colcenall" || "${mapparam}" == "all" ]]; then
+	printf "${mapparam} chosen as the mapping option\n"
+else
+	printf "Unknown mapping option selected\n"
 	printf "${usage}\n"
 	exit 1
 fi
