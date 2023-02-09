@@ -65,8 +65,19 @@ while getopts "x:d:l:t:m:r:i:f:p:s:a:h" opt; do
 done
 shift $((OPTIND - 1))
 
-if [ ! ${data} ] || [ ! ${ref_dir} ] || [ ! ${line} ] || [ ! ${tissue} ] || [ ! ${rnatype} ] || [ ! ${rep} ] || [ ! ${sampleID} ] || [ ! ${path} ] || [ ! ${paired} ] || [ ! ${step} ] || [ ! ${mapparam} ]; then
+if [ ! ${data} ] || [ ! ${ref_dir} ] || [ ! ${line} ] || [ ! ${tissue} ] || [ ! ${rnatype} ] || [ ! ${rep} ] || [ ! ${sampleID} ] || [ ! ${path} ] || [ ! ${paired} ] || [ ! ${step} ]; then
 	printf "Missing arguments!\n"
+	printf "${usage}\n"
+	exit 1
+fi
+
+if [ ! ${mapparam} ]; then
+	printf "No mapping option selected, using default\n"
+	export mapparam="default"
+elif [[ "${mapparam}" == "default" || "${mapparam}" == "colcen" || "${mapparam}" == "colcenall" || "${mapparam}" == "all" ]]; then
+	printf "${mapparam} chosen as the mapping option\n"
+else
+	printf "Unknown mapping option selected\n"
 	printf "${usage}\n"
 	exit 1
 fi
