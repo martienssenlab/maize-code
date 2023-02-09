@@ -11,10 +11,9 @@
 usage="
 ##### Script for Maize code TF ChIP data analysis, used by script MaizeCode_analysis.sh for TF data
 #####
-##### sh MaiCode_TF_analysis.sh -f samplefile [-a mappingoption] [-h]
+##### sh MaiCode_TF_analysis.sh -f samplefile [-h]
 #####	-f: samplefile containing the samples to compare and the reference directory in 6 tab-delimited columns:
 ##### 		Line, TF, ChIP, PE or SE, Reference directory
-#####	-a: mapping option [ default | colcen | colcenall ]
 ##### 	-h: help, returns usage
 ##### 
 ##### It merges the two replicate files, and creates pseudo-replicates by splitting the merged bam file into 2 halves
@@ -39,12 +38,11 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts ":f:a:h" opt; do
+while getopts ":f:h" opt; do
 	case ${opt} in
 		h) 	printf "${usage}\n"
 			exit 0;;
 		f) 	export samplefile=${OPTARG};;
-		a)	export mapparam=${OPTARG};;
 		*)	printf "${usage}\n"
 			exit 1;;
 	esac
@@ -53,17 +51,6 @@ shift $((OPTIND - 1))
 
 if [ ! ${samplefile} ]; then
 	printf "Samplefile missing!\n"
-	printf "${usage}\n"
-	exit 1
-fi
-
-if [ ! ${mapparam} ]; then
-	printf "No mapping option selected, using default\n"
-	export mapparam="default"
-elif [[ "${mapparam}" == "default" ]] || [[ "${mapparam}" == "colcen" ]] || [[ "${mapparam}" == "colcenall" ]]; then
-	printf "${mapparam} chosen as the mapping option\n"
-else
-	printf "Unknown mapping option selected\n"
 	printf "${usage}\n"
 	exit 1
 fi
