@@ -444,27 +444,27 @@ pids=()
 
 if [[ "${wholeanalysis}" == "STOP" ]]; then
 	printf "\nPerforming only the single sample analysis\n"
-	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -m ${markofinterest} -a ${mapparam} -s &
+	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -m ${markofinterest} -s &
 	analysisname="${samplename}_no_region"
 	check="combined/chkpts/${analysisname}"
 elif [[ "${total}" == "NO" ]]; then
 	printf "\nPerforming partial analysis on all genes\n"
-	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -m ${markofinterest} -a ${mapparam} -t &
+	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -m ${markofinterest} -t &
 	analysisname="${samplename}_on_all_genes_for_${markofinterest}"
 	check="combined/chkpts/${analysisname}"
 elif [[ "${total}" == "TEST" ]] && [[ "${repeats}" == "YES" ]]; then
 	printf "\nPerforming testing analysis on all genes\n"
-	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -m ${markofinterest} -a ${mapparam} -z -x &
+	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -m ${markofinterest} -z -x &
 	analysisname="${samplename}_on_all_genes_for_${markofinterest}"
 	check="combined/chkpts/${analysisname}"
 elif [[ "${repeats}" == "YES" ]]; then
 	printf "\nPerforming testing analysis on all genes\n"
-	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -m ${markofinterest} -a ${mapparam} -x &
+	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -m ${markofinterest} -x &
 	analysisname="${samplename}_on_all_genes_for_${markofinterest}"
 	check="combined/chkpts/${analysisname}"
 else
 	printf "\nPerforming complete analysis on all genes\n"
-	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -m ${markofinterest} -a ${mapparam} &
+	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -m ${markofinterest} &
 	analysisname="${samplename}_on_all_genes_for_${markofinterest}"
 	check="combined/chkpts/${analysisname}"
 fi	
