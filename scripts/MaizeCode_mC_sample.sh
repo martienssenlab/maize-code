@@ -66,7 +66,7 @@ while getopts "x:d:l:t:m:r:i:f:p:s:a:h" opt; do
 done
 shift $((OPTIND - 1))
 
-if [ ! ${data} ] || [ ! ${ref_dir} ] || [ ! ${line} ] || [ ! ${tissue} ] || [ ! ${met} ] || [ ! ${rep} ] || [ ! ${sampleID} ] || [ ! ${path} ] || [ ! ${paired} ] || [ ! ${step} ] || [ ! ${mapparam} ]; then
+if [ ! ${data} ] || [ ! ${ref_dir} ] || [ ! ${line} ] || [ ! ${tissue} ] || [ ! ${met} ] || [ ! ${rep} ] || [ ! ${sampleID} ] || [ ! ${path} ] || [ ! ${paired} ] || [ ! ${step} ]; then
 	printf "Missing arguments!\n"
 	printf "${usage}\n"
 	exit 1
