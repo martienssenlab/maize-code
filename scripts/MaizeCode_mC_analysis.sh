@@ -14,7 +14,7 @@ usage="
 ##### sh MaiCode_mC_analysis.sh -f samplefile [-a mappingoption ] [-h]
 #####	-f: samplefile containing the samples to compare and the reference directory in 6 tab-delimited columns:
 ##### 		Data, Line, Tissue, Mark, PE or SE, Reference directory
-#####	-a: mapping option [ default | colcen | colcenall ]
+#####	-a: mapping option [ default | colcen | all | colcenall ]
 ##### 	-h: help, returns usage
 ##### 
 ##### It merges the two replicate files (weighted average), and creates bigwig files
@@ -56,7 +56,7 @@ fi
 if [ ! ${mapparam} ]; then
 	printf "No mapping option selected, using default\n"
 	export mapparam="default"
-elif [[ "${mapparam}" == "default" ]] || [[ "${mapparam}" == "colcen" ]] || [[ "${mapparam}" == "colcenall" ]]; then
+elif [[ "${mapparam}" == "default" || "${mapparam}" == "colcen" || "${mapparam}" == "colcenall" || "${mapparam}" == "all" ]]; then
 	printf "${mapparam} chosen as the mapping option\n"
 else
 	printf "Unknown mapping option selected\n"
