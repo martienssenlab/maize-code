@@ -11,14 +11,13 @@
 usage="
 ##### Script for Maize code data analysis
 #####
-##### sh MaiCode_analysis.sh -f samplefile -r regionfile [-m markofinterest] [-a mapparam ] [-s] [-t] [-z] [-x]
+##### sh MaiCode_analysis.sh -f samplefile -r regionfile [-m markofinterest] [-s] [-t] [-z] [-x]
 #####	-f: samplefile containing the samples to compare and in 6 tab-delimited columns:
 ##### 		Data, Line, Tissue, Sample, PE or SE, Reference genome directory
 ##### 	-r: textfile containing the name of region files that are to be plotted over (bed files)
 ##### 		It is safest to use a full paths.
 #####		If no region file is given, the analysis will behave as if -s was set.
 #####	-m: histone mark to focus on for the analysis (H3K27ac by default)
-#####	-a: mapping option [ default | colcen | all | colcenall ] (colcen: very sensitive, -k 100; all: no MAPQ>10) 
 #####	-s: If set, the script does not progress into the line data analysis, only single sample analysis will be performed
 #####	-t: If set, partial analysis will be performed (no heatmap with deeptools)
 #####	-z: If set, partial analysis will be performed for testing
@@ -46,12 +45,11 @@ if [ $# -eq 0 ]; then
 	exit 1
 fi
 
-while getopts ":f:r:m:a:stzxh" opt; do
+while getopts ":f:r:m:stzxh" opt; do
 	case $opt in
 		f) 	export samplefile=${OPTARG};;
 		r)	export regionfile=${OPTARG};;
 		m)	export markofinterest=${OPTARG};;
-		a)	export mapparam=${OPTARG};;
 		s)	printf "\nOption not to perform combined analysis selected\n"
 			export keepgoing="STOP";;
 		t)	printf "\nOption to perform partial combined analysis selected\n"
@@ -84,17 +82,6 @@ if [ ! ${markofinterest} ]; then
 	export markofinterest="H3K27ac"
 else
 	printf "${markofinterest} chosen as the mark of interest\n"
-fi
-
-if [ ! ${mapparam} ]; then
-	printf "No mapping option selected, using default\n"
-	export mapparam="default"
-elif [[ "${mapparam}" == "default" || "${mapparam}" == "colcen" || "${mapparam}" == "colcenall" || "${mapparam}" == "all" ]]; then
-	printf "${mapparam} chosen as the mapping option\n"
-else
-	printf "Unknown mapping option selected\n"
-	printf "${usage}\n"
-	exit 1
 fi
 
 #############################################################################################
@@ -238,7 +225,7 @@ if [[ "${test_new}" == 1 ]]; then
 	do
 		printf "\nRunning ${datatype} analysis script\n"
 		cd ${datatype}
-		qsub -sync y -N ${datatype} -o logs/${samplename}.log ${mc_dir}/MaizeCode_${datatype}_analysis.sh -f temp_${samplename}_${datatype}.txt -a ${mapparam} &
+		qsub -sync y -N ${datatype} -o logs/${samplename}.log ${mc_dir}/MaizeCode_${datatype}_analysis.sh -f temp_${samplename}_${datatype}.txt &
 		pids+=("$!")
 		cd ..
 	done
