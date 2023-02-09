@@ -14,7 +14,7 @@ usage="
 ##### sh MaiCode_RNA_analysis.sh -f samplefile [-a mappingoption] [-h]
 #####	-f: samplefile containing the samples to compare and in 5 tab-delimited columns:
 ##### 		Line, Tissue, Mark, PE or SE, Reference genome directory
-#####	-a: mapping option [ default | colcen ]
+#####	-a: mapping option [ default | colcen | all | colcenall ]
 ##### 	-h: help, returns usage
 ##### 
 ##### It merges the two replicate files and creates stranded bigwig files for each sample
@@ -51,17 +51,6 @@ shift $((OPTIND - 1))
 
 if [ ! ${samplefile} ]; then
 	printf "Samplefile missing!\n"
-	printf "${usage}\n"
-	exit 1
-fi
-
-if [ ! ${mapparam} ]; then
-	printf "No mapping option selected, using default\n"
-	export mapparam="default"
-elif [[ "${mapparam}" == "default" ]] || [[ "${mapparam}" == "colcen" ]]; then
-	printf "${mapparam} chosen as the mapping option\n"
-else
-	printf "Unknown mapping option selected\n"
 	printf "${usage}\n"
 	exit 1
 fi
