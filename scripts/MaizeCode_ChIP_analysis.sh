@@ -14,7 +14,7 @@ usage="
 ##### sh MaiCode_ChIP_analysis.sh -f samplefile [-a mappingoption] [-h]
 #####	-f: samplefile containing the samples to compare and the reference directory in 6 tab-delimited columns:
 ##### 		Data, Line, Tissue, Mark, PE or SE, Reference directory
-#####	-a: mapping option [ default | colcen ] (colcen: very sensitive, -k 150)
+#####	-a: mapping option [ default | colcen | all | colcenall ] (colcen: very sensitive, -k 100; all: no MAPQ>10)
 ##### 	-h: help, returns usage
 ##### 
 ##### It merges the two replicate files, and creates pseudo-replicates by splitting the merged bam file into 2 halves
@@ -60,7 +60,7 @@ fi
 if [ ! ${mapparam} ]; then
 	printf "No mapping option selected, using default\n"
 	export mapparam="default"
-elif [[ "${mapparam}" == "default" ]] || [[ "${mapparam}" == "colcen" ]] || [[ "${mapparam}" == "colcenall" ]]; then
+elif [[ "${mapparam}" == "default" || "${mapparam}" == "colcen" || "${mapparam}" == "colcenall" || "${mapparam}" == "all" ]]; then
 	printf "${mapparam} chosen as the mapping option\n"
 else
 	printf "Unknown mapping option selected\n"
