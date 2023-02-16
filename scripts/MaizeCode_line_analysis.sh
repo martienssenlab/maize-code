@@ -773,21 +773,15 @@ if [[ "${total}" != "TEST" ]]; then
 			for mark in ${all_samples[@]}
 			do
 				mini=$(grep "${mark}" combined/matrix/temp_values_${matrix}_${analysisname}.txt | awk 'BEGIN {m=999999} {a=$5; if (a<m) m=a;} END {print m}')
-				printf "mini: ${mini}\n"
 				maxi=$(grep "${mark}" combined/matrix/temp_values_${matrix}_${analysisname}.txt | awk 'BEGIN {m=-999999} {a=$6; if (a>m) m=a;} END {print m}')			
-				printf "mini: ${maxi}\n"
 				test1=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
-				printf "test1: ${test1}\n"
 				if [[ ${test1} == "yes" ]]; then
 					mini="0"
 					maxi="0.005"
 				fi
 				ymini=$(grep "${mark}" combined/matrix/temp_values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
-				printf "ymini: ${ymini}\n"
 				ymaxi=$(grep "${mark}" combined/matrix/temp_values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
-				printf "ymaxi: ${ymaxi}\n"
 				test2=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
-				printf "test2: ${test2}\n"
 				if [[ ${test2} == "yes" ]]; then
 					ymini=("0")
 					ymaxi=("0.01")
@@ -801,19 +795,14 @@ if [[ "${total}" != "TEST" ]]; then
 					ymaxs+=("${ymaxi}")
 				done		
 			done
-			printf "v1 scales done\n"
 			
 			mins2=()
 			maxs2=()
 			for sample in ${all_labels[@]}
 			do
-				printf "${sample}\n"
 				mini=$(grep ${sample} combined/matrix/temp_values_${matrix}_${analysisname}.txt | awk '{print $5}')
-				printf "mini: ${mini}\n"
 				maxi=$(grep ${sample} combined/matrix/temp_values_${matrix}_${analysisname}.txt | awk '{print $6}')
-				printf "maxi: ${maxi}\n"
 				test=$(awk -v a=${mini} -v b=${maxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
-				printf "test: ${test}\n"
 				if [[ ${test} == "yes" ]]; then
 					mins2+=("0")
 					maxs2+=("0.005")
@@ -826,13 +815,9 @@ if [[ "${total}" != "TEST" ]]; then
 			ymaxs2=()
 			for sample in ${all_labels[@]}
 			do
-				printf "${sample}\n"
 				ymini=$(grep ${sample} combined/matrix/temp_values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
-				printf "ymini: ${ymini}\n"
 				ymaxi=$(grep ${sample} combined/matrix/temp_values_profile_${matrix}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
-				printf "ymini: ${ymaxi}\n"
 				test=$(awk -v a=${ymini} -v b=${ymaxi} 'BEGIN {if (a==0 && b==0) c="yes"; else c="no"; print c}')
-				printf "test: ${test}\n"
 				if [[ ${test} == "yes" ]]; then
 					ymins2+=("0")
 					ymaxs2+=("0.01")
