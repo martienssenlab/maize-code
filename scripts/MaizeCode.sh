@@ -453,12 +453,17 @@ elif [[ "${total}" == "NO" ]]; then
 	analysisname="${samplename}_on_all_genes_for_${markofinterest}"
 	check="combined/chkpts/${analysisname}"
 elif [[ "${total}" == "TEST" ]] && [[ "${repeats}" == "YES" ]]; then
-	printf "\nPerforming testing analysis on all genes\n"
+	printf "\nPerforming testing analysis on all genes and on TEs\n"
 	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -m ${markofinterest} -z -x &
 	analysisname="${samplename}_on_all_genes_for_${markofinterest}"
 	check="combined/chkpts/${analysisname}"
-elif [[ "${repeats}" == "YES" ]]; then
+elif [[ "${total}" == "TEST" ]]; then
 	printf "\nPerforming testing analysis on all genes\n"
+	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -m ${markofinterest} -z &
+	analysisname="${samplename}_on_all_genes_for_${markofinterest}"
+	check="combined/chkpts/${analysisname}"
+elif [[ "${repeats}" == "YES" ]]; then
+	printf "\nPerforming complete analysis on all genes and on TEs\n"
 	qsub -sync y -N maizecodeanalysis -o maizecode.log ${mc_dir}/MaizeCode_analysis.sh -f ${analysisfile} -r all_genes.txt -m ${markofinterest} -x &
 	analysisname="${samplename}_on_all_genes_for_${markofinterest}"
 	check="combined/chkpts/${analysisname}"
