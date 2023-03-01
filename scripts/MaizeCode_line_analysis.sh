@@ -2264,8 +2264,16 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 						mins2+=("0")
 						maxs2+=("0.005")
 					else
-						mins2+=("${mini}")
-						maxs2+=("${maxi}")
+						if [[ "${mini}" ~ "e-" ]]; then
+							mins2+=("0")
+						else
+							mins2+=("${mini}")
+						fi
+						if [[ "${maxi}" ~ "e-" ]]; then
+							maxs2+=("0.005")
+						else
+							maxs2+=("${maxi}")
+						fi
 					fi
 					ymini=$(grep "${sample}" combined/matrix/temp_values_profile_${matrix}_${TEtype}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i<m) m=$i; print m}' | awk 'BEGIN {m=99999} {if ($1<m) m=$1} END {if (m<0) a=m*1.2; else a=m*0.8; print a}')
 					ymaxi=$(grep "${sample}" combined/matrix/temp_values_profile_${matrix}_${TEtype}_${analysisname}.txt | awk '{m=$3; for(i=3;i<=NF;i++) if ($i>m) m=$i; print m}' | awk 'BEGIN {m=-99999} {if ($1>m) m=$1} END {if (m<0) a=m*0.8; else a=m*1.2; print a}')
@@ -2274,8 +2282,16 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 						ymins2+=("0")
 						ymaxs2+=("0.01")
 					else
-						ymins2+=("${ymini}")
-						ymaxs2+=("${ymaxi}")
+						if [[ "${ymini}" ~ "e-" ]]; then
+							ymins2+=("0")
+						else
+							ymins2+=("${ymini}")
+						fi
+						if [[ "${ymaxi}" ~ "e-" ]]; then
+							ymaxs2+=("0.005")
+						else
+							ymaxs2+=("${ymaxi}")
+						fi
 					fi
 				done
 				printf "\nPlotting heatmap for ${matrix} ${TEtype} matrix of ${analysisname} scaling by mark\n"
