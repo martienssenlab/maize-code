@@ -2264,12 +2264,12 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 						mins2+=("0")
 						maxs2+=("0.005")
 					else
-						if [[ "${mini}" ~= "e-" ]]; then
+						if [[ "${mini}" =~ "e-" ]]; then
 							mins2+=("0")
 						else
 							mins2+=("${mini}")
 						fi
-						if [[ "${maxi}" ~= "e-" ]]; then
+						if [[ "${maxi}" =~ "e-" ]]; then
 							maxs2+=("0.005")
 						else
 							maxs2+=("${maxi}")
@@ -2282,12 +2282,12 @@ if [[ ${tefilebw} != "" ]] && [[ "${repeats}" == "YES" ]]; then
 						ymins2+=("0")
 						ymaxs2+=("0.01")
 					else
-						if [[ "${ymini}" ~= "e-" ]]; then
+						if [[ "${ymini}" =~ "e-" ]]; then
 							ymins2+=("0")
 						else
 							ymins2+=("${ymini}")
 						fi
-						if [[ "${ymaxi}" ~= "e-" ]]; then
+						if [[ "${ymaxi}" =~ "e-" ]]; then
 							ymaxs2+=("0.005")
 						else
 							ymaxs2+=("${ymaxi}")
