@@ -123,7 +123,7 @@ All files can be gzipped (.gz extension).
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | ChIP | B73 | roots | H3K27ac | Rep1 | SRRxxxxxx | SRA | SE | B73_NAM |
 | ChIP | B73 | roots | Input | Rep1 | SRRxxxxxx | SRA | SE | B73_NAM |
-| RNA | W22 | ears | RNAseq | Rep1 | S01 | /home/maize-code/RNAseq/fastqs | PE | W22_v2 |
+| RNAseq | W22 | ears | RNAseq | Rep1 | S01 | /home/maize-code/RNAseq/fastqs | PE | W22_v2 |
 | RAMPAGE | W22 | ears | RAMPAGE | Rep1 | rampage_exp1 | /home/maize-code/RAMPAGE/fastqs | PE | W22_v2 |
 | TF_TB1 | B73 | leaf | IP | Rep1 | SRRxxxxxx | SRA | PE | B73_v4 |
 | TF_TB1 | B73 | leaf | Input | Rep1 | SRRxxxxxx | SRA | PE | B73_v4 |
