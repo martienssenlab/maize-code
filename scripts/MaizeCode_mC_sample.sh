@@ -173,9 +173,15 @@ elif [[ ${paired} == "SE" ]]; then
 	if [[ ${met} == "Pico" ]]; then
 		param1="-u 10 -q 10 -m 20"
 		param2="--non_directional"
-	else
-		param1="-m 20"
+		param3=""
+	elif [[ ${met} == "EMseq" ]]; then
+		param1="-u 10 -q 10 -m 20"
 		param2=""
+		param3=""
+	else
+		param1="-q 10 -m 20"
+		param2="" 
+		param3=""
 	fi
 	if [[ ${step} == "download" ]]; then
 		if [[ ${path} == "SRA" ]]; then
@@ -208,11 +214,11 @@ elif [[ ${paired} == "SE" ]]; then
 	fi
 	#### Proceeding with DNA methylation analysis with Bismark
 	printf "\nAligning ${name} with bismark_bowtie2\n"
-	bismark --genome ${ref_dir} ${param2} --local --multicore ${limthreads} --temp_dir=${TMPDIR} -o mapped/${name} --gzip --nucleotide_coverage fastq/trimmed_${sample}.fastq.gz |& tee reports/alignment_bismark_${name}.txt
+	bismark --genome ${ref_dir} ${param2} --local --multicore ${limthreads} --temp_dir=${TMPDIR} -o mapped/${name} --gzip --nucleotide_coverage fastq/trimmed_${name}.fastq.gz |& tee reports/alignment_bismark_${name}.txt
 	printf "\nDeduplicating ${name} with bismark\n"
 	deduplicate_bismark -s --output_dir mapped/${name}/ -o ${name} --bam mapped/${name}/trimmed_${name}_bismark_bt2.bam |& tee reports/deduplication_bismark_${name}.txt
 	printf "\nCalling mC for ${name}"
-	bismark_methylation_extractor -s --comprehensive -o methylcall/ --gzip --multicore ${limthreads} --buffer_size 10G --cytosine_report --CX --genome_folder ${ref_dir} mapped/${name}/${name}.deduplicated.bam
+	bismark_methylation_extractor -s --comprehensive -o methylcall/ ${param3} --gzip --multicore ${limthreads} --buffer_size 10G --cytosine_report --CX --genome_folder ${ref_dir} mapped/${name}/${name}.deduplicated.bam
 	rm -f methylcall/C*context_${name}*
 	rm -f methylcall/${name}*bismark.cov*
 	printf "\nMaking final html report for ${name}\n"
