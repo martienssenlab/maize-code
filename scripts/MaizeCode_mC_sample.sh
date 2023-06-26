@@ -162,11 +162,25 @@ if [[ ${paired} == "PE" ]]; then
     		zcat methylcall/${name}.deduplicated.CX_report.txt.gz | awk -v OFS="\t" -v l=${line} -v t=${tissue} -v r=${rep} -v z=${tot} -v y=${map} -v x=${uniq} '{a+=1; b=$4+$5; g+=b; if (b>0) {c+=1; d+=b;} else f+=1; if (b>2) e+=1} END {print l,t,r,z,y,x,c/a*100,e/a*100,g/a,d/c,"NA"}' >> reports/summary_mapping_stats.txt
   	fi
 	zcat methylcall/${name}.deduplicated.CX_report.txt.gz | awk -v OFS="\t" -v s=${name} '($4+$5)>0 {a=$4+$5; if ($6=="CHH") print $1,$2-1,$2,$4/a*100 > "methylcall/"s"_CHH.bedGraph"; else if ($6=="CHG") print $1,$2-1,$2,$4/a*100 > "methylcall/"s"_CHG.bedGraph"; else print $1,$2-1,$2,$4/a*100 > "methylcall/"s"_CG.bedGraph"}'
+	for strand in plus minus
+	do
+		case "${strand}" in 
+			plus)	sign="+";;
+			minus)	sign="-";;
+		esac
+		zcat methylcall/${name}.deduplicated.CX_report.txt.gz | awk -v n=${sign} '$4==n' | awk -v OFS="\t" -v s=${name} -v d=${strand} '($5+$6)>0 {a=$5+$6; if ($7=="CHH") print $1,$2,$3,$5/a*100 > "methylcall/"s"_CHH_"d".bedGraph"; else if ($7=="CHG") print $1,$2,$3,$5/a*100 > "methylcall/"s"_CHG_"d".bedGraph"; else if ($7=="CG") print $1,$2,$3,$5/a*100 > "methylcall/"s"_CG_"d".bedGraph"}'
+   	done
 	for context in CG CHG CHH
 	do
 		printf "\nMaking bigwig files of ${context} context for ${name}\n"
 		LC_COLLATE=C sort -k1,1 -k2,2n methylcall/${name}_${context}.bedGraph > methylcall/sorted_${name}_${context}.bedGraph
-		bedGraphToBigWig methylcall/sorted_${name}_${context}.bedGraph ${ref_dir}/chrom.sizes tracks/${name}_${context}.bw
+		bedGraphToBigWig methylcall/sorted_${name}_${context}.bedGraph ${ref_dir}/chrom.sizes methylcall/${name}_${context}.bw
+   		for strand in plus minus
+      		do
+ 			printf "\nMaking ${strand} strand bigwig files of ${context} context for ${name}\n"
+			LC_COLLATE=C sort -k1,1 -k2,2n methylcall/${name}_${context}_${strand}.bedGraph > methylcall/sorted_${name}_${context}_${strand}.bedGraph
+			bedGraphToBigWig methylcall/sorted_${name}_${context}_${strand}.bedGraph ${ref_dir}/chrom.sizes methylcall/${name}_${context}_${strand}.bw
+    		done
 	done
 	rm -f methylcall/*${name}*bedGraph*
 elif [[ ${paired} == "SE" ]]; then
@@ -223,23 +237,27 @@ elif [[ ${paired} == "SE" ]]; then
 	rm -f methylcall/${name}*bismark.cov*
 	printf "\nMaking final html report for ${name}\n"
 	bismark2report -o final_report_${name}.html --dir reports/ --alignment_report mapped/${name}/trimmed_${name}_bismark_bt2_SE_report.txt --dedup_report mapped/${name}/trimmed_${name}_bismark_bt2.deduplication_report.txt --splitting_report methylcall/${name}.deduplicated_splitting_report.txt --mbias_report methylcall/${name}.deduplicated.M-bias.txt --nucleotide_report mapped/${name}/trimmed_${name}_bismark_bt2.nucleotide_stats.txt
- 	printf "\nCalculting coverage stats for ${name}\n"
-	# tot=$(cat reports/alignment_bismark_${name}.txt | grep "Sequence pairs analysed in total:" | awk -v FS="\t" 'END {print $2}')
-	# map=$(cat reports/alignment_bismark_${name}.txt | grep "Number of paired-end alignments with a unique best hit:" | awk -v FS="\t" 'END {print $2}')
-  	# uniq=$(cat reports/deduplication_bismark_${name}.txt | grep "Total count of deduplicated leftover sequences:" | awk -v FS="\t" 'END {print $2}')
-  	# if grep -E -q "J02459.1_48502" ${ref_dir}/chrom.sizes; then
-    	#	zcat methylcall/${name}.deduplicated.CX_report.txt.gz | awk -v OFS="\t" -v l=${line} -v t=${tissue} -v r=${rep} -v z=${tot} -v y=${map} -v x=${uniq} '{a+=1; b=$4+$5; g+=b; if ($1=="J02459.1_48502") {m+=$4; n+=b;}; if (b>0) {c+=1; d+=b;} else f+=1; if (b>2) e+=1} END {print l,t,r,z,y,x,c/a*100,e/a*100,g/a,d/c,m/n*100}' >> reports/summary_mapping_stats.txt
-  	# elif grep -E -q "Pt|ChrC|chrc" ${ref_dir}/chrom.sizes; then
-  	#	zcat methylcall/${name}.deduplicated.CX_report.txt.gz | awk -v OFS="\t" -v l=${line} -v t=${tissue} -v r=${rep} -v z=${tot} -v y=${map} -v x=${uniq} '{a+=1; b=$4+$5; g+=b; if ($1 == "Pt" || $1 == "ChrC" || $1 == "chrC") {m+=$4; n+=b;}; if (b>0) {c+=1; d+=b;} else f+=1; if (b>2) e+=1} END {print l,t,r,z,y,x,c/a*100,e/a*100,g/a,d/c,m/n*100}' >> reports/summary_mapping_stats.txt
-  	# else
-    	#	zcat methylcall/${name}.deduplicated.CX_report.txt.gz | awk -v OFS="\t" -v l=${line} -v t=${tissue} -v r=${rep} -v z=${tot} -v y=${map} -v x=${uniq} '{a+=1; b=$4+$5; g+=b; if (b>0) {c+=1; d+=b;} else f+=1; if (b>2) e+=1} END {print l,t,r,z,y,x,c/a*100,e/a*100,g/a,d/c,"NA"}' >> reports/summary_mapping_stats.txt
-  	# fi
+ 	# printf "\nCalculting coverage stats for ${name}\n" To be completed	
 	zcat methylcall/${name}.deduplicated.CX_report.txt.gz | awk -v OFS="\t" -v s=${name} '($4+$5)>0 {a=$4+$5; if ($6=="CHH") print $1,$2-1,$2,$4/a*100 > "methylcall/"s"_CHH.bedGraph"; else if ($6=="CHG") print $1,$2-1,$2,$4/a*100 > "methylcall/"s"_CHG.bedGraph"; else print $1,$2-1,$2,$4/a*100 > "methylcall/"s"_CG.bedGraph"}'
+	for strand in plus minus
+	do
+		case "${strand}" in 
+			plus)	sign="+";;
+			minus)	sign="-";;
+		esac
+		zcat methylcall/${name}.deduplicated.CX_report.txt.gz | awk -v n=${sign} '$4==n' | awk -v OFS="\t" -v s=${name} -v d=${strand} '($5+$6)>0 {a=$5+$6; if ($7=="CHH") print $1,$2,$3,$5/a*100 > "methylcall/"s"_CHH_"d".bedGraph"; else if ($7=="CHG") print $1,$2,$3,$5/a*100 > "methylcall/"s"_CHG_"d".bedGraph"; else if ($7=="CG") print $1,$2,$3,$5/a*100 > "methylcall/"s"_CG_"d".bedGraph"}'
+   	done
 	for context in CG CHG CHH
 	do
 		printf "\nMaking bigwig files of ${context} context for ${name}\n"
 		LC_COLLATE=C sort -k1,1 -k2,2n methylcall/${name}_${context}.bedGraph > methylcall/sorted_${name}_${context}.bedGraph
 		bedGraphToBigWig methylcall/sorted_${name}_${context}.bedGraph ${ref_dir}/chrom.sizes methylcall/${name}_${context}.bw
+   		for strand in plus minus
+      		do
+ 			printf "\nMaking ${strand} strand bigwig files of ${context} context for ${name}\n"
+			LC_COLLATE=C sort -k1,1 -k2,2n methylcall/${name}_${context}_${strand}.bedGraph > methylcall/sorted_${name}_${context}_${strand}.bedGraph
+			bedGraphToBigWig methylcall/sorted_${name}_${context}_${strand}.bedGraph ${ref_dir}/chrom.sizes methylcall/${name}_${context}_${strand}.bw
+    		done
 	done
 	rm -f methylcall/*${name}*bedGraph*
 else
