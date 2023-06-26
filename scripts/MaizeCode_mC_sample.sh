@@ -168,7 +168,7 @@ if [[ ${paired} == "PE" ]]; then
 			plus)	sign="+";;
 			minus)	sign="-";;
 		esac
-		zcat methylcall/${name}.deduplicated.CX_report.txt.gz | awk -v n=${sign} '$4==n' | awk -v OFS="\t" -v s=${name} -v d=${strand} '($5+$6)>0 {a=$5+$6; if ($7=="CHH") print $1,$2,$3,$5/a*100 > "methylcall/"s"_CHH_"d".bedGraph"; else if ($7=="CHG") print $1,$2,$3,$5/a*100 > "methylcall/"s"_CHG_"d".bedGraph"; else if ($7=="CG") print $1,$2,$3,$5/a*100 > "methylcall/"s"_CG_"d".bedGraph"}'
+		zcat methylcall/${name}.deduplicated.CX_report.txt.gz | awk -v n=${sign} '$3==n' | awk -v OFS="\t" -v s=${name} -v d=${strand} '($4+$5)>0 {a=$4+$5; if ($6=="CHH") print $1,$2-1,$2,$4/a*100 > "methylcall/"s"_CHH_"d".bedGraph"; else if ($6=="CHG") print $1,$2-1,$2,$4/a*100 > "methylcall/"s"_CHG_"d".bedGraph"; else if ($6=="CG") print $1,$2-1,$2,$4/a*100 > "methylcall/"s"_CG_"d".bedGraph"}'
    	done
 	for context in CG CHG CHH
 	do
@@ -245,7 +245,7 @@ elif [[ ${paired} == "SE" ]]; then
 			plus)	sign="+";;
 			minus)	sign="-";;
 		esac
-		zcat methylcall/${name}.deduplicated.CX_report.txt.gz | awk -v n=${sign} '$4==n' | awk -v OFS="\t" -v s=${name} -v d=${strand} '($5+$6)>0 {a=$5+$6; if ($7=="CHH") print $1,$2,$3,$5/a*100 > "methylcall/"s"_CHH_"d".bedGraph"; else if ($7=="CHG") print $1,$2,$3,$5/a*100 > "methylcall/"s"_CHG_"d".bedGraph"; else if ($7=="CG") print $1,$2,$3,$5/a*100 > "methylcall/"s"_CG_"d".bedGraph"}'
+		zcat methylcall/${name}.deduplicated.CX_report.txt.gz | awk -v n=${sign} '$3==n' | awk -v OFS="\t" -v s=${name} -v d=${strand} '($4+$5)>0 {a=$4+$5; if ($6=="CHH") print $1,$2-1,$2,$4/a*100 > "methylcall/"s"_CHH_"d".bedGraph"; else if ($6=="CHG") print $1,$2-1,$2,$4/a*100 > "methylcall/"s"_CHG_"d".bedGraph"; else if ($6=="CG") print $1,$2-1,$2,$4/a*100 > "methylcall/"s"_CG_"d".bedGraph"}'
    	done
 	for context in CG CHG CHH
 	do
