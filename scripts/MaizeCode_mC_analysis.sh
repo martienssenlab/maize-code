@@ -75,12 +75,26 @@ do
 		zcat methylcall/${name}_Rep*.deduplicated.CX_report.txt.gz | sort -k1,1 -k2,2n | awk -v OFS="\t" '{print $1,$2-1,$2,$3,$4,$5,$6,$7}' > methylcall/temp_${name}.bed
 		bedtools merge -d -1 -o distinct,sum,sum,distinct,distinct -c 4,5,6,7,8 -i methylcall/temp_${name}.bed > methylcall/temp2_${name}.bed
 		cat methylcall/temp2_${name}.bed | awk -v OFS="\t" -v s=${name} '($5+$6)>0 {a=$5+$6; if ($7=="CHH") print $1,$2,$3,$5/a*100 > "methylcall/"s"_CHH.bedGraph"; else if ($7=="CHG") print $1,$2,$3,$5/a*100 > "methylcall/"s"_CHG.bedGraph"; else if ($7=="CG") print $1,$2,$3,$5/a*100 > "methylcall/"s"_CG.bedGraph"}'
-		rm -f methylcall/temp*${name}*
+		for strand in plus minus
+		do
+			case "${strand}" in 
+				plus)	sign="+";;
+				minus)	sign="-";;
+			esac
+			awk -v n=${sign} '$4==n' methylcall/temp2_${name}.bed | awk -v OFS="\t" -v s=${name} -v d=${strand} '($5+$6)>0 {a=$5+$6; if ($7=="CHH") print $1,$2,$3,$5/a*100 > "methylcall/"s"_CHH_"d".bedGraph"; else if ($7=="CHG") print $1,$2,$3,$5/a*100 > "methylcall/"s"_CHG_"d".bedGraph"; else if ($7=="CG") print $1,$2,$3,$5/a*100 > "methylcall/"s"_CG_"d".bedGraph"}'
+   		done
+  		rm -f methylcall/temp*${name}*
 		for context in CG CHG CHH
 		do
 			printf "\nMaking bigwig files of ${context} context for ${name}\n"
 			LC_COLLATE=C sort -k1,1 -k2,2n methylcall/${name}_${context}.bedGraph > methylcall/sorted_${name}_${context}.bedGraph
 			bedGraphToBigWig methylcall/sorted_${name}_${context}.bedGraph ${ref_dir}/chrom.sizes methylcall/${name}_${context}.bw
+   			for strand in plus minus
+      			do
+ 				printf "\nMaking ${strand} strand bigwig files of ${context} context for ${name}\n"
+				LC_COLLATE=C sort -k1,1 -k2,2n methylcall/${name}_${context}_${strand}.bedGraph > methylcall/sorted_${name}_${context}_${strand}.bedGraph
+				bedGraphToBigWig methylcall/sorted_${name}_${context}_${strand}.bedGraph ${ref_dir}/chrom.sizes methylcall/${name}_${context}_${strand}.bw
+    			done
 		done
 		rm -f methylcall/*${name}*.bedGraph
 		touch chkpts/analysis_${name}
