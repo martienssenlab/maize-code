@@ -244,6 +244,7 @@ if [[ "${test_new}" == 1 ]]; then
 					printf "\nChIP analysis for ${chipsample} processed succesfully\n"
 				fi
 			done
+   			rm -f ${datatype}/temp_${samplename}_${datatype}.txt
 		elif [[ "${datatype}" == "RNA" ]]; then
 			for rnasample in ${new_rna_sample[@]}
 			do
@@ -253,6 +254,7 @@ if [[ "${test_new}" == 1 ]]; then
 					printf "\nRNA analysis for ${rnasample} processed succesfully\n"
 				fi
 			done
+   			rm -f ${datatype}/temp_${samplename}_${datatype}.txt
 		elif [[ "${datatype}" == "TF" ]]; then
 			for tfsample in ${new_tf_chk[@]}
 			do
@@ -262,6 +264,7 @@ if [[ "${test_new}" == 1 ]]; then
 					printf "\nTF analysis for ${tfsample} processed succesfully\n"
 				fi
 			done
+   			rm -f ${datatype}/temp_${samplename}_${datatype}.txt
 		elif [[ "${datatype}" == "shRNA" ]]; then
 			for shrnasample in ${new_shrna_sample[@]}
 			do
@@ -271,6 +274,7 @@ if [[ "${test_new}" == 1 ]]; then
 					printf "\nshRNA analysis for ${shrnasample} processed succesfully\n"
 				fi
 			done
+   			rm -f ${datatype}/temp_${samplename}_${datatype}.txt
 		elif [[ "${datatype}" == "mC" ]]; then
 			for mcsample in ${new_mc_sample[@]}
 			do
@@ -280,6 +284,7 @@ if [[ "${test_new}" == 1 ]]; then
 					printf "\nshRNA analysis for ${shrnasample} processed succesfully\n"
 				fi
 			done
+   			rm -f ${datatype}/temp_${samplename}_${datatype}.txt
 		fi
 	done
 fi
