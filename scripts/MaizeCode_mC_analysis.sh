@@ -88,7 +88,7 @@ do
 		do
 			printf "\nMaking bigwig files of ${context} context for ${name}\n"
 			LC_COLLATE=C sort -k1,1 -k2,2n methylcall/${name}_${context}.bedGraph > methylcall/sorted_${name}_${context}.bedGraph
-			bedGraphToBigWig methylcall/sorted_${name}_${context}.bedGraph ${ref_dir}/chrom.sizes methylcall/${name}_${context}.bw
+			bedGraphToBigWig methylcall/sorted_${name}_${context}.bedGraph ${ref_dir}/chrom.sizes tracks/${name}_${context}.bw
    			for strand in plus minus
       			do
  				printf "\nMaking ${strand} strand bigwig files of ${context} context for ${name}\n"
