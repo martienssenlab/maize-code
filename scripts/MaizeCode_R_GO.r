@@ -52,7 +52,7 @@ getGO<-function(ont, name) {
   }
   summary<-GenTable(GOdata, classicFisher = resultFisher, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = nSigTerms, numChar=1000)
   tab<-summary %>%
-	rename_with(.cols = starts_with("apply"), .fn = ~ return("classicFisher")) %>%
+	rename_with(.cols = starts_with("apply"), .fn = ~ { if (length(.) > 0) { paste0("classicFisher") } else { . } }) %>%
 	mutate(classicFisher = classicFisher %>% str_replace(pattern= "< *1e-30", replacement = "1e-30") %>% as.numeric())
   sigTerms<-tab$GO.ID
   genesInTerms<-genesInTerm(GOdata, sigTerms)
@@ -64,7 +64,7 @@ getGO<-function(ont, name) {
 	  rename(GO=GO.ID) %>%
 	  merge(geneid2GO, by="GO") %>%
 	  merge(sampletable, by="GID") %>%
-	  select(Chr, Start, Stop, GID, GO, Term) %>%
+	  dplyr::select(Chr, Start, Stop, GID, GO, Term) %>%
 	  arrange(GO) %>%
 	  unique()
   if (nrow(tab2) > 1) {
