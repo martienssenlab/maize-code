@@ -38,7 +38,7 @@ analysisname<-args[4]
 ref_genes<-read.delim(args[5], header = FALSE, 
                       col.names = c("Chr","Start","Stop","Name","Value","Strand"))
 ref_genes<-mutate(ref_genes, GeneID=str_replace(ref_genes$Name, pattern = ".*ID=(gene:)?([^;]+).*", replacement = "\\2")) %>%
-  select(-Name, -Value)
+  dplyr::select(-Name, -Value)
 
 # EdgeR analysis
 y<-DGEList(counts=filtered, group = samples)
@@ -97,7 +97,7 @@ getGO<-function(ont, name, sampletable) {
   }
   summary<-GenTable(GOdata, classicFisher = resultFisher, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = nSigTerms, numChar=1000)
   tab<-summary %>%
-	rename_with(.cols = starts_with("apply"), .fn = ~ return("classicFisher")) %>%
+	rename_with(.cols = starts_with("apply"), .fn = ~ paste0("classicFisher", recycle0 = TRUE)) %>%
 	mutate(classicFisher = classicFisher %>% str_replace(pattern= "< *1e-30", replacement = "1e-30") %>% as.numeric())
   sigTerms<-tab$GO.ID
   genesInTerms<-genesInTerm(GOdata, sigTerms)
@@ -159,12 +159,12 @@ for (i in 1:(length(tissues)-1)) {
 	sample2<-tissues[j]
 	FCtable<-create.FC.table(sample1,sample2,y)
 	FCtable<-merge(ref_genes,FCtable,by=c("GeneID")) %>%
-		select(Chr,Start,Stop,GeneID,logFC,Strand,logCPM,PValue,FDR,Sample) %>%
+		dplyr::select(Chr,Start,Stop,GeneID,logFC,Strand,logCPM,PValue,FDR,Sample) %>%
 		arrange(Chr,Start)
 	write.table(FCtable,paste0("combined/DEG/FC_",analysisname,"_",sample1,"_vs_",sample2,".txt"),sep="\t",row.names=FALSE,col.names=TRUE,quote=FALSE)
 	DEGtable<-create.DEG.table(sample1,sample2,y)
 	DEGtable<-merge(ref_genes,DEGtable,by=c("GeneID")) %>%
-		select(Chr,Start,Stop,GID=GeneID,logFC,Strand,logCPM,PValue,FDR,Sample,DEG) %>%
+		dplyr::select(Chr,Start,Stop,GID=GeneID,logFC,Strand,logCPM,PValue,FDR,Sample,DEG) %>%
 		arrange(DEG,Chr,Start)
 	write.table(DEGtable,paste0("combined/DEG/DEG_",analysisname,"_",sample1,"_vs_",sample2,".txt"),sep="\t",row.names=FALSE,col.names=TRUE,quote=FALSE)
 	allDEG<-c(allDEG,DEGtable$GID)
