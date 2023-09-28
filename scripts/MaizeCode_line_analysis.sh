@@ -1905,7 +1905,7 @@ fi
 
 uniq_shrna_tissue_list=($(printf "%s\n" "${shrna_tissue_list[@]}" | sort -u))
 
-if [[ ${#uniq_shrna_tissue_list[*]} -ge 2 ]] && [[ ${tefilebw} != "" ]]; then
+if [[ ${#uniq_shrna_tissue_list[*]} -ge 2 ]] && [[ ${tefilebw} != "" ]] && [[ "${total}" != "TEST" ]]; then
 	if [ ! -d combined/shRNA ]; then
 		mkdir combined/shRNA
 	fi
