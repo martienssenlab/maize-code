@@ -39,6 +39,7 @@ ref_genes<-read.delim(args[5], header = FALSE,
                       col.names = c("Chr","Start","Stop","Name","Value","Strand"))
 ref_genes<-mutate(ref_genes, GeneID=str_replace(ref_genes$Name, pattern = ".*ID=(gene:)?([^;]+).*", replacement = "\\2")) %>%
   dplyr::select(-Name, -Value)
+ref_genes$GeneID<-str_remove_all(ref_genes$GeneID, pattern = "_*")
 
 # EdgeR analysis
 y<-DGEList(counts=filtered, group = samples)
