@@ -106,8 +106,8 @@ do
 		#### To make bw files of merged samples if not already existing		
 		if [ ! -s tracks/${name}_merged_minus.bw ]; then
 			printf "\nMaking tracks for ${name}\n"
-			bamCoverage --filterRNAstrand forward -bs 1 -p ${threads} --normalizeUsing CPM -b mapped/${name}_merged.bam -o tracks/${name}_merged_plus.bw
-			bamCoverage --filterRNAstrand reverse -bs 1 -p ${threads} --normalizeUsing CPM -b mapped/${name}_merged.bam -o tracks/${name}_merged_minus.bw
+			bamCoverage --filterRNAstrand reverse -bs 1 -p ${threads} --normalizeUsing CPM -b mapped/${name}_merged.bam -o tracks/${name}_merged_plus.bw
+			bamCoverage --filterRNAstrand forward -bs 1 -p ${threads} --normalizeUsing CPM -b mapped/${name}_merged.bam -o tracks/${name}_merged_minus.bw
 		else
 			printf "\nBigwig files for ${name} already exists\n"
 		fi
