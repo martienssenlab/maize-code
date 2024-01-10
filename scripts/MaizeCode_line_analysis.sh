@@ -375,9 +375,9 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 		do
 			namej=${rnaseq_name_list[j]}
 			if [ -s combined/DEG/DEG_${analysisname}_${namei}_vs_${namej}.txt ]; then
-				awk -v a=${namei} -v b=${namej} -v OFS="\t" '{if ($11== "UP") c+=1; else d+=1} END {print a" vs "b,"UP:"c,"DOWN:"d}' combined/DEG/DEG_${analysisname}_${namei}_vs_${namej}.txt >> combined/reports/summary_DEG_numbers_${analysisname}.txt
+				awk -v a=${namei} -v b=${namej} -v OFS="\t" 'NR>1 {if ($11== "UP") c+=1; else d+=1} END {print a" vs "b,"UP:"c,"DOWN:"d}' combined/DEG/DEG_${analysisname}_${namei}_vs_${namej}.txt >> combined/reports/summary_DEG_numbers_${analysisname}.txt
 			elif [ -s combined/DEG/DEG_${analysisname}_${namej}_vs_${namei}.txt ]; then
-				awk -v a=${namei} -v b=${namej} -v OFS="\t" '{if ($11== "DOWN") c+=1; else d+=1} END {print a" vs "b,"UP:"c,"DOWN:"d}' combined/DEG/DEG_${analysisname}_${namej}_vs_${namei}.txt >> combined/reports/summary_DEG_numbers_${analysisname}.txt
+				awk -v a=${namei} -v b=${namej} -v OFS="\t" 'NR>1 {if ($11== "DOWN") c+=1; else d+=1} END {print a" vs "b,"UP:"c,"DOWN:"d}' combined/DEG/DEG_${analysisname}_${namej}_vs_${namei}.txt >> combined/reports/summary_DEG_numbers_${analysisname}.txt
 			fi
 		done
 		if [ -s combined/DEG/only_${namei}_DEG_UP_${analysisname}.bed ] && [ -s combined/DEG/only_${namei}_DEG_DOWN_${analysisname}.bed ]; then
