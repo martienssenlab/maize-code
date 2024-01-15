@@ -198,7 +198,7 @@ elif [[ ${paired} == "SE" ]]; then
 	printf "\nMaking plus track for ${name}\n"
 	bamCoverage --filterRNAstrand reverse -bs 1 -p ${threads} --normalizeUsing CPM -b mapped/${name}/filtered_${name}.bam -o tracks/${name}_plus.bw
 	bamCoverage --filterRNAstrand forward -bs 1 -p ${threads} --normalizeUsing CPM -b mapped/${name}/filtered_${name}.bam -o tracks/${name}_minus.bw
-	#### Filtering only small RNA sizes (15 to 32nt)
+	#### Filtering only small RNA sizes (20 to 24nt)
 	samtools view -h mapped/${name}/filtered_${name}.bam | awk '(length($10) >= 20 && length($10) <= 24) || $1 ~ /^@/' | samtools view -bS - > mapped/${name}/sized_${name}.bam
 	#### Getting stats of size distribution
   	printf "\nGetting trimmed stats for ${name}\n"
