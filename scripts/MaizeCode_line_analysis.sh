@@ -312,6 +312,7 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 	fi
 	#### To extract DEG only called in one tissue
 	if [ ${#rnaseq_name_list[@]} -ge 3 ]; then
+ 		printf "Sample\tGID\tDEG\n" > combined/DEG/unique_DEGs_${analysisname}.txt
 		for namei in ${rnaseq_name_list[@]}
 		do
 			if [ -e combined/peaks/temp_all_${namei}_${analysisname}_DEG_GID.txt ]; then
@@ -350,7 +351,13 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 			done
 			cat combined/DEG/temp_tissue_spec_DEG_${analysisname}_DOWN_${max}.txt | sort -u > combined/DEG/only_${namei}_DEG_DOWN_${analysisname}.bed
 			cat combined/DEG/temp_tissue_spec_DEG_${analysisname}_UP_${max}.txt | sort -u > combined/DEG/only_${namei}_DEG_UP_${analysisname}.bed
-			rm -f combined/DEG/DEG_${analysisname}_*.temp.bed
+   			if [ -s combined/DEG/only_${namei}_DEG_DOWN_${analysisname}.bed ]; then
+      				awk -v OFS="\t" -v s=${namei} '{print s,$4,"DOWN"}' combined/DEG/only_${namei}_DEG_DOWN_${analysisname}.bed >> combined/DEG/unique_DEGs_${analysisname}.txt
+	  		fi
+     			if [ -s combined/DEG/only_${namei}_DEG_UP_${analysisname}.bed ]; then
+				awk -v OFS="\t" -v s=${namei} '{print s,$4,"UP"}' combined/DEG/only_${namei}_DEG_UP_${analysisname}.bed >> combined/DEG/unique_DEGs_${analysisname}.txt
+			fi
+   			rm -f combined/DEG/DEG_${analysisname}_*.temp.bed
 			rm -f combined/DEG/temp_tissue_spec_DEG_${analysisname}*
 			if [ -d combined/GO/${ref}/org.Zmays.eg.db ]; then
 				printf "\nMaking GO enrichment plot for ${namei} tissue with R version:\n"
