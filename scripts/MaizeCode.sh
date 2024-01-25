@@ -92,11 +92,16 @@ if [ ! ${samplefile} ]; then
 	printf "Samplefile missing!\n"
 	printf "${usage}\n"
 	exit 1
+else
+	printf "Using sample file ${samplefile}\n"
 fi
+
 if [ ! ${pathtoref} ]; then
 	printf "Path to reference genome folders missing!\n"
 	printf "${usage}\n"
 	exit 1
+else
+	printf "Using reference genome folders in ${pathtoref}\n"
 fi
 
 if [ ! ${markofinterest} ]; then
