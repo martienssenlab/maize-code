@@ -6,7 +6,6 @@ MaizeCode streamlines analysis for multi-sample, multi-modal sequencing datasets
 * WGBS
 * mRNA-seq
 * shRNA-seq
-* smallRNA-seq
 
 ## MaizeCode Pipeline Help
 
