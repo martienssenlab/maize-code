@@ -10,8 +10,6 @@ For the manuscript "MaizeCODE reveals bi-directionally expressed enhancers that 
 * WGBS
 * mRNA-seq
 * shRNA-seq
-* smallRNA-seq
->>>>>>> 58421ff (Update README.md)
 
 ## MaizeCode Pipeline Help
 
