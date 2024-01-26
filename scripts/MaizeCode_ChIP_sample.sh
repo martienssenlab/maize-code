@@ -131,8 +131,7 @@ fi
 printf "\nRunning fastQC on raw reads for ${name} with fastqc version:\n"
 fastqc --version
 if [[ ${paired} == "PE" ]]; then
-	fastqc -o reports/ fastq/${name}_R1.fastq.gz
-	fastqc -o reports/ fastq/${name}_R2.fastq.gz
+	fastqc --threads 2 -o reports/ fastq/${name}_R1.fastq.gz fastq/${name}_R2.fastq.gz
 elif [[ ${paired} == "SE" ]]; then
 	fastqc -o reports/ fastq/${name}.fastq.gz
 fi
@@ -167,8 +166,7 @@ fi
 #### FastQC on trimmed data
 printf "\nRunning fastQC on trimmed reads for ${name}\n"
 if [[ ${paired} == "PE" ]]; then
-	fastqc -o reports/ fastq/trimmed_${name}_R1.fastq.gz
-	fastqc -o reports/ fastq/trimmed_${name}_R2.fastq.gz
+	fastqc --threads 2 -o reports/ fastq/trimmed_${name}_R1.fastq.gz fastq/trimmed_${name}_R2.fastq.gz
 elif [[ ${paired} == "SE" ]]; then
 	fastqc -o reports/ fastq/trimmed_${name}.fastq.gz
 fi
