@@ -151,7 +151,7 @@ if [[ ${step} == "trim" ]]; then
 		ca_read_params="-o fastq/trimmed_${name}.fastq.gz fastq/${name}.fastq.gz"
 	fi
 	
-	cutadapt -j ${threads} -q 10 -m 20 "${ca_adapter_params}" "${ca_read_params}" |& tee reports/trimming_${name}.txt
+	cutadapt -j ${threads} -q 10 -m 20 ${ca_adapter_params} ${ca_read_params} |& tee reports/trimming_${name}.txt
 
 	#### Removing untrimmed fastq(s)
 	if [[ ${paired} == "PE" ]]; then
@@ -192,8 +192,9 @@ fi
 
 # The shell redirection to a third file descriptor here is necessary only because we tee the bt2 stderr info into the log and the mapping report.
 # Otherwise, could just write the report directly to the with with 2>reports/mapping_${name}.txt and pipe stdout to samtools.
-{ bowtie2 -p ${threads} --end-to-end --met-file reports/bt2_${name}.txt -x $ref_dir/$ref ${paired_params} ${map_params} 2>&1 1>&3 3>&- | tee reports/mapping_${name}.txt } 3>&1 1>&2 \
-	samtools view -@ ${threads} -b -h -F 256 -o mapped/temp1_${name}.bam -
+( bowtie2 -p ${threads} --end-to-end --met-file reports/bt2_${name}.txt -x $ref_dir/$ref ${paired_params} ${map_params} \
+	| samtools view -@ ${threads} -b -h -F 256 -o mapped/temp1_${name}.bam) 3>&1 1>&2 2>&3 | tee reports/mapping_${name}.txt
+	
 
 
 #### Filter read alignments respecting the sequencing strategy and mapping macro parameter
@@ -236,3 +237,4 @@ awk -v OFS="\t" -v l=${line} -v t=${tissue} -v m=${mark} -v r=${rep}${add} -v g=
 
 printf "\nScript finished successfully!\n"
 touch chkpts/${name}_${ref}
+
