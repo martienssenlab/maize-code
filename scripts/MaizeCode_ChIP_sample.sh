@@ -81,6 +81,11 @@ else
 	printf "${usage}\n"
 	exit 1
 fi
+	
+if [[ ! (${paired} == "PE" || ${paired} == "SE") ]]; then
+	printf "\nData format missing: paired-end (PE) or single-end (SE)?\n"
+	exit 1
+fi
 
 export ref=${ref_dir##*/}
 
@@ -92,113 +97,129 @@ else
 	name=${line}_${tissue}_${mark}_${rep}
 fi
 
-if [[ ${paired} == "PE" ]]; then
-	if [[ ${step} == "download" ]]; then
-		if [[ ${path} == "SRA" ]]; then
-			printf "\nUsing fasterq-dump for ${name} (${sampleID})\n"
-			fasterq-dump -e ${threads} --outdir ./fastq ${sampleID}
-			printf "\n$name ($sampleID) downloaded\nGzipping and renaming files..."
+
+if [[ ${step} == "download" ]]; then
+	if [[ ${path} == "SRA" ]]; then
+		printf "\nUsing fasterq-dump for ${name} (${sampleID})\n"
+		fasterq-dump -e ${threads} --outdir ./fastq ${sampleID}
+		printf "\n$name ($sampleID) downloaded\nGzipping and renaming files..."
+
+		if [[ ${paired} == "PE" ]]; then
 			pigz -p ${threads} ./fastq/${sampleID}_1.fastq
 			mv ./fastq/${sampleID}_1.fastq.gz ./fastq/${name}_R1.fastq.gz
 			pigz -p ${threads} ./fastq/${sampleID}_2.fastq
 			mv ./fastq/${sampleID}_2.fastq.gz ./fastq/${name}_R2.fastq.gz
-			step="trim"
-		else
-			printf "\nCopying PE fastq for ${name} (${sampleID} in ${path})\n"
-			cp ${path}/*${sampleID}*R1*q.gz ./fastq/${name}_R1.fastq.gz
-			cp ${path}/*${sampleID}*R2*q.gz ./fastq/${name}_R2.fastq.gz
-			step="trim"
-		fi
-	fi
-	if [[ ${step} == "trim" ]]; then
-		#### FastQC on raw data
-		printf "\nRunning fastQC for ${name} with fastqc version:\n"
-		fastqc --version
-		fastqc -o reports/ fastq/${name}_R1.fastq.gz
-		fastqc -o reports/ fastq/${name}_R2.fastq.gz	
-		#### Trimming illumina adapters with Cutadapt
-		printf "\nTrimming Illumina adapters for ${name} with cutadapt version:\n"
-		cutadapt --version
-		cutadapt -j ${threads} -q 10 -m 20 -a AGATCGGAAGAGCACACGTCTGAAC -A AGATCGGAAGAGCGTCGTGTAGGGA -o fastq/trimmed_${name}_R1.fastq.gz -p fastq/trimmed_${name}_R2.fastq.gz fastq/${name}_R1.fastq.gz fastq/${name}_R2.fastq.gz |& tee reports/trimming_${name}.txt
-		#### Removing untrimmed fastq
-		rm -f fastq/${name}_R*.fastq.gz
-		#### FastQC on trimmed data
-		printf "\nRunning fastQC on trimmed files for ${name}\n"
-		fastqc -o reports/ fastq/trimmed_${name}_R1.fastq.gz
-		fastqc -o reports/ fastq/trimmed_${name}_R2.fastq.gz
-	fi
-	#### Aligning reads to reference genome with Bowtie2
-	#### maxins 1500 used after seeing that average insert size from first round of mapping was ~500bp (for most B73 marks) but ~900bp for Inputs
-	if [[ ${mapparam} == "default" || ${mapparam} == "all" ]]; then
-		printf "\nMaping ${name} to ${ref} with ${mapparam} parameters\n"
-		bowtie2 --version
-		bowtie2 -p ${threads} --end-to-end --maxins 1500 --met-file reports/bt2_${name}.txt -x $ref_dir/$ref -1 fastq/trimmed_${name}_R1.fastq.gz -2 fastq/trimmed_${name}_R2.fastq.gz -S mapped/${name}.sam |& tee reports/mapping_${name}.txt
-	elif [[ ${mapparam} == "colcen" || ${mapparam} == "colcenall" ]]; then
-		printf "\nMaping ${name} to ${ref} with ${mapparam} parameters\n"
-		bowtie2 --version
-		bowtie2 -p ${threads} --very-sensitive --no-mixed --no-discordant --k 100 --end-to-end --met-file reports/bt2_${name}.txt -x $ref_dir/$ref -1 fastq/trimmed_${name}_R1.fastq.gz -2 fastq/trimmed_${name}_R2.fastq.gz -S mapped/${name}.sam |& tee reports/mapping_${name}.txt
-	fi
-elif [[ ${paired} == "SE" ]]; then
-	if [[ ${step} == "download" ]]; then
-		if [[ ${path} == "SRA" ]]; then
-			printf "\nUsing fasterq-dump for ${name} (${sampleID})\n"
-			fasterq-dump -e ${threads} --outdir ./fastq ${sampleID}
-			printf "\n$name ($sampleID) downloaded\nRenaming files..."
+		elif [[ ${paired} == "SE" ]]; then
 			pigz -p ${threads} ./fastq/${sampleID}.fastq
 			mv ./fastq/${sampleID}.fastq.gz ./fastq/${name}.fastq.gz
-			step="trim"
-		else
-			printf "\nCopying SE fastq for ${name} (${sampleID} in ${path})\n"
+		fi
+	else
+		printf "\nCopying ${paired} fastq(s) for ${name} (${sampleID} in ${path})\n"
+		if [[ ${paired} == "PE" ]]; then
+			cp ${path}/*${sampleID}*R1*q.gz ./fastq/${name}_R1.fastq.gz
+			cp ${path}/*${sampleID}*R2*q.gz ./fastq/${name}_R2.fastq.gz
+		elif [[ ${paired} == "SE" ]]; then
 			cp ${path}/*${sampleID}*q.gz ./fastq/${name}.fastq.gz
-			step="trim"
 		fi
 	fi
-	if [[ ${step} == "trim" ]]; then
-		#### FastQC on raw data
-		printf "\nRunning fastQC for ${name} with fastqc version:\n"
-		fastqc --version
-		fastqc -o reports/ fastq/${name}.fastq.gz
-		#### Trimming illumina adapters with Cutadapt
-		printf "\nTrimming Illumina adapters for ${name} with cutadapt version:\n"
-		cutadapt --version
-		cutadapt -j ${threads} -q 10 -m 20 -a AGATCGGAAGAGCACACGTCTGAAC -o fastq/trimmed_${name}.fastq.gz fastq/${name}.fastq.gz |& tee reports/trimming_${name}.txt
-		#### Removing untrimmed fastq
-		rm -f fastq/${name}.fastq.gz
-		#### FastQC on trimmed data
-		printf "\nRunning fastQC on trimmed files for ${name}\n"
-		fastqc -o reports/ fastq/trimmed_${name}.fastq.gz
-	fi
-	#### Aligning reads to reference genome with Bowtie2
-	if [[ ${mapparam} == "default" || ${mapparam} == "all" ]]; then
-		printf "\nMaping ${name} to ${ref} with ${mapparam} parameters\n"
-		bowtie2 --version
-		bowtie2 -p ${threads} --end-to-end --met-file reports/bt2_${name}.txt -x $ref_dir/$ref -U fastq/trimmed_${name}.fastq.gz -S mapped/${name}.sam |& tee reports/mapping_${name}.txt
-	elif [[ ${mapparam} == "colcen" || ${mapparam} == "colcenall" ]]; then
-		printf "\nMaping ${name} to ${ref} with ${mapparam} parameters\n"
-		bowtie2 --version
-		bowtie2 -p ${threads} --very-sensitive --no-mixed --no-discordant --k 100 --end-to-end --met-file reports/bt2_${name}.txt -x $ref_dir/$ref -U fastq/trimmed_${name}.fastq.gz -S mapped/${name}.sam |& tee reports/mapping_${name}.txt
-	fi
-else
-	printf "\nData format missing: paired-end (PE) or single-end (SE)?\n"
-	exit 1
+
+	step="trim"
 fi
 
-#### Removing low quality reads and duplicates, sorting, converting to bam and indexing file with samtools
+
+#### FastQC on raw data
+printf "\nRunning fastQC on raw reads for ${name} with fastqc version:\n"
+fastqc --version
+if [[ ${paired} == "PE" ]]; then
+	fastqc -o reports/ fastq/${name}_R1.fastq.gz
+	fastqc -o reports/ fastq/${name}_R2.fastq.gz
+elif [[ ${paired} == "SE" ]]; then
+	fastqc -o reports/ fastq/${name}.fastq.gz
+fi
+
+
+#### Trimming illumina adapters with Cutadapt
+if [[ ${step} == "trim" ]]; then
+	printf "\nTrimming Illumina adapters for ${name} with cutadapt version:\n"
+	cutadapt --version
+
+	if [[ ${paired} == "PE" ]]; then
+		ca_adapter_params="-a AGATCGGAAGAGCACACGTCTGAAC -A AGATCGGAAGAGCGTCGTGTAGGGA"
+		ca_read_params="-o fastq/trimmed_${name}_R1.fastq.gz -p fastq/trimmed_${name}_R2.fastq.gz fastq/${name}_R1.fastq.gz fastq/${name}_R2.fastq.gz"
+
+	elif [[ ${paired} == "SE" ]]; then
+		ca_adapter_params="-a AGATCGGAAGAGCACACGTCTGAAC"
+		ca_read_params="-o fastq/trimmed_${name}.fastq.gz fastq/${name}.fastq.gz"
+	fi
+	
+	cutadapt -j ${threads} -q 10 -m 20 "${ca_adapter_params}" "${ca_read_params}" |& tee reports/trimming_${name}.txt
+
+	#### Removing untrimmed fastq(s)
+	if [[ ${paired} == "PE" ]]; then
+		rm -f fastq/${name}_R*.fastq.gz
+
+	elif [[ ${paired} == "SE" ]]; then
+		rm -f fastq/${name}.fastq.gz
+	fi
+fi
+
+
+#### FastQC on trimmed data
+printf "\nRunning fastQC on trimmed reads for ${name}\n"
+if [[ ${paired} == "PE" ]]; then
+	fastqc -o reports/ fastq/trimmed_${name}_R1.fastq.gz
+	fastqc -o reports/ fastq/trimmed_${name}_R2.fastq.gz
+elif [[ ${paired} == "SE" ]]; then
+	fastqc -o reports/ fastq/trimmed_${name}.fastq.gz
+fi
+
+
+#### Align reads to the reference respecting the sequencing strategy and mapping macro parameter
+printf "\nMapping ${paired} library ${name} to ${ref} with ${mapparam} parameters with bowtie2 version:\n"
+bowtie2 --version
+printf "\nSecondary alignments will be discarded.\n"
+
+if [[ ${paired} == "PE" ]]; then
+	#### maxins 1500 used after seeing that average insert size from first round of mapping was ~500bp (for most B73 marks) but ~900bp for Inputs
+	paired_params="--maxins 1500 -1 fastq/trimmed_${name}_R1.fastq.gz -2 fastq/trimmed_${name}_R2.fastq.gz"
+elif [[ ${paired} == "SE" ]]; then
+	paired_params="-U fastq/trimmed_${name}.fastq.gz"
+fi
+
+if [[ ${mapparam} == "default" || ${mapparam} == "all" ]]; then
+	map_params=""
+elif [[ ${mapparam} == "colcen" || ${mapparam} == "colcenall" ]]; then
+	map_params="--very-sensitive --no-mixed --no-discordant --k 100"
+fi
+
+# The shell redirection to a third file descriptor here is necessary only because we tee the bt2 stderr info into the log and the mapping report.
+# Otherwise, could just write the report directly to the with with 2>reports/mapping_${name}.txt and pipe stdout to samtools.
+{ bowtie2 -p ${threads} --end-to-end --met-file reports/bt2_${name}.txt -x $ref_dir/$ref ${paired_params} ${map_params} 2>&1 1>&3 3>&- | tee reports/mapping_${name}.txt } 3>&1 1>&2 \
+	samtools view -@ ${threads} -b -h -F 256 -o mapped/temp1_${name}.bam -
+
+
+#### Filter read alignments respecting the sequencing strategy and mapping macro parameter
 printf "\nRemoving low quality reads, secondary alignements and duplicates, sorting and indexing file with samtools version:\n"
 samtools --version
+
 if [[ ${mapparam} == "default" || ${mapparam} == "colcen" ]]; then
-	samtools view -@ ${threads} -b -h -q 10 -F 256 -o mapped/temp1_${name}.bam mapped/${name}.sam
+	filter_params="-q10"
 elif [[ ${mapparam} == "colcenall" || ${mapparam} == "all" ]]; then
-	samtools view -@ ${threads} -b -h -F 256 -o mapped/temp1_${name}.bam mapped/${name}.sam
+	filter_params=""
 fi
-rm -f mapped/${name}.sam
-samtools fixmate -@ ${threads} -m mapped/temp1_${name}.bam mapped/temp2_${name}.bam
-samtools sort -@ ${threads} -o mapped/temp3_${name}.bam mapped/temp2_${name}.bam
-samtools markdup -r -s -f reports/markdup_${name}.txt -@ ${threads} mapped/temp3_${name}.bam mapped/${name}.bam
+
+samtools view -@ ${threads} -b -h -u ${filter_params} mapped/temp1_${name}.bam \
+	samtools fixmate -@ ${threads} -m -u - - \
+	| samtools sort -@ ${threads} -m 1G -u -T temp1_${name} - \
+	| samtools markdup -r -s -f reports/markdup_${name}.txt -@ ${threads} - mapped/${name}.bam
 samtools index -@ ${threads} mapped/${name}.bam
+
+
+#### Cleanup
+rm -f mapped/temp*_${name}.bam
+
 printf "\nGetting some stats\n"
 samtools flagstat -@ ${threads} mapped/${name}.bam > reports/flagstat_${name}.txt
-rm -f mapped/temp*_${name}.bam
 #### Summary stats
 printf "\nMaking mapping statistics summary\n"
 if [[ ${paired} == "PE" ]]; then
