@@ -21,7 +21,7 @@ usage="
 #####	-i: sample ID (name in original folder or SRR number)
 #####	-f: path to original folder or SRA
 ##### 	-p: if data is paired-end (PE) or single-end (SE) [ PE | SE ]
-#####	-s: status of the raw data [ download | trim | done ] 'download' if sample needs to be copied/downloaded, 'trim' if only trimming has to be performed, 'done' if trimming has already been performed
+#####	-s: status of the raw data [ download | trim | qc | done ] 'download' if sample needs to be copied/downloaded, 'trim' if only trimming has to be performed, 'done' if trimming has already been performed
 #####	-a: what option to use for mapping [ default | all | colcen | colcenall ] (colcen: very-sensitive, -k 100; all: no MAPQ>10)
 ##### 	-h: help, returns usage
 #####
@@ -127,16 +127,6 @@ if [[ ${step} == "download" ]]; then
 fi
 
 
-#### FastQC on raw data
-printf "\nRunning fastQC on raw reads for ${name} with fastqc version:\n"
-fastqc --version
-if [[ ${paired} == "PE" ]]; then
-	fastqc --threads 2 -o reports/ fastq/${name}_R1.fastq.gz fastq/${name}_R2.fastq.gz
-elif [[ ${paired} == "SE" ]]; then
-	fastqc -o reports/ fastq/${name}.fastq.gz
-fi
-
-
 #### Trimming illumina adapters with Cutadapt
 if [[ ${step} == "trim" ]]; then
 	printf "\nTrimming Illumina adapters for ${name} with cutadapt version:\n"
@@ -160,15 +150,20 @@ if [[ ${step} == "trim" ]]; then
 	elif [[ ${paired} == "SE" ]]; then
 		rm -f fastq/${name}.fastq.gz
 	fi
+
+	step="qc"
 fi
 
 
-#### FastQC on trimmed data
-printf "\nRunning fastQC on trimmed reads for ${name}\n"
-if [[ ${paired} == "PE" ]]; then
-	fastqc --threads 2 -o reports/ fastq/trimmed_${name}_R1.fastq.gz fastq/trimmed_${name}_R2.fastq.gz
-elif [[ ${paired} == "SE" ]]; then
-	fastqc -o reports/ fastq/trimmed_${name}.fastq.gz
+#### FastQC on raw and trimmed reads
+if [[ ${step} == "qc" ]]; then
+	printf "\nRunning fastQC on raw and trimmed reads for ${name} with fastqc version:\n"
+	fastqc --version
+	if [[ ${paired} == "PE" ]]; then
+		fastqc --threads ${threads} -o reports/ fastq/${name}_R1.fastq.gz fastq/${name}_R2.fastq.gz fastq/trimmed_${name}_R1.fastq.gz fastq/trimmed_${name}_R2.fastq.gz
+	elif [[ ${paired} == "SE" ]]; then
+		fastqc --threads ${threads} -o reports/ fastq/${name}.fastq.gz fastq/trimmed_${name}.fastq.gz
+	fi
 fi
 
 
