@@ -145,7 +145,7 @@ if [[ ${step} == "trim" ]]; then
 
 	#### Removing untrimmed fastq(s)
 	if [[ ${paired} == "PE" ]]; then
-		rm -f fastq/${name}_R*.fastq.gz
+		rm -f fastq/${name}_R{1,2}.fastq.gz
 
 	elif [[ ${paired} == "SE" ]]; then
 		rm -f fastq/${name}.fastq.gz
