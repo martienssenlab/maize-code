@@ -3,7 +3,6 @@ MaizeCode streamlines analysis for multi-sample, multi-modal sequencing datasets
 
 ## Supported data types
 * ChIP-seq (histone & TF)
-* ATAC-seq
 * WGBS
 * mRNA-seq
 * shRNA-seq
