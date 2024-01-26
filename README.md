@@ -7,7 +7,6 @@ For the manuscript "MaizeCODE reveals bi-directionally expressed enhancers that 
 
 ## Supported data types
 * ChIP-seq (histone & TF)
-* ATAC-seq
 * WGBS
 * mRNA-seq
 * shRNA-seq
