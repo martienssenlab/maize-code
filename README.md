@@ -1,8 +1,18 @@
-# maize-code
+# MaizeCode
+MaizeCode streamlines analysis for multi-sample, multi-modal sequencing datasets, with a focus on epigenetic gene regulation. Beginning with raw read input, MaizeCode performs individual and intersectional sample analysis to help gain insights into the impact of the chromatin landscape on transcription. Outputs are read alignments, peak calls, candidate TF binding motifs, occupancy profiles (metaplots, heatmaps) w.r.t. gene or transposable element features, and UpSet plots showing sample correlations.
 
 ## Manuscript
 
 For the manuscript "MaizeCODE reveals bi-directionally expressed enhancers that harbor molecular signatures of maize domestication", the pre-release MaizeCODE v0.1.0-manuscript contains the code used to analyze the data and generate the figures, complemented with the script "MaizeCode_extra_manuscript_figures.sh" in the "scripts/manuscript" folder.
+
+## Supported data types
+* ChIP-seq (histone & TF)
+* ATAC-seq
+* WGBS
+* mRNA-seq
+* shRNA-seq
+* smallRNA-seq
+>>>>>>> 58421ff (Update README.md)
 
 ## MaizeCode Pipeline Help
 
