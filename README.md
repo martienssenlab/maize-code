@@ -1,5 +1,13 @@
-# maize-code
+# MaizeCode
+MaizeCode streamlines analysis for multi-sample, multi-modal sequencing datasets, with a focus on epigenetic gene regulation. Beginning with raw read input, MaizeCode performs individual and intersectional sample analysis to help gain insights into the impact of the chromatin landscape on transcription. Outputs are read alignments, peak calls, candidate TF binding motifs, occupancy profiles (metaplots, heatmaps) w.r.t. gene or transposable element features, and UpSet plots showing sample correlations.
 
+## Supported data types
+* ChIP-seq (histone & TF)
+* ATAC-seq
+* WGBS
+* mRNA-seq
+* shRNA-seq
+* smallRNA-seq
 
 ## MaizeCode Pipeline Help
 
