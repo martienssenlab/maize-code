@@ -21,7 +21,7 @@ usage="
 #####	-i: sample ID (name in original folder or SRR number)
 #####	-f: path to original folder or SRA
 ##### 	-p: if data is paired-end (PE) or single-end (SE) [ PE | SE ]
-#####	-s: status of the raw data [ download | trim | qc | done ] 'download' if sample needs to be copied/downloaded, 'trim' if only trimming has to be performed, 'done' if trimming has already been performed
+#####	-s: status of the raw data [ download | trim | qc | align | filter | done ] 'download' if sample needs to be copied/downloaded, 'trim' if only trimming has to be performed, etc. 'done' if it has already been processed to aligned, filtered BAMs.
 #####	-a: what option to use for mapping [ default | all | colcen | colcenall ] (colcen: very-sensitive, -k 100; all: no MAPQ>10)
 ##### 	-h: help, returns usage
 #####
@@ -164,25 +164,31 @@ if [[ ${step} == "qc" ]]; then
 	elif [[ ${paired} == "SE" ]]; then
 		fastqc --threads ${threads} -o reports/ fastq/${name}.fastq.gz fastq/trimmed_${name}.fastq.gz
 	fi
+
+	step="align"
 fi
 
 
-#### Align reads to the reference respecting the sequencing strategy and mapping macro parameter
-printf "\nMapping ${paired} library ${name} to ${ref} with ${mapparam} parameters with bowtie2 version:\n"
-bowtie2 --version
-printf "\nSecondary alignments will be discarded.\n"
+if [[ ${step} == "align" ]]; then
+	#### Align reads to the reference respecting the sequencing strategy and mapping macro parameter
+	printf "\nMapping ${paired} library ${name} to ${ref} with ${mapparam} parameters with bowtie2 version:\n"
+	bowtie2 --version
+	printf "\nSecondary alignments will be discarded.\n"
 
-if [[ ${paired} == "PE" ]]; then
-	#### maxins 1500 used after seeing that average insert size from first round of mapping was ~500bp (for most B73 marks) but ~900bp for Inputs
-	paired_params="--maxins 1500 -1 fastq/trimmed_${name}_R1.fastq.gz -2 fastq/trimmed_${name}_R2.fastq.gz"
-elif [[ ${paired} == "SE" ]]; then
-	paired_params="-U fastq/trimmed_${name}.fastq.gz"
-fi
+	if [[ ${paired} == "PE" ]]; then
+		#### maxins 1500 used after seeing that average insert size from first round of mapping was ~500bp (for most B73 marks) but ~900bp for Inputs
+		paired_params="--maxins 1500 -1 fastq/trimmed_${name}_R1.fastq.gz -2 fastq/trimmed_${name}_R2.fastq.gz"
+	elif [[ ${paired} == "SE" ]]; then
+		paired_params="-U fastq/trimmed_${name}.fastq.gz"
+	fi
 
-if [[ ${mapparam} == "default" || ${mapparam} == "all" ]]; then
-	map_params=""
-elif [[ ${mapparam} == "colcen" || ${mapparam} == "colcenall" ]]; then
-	map_params="--very-sensitive --no-mixed --no-discordant --k 100"
+	if [[ ${mapparam} == "default" || ${mapparam} == "all" ]]; then
+		map_params=""
+	elif [[ ${mapparam} == "colcen" || ${mapparam} == "colcenall" ]]; then
+		map_params="--very-sensitive --no-mixed --no-discordant --k 100"
+	fi
+	
+	step="filter"
 fi
 
 # The shell redirection to a third file descriptor here is necessary only because we tee the bt2 stderr info into the log and the mapping report.
@@ -191,22 +197,23 @@ fi
 	| samtools view -@ ${threads} -b -h -F 256 -o mapped/temp1_${name}.bam) 3>&1 1>&2 2>&3 | tee reports/mapping_${name}.txt
 	
 
+if [[ ${step} == "filter" ]]; then
+	#### Filter read alignments respecting the sequencing strategy and mapping macro parameter
+	printf "\nRemoving low quality reads, secondary alignements and duplicates, sorting and indexing file with samtools version:\n"
+	samtools --version
 
-#### Filter read alignments respecting the sequencing strategy and mapping macro parameter
-printf "\nRemoving low quality reads, secondary alignements and duplicates, sorting and indexing file with samtools version:\n"
-samtools --version
+	if [[ ${mapparam} == "default" || ${mapparam} == "colcen" ]]; then
+		filter_params="-q10"
+	elif [[ ${mapparam} == "colcenall" || ${mapparam} == "all" ]]; then
+		filter_params=""
+	fi
 
-if [[ ${mapparam} == "default" || ${mapparam} == "colcen" ]]; then
-	filter_params="-q10"
-elif [[ ${mapparam} == "colcenall" || ${mapparam} == "all" ]]; then
-	filter_params=""
+	samtools view -@ ${threads} -b -h -u ${filter_params} mapped/temp1_${name}.bam \
+		| samtools fixmate -@ ${threads} -m -u - - \
+		| samtools sort -@ ${threads} -m 1G -u -T temp1_${name} - \
+		| samtools markdup -r -s -f reports/markdup_${name}.txt -@ ${threads} - mapped/${name}.bam
+	samtools index -@ ${threads} mapped/${name}.bam
 fi
-
-samtools view -@ ${threads} -b -h -u ${filter_params} mapped/temp1_${name}.bam \
-	samtools fixmate -@ ${threads} -m -u - - \
-	| samtools sort -@ ${threads} -m 1G -u -T temp1_${name} - \
-	| samtools markdup -r -s -f reports/markdup_${name}.txt -@ ${threads} - mapped/${name}.bam
-samtools index -@ ${threads} mapped/${name}.bam
 
 
 #### Cleanup
