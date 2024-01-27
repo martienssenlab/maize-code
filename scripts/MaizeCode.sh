@@ -293,9 +293,15 @@ do
 		checkname_list+=("${name}")
 		checkdatatype_list+=("${env}")
 		check_list+=("${check}")
-		if ls ./${env}/fastq/trimmed_${name}*.fastq.gz 1> /dev/null 2>&1; then
-			printf "\nTrimmed fastq file(s) for ${name} already exist\n"
+		if ls ./${env}/mapped/${name}.bam 1> /dev/null 2>&1; then
+			printf "\nFiltered BAM file for ${name} already exists\n"
 			export step="done"
+		elif ls ./${env}/mapped/temp1_${name}.bam 1> /dev/null 2>&1; then
+			printf "\nAligned BAM file for ${name} already exists\n"
+			export step="filter"
+		elif ls ./${env}/fastq/trimmed_${name}*.fastq.gz 1> /dev/null 2>&1; then
+			printf "\nTrimmed fastq file(s) for ${name} already exist\n"
+			export step="align"
 		elif ls ./${env}/fastq/${name}*.fastq.gz 1> /dev/null 2>&1; then
 			printf "\nFastq file(s) for ${name} already exist\n"
 			export step="trim"
