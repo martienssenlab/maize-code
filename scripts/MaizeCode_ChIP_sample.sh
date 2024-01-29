@@ -187,14 +187,15 @@ if [[ ${step} == "align" ]]; then
 	elif [[ ${mapparam} == "colcen" || ${mapparam} == "colcenall" ]]; then
 		map_params="--very-sensitive --no-mixed --no-discordant --k 100"
 	fi
+
+	# The shell redirection to a third file descriptor here is necessary only because we tee the bt2 stderr info into the log and the mapping report.
+	# Otherwise, could just write the report directly to the with with 2>reports/mapping_${name}.txt and pipe stdout to samtools.
+	( bowtie2 -p ${threads} --end-to-end --met-file reports/bt2_${name}.txt -x $ref_dir/$ref ${paired_params} ${map_params} \
+		| samtools view -@ ${threads} -b -h -F 256 -o mapped/temp1_${name}.bam) 3>&1 1>&2 2>&3 | tee reports/mapping_${name}.txt
 	
 	step="filter"
 fi
 
-# The shell redirection to a third file descriptor here is necessary only because we tee the bt2 stderr info into the log and the mapping report.
-# Otherwise, could just write the report directly to the with with 2>reports/mapping_${name}.txt and pipe stdout to samtools.
-( bowtie2 -p ${threads} --end-to-end --met-file reports/bt2_${name}.txt -x $ref_dir/$ref ${paired_params} ${map_params} \
-	| samtools view -@ ${threads} -b -h -F 256 -o mapped/temp1_${name}.bam) 3>&1 1>&2 2>&3 | tee reports/mapping_${name}.txt
 	
 
 if [[ ${step} == "filter" ]]; then
