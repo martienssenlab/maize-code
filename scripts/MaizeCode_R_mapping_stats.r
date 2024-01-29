@@ -54,7 +54,7 @@ plot.mapping.stats<-function(stattable, name) {
           strip.background = element_blank(),
           strip.text = element_text(size=12))
   
-  ymax<-plyr::round_any(max(table$Total_reads), 1e7, f = ceiling) 
+  ymax<-ceiling(max(table$Total_reads) / 1e7) * 1e7
   ylims<-c(0, ymax)
   ybreaks<-seq(0, ymax, length.out=5)
   ylabels<-c(round(ybreaks/1e6, 1))
