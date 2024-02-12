@@ -238,6 +238,7 @@ else
 	single=$(grep "aligned exactly 1 time" reports/mapping_${name}.txt | awk '{print $1}')
 fi
 
+printf "\nWriting mapping statistics summary\n"
 allmap=$((multi+single))
 awk -v OFS="\t" \
 	-v l=${line} \

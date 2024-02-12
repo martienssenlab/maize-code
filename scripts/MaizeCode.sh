@@ -309,7 +309,7 @@ do
 			printf "\nNew sample ${name} to be copied/downloaded\n"
 			export step="download"
 		fi
-		printf "\nRunning ${env} mapping script for ${name} on ${ref} genome\n"
+		printf "\nRunning ${env} mapping script for ${name} on ${ref} genome at step ${step}\n"
 		cd ${env}
 		qsub -sync y -N ${name} -o logs/${name}.log ${mc_dir}/MaizeCode_${env}_sample.sh -x ${data} -d ${ref_dir} -l ${line} -t ${tissue} -m ${sample} -r ${rep} -i ${sampleID} -f ${path} -p ${paired} -s ${step} -a ${mapparam} &
 		pids+=("$!")
