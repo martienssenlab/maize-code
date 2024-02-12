@@ -2,7 +2,7 @@
 
 ## Manuscript
 
-For the manuscript "MaizeCODE reveals bi-directionally expressed enhancers that harbor molecular signatures of maize domestication", the default MaizeCode pipeline was used to analyze the data and generate some of the figures, followed by the code in "MaizeCode_extra_manuscript_figures.sh" in the "manuscript" folder.
+For the manuscript "MaizeCODE reveals bi-directionally expressed enhancers that harbor molecular signatures of maize domestication", the default MaizeCode pipeline was used to analyze the data and generate some of the figures, followed by the code in "MaizeCode_extra_manuscript_figures.sh" in the "scripts/manuscript" folder.
 
 ## MaizeCode Pipeline Help
 
