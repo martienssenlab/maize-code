@@ -49,7 +49,7 @@ if ( moifile == "yes" ) {
           ggplot(mapping = aes(x=intersection, y=Distance, fill=marked)) +
             geom_violin(scale="width", na.rm=TRUE, color = "black") +
             scale_y_continuous(trans = "log10",
-                               labels=scales::label_number_si(accuracy = 1, unit = "bp")) +
+                               labels=scales::label_number(scale_cut = cut_short_scale(), accuracy = 1, unit = "bp")) +
 			scale_fill_manual(values=colmarks) + guides(fill = FALSE))),
 	  queries = queriesmoi,
       set_sizes = (upset_set_size() + ylab("Total peaks") +
@@ -109,7 +109,7 @@ inputable<-read.delim(args[4], header = TRUE) %>%
           ggplot(mapping = aes(x=intersection, y=Distance)) +
             geom_violin(scale="width", na.rm=TRUE, color = "black", fill="#2e2e2e") +
             scale_y_continuous(trans = "log10",
-                               labels=scales::label_number_si(accuracy = 1, unit = "bp")))),
+                               labels=scales::label_number(scale_cut = cut_short_scale(), accuracy = 1, unit = "bp")))),
       set_sizes = (upset_set_size() + ylab("Total peaks") +
         theme(axis.text.x = element_text(angle = 45))),
       matrix = (intersection_matrix(geom = geom_point(shape = "circle",size = 3),
