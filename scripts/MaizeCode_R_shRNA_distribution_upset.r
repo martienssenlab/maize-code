@@ -131,7 +131,7 @@ if ( length(args) == 6 ) {
 	plot3<-ggplot(filteredtable, aes(Tissue, RPKM+1, fill=Tissue)) +
 	  geom_violin(show.legend = T) +
 	  scale_y_continuous(trans="log10",
-                     labels=scales::label_number(scale_cut = cut_short_scale(), accuracy = 1)) +
+                     labels=scales::label_number(scale_cut = scales::cut_short_scale(), accuracy = 1)) +
 	  facet_wrap(~Tissues, scales="free_y") +
 	  theme(panel.grid=element_blank(),
 	        panel.grid.major.y = element_line(colour="grey"),

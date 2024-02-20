@@ -88,7 +88,7 @@ plot<-upset(inputable, sampleCols, name="Peaks",
           ggplot(mapping = aes(x=intersection, y=Distance, fill = exclusive_mark)) +
             geom_violin(scale="width", na.rm=TRUE, color = "black") +
             scale_y_continuous(trans = "log10",
-                               labels=scales::label_number(scale_cut = cut_short_scale(), accuracy = 1, unit = "bp")) +
+                               labels=scales::label_number(scale_cut = scales::cut_short_scale(), accuracy = 1, unit = "bp")) +
             scale_fill_manual(values=colmarks, name="Exclusive marks"))
       ),
       queries = queries,
