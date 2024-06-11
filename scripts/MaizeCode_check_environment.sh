@@ -204,7 +204,7 @@ elif [[ ${datatype} == "shRNA" ]]; then
 	#### This step will need to be automatized to potentially change which organism to map to and build it from scratch. 
 	#### Another option would be to have people create it independantly, potentially giving a script or just the help documentation (see Help_RFam.docx in the data folder).
 	printf "\nCopying structural RNA index files to filter reads\n"
-	cp -r /grid/martienssen/data_norepl/dropbox/maizecode/structural_RNA ${datatype}/
+	cp -r /grid/martienssen/data_nlsas_norepl/dropbox/maizecode/structural_RNA ${datatype}/
 else
 	printf "\nType of data unknown!\n"
 	exit 1
