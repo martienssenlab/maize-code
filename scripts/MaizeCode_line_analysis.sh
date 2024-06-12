@@ -152,7 +152,7 @@ do
 		mC) datatype="mC"
 			name=${line}_${tissue}_mC;;
 		TF_*) datatype="TF"
-			name=${data##TF_};;
+			name=${line}_${data##TF_};;
 	esac
 
 	ref=${ref_dir##*/}
@@ -222,13 +222,12 @@ do
 	fi
 done < ${samplefile}
 
-if [ ! ${#ref_list[@]} -eq 1 ] || [ ! ${#line_list[@]} -eq 1 ]; then
+if [ ! ${#ref_list[@]} -eq 1 ]; then
 	printf "\nThere are multiple references in the samplefile! This analysis cannot be performed!\n"
 	exit 1
 else
 	export ref=${ref_list[0]}
 	export ref_dir=${ref_dir_list[0]}
-	export line=${line_list[0]}
 fi
 
 ############################################################################################
