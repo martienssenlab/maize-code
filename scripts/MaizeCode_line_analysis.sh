@@ -239,7 +239,7 @@ fi
 if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 	#### This step will need to be automatized to potentially change which line/organism to have the GO terms for 
 	#### It would require people to have the required files or dowload them
-	if [ -s /grid/martienssen/data_norepl/dropbox/maizecode/GO/${ref}_infoGO.tab ]; then
+	if [ -s /grid/martienssen/data_nlsas_norepl/dropbox/maizecode/GO/${ref}_infoGO.tab ]; then
 		if [ ! -d combined/GO ]; then
 			mkdir combined/GO
 		fi
@@ -249,11 +249,11 @@ if [ ${#rnaseq_sample_list[@]} -ge 2 ]; then
 		if [ ! -d combined/GO/${ref}/org.Zmays.eg.db ]; then
 			if [ ! -s combined/GO/${ref}/${ref}_infoGO.tab ]; then
 				printf "\nCopying GO information file\n"
-				cp /grid/martienssen/data_norepl/dropbox/maizecode/GO/${ref}_infoGO.tab combined/GO/${ref}/
+				cp /grid/martienssen/data_nlsas_norepl/dropbox/maizecode/GO/${ref}_infoGO.tab combined/GO/${ref}/
 			fi
 			if [ ! -s combined/GO/${ref}/${ref}_genes_info.tab ]; then
 				printf "\nCopying gene information file\n"
-				cp /grid/martienssen/data_norepl/dropbox/maizecode/GO/${ref}_genes_info.tab combined/GO/${ref}/
+				cp /grid/martienssen/data_nlsas_norepl/dropbox/maizecode/GO/${ref}_genes_info.tab combined/GO/${ref}/
 			fi
 			printf "\nCreating GO database\n"
 			Rscript --vanilla ${mc_dir}/MaizeCode_R_build_GOdatabase.r combined/GO/${ref}/${ref}_infoGO.tab combined/GO/${ref}/${ref}_genes_info.tab ${ref}
@@ -1679,12 +1679,12 @@ rm -f combined/tracks/temp*.bg
 
 tefilebw=""
 tefilebed=""
-if [ -s /grid/martienssen/data/dropbox/maizecode/TEs/${ref}_TEs.gff3.gz ]; then
+if [ -s /grid/martienssen/data_nlsas_norepl/dropbox/maizecode/TEs/${ref}_TEs.gff3.gz ]; then
 	if [ ! -d combined/TSS ]; then
 		mkdir combined/TSS
 	fi	
 	if [ ! -s combined/TSS/${ref}_all_tes.bed ]; then
-		zcat /grid/martienssen/data/dropbox/maizecode/TEs/${ref}_TEs.gff3.gz | awk -v OFS="\t" '$1 !~ /^#/ {print $1,$4-1,$5,$3,".",$7}' | bedtools sort -g ${ref_dir}/chrom.sizes > combined/TSS/${ref}_all_tes.bed
+		zcat /grid/martienssen/data_nlsas_norepl/dropbox/maizecode/TEs/${ref}_TEs.gff3.gz | awk -v OFS="\t" '$1 !~ /^#/ {print $1,$4-1,$5,$3,".",$7}' | bedtools sort -g ${ref_dir}/chrom.sizes > combined/TSS/${ref}_all_tes.bed
 	fi
 	awk -v OFS="\t" '($1~/^[0-9]/ || $1~/^chr[0-9]/ || $1~/^Chr[0-9]/) {print $1,$2,$3,"1"}' combined/TSS/${ref}_all_tes.bed | bedtools sort -g ${ref_dir}/chrom.sizes > combined/tracks/temp_${ref}_all_tes.bg
 	bedtools merge -i combined/tracks/temp_${ref}_all_tes.bg -o max -c 4 | LC_COLLATE=C sort -k1,1 -k2,2n > combined/tracks/temp2_${ref}_all_tes.bg

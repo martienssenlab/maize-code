@@ -119,7 +119,7 @@ genextable<-mutate(genextable, GID=row.names(genextable))
 
 plot.Expression <- function(gene) {
   
-  dataline<-filter(genextable, GID==gene) %>% melt(id=c("GID")) %>%
+  dataline<-filter(genextable, GID==gene) %>% reshape2::melt(id=c("GID")) %>%
     select(GID, Replicate=variable, CountPerMillion=value)
   
   uniqueDEGs<-read.delim(paste0("combined/DEG/unique_DEGs_",analysisname,".txt"), header = TRUE)

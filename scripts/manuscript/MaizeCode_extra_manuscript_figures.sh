@@ -1610,6 +1610,238 @@ printf "\n"
 # done
 
 ############################################################################################################################
+### To look at overlap between distal enhancer types, OCRS and loops (Sup Fig 8a) and the gene expression of genes in loops
+############################################################################################################################
+
+### To look at OCRs in super-enhancers (SupFig 8a)
+
+# for tissue in cn ears endosperm roots
+# do	
+	# for group in with_k4_expdouble with_k4_expsingle with_k4_noexp without_k4_expdouble without_k4_expsingle without_k4_noexp shuffled
+	# do
+		# awk -v OFS="\t" -v t=${tissue} -v g=${group} '{print $1,$2,$3,$4,t,g}' manuscript/data/B73_v4_distal_${tissue}_${group}.bed >> manuscript/data/temp_total_table_B73_v4_enhancers.bed
+	# done
+# done
+
+# sort -k1,1 -k2,2n manuscript/data/temp_total_table_B73_v4_enhancers.bed > manuscript/data/total_table_B73_v4_enhancers.bed 
+# rm -f manuscript/data/temp_total_table_B73_v4_enhancers.bed
+
+# printf "ID\tTissue\tType\tOCRs\n" > manuscript/data/table_B73_v4_enhancers_with_Sun_OCRs_ears.txt
+# bedtools intersect -c -a manuscript/data/total_table_B73_v4_enhancers.bed -b manuscript/data/Sun_OCRs_ears.bed | awk -v OFS="\t" '{print $4,$5,$6,$7}' >> manuscript/data/table_B73_v4_enhancers_with_Sun_OCRs_ears.txt
+
+# printf "ID\tTissue\tType\tOCRs\n" > manuscript/data/table_B73_v4_enhancers_with_Sun_OCRs_tassel.txt
+# bedtools intersect -c -a manuscript/data/total_table_B73_v4_enhancers.bed -b manuscript/data/Sun_OCRs_tassel.bed | awk -v OFS="\t" '{print $4,$5,$6,$7}' >> manuscript/data/table_B73_v4_enhancers_with_Sun_OCRs_tassel.txt
+
+# printf "ID\tTissue\tType\tOCRs\n" > manuscript/data/table_B73_v4_enhancers_with_Schmitz_ATAC_ears.txt
+# bedtools intersect -c -a manuscript/data/total_table_B73_v4_enhancers.bed -b manuscript/data/Schmitz_ATAC_ears.bed | awk -v OFS="\t" '{print $4,$5,$6,$7}' >> manuscript/data/table_B73_v4_enhancers_with_Schmitz_ATAC_ears.txt
+
+# printf "ID\tTissue\tType\tOCRs\n" > manuscript/data/table_B73_v4_enhancers_with_Schmitz_ATAC_leaf.txt
+# bedtools intersect -c -a manuscript/data/total_table_B73_v4_enhancers.bed -b manuscript/data/Schmitz_ATAC_leaf.bed | awk -v OFS="\t" '{print $4,$5,$6,$7}' >> manuscript/data/table_B73_v4_enhancers_with_Schmitz_ATAC_leaf.txt
+
+# rm -f manuscript/data/table_B73_v4_enhancers_with_loops_GIDs.txt
+# printf "ID\tTissue\tType\tGID\n" > manuscript/data/table_B73_v4_enhancers_with_loops_GIDs.txt
+# for tissue in cn ears endosperm roots
+# do
+	# for type in with_k4_expdouble with_k4_expsingle with_k4_noexp without_k4_expdouble without_k4_expsingle without_k4_noexp shuffle
+	# do
+		# bedtools intersect -wao -a manuscript/data/B73_v4_distal_${tissue}_${type}.bed -b manuscript/data/Sun_loops_ears.bed | awk -v OFS="\t" -v t=${tissue} -v g=${type} '{print $4,t,g,$10}' | sort -u >> manuscript/data/table_B73_v4_enhancers_with_loops_GIDs.txt
+	# done	
+# done
+
+# for tissue in cn ears endosperm roots
+# do
+	# nb=$(awk -v t=${tissue} '$2==t && $3=="without_k4_expdouble" && $4!="."' manuscript/data/table_B73_v4_enhancers_with_loops_GIDs.txt | wc -l)
+	# shuf -n ${nb} manuscript/data/Sun_loops_ears.bed | awk -v OFS="\t" -v t=${tissue} '{print "Random_loops"NR,t,"random_loops",$4}' >> manuscript/data/table_B73_v4_enhancers_with_loops_GIDs.txt
+# done
+
+# rm -f manuscript/data/temp*
+
+### Then plot with R
+
+# Rscript --vanilla - <<-'EOF'
+	# #!/usr/bin/env Rscript
+	# library(dplyr)
+	# library(tidyr)
+	# library(ggplot2)
+	# library(stringr)
+	# library(ggrepel)
+	# library(ggpubr)
+	# library(data.table)
+	# library(ggalluvial)
+
+	# schmitz_leaf<-read.delim("Input/table_B73_v4_enhancers_with_Schmitz_ATAC_leaf.txt", header=TRUE) %>%
+	#   rename(ricci_leaf=OCRs)
+	# schmitz_ears<-read.delim("Input/table_B73_v4_enhancers_with_Schmitz_ATAC_ears.txt", header=TRUE) %>%
+	#   rename(ricci_ears=OCRs)
+	# sun_ears<-read.delim("Input/table_B73_v4_enhancers_with_Sun_OCRs_ears.txt", header=TRUE) %>%
+	#   rename(sun_ears=OCRs)
+	# sun_tassel<-read.delim("Input/table_B73_v4_enhancers_with_Sun_OCRs_tassel.txt", header=TRUE) %>%
+	#   rename(sun_tassel=OCRs)
+
+	# sun_loops<-read.delim("Input/table_B73_v4_enhancers_with_loops_GIDs.txt", header=TRUE) %>%
+	#   mutate(loops=ifelse(GID==".",0,1)) %>%
+	#   group_by(ID,Tissue,Type) %>%
+	#   summarize(sun_loops=sum(loops))
+
+	# all<-merge(schmitz_ears,schmitz_leaf, by=c("ID","Tissue","Type")) %>%
+	#   merge(sun_ears, by=c("ID","Tissue","Type")) %>%
+	#   merge(sun_tassel, by=c("ID","Tissue","Type")) %>%
+	#   merge(sun_loops, by=c("ID","Tissue","Type")) %>%
+	#   mutate(regions_ricci_ears=ifelse(ricci_ears>=5, "5+", ricci_ears),
+	#          regions_ricci_leaf=ifelse(ricci_leaf>=5, "5+", ricci_leaf),
+	#          regions_sun_ears=ifelse(sun_ears>=5, "5+", sun_ears),
+	#          regions_sun_loops=ifelse(sun_loops>=5, "5+", sun_loops),
+	#          regions_sun_tassel=ifelse(sun_tassel>=5, "5+", sun_tassel)) %>%
+	#   select(-ricci_ears, -ricci_leaf, -sun_ears, -sun_loops, -sun_tassel) %>%
+	#   rename(ricci_ears=regions_ricci_ears, ricci_leaf=regions_ricci_leaf, sun_ears=regions_sun_ears, sun_loops=regions_sun_loops, sun_tassel=regions_sun_tassel)
+
+	# all$Tissue<-as.factor(all$Tissue)
+	# all$Type<-factor(all$Type, levels=c("with_k4_expdouble", "with_k4_expsingle", "with_k4_noexp",
+	#                                             "without_k4_expdouble", "without_k4_expsingle", "without_k4_noexp","shuffle"))
+
+	# temp<-group_by(all, ricci_ears, ricci_leaf, sun_ears, sun_loops, sun_tassel, Tissue, Type) %>%
+	#   summarize(Counts=n()) %>%
+	#   tibble::rownames_to_column("Groups") %>%
+	#   gather(key="OCR",value="Nb",ricci_ears, ricci_leaf, sun_ears, sun_tassel, sun_loops)
+
+	# temp$OCR<-factor(temp$OCR, levels=c("sun_tassel", "sun_ears", "sun_loops", "ricci_ears","ricci_leaf"))
+
+	# temp$Type<-factor(temp$Type, levels=c("with_k4_expdouble", "with_k4_expsingle", "with_k4_noexp",
+        #                   "without_k4_expdouble", "without_k4_expsingle", "without_k4_noexp","shuffle"))
+	# temp$Groups<-as.factor(temp$Groups)
+
+	# plot.OCRs.v2<-function(type) {
+	  # tab<-filter(temp, Type==type)
+  
+	  # plot<-ggplot(tab, aes(x=OCR, stratum=Nb, alluvium=Groups, fill=Nb, y=Counts)) +
+	    # geom_flow(aes.flow = "backward") +
+	    # geom_stratum(width=0.5, size=0.1) +
+	    # facet_wrap(~Tissue, scales="free_y", ncol=1, strip.position = "right") +
+	    # scale_fill_manual(values = c("0"="grey80","1"="gold","2"="orange","3"="red", "4"="maroon", "5+"="black")) +
+	    # labs(title=paste0(type)) +
+	    # scale_x_discrete(expand = c(0,0)) +
+	    # theme(panel.grid.minor = element_blank(),
+	          # panel.grid.major.x = element_blank(),
+	          # panel.grid.major.y = element_blank(),
+	          # panel.background = element_blank(),
+        	  # strip.background = element_rect(fill="white", color="black"),
+        	  # axis.ticks.x=element_blank(), 
+        	  # axis.title=element_blank(),
+        	  # plot.title = element_text(hjust = 0.5, size=15),
+        	  # axis.text.x=element_text(size=12, angle=90, hjust=1, vjust=1),
+       	 	  # axis.text.y=element_text(size=10),
+         	 # legend.position="none")
+  
+	  # print(plot)
+	# }
+
+	#### Sup fig 8a
+	# pdf("Plots/Alluvial_enhancers_B73_v4_in_OCRs_v2.pdf", height=12, width=15)
+	# ggarrange(plot.OCRs.v2("with_k4_expdouble"),plot.OCRs.v2("with_k4_expsingle"),plot.OCRs.v2("with_k4_noexp"),
+        	  # plot.OCRs.v2("without_k4_expdouble"),plot.OCRs.v2("without_k4_expsingle"),plot.OCRs.v2("without_k4_noexp"), 
+        	  # plot.OCRs.v2("shuffle"), nrow = 1)
+	# dev.off()
+
+ 	####
+
+  	# tableRPKM<-read.delim("Input/genes_B73_v4_rpkm_DEGs.txt", header=TRUE)
+
+	# mergedt<-filter(sun_loops, Type!="shuffle", GID != ".") %>%
+		# merge(tableRPKM, by=c("GID","Tissue"), all.x=TRUE)
+
+	## To add random genes
+
+	# mergedtot<-group_by(mergedt, Tissue, Type) %>%
+		  # summarize(Total=n())
+	# shuf<-filter(mergedtot, Type=="without_k4_expdouble")
+	# for ( tissue in c("ears","cn","endosperm","roots") ) {
+  		# temptab<-filter(tableRPKM, Tissue==tissue)
+  		# nb<-filter(shuf, Tissue==tissue)$Total  
+  		# shuftemp<-as.data.table(sapply(temptab, sample, nb)) %>%
+    		# mutate(ID=paste0("Random_gene",row_number()), Type="Random_genes")
+  		# mergedt<-rbind(mergedt, shuftemp)
+	# }
+
+	# mergedt$RPKM<-as.numeric(mergedt$RPKM)
+	# mergedt$Tissue<-as.factor(mergedt$Tissue)
+	# mergedt$Type<-factor(mergedt$Type, levels=c("with_k4_expdouble", "with_k4_expsingle", "with_k4_noexp",
+                                            "without_k4_expdouble", "without_k4_expsingle", "without_k4_noexp","random_loops","Random_genes"))
+
+	# mergedtot2<-group_by(mergedt, Tissue, Type) %>%
+  		# summarize(Total=n())
+
+	# comps<-list( c("without_k4_expdouble", "without_k4_expsingle"),
+             	# c("without_k4_expdouble", "without_k4_noexp"),
+              	# c("without_k4_expdouble", "random_loops"),
+             	# c("without_k4_expdouble", "Random_genes"))
+
+	# plot2<-ggplot(mergedt, aes(Type, log2(RPKM+0.1), fill=Type)) +
+  		# geom_boxplot(position="dodge", notch = FALSE) +
+  		# facet_grid(~Tissue) +
+  		# geom_text(data=mergedtot2, aes(x=Type, label=Total), y=11, size=3, color="black", angle=45) +
+  		# scale_fill_manual(values=c("with_k4_expdouble" = "#5546EE", "with_k4_expsingle" = "#33A9ED", "with_k4_noexp" = "#33CBED", 
+                              	# "without_k4_expdouble" = "#ED4433", "without_k4_expsingle" = "#ED8A33", "without_k4_noexp" = "#EDB533",
+                              	# "random_Genes" = "#A9A9A9","random_loops" = "grey90")) +
+  		# theme_bw() +
+  		# stat_compare_means(comparisons = comps, method = "t.test", label="p.format",
+                     	# tip.length = c(0)) +
+  		# theme(axis.text.x = element_text(angle=45, vjust=1, hjust=1),
+        		# legend.position = "none")
+
+	#### Sup fig 8c
+	# pdf("Plots/Enhancers_B73_v4_loops_to_GID_expression.pdf", height=6, width=8)
+	# print(plot2)
+	# dev.off()
+ 
+# EOF
+
+#####################################################################
+### To get percentage of K27ac peaks in loops vs OCRs from Sun 2020 (Table in Sup Fig 8b)
+
+# awk -v OFS="\t" 'NR>1 {print $1,$2,$3,$11}' manuscript/data/Sun_2020_ears_loops.txt > manuscript/data/Sun_ears_left_anchors.bed
+# awk -v OFS="\t" 'NR>1 {print $4,$5,$6,$11}' manuscript/data/Sun_2020_ears_loops.txt > manuscript/data/Sun_ears_right_anchors.bed
+
+# cat manuscript/data/Sun_ears_left_anchors.bed manuscript/data/Sun_ears_right_anchors.bed | sort -k1,1 -k2,2n > manuscript/data/Sun_ears_all_anchors.bed
+# for loop in Gene-gene Intergenic-gene Intergenic-intergenic
+# do
+	# grep "${loop}" manuscript/data/Sun_ears_all_anchors.bed > manuscript/data/Sun_ears_all_anchors_${loop}.bed
+# done
+
+# rm -f manuscript/data/table_enhancers_in_loop_types.txt
+
+# printf "Enhancer_Type\tLoop_Type\tNb\n" > manuscript/data/table_enhancers_in_loop_types.txt
+
+# for type in with_k4_expdouble with_k4_expsingle with_k4_noexp without_k4_expdouble without_k4_expsingle without_k4_noexp shuffled
+# do
+	# wc -l manuscript/data/B73_v4_distal_ears_${type}.bed | awk -v OFS="\t" -v t=${type} '{print t,"Total",$1}' >> manuscript/data/table_enhancers_in_loop_types.txt
+	# for loop in Gene-gene Intergenic-gene Intergenic-intergenic
+	# do
+		# sort -k1,1 -k2,2n manuscript/data/B73_v4_distal_ears_${type}.bed | bedtools intersect -c -a - -b manuscript/data/Sun_ears_all_anchors_${loop}.bed | awk -v OFS="\t" -v g=${type} -v l=${loop} '{if ($7!=0) n+=1} END {print g,l,n}' >> manuscript/data/table_enhancers_in_loop_types.txt
+	# done
+# done
+
+# for type in dOCR LoOCR
+# do
+	# grep "${type}" manuscript/data/Sun_OCRs_ears.bed | awk -v OFS="\t" -v t=${type} '{print $1,$2,$3,"ear_"t"_"NR,NR,"."}' > manuscript/data/Sun_OCRs_ears_prep_${type}.bed
+	# wc -l manuscript/data/Sun_OCRs_ears_prep_${type}.bed | awk -v OFS="\t" -v t=${type} '{print t,"Total",$1}' >> manuscript/data/table_enhancers_in_loop_types.txt
+	# for loop in Gene-gene Intergenic-gene Intergenic-intergenic
+	# do
+		# sort -k1,1 -k2,2n manuscript/data/Sun_OCRs_ears_prep_${type}.bed | bedtools intersect -c -a - -b manuscript/data/Sun_ears_all_anchors_${loop}.bed | awk -v OFS="\t" -v g=${type} -v l=${loop} '{if ($7!=0) n+=1} END {print g,l,n}' >> manuscript/data/table_enhancers_in_loop_types.txt
+	# done
+# done
+
+# rm -f manuscript/data/B73_v4_local_ears.bed
+# awk -v OFS="\t" '{print $1,$2,$3,$4,$5,"."}' combined/peaks/enhancers_genic_B73_v4_on_B73_v4_all_genes_ears.txt >> manuscript/data/B73_v4_local_ears.bed
+# awk -v OFS="\t" '{print $1,$2,$3,$4,$5,"."}' combined/peaks/enhancers_promoter_B73_v4_on_B73_v4_all_genes_ears.txt >> manuscript/data/B73_v4_local_ears.bed
+# awk -v OFS="\t" '{print $1,$2,$3,$4,$5,"."}' combined/peaks/enhancers_terminator_B73_v4_on_B73_v4_all_genes_ears.txt >> manuscript/data/B73_v4_local_ears.bed
+# wc -l manuscript/data/B73_v4_local_ears.bed | awk -v OFS="\t" -v t="Local_K27ac_peaks" '{print t,"Total",$1}' >> manuscript/data/table_enhancers_in_loop_types.txt
+# for loop in Gene-gene Intergenic-gene Intergenic-intergenic
+# do
+	# sort -k1,1 -k2,2n manuscript/data/B73_v4_local_ears.bed | bedtools intersect -c -a - -b manuscript/data/Sun_ears_all_anchors_${loop}.bed | awk -v OFS="\t" -v g="Local_K27ac_peaks" -v l=${loop} '{if ($7!=0) n+=1} END {print g,l,n}' >> manuscript/data/table_enhancers_in_loop_types.txt
+# done
+
+
+############################################################################################################################
 ### To generate table of all DEGs (Sup Data 1)
 ############################################################################################################################
 
