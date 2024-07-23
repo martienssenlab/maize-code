@@ -22,7 +22,7 @@ usage="
 #####	-f: path to original folder or SRA
 ##### 	-p: if data is paired-end (PE) or single-end (SE) [ PE | SE ]
 #####	-s: status of the raw data [ download | trim | done ] 'download' if sample needs to be copied/downloaded, 'trim' if only trimming has to be performed, 'done' if trimming has already been performed
-#####	-a: what option to use for mapping [ default | all | colcen | colcenall ] (colcen: very-sensitive, -k 100; all: no MAPQ>10)
+#####	-a: what option to use for mapping [ default | all | colcen | colcenall | heavy ] (colcen: very-sensitive, -k 100; all: no MAPQ>10; heavy: RNA only, default here)
 ##### 	-h: help, returns usage
 #####
 ##### It downloads or copies the files, runs fastQC, trims adapters with cutadapt, aligns with bowtie2,
@@ -74,7 +74,7 @@ fi
 if [ ! ${mapparam} ]; then
 	printf "No mapping option selected, using default\n"
 	export mapparam="default"
-elif [[ "${mapparam}" == "default" || "${mapparam}" == "colcen" || "${mapparam}" == "colcenall" || "${mapparam}" == "all" ]]; then
+elif [[ "${mapparam}" == "default" || "${mapparam}" == "colcen" || "${mapparam}" == "colcenall" || "${mapparam}" == "all" || "${mapparam}" == "heavy" ]]; then
 	printf "${mapparam} chosen as the mapping option\n"
 else
 	printf "Unknown mapping option selected\n"
