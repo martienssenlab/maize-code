@@ -134,8 +134,9 @@ if [[ ${paired} == "PE" ]]; then
 	printf "\nMapping ${name} to ${ref} with STAR version:\n"
 	STAR --version
 	if [[ ${mapparam} == "heavy" ]]; then
-		STAR --runMode alignReads --genomeDir ${ref_dir}/STAR_index --readFilesIn ${filesorder} --readFilesCommand zcat --runThreadN ${threads} --genomeLoad NoSharedMemory --outMultimapperOrder Random --outFileNamePrefix mapped/mrkdup_${name}_ --outSAMtype BAM SortedByCoordinate --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNmax 999 --outFilterMismatchNoverReadLmax 0.04 --alignIntronMin 20 --alignIntronMax 1000000 --alignMatesGapMax 1000000 --outFilterMultimapNmax 20 --quantMode GeneCounts --limitBAMsortRAM 3000000000 --outBAMsortingBinsN 200 --outBAMsortingThreadN 1
+		STAR --runMode alignReads --genomeDir ${ref_dir}/STAR_index --readFilesIn ${filesorder} --readFilesCommand zcat --runThreadN ${threads} --genomeLoad NoSharedMemory --outMultimapperOrder Random --outFileNamePrefix mapped/map_${name}_ --outSAMtype BAM SortedByCoordinate --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNmax 999 --outFilterMismatchNoverReadLmax 0.04 --alignIntronMin 20 --alignIntronMax 1000000 --alignMatesGapMax 1000000 --outFilterMultimapNmax 20 --quantMode GeneCounts --limitBAMsortRAM 3000000000 --outBAMsortingBinsN 200 --outBAMsortingThreadN 1
 		### Marking duplicates too intensive
+  		mv mapped/map_${name}_Aligned.sortedByCoord.out.bam mapped/mrkdup_${name}_Processed.out.bam
 	else
  		STAR --runMode alignReads --genomeDir ${ref_dir}/STAR_index --readFilesIn ${filesorder} --readFilesCommand zcat --runThreadN ${threads} --genomeLoad NoSharedMemory --outMultimapperOrder Random --outFileNamePrefix mapped/map_${name}_ --outSAMtype BAM SortedByCoordinate --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 --outFilterMismatchNmax 999 --outFilterMismatchNoverReadLmax 0.04 --alignIntronMin 20 --alignIntronMax 1000000 --alignMatesGapMax 1000000 --outFilterMultimapNmax 20 --quantMode GeneCounts
    		### Marking duplicates
