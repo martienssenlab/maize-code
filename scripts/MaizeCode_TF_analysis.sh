@@ -100,7 +100,7 @@ do
 		
 		if [ ! -s mapped/${name}_merged.bam ]; then
 			printf "\nMerging replicates of ${name}\n"
-			samtools merge -f -@ ${threads} mapped/temp_${name}.bam mapped/${file}_Rep1.bam mapped/${file}_Rep2.bam
+			samtools merge -f -@ ${threads} mapped/temp_${name}.bam mapped/${file}_Rep*.bam
 			samtools sort -@ ${threads} -o mapped/${name}_merged.bam mapped/temp_${name}.bam
 			rm -f mapped/temp_${name}.bam
 			samtools index -@ ${threads} mapped/${name}_merged.bam
