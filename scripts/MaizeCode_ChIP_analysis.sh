@@ -140,7 +140,7 @@ do
 		fi
 		#### To call either broad or narrow peaks if not already exisiting
 		case "${mark}" in
-			H3K4me1|H3K27me1|H3K27me2|H3K27me3|H3K9me1|H3K9me2|H3K9me3|H4K20me1|H4K20me2|H4K20me3|*DDM1|H3.3|H3.1|MGH3|CenH3|PolIIS2P|H2AT120Ph) export peaktype="broad";;
+			H3K4me1|H3K27me1|H3K27me2|H3K27me3|H3K9me1|H3K9me2|H3K9me3|H4K20me1|H4K20me2|H4K20me3|*DDM1|H3.3|H3.1|MGH3|CenH3|PolIIS2P|H2AT120Ph|H2AKub) export peaktype="broad";;
 			H3K27ac|H3K4me3|H3K9ac|H4K16ac|H3K23ac|MNase) export peaktype="narrow";;
    			H3)	export peaktype="broad";;
 		esac
