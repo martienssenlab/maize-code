@@ -39,6 +39,7 @@ usage="
 ##### PART7: perform differential peak calling between all pairs of ChIP samples for each mark
 ##### PART17: plot heatmaps on all TEs
 
+##### Testing
 #####
 ##### Requirements: bedtools, deeptools, macs2, R (+R packages: ggplot2,limma,edgeR,dplyr,tidyr,stringr,gplots,cowplot,ComplexUpset,purrr)
 "
