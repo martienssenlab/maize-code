@@ -15,7 +15,7 @@ usage="
 ##### 	-f: samplefile
 ##### 	-p: path to the folder containing all the different genome references (e.g. ~/data/Genomes/Zea_mays)
 #####	-m: histone mark to focus on for the analysis (H3K27ac by default, does not matter if not set)
-#####	-a: mapping option [ default | colcen | all | colcenall ] (colcen: very sensitive, -k 100; all: no MAPQ>10)
+#####	-a: mapping option [ default | colcen | all | colcenall | heavy ] (colcen: very sensitive, -k 100; all: no MAPQ>10; heavy: --limitBAMsortRAM 32000000000)
 #####	-s: if set, the whole analysis does not proceed (default=not set, keep going with the analysis over all the samples in the samplefile)
 #####	-c: if set, only single samples analysis proceeds, not grouped analysis per line (default=not set, keep going with the complete analysis)
 #####	-t: if set, only partial grouped analysis per line, no heatmaps with deeptools (default=not set, keep going with the complete analysis)
@@ -114,7 +114,7 @@ fi
 if [ ! ${mapparam} ]; then
 	printf "No mapping option selected, using default\n"
 	export mapparam="default"
-elif [[ "${mapparam,,}" == "default" || "${mapparam,,}" == "colcen" || "${mapparam,,}" == "colcenall" || "${mapparam,,}" == "all" ]]; then
+elif [[ "${mapparam,,}" == "default" || "${mapparam,,}" == "colcen" || "${mapparam,,}" == "colcenall" || "${mapparam,,}" == "all" || "${mapparam,,}" == "heavy" ]]; then
 	mapparam=${mapparam,,}
 	printf "${mapparam} chosen as the mapping option\n"
 else
